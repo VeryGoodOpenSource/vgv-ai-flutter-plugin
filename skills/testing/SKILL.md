@@ -474,3 +474,4 @@ Always call `pump()` (or `pumpAndSettle()`) after every interaction — widgets 
 - [references/matchers.md](references/matchers.md) — matchers quick reference
 - [references/configuration.md](references/configuration.md) — `dart_test.yaml` configuration (tags, commands, platform overrides)
 - [references/coverage.md](references/coverage.md) — coverage patterns and package/imports reference
+- [references/animation-testing.md](references/animation-testing.md) — testing implicit/explicit animations, AnimatedSwitcher, page transitions, and injected controllers

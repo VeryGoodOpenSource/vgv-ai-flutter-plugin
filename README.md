@@ -33,6 +33,7 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | Skill | Description |
 | ----- | ----------- |
 | [**Create Project**](skills/create-project/SKILL.md) | Scaffold new Dart/Flutter projects from Very Good CLI templates — `flutter_app`, `dart_package`, `flutter_plugin`, `dart_cli`, `flame_game`, and more |
+| [**Animations**](skills/animations/SKILL.md) | Flutter built-in animations — implicit vs explicit decision tree, Material 3 motion tokens (`Durations`, `Easing`), page transitions with GoRouter, Hero animations, staggered animations, and performance guidelines |
 | [**Accessibility**](skills/accessibility/SKILL.md) | WCAG 2.1 AA compliance — semantics, screen reader support, touch targets, focus management, color contrast, text scaling, and motion sensitivity |
 | [**Testing**](skills/testing/SKILL.md) | Unit, widget, and golden testing — `mocktail` mocking, `pumpApp` helpers, test structure & naming, coverage patterns, and `dart_test.yaml` configuration |
 | [**Navigation**](skills/navigation/SKILL.md) | GoRouter routing — `@TypedGoRoute` type-safe routes, deep linking, redirects, shell routes, and widget testing with `MockGoRouter` |
@@ -73,6 +74,7 @@ You can also invoke skills directly as slash commands:
 
 ```bash
 /vgv-create-project
+/vgv-animations
 /vgv-accessibility
 /vgv-bloc
 /vgv-internationalization
