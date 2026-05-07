@@ -60,7 +60,7 @@ testWidgets('spinner rotates continuously', (tester) async {
   );
 
   // Advance one frame
-  await tester.pump(const Duration(milliseconds: 16));
+  await tester.pump();
 
   // Verify rotation has progressed
   final updatedTransform = tester.widget<Transform>(
