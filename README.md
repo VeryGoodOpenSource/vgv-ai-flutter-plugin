@@ -54,12 +54,15 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 
 ## Hooks
 
-This plugin includes PostToolUse hooks that automatically run Dart analysis and formatting on `.dart` files after every `Edit` or `Write` tool call.
+> **Fork note:** The upstream plugin runs `dart analyze` and `dart format` automatically after every `Edit` or `Write` on a `.dart` file. **Those PostToolUse hooks are disabled by default in this fork** — they caused unwanted reformatting on every edit and blocked edits in legacy codebases full of pre-existing analyzer warnings. The scripts are still present in `hooks/scripts/`; run them manually when you want, or restore the `PostToolUse` block in `hooks/hooks.json` to opt back in. See `CLAUDE.md` for the exact JSON snippet.
 
-| Hook | Behavior |
-| ---- | -------- |
-| **Analyze** | Runs `dart analyze` on the modified file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
-| **Format** | Runs `dart format` on the modified file; always exits 0 (non-blocking — formatting is applied silently) |
+The active hooks in this fork are:
+
+| Hook | When | Behavior |
+| ---- | ---- | -------- |
+| **warn-missing-mcp** | SessionStart | Warns if Very Good CLI is not installed or is below the required version (non-blocking) |
+| **check-vgv-cli** | Before `mcp__very-good-cli__*` calls | Blocks the tool call if Very Good CLI is missing or outdated |
+| **block-cli-workarounds** | Before `Bash` | Prevents bypassing Very Good CLI via direct shell commands |
 
 ### Prerequisites
 

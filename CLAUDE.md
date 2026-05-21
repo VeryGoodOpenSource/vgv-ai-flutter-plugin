@@ -13,7 +13,7 @@ VGV AI Flutter Plugin is a Claude Code plugin that provides best-practices skill
 .claude-plugin/
   plugin.json          # Plugin manifest (name, version, tags)
 hooks/
-  hooks.json           # Hook definitions (PreToolUse and PostToolUse)
+  hooks.json           # Hook definitions (SessionStart + PreToolUse only in this fork)
   scripts/
     analyze.sh         # Runs dart analyze on modified .dart files
     block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
@@ -91,10 +91,31 @@ Both PreToolUse scripts share common utilities from `vgv-cli-common.sh`.
 
 ### PostToolUse Hooks
 
-These run **after** a tool call completes:
+**Disabled by default in this fork.** The upstream plugin runs `dart analyze` and `dart format` after every `Edit`/`Write` on a `.dart` file. That caused two problems we wanted to avoid:
 
-- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue)
-- `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
+1. **Silent reformatting** — every edit re-shaped surrounding code, hiding the actual intent of the change in PR diffs
+2. **Blocking on pre-existing warnings** — `analyze.sh` exits 2 if `dart analyze` reports anything, which blocks edits in legacy codebases full of pre-existing analyzer noise
+
+The scripts (`hooks/scripts/analyze.sh` and `hooks/scripts/format.sh`) are still present, just not wired into `hooks.json`. Run them manually when you want:
+
+```bash
+dart format <file>
+dart analyze <file>
+```
+
+**To opt back in** to automatic per-edit hooks, add the following section inside the `"hooks"` object in `hooks/hooks.json`:
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Edit|Write",
+    "hooks": [
+      { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/analyze.sh", "timeout": 30 },
+      { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/format.sh",  "timeout": 30 }
+    ]
+  }
+]
+```
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
 
