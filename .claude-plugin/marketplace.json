@@ -1,0 +1,27 @@
+{
+  "name": "prasadsunny1-vgv-flutter-marketplace",
+  "owner": {
+    "name": "Sanni Prasad",
+    "url": "https://github.com/prasadsunny1"
+  },
+  "metadata": {
+    "description": "Personal marketplace serving a fork of vgv-ai-flutter-plugin with PostToolUse auto dart-analyze/dart-format hooks disabled. See feat/no-auto-format-analyze for the diff vs upstream.",
+    "version": "0.0.1"
+  },
+  "plugins": [
+    {
+      "name": "vgv-ai-flutter-plugin",
+      "description": "VGV Flutter plugin (fork) — same skills as upstream, but PostToolUse hooks for dart analyze + dart format are disabled. Run those tools manually when you choose to.",
+      "version": "0.0.3",
+      "source": {
+        "source": "github",
+        "repo": "prasadsunny1/vgv-ai-flutter-plugin"
+      },
+      "repository": "https://github.com/prasadsunny1/vgv-ai-flutter-plugin",
+      "homepage": "https://github.com/prasadsunny1/vgv-ai-flutter-plugin",
+      "author": {
+        "name": "Sanni Prasad"
+      }
+    }
+  ]
+}
