@@ -24,6 +24,12 @@ hooks/
 skills/
   accessibility/SKILL.md
   accessibility/reference.md
+  animations/SKILL.md
+  animations/references/
+    explicit-animations.md
+    looping-animations.md
+    page-transitions.md
+    staggered-animations.md
   bloc/SKILL.md
   bloc/reference.md
   create-project/SKILL.md
