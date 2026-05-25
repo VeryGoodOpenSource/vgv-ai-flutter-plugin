@@ -10,6 +10,7 @@ Per-platform WCAG 2.2 checks for Flutter macOS apps. Read this file during Phase
 - **Full Keyboard Access** — enable keyboard navigation in System Preferences > Keyboard > Shortcuts. Toggle with Ctrl+F7.
 
 **System Accessibility Settings:**
+
 - Reduce Motion — disables non-essential animations and transitions.
 - Increase Contrast — increases contrast on system UI and colors.
 
@@ -51,7 +52,7 @@ if (isHighContrast) {
 }
 ```
 
-**VoiceOver is keyboard-driven, not swipe-based**
+### VoiceOver is keyboard-driven, not swipe-based
 
 macOS VoiceOver uses keyboard commands (VO + arrows, VO + space) to navigate, unlike iOS VoiceOver which uses swipes. Screen readers speak semantics the same way, but the modality is different. Test with actual keyboard commands, not swipes.
 
