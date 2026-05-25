@@ -11,6 +11,7 @@ Per-platform WCAG 2.2 checks for Flutter Windows apps. Read this file during Pha
 - **JAWS** — commercial screen reader.
 
 **System Accessibility Settings:**
+
 - Windows High Contrast Mode — forces a specific color palette (Black, White, or other presets). Controlled via Settings > Ease of Access > Display > High Contrast.
 - Keyboard-only navigation — primary interaction modality for assistive tech users.
 
