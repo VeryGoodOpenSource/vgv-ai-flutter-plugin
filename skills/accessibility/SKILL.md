@@ -21,34 +21,81 @@ Read whichever reference file matches the current phase. Do not duplicate its co
 
 ## Core Standards
 
-Apply these standards to ALL accessibility work:
+<instructions>Apply these standards to ALL accessibility work:</instructions>
 
-- Begin every audit by asking which WCAG 2.2 conformance level the project targets (A, AA, AA + selected AAA, or AAA). Never assume AA.
-- Begin every audit by asking which of the six platforms are targeted (iOS, Android, Web, macOS, Windows, Linux). Apply the platform rules from the matching file(s) in `references/platforms/`.
-- Every `Image` must have `semanticLabel`, or be wrapped in `Semantics(label:)`. Decorative images use `excludeFromSemantics: true`.
-- Never use bare `GestureDetector` for tap targets. Use `InkWell`, `ElevatedButton`, `TextButton`, or `IconButton`. `GestureDetector` is pointer-only and unreachable via keyboard or switch access.
-- Target Size Minimum (WCAG 2.2 2.5.8) is 24x24 CSS px (≈ 24 dp) at AA. The VGV recommended minimum is 48x48 dp. Findings between 24 dp and 48 dp are flagged as VGV-style at AA, and as WCAG findings at AAA via 2.5.5 (44 dp).
-- Every dragging-based function must offer a non-drag alternative on the same screen (WCAG 2.2 2.5.7 AA). Sliders need keyboard or stepper alternatives. `Dismissible` needs an explicit delete button. `ReorderableListView` needs up/down or "move to" controls.
-- A focused widget must not be entirely obscured by sticky headers, snackbars, bottom sheets, persistent FABs, or overlays (WCAG 2.2 2.4.11 AA, 2.4.12 AAA). Use `Scrollable.ensureVisible` and `Scaffold.resizeToAvoidBottomInset: true`.
-- Never use color as the sole differentiator. Always pair color with a label, icon, or shape.
-- All animations must respect `MediaQuery.disableAnimations`. Gate every `AnimationController`, `AnimatedContainer`, `Hero` transition, and `PageRouteBuilder` transition on this flag.
-- Icon-only buttons must have a `Tooltip` or `Semantics(label:)`. Screen readers have no other way to convey purpose.
-- Never use `ExcludeSemantics` on non-decorative content.
-- Fixed-height containers must not wrap `Text`. Use `minHeight` constraints. Fixed heights clip text at 1.5x font scale on Android, sooner on iOS where Larger Accessibility Sizes go to ~3.1x.
-- All text and UI components must meet the contrast ratio for the selected WCAG level. See the WCAG Level Criteria Reference section below.
-- Cupertino widgets (`CupertinoSwitch`, `CupertinoSlider`, `CupertinoSegmentedControl`, `CupertinoButton`) ship with weaker semantic defaults than their Material equivalents. Always wrap them in `Semantics(label:, value:, button:)`.
-- Every `TextField` collecting structured personal data (email, username, password, name, address, phone, oneTimeCode) must declare `autofillHints`. Required for 1.3.5 at AA and the foundation for 3.3.7 Redundant Entry at A.
-- Every async user-visible state change must announce itself via `Semantics(liveRegion: true)` or `SemanticsService.announce`.
+<rule id="conformance-level">
+Begin every audit by asking which WCAG 2.2 conformance level the project targets (A, AA, AA + selected AAA, or AAA). Never assume AA.
+</rule>
+
+<rule id="platform-selection">
+Begin every audit by asking which of the six platforms are targeted (iOS, Android, Web, macOS, Windows, Linux). Apply the platform rules from the matching file(s) in `references/platforms/`.
+</rule>
+
+<rule id="image-semantics" wcag="1.1.1">
+Every `Image` must have `semanticLabel`, or be wrapped in `Semantics(label:)`. Decorative images use `excludeFromSemantics: true`.
+</rule>
+
+<rule id="gesture-detector" wcag="2.1.1">
+Never use bare `GestureDetector` for tap targets. Use `InkWell`, `ElevatedButton`, `TextButton`, or `IconButton`. `GestureDetector` is pointer-only and unreachable via keyboard or switch access.
+</rule>
+
+<rule id="target-size" wcag="2.5.8">
+Target Size Minimum (WCAG 2.2 2.5.8) is 24x24 CSS px (≈ 24 dp) at AA. The VGV recommended minimum is 48x48 dp. Findings between 24 dp and 48 dp are flagged as VGV-style at AA, and as WCAG findings at AAA via 2.5.5 (44 dp).
+</rule>
+
+<rule id="drag-alternatives" wcag="2.5.7">
+Every dragging-based function must offer a non-drag alternative on the same screen (WCAG 2.2 2.5.7 AA). Sliders need keyboard or stepper alternatives. `Dismissible` needs an explicit delete button. `ReorderableListView` needs up/down or "move to" controls.
+</rule>
+
+<rule id="focus-not-obscured" wcag="2.4.11">
+A focused widget must not be entirely obscured by sticky headers, snackbars, bottom sheets, persistent FABs, or overlays (WCAG 2.2 2.4.11 AA, 2.4.12 AAA). Use `Scrollable.ensureVisible` and `Scaffold.resizeToAvoidBottomInset: true`.
+</rule>
+
+<rule id="color-differentiation" wcag="1.4.1">
+Never use color as the sole differentiator. Always pair color with a label, icon, or shape.
+</rule>
+
+<rule id="animation-motion" wcag="2.3.3">
+All animations must respect `MediaQuery.disableAnimations`. Gate every `AnimationController`, `AnimatedContainer`, `Hero` transition, and `PageRouteBuilder` transition on this flag.
+</rule>
+
+<rule id="icon-buttons" wcag="4.1.2">
+Icon-only buttons must have a `Tooltip` or `Semantics(label:)`. Screen readers have no other way to convey purpose.
+</rule>
+
+<rule id="exclude-semantics" wcag="1.1.1">
+Never use `ExcludeSemantics` on non-decorative content.
+</rule>
+
+<rule id="text-containers" wcag="1.4.4">
+Fixed-height containers must not wrap `Text`. Use `minHeight` constraints. Fixed heights clip text at 1.5x font scale on Android, sooner on iOS where Larger Accessibility Sizes go to ~3.1x.
+</rule>
+
+<rule id="contrast" wcag="1.4.3">
+All text and UI components must meet the contrast ratio for the selected WCAG level. See the WCAG Level Criteria Reference section below.
+</rule>
+
+<rule id="cupertino-semantics" wcag="4.1.2">
+Cupertino widgets (`CupertinoSwitch`, `CupertinoSlider`, `CupertinoSegmentedControl`, `CupertinoButton`) ship with weaker semantic defaults than their Material equivalents. Always wrap them in `Semantics(label:, value:, button:)`.
+</rule>
+
+<rule id="autofill-hints" wcag="1.3.5">
+Every `TextField` collecting structured personal data (email, username, password, name, address, phone, oneTimeCode) must declare `autofillHints`. Required for 1.3.5 at AA and the foundation for 3.3.7 Redundant Entry at A.
+</rule>
+
+<rule id="async-announcements" wcag="4.1.3">
+Every async user-visible state change must announce itself via `Semantics(liveRegion: true)` or `SemanticsService.announce`.
+</rule>
 
 ---
 
 ## Workflow
 
-Every accessibility engagement follows four phases in sequence. Do not skip Phase 1 or Phase 2.
+<instructions>Every accessibility engagement follows four phases in sequence. Do not skip Phase 1 or Phase 2.</instructions>
 
-### Phase 1: Conformance Level Selection
+<phase id="1" name="Conformance Level Selection">
 
-Use `AskUserQuestion` to ask:
+<action>Use `AskUserQuestion` to ask:</action>
 
 ```yaml
 question: "Which WCAG 2.2 conformance level are you targeting?"
@@ -66,12 +113,15 @@ options:
 
 If the user picks "AA + selected AAA", follow up with a free-text request for the AAA criterion IDs they want included (for example, "1.4.6, 2.2.3, 2.4.13").
 
-Record the selected level. All audit checks, criterion citations, and fix recommendations apply only the rules for that level (plus all levels below it) and any opted-in AAA criteria.
+<outcome>Record the selected level. All audit checks, criterion citations, and fix recommendations apply only the rules for that level (plus all levels below it) and any opted-in AAA criteria.</outcome>
 
-### Phase 2: Platform Selection
+</phase>
 
-Use `AskUserQuestion` (multi-select if available, otherwise one question with a comma-separated reply) to ask:
+<phase id="2" name="Platform Selection">
 
+<action>Use `AskUserQuestion` (multi-select if available, otherwise one question with a comma-separated reply) to ask:</action>
+
+<question>
 ```yaml
 question: "Which platforms is this app targeting? Select all that apply."
 header: "Platforms"
@@ -87,31 +137,43 @@ options:
   - label: "Windows / Linux desktop"
     description: "Narrator, NVDA, JAWS (Windows), Orca (Linux), Windows High Contrast Mode."
 ```
+</question>
 
-Record the selected platforms. Load the matching file(s) from `references/platforms/` (for example, `references/platforms/ios.md` for iOS, `references/platforms/android.md` for Android). Load only the files for platforms that were selected; do not load unnecessary files.
+<outcome>Record the selected platforms. Load the matching file(s) from `references/platforms/` (for example, `references/platforms/ios.md` for iOS, `references/platforms/android.md` for Android). Load only the files for platforms that were selected; do not load unnecessary files.</outcome>
 
-### Phase 3: Level-Appropriate, Platform-Aware Audit
+</phase>
 
-For each selected platform, audit the provided files or widgets across seven categories, in order:
+<phase id="3" name="Level-Appropriate, Platform-Aware Audit">
 
-1. Semantics and Screen Reader. Labels, roles, live regions, merge/exclude correctness, Cupertino semantic gaps, reading order under TalkBack and VoiceOver.
-2. Touch Targets and Dragging Alternatives. WCAG 2.2 2.5.8 minimum (24 CSS px) at AA, 2.5.5 enhanced (44 CSS px) at AAA, VGV recommended 48 dp, plus 2.5.7 dragging alternatives.
-3. Focus and Keyboard Navigation. Operability, traversal order, dialog focus trapping, focus indicators, plus 2.4.11 / 2.4.12 focus-not-obscured.
-4. Color Contrast. Text and UI component ratios at the selected level's threshold (table below).
-5. Text Scaling. No fixed-height text containers, no clamped text scaling. Cap simulations at 2x on Android and Web, 3x on iOS.
-6. Animation and Motion. `disableAnimations` gating across `AnimationController`, `Hero`, `AnimatedContainer`, `PageRouteBuilder`. No content flashing above 3 Hz at AA, zero flashing at AAA.
-7. Forms, Authentication, and Help. `autofillHints` (1.3.5, 3.3.7), accessible authentication (3.3.8 / 3.3.9), consistent placement of help mechanisms (3.2.6).
+<instructions>For each selected platform, audit the provided files or widgets across seven categories, in order:</instructions>
 
-Apply only criteria active at the selected level (plus opted-in AAA) and relevant to the selected platforms.
+<category id="1">Semantics and Screen Reader — Labels, roles, live regions, merge/exclude correctness, Cupertino semantic gaps, reading order under TalkBack and VoiceOver.</category>
 
-For each finding, capture: file path and approximate line number, WCAG criterion ID + name + version (2.0 / 2.1 / 2.2), platform(s) affected, severity (CRITICAL / MAJOR / MINOR), current behavior, expected behavior, Flutter fix as a before-and-after diff.
+<category id="2">Touch Targets and Dragging Alternatives — WCAG 2.2 2.5.8 minimum (24 CSS px) at AA, 2.5.5 enhanced (44 CSS px) at AAA, VGV recommended 48 dp, plus 2.5.7 dragging alternatives.</category>
 
-After completing all seven categories, produce the Audit Report using the template in [`references/audit-templates.md`](references/audit-templates.md). Pick the level-specific passed-check list that matches Phase 1.
+<category id="3">Focus and Keyboard Navigation — Operability, traversal order, dialog focus trapping, focus indicators, plus 2.4.11 / 2.4.12 focus-not-obscured.</category>
 
-### Phase 4: Remediation Scope Selection
+<category id="4">Color Contrast — Text and UI component ratios at the selected level's threshold (table below).</category>
 
-After delivering the report, use `AskUserQuestion`:
+<category id="5">Text Scaling — No fixed-height text containers, no clamped text scaling. Cap simulations at 2x on Android and Web, 3x on iOS.</category>
 
+<category id="6">Animation and Motion — `disableAnimations` gating across `AnimationController`, `Hero`, `AnimatedContainer`, `PageRouteBuilder`. No content flashing above 3 Hz at AA, zero flashing at AAA.</category>
+
+<category id="7">Forms, Authentication, and Help — `autofillHints` (1.3.5, 3.3.7), accessible authentication (3.3.8 / 3.3.9), consistent placement of help mechanisms (3.2.6).</category>
+
+<constraint>Apply only criteria active at the selected level (plus opted-in AAA) and relevant to the selected platforms.</constraint>
+
+<finding-format>For each finding, capture: file path and approximate line number, WCAG criterion ID + name + version (2.0 / 2.1 / 2.2), platform(s) affected, severity (CRITICAL / MAJOR / MINOR), current behavior, expected behavior, Flutter fix as a before-and-after diff.</finding-format>
+
+<outcome>After completing all seven categories, produce the Audit Report using the template in [`references/audit-templates.md`](references/audit-templates.md). Pick the level-specific passed-check list that matches Phase 1.</outcome>
+
+</phase>
+
+<phase id="4" name="Remediation Scope Selection">
+
+<action>After delivering the report, use `AskUserQuestion`:</action>
+
+<question>
 ```yaml
 question: "The audit is complete. How would you like to proceed with fixes?"
 header: "Fix scope"
@@ -125,8 +187,11 @@ options:
   - label: "Specific findings"
     description: "List the finding numbers you want fixed"
 ```
+</question>
 
-Apply exactly the fixes the user selects. After applying fixes, confirm: "Fixed [N] findings ([severities]). [N remaining] remain open."
+<outcome>Apply exactly the fixes the user selects. After applying fixes, confirm: "Fixed [N] findings ([severities]). [N remaining] remain open."</outcome>
+
+</phase>
 
 ---
 
@@ -208,9 +273,9 @@ Level AA includes all Level A criteria. Level AAA includes all Level A and AA cr
 
 ## Quick Anti-Pattern Reference
 
-Full code samples and corrected versions live in [`references/examples.md`](references/examples.md). The patterns below are the ones the skill flags most often.
+<context>Full code samples and corrected versions live in [`references/examples.md`](references/examples.md). The patterns below are the ones the skill flags most often.</context>
 
-### Semantics
+<antipattern category="Semantics" wcag="1.1.1,4.1.2">
 
 ```dart
 // WRONG: empty label, no label, ExcludeSemantics over actionable
@@ -231,7 +296,9 @@ MergeSemantics(
 )
 ```
 
-### Touch targets and dragging
+</antipattern>
+
+<antipattern category="Touch targets and dragging" wcag="2.5.8,2.5.7">
 
 ```dart
 // WRONG: 16x16 target, below WCAG 2.2 2.5.8 AA (24 dp)
@@ -243,7 +310,9 @@ SizedBox(width: 16, height: 16, child: GestureDetector(onTap: _onTap, child: con
 Dismissible(key: ValueKey(item.id), onDismissed: (_) => _delete(item), child: ListTile(title: Text(item.name)))
 ```
 
-### Focus
+</antipattern>
+
+<antipattern category="Focus" wcag="2.1.1,2.4.11">
 
 ```dart
 // WRONG: GestureDetector is not keyboard-accessible
@@ -259,7 +328,9 @@ Scaffold(
 )
 ```
 
-### Text scaling and motion
+</antipattern>
+
+<antipattern category="Text scaling and motion" wcag="1.4.4,2.3.3">
 
 ```dart
 // WRONG: clips text at 1.5x font scale
@@ -270,6 +341,8 @@ SizedBox(height: 48, child: Text('Status: Ready'))
 // WRONG: animation always plays
 AnimatedContainer(duration: const Duration(milliseconds: 500), color: ..., child: child)
 ```
+
+</antipattern>
 
 For corrected snippets, full classes (`AccessibleTapTarget`, `AccessibleSlider`, `AccessibleReorderableList`, `AccessiblePageRoute`, `AccessibleHero`), and the Cupertino semantic wrappers, see [`references/examples.md`](references/examples.md).
 
