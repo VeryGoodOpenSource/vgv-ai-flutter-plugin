@@ -20,6 +20,28 @@ Severity assignment:
 
 ---
 
+## Cross-Platform Severity Adjustments
+
+The same code path can produce different severities per platform. Use this table to decide how to assign severity per platform when listing a finding.
+
+| Issue | iOS | Android | Web | macOS | Win/Linux |
+| --- | --- | --- | --- | --- | --- |
+| `GestureDetector` for tap | CRITICAL | CRITICAL | CRITICAL | CRITICAL | CRITICAL |
+| 16x16 target (below 24 dp) | CRITICAL | CRITICAL | CRITICAL | MAJOR | MAJOR |
+| 36 dp target (between 24 and 48 dp) | MAJOR | MAJOR | MAJOR | MINOR | MINOR |
+| `Dismissible` without delete button | CRITICAL | CRITICAL | MAJOR | MAJOR | MAJOR |
+| Focused field obscured by sticky bottom bar | CRITICAL | CRITICAL | MAJOR | MAJOR | MAJOR |
+| `AnimatedContainer` ignoring disableAnimations | MAJOR | MAJOR | MAJOR | MAJOR | MAJOR |
+| Tooltip > 80 chars | MINOR | MINOR | MAJOR | MINOR | MINOR |
+| `setApplicationSwitcherDescription` for page title | n/a | n/a | CRITICAL | n/a | n/a |
+| Bypass blocks missing | n/a | n/a | MAJOR | n/a | n/a |
+| Cupertino widget without semantic wrapper | MAJOR | MINOR | MINOR | MAJOR | MINOR |
+| Hardcoded Color outside ThemeExtension | MINOR | MINOR | MINOR | MAJOR | MAJOR (Windows HCM) |
+
+Severities in this table assume the criterion is active at the selected level. Findings for criteria above the selected level (for example, AAA criteria when AA is selected) are dropped from the report unless the criterion is in the user's "selected AAA" list from Phase 1.
+
+---
+
 ## Report Template (all levels)
 
 ```markdown

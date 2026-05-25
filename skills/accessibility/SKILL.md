@@ -9,11 +9,11 @@ effort: high
 
 # Accessibility
 
-Flutter accessibility auditing and remediation across WCAG 2.2 conformance levels A, AA, and AAA. The skill is split into a workflow (this file) plus three reference files loaded on demand:
+Flutter accessibility auditing and remediation across WCAG 2.2 conformance levels A, AA, and AAA. The skill is split into a workflow (this file) plus reference files loaded on demand:
 
-- [`references/audit-templates.md`](references/audit-templates.md). Severity guide, report template, level-specific passed-check lists for A, AA, AA + selected AAA, and AAA.
-- [`references/examples.md`](references/examples.md). Extended Flutter code per category, including the new WCAG 2.2 patterns (focus-not-obscured, dragging alternatives, Cupertino semantic wrappers, MergeSemantics correctness).
-- [`references/platform-matrix.md`](references/platform-matrix.md). Per-OS checks for iOS, Android, Web, macOS, and Windows/Linux desktop.
+- [`references/audit-templates.md`](references/audit-templates.md) — severity guide, report template, level-specific passed-check lists for A, AA, AA + selected AAA, and AAA. Also includes cross-platform severity adjustment table.
+- [`references/examples.md`](references/examples.md) — extended Flutter code per category, including WCAG 2.2 patterns (focus-not-obscured, dragging alternatives, Cupertino semantic wrappers, MergeSemantics correctness).
+- [`references/platforms/ios.md`](references/platforms/ios.md), [`android.md`](references/platforms/android.md), [`web.md`](references/platforms/web.md), [`macos.md`](references/platforms/macos.md), [`windows.md`](references/platforms/windows.md), [`linux.md`](references/platforms/linux.md) — per-platform WCAG 2.2 checks. Load only the file(s) matching the selected platform(s).
 
 Read whichever reference file matches the current phase. Do not duplicate its content here.
 
@@ -24,7 +24,7 @@ Read whichever reference file matches the current phase. Do not duplicate its co
 Apply these standards to ALL accessibility work:
 
 - Begin every audit by asking which WCAG 2.2 conformance level the project targets (A, AA, AA + selected AAA, or AAA). Never assume AA.
-- Begin every audit by asking which of the five platforms are targeted (iOS, Android, Web, macOS, Windows/Linux desktop). Apply the platform rules from `references/platform-matrix.md`.
+- Begin every audit by asking which of the six platforms are targeted (iOS, Android, Web, macOS, Windows, Linux). Apply the platform rules from the matching file(s) in `references/platforms/`.
 - Every `Image` must have `semanticLabel`, or be wrapped in `Semantics(label:)`. Decorative images use `excludeFromSemantics: true`.
 - Never use bare `GestureDetector` for tap targets. Use `InkWell`, `ElevatedButton`, `TextButton`, or `IconButton`. `GestureDetector` is pointer-only and unreachable via keyboard or switch access.
 - Target Size Minimum (WCAG 2.2 2.5.8) is 24x24 CSS px (≈ 24 dp) at AA. The VGV recommended minimum is 48x48 dp. Findings between 24 dp and 48 dp are flagged as VGV-style at AA, and as WCAG findings at AAA via 2.5.5 (44 dp).
@@ -88,7 +88,7 @@ options:
     description: "Narrator, NVDA, JAWS (Windows), Orca (Linux), Windows High Contrast Mode."
 ```
 
-Record the selected platforms. Load `references/platform-matrix.md` and apply the per-platform rule sets during the audit.
+Record the selected platforms. Load the matching file(s) from `references/platforms/` (for example, `references/platforms/ios.md` for iOS, `references/platforms/android.md` for Android). Load only the files for platforms that were selected; do not load unnecessary files.
 
 ### Phase 3: Level-Appropriate, Platform-Aware Audit
 
@@ -277,9 +277,9 @@ For corrected snippets, full classes (`AccessibleTapTarget`, `AccessibleSlider`,
 
 ## Additional Resources
 
-- [`references/audit-templates.md`](references/audit-templates.md). Severity guide, report template, level-specific passed-check lists.
-- [`references/examples.md`](references/examples.md). Full Flutter widget classes per category, including all WCAG 2.2 patterns.
-- [`references/platform-matrix.md`](references/platform-matrix.md). Per-OS check tables for iOS, Android, Web, macOS, Windows/Linux desktop.
+- [`references/audit-templates.md`](references/audit-templates.md) — severity guide, report template, level-specific passed-check lists, cross-platform severity table.
+- [`references/examples.md`](references/examples.md) — full Flutter widget classes per category, including all WCAG 2.2 patterns.
+- [`references/platforms/ios.md`](references/platforms/ios.md), [`android.md`](references/platforms/android.md), [`web.md`](references/platforms/web.md), [`macos.md`](references/platforms/macos.md), [`windows.md`](references/platforms/windows.md), [`linux.md`](references/platforms/linux.md) — per-platform WCAG 2.2 checks and Flutter-specific gotchas.
 
 Official references:
 
