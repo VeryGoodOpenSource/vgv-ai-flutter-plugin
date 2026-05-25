@@ -45,7 +45,7 @@ Per-platform WCAG 2.2 checks for iOS apps using Flutter. Read this file during P
 
 ## Flutter-Specific Gotchas
 
-**liveRegion does not auto-announce**
+### liveRegion does not auto-announce
 
 `Semantics(liveRegion: true)` marks a region as frequently updated but does **not automatically announce** the change on iOS (issue #45968). You must also call `SemanticsService.announce()`:
 
@@ -59,15 +59,15 @@ SemanticsService.announce('Status changed to $status', TextDirection.ltr);
 
 Without the `announce()` call, VoiceOver users will not hear the update unless they manually navigate back to the live region.
 
-**SemanticsService.announce() gets interrupted**
+### SemanticsService.announce() gets interrupted
 
 When a button also has semantic hints (via `Semantics(hint:)`), calling `SemanticsService.announce()` during active button interaction gets interrupted (issue #122101). Debounce frequent calls and avoid calling during touch/interaction.
 
-**headingLevel is binary on iOS, not hierarchical**
+### headingLevel is binary on iOS, not hierarchical
 
 Flutter 3.38.0 wired `Semantics(headingLevel: 1)` through to iOS, but the platform does not support heading hierarchy. Use `Semantics(header: true)` for binary heading (maps to `UIAccessibilityTraitHeader`). Do not use numeric `headingLevel` values expecting h1-h6 hierarchy on iOS.
 
-**AccessibilityFeatures.highContrast and invertColors are iOS-only**
+### AccessibilityFeatures.highContrast and invertColors are iOS-only
 
 These flags exist on iOS only. Check them before applying iOS-specific UI adjustments:
 
@@ -81,11 +81,11 @@ if (features.invertColors) {
 }
 ```
 
-**Full Keyboard Access bug**
+### Full Keyboard Access bug
 
 Enabling Full Keyboard Access (external keyboard + iOS Accessibility setting) breaks external keyboard input in Flutter apps (issues #165303, #166683). This is a platform bug, not a code issue. Document this limitation in release notes if your app targets external keyboard users.
 
-**Voice Control does not number non-actionable widgets**
+### Voice Control does not number non-actionable widgets
 
 As of Flutter 3.32, non-actionable widgets no longer receive numbered labels under Voice Control. Only actionable widgets (buttons, text fields) get numbers. Adjust user guidance accordingly.
 

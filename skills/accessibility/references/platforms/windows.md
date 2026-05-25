@@ -7,7 +7,7 @@ Per-platform WCAG 2.2 checks for Flutter Windows apps. Read this file during Pha
 ## Screen Reader & Assistive Tech
 
 - **Narrator** — built-in screen reader. Activated via Windows+Enter.
-- **NVDA** — recommended free screen reader for testing. Download from https://www.nvaccess.org/
+- **NVDA** — recommended free screen reader for testing. Download from [NVDA](https://www.nvaccess.org/)
 - **JAWS** — commercial screen reader.
 
 **System Accessibility Settings:**
@@ -35,7 +35,7 @@ Per-platform WCAG 2.2 checks for Flutter Windows apps. Read this file during Pha
 ## Testing Tools
 
 - **Narrator** — built-in, but limited. Good for quick testing. Activated via Windows+Enter.
-- **NVDA** — recommended for thorough testing. Open-source, free, actively maintained. Download from https://www.nvaccess.org/
+- **NVDA** — recommended for thorough testing. Open-source, free, actively maintained. Download from [NVDA](https://www.nvaccess.org/)
 - **JAWS** — commercial option. Trial available.
 - **Inspect** — Windows SDK tool for inspecting UIA (UI Automation) element trees. Help understand how Flutter elements are exposed to assistive tech.
 - **Keyboard-only testing** — use Tab, Shift+Tab, Enter, Space, arrows to navigate without a screen reader.
@@ -44,7 +44,7 @@ Per-platform WCAG 2.2 checks for Flutter Windows apps. Read this file during Pha
 
 ## Flutter-Specific Gotchas
 
-**AccessibilityFeatures.highContrast is iOS-only**
+### AccessibilityFeatures.highContrast is iOS-only
 
 `AccessibilityFeatures.highContrast` does **not exist on Windows**. Detect Windows High Contrast Mode via `ThemeData(useSystemColors: true)`:
 
@@ -57,19 +57,19 @@ ThemeData(
 
 However, support for Windows forced-colors mode is incomplete (issue #75883). Always test with High Contrast enabled in Windows Settings.
 
-**Focus mode only, no browse mode**
+### Focus mode only, no browse mode
 
 Flutter Desktop on Windows runs in UIA **focus mode only** — unlike web where NVDA browse mode lets users skim content by headings. Screens that rely on heading navigation as the primary discovery pattern should note this limitation in findings. All content must be reachable via Tab navigation.
 
-**SemanticsRole is web-only**
+### SemanticsRole is web-only
 
 `SemanticsRole` enum support is web-only in Flutter 3.32. Windows support is planned but not yet shipped. Do not rely on `SemanticsRole` for Windows accessibility.
 
-**UIA element tree mapping**
+### UIA element tree mapping
 
 Flutter Windows uses the UIA (UI Automation) accessibility API. The semantics tree maps to UIA automation elements. Use Inspect tool to verify correct element types and properties.
 
-**Keyboard is the primary interaction**
+### Keyboard is the primary interaction
 
 On Windows desktop, keyboard navigation is the primary interaction pattern. Every interactive element must be reachable via Tab and activatable via Enter or Space. Test thoroughly with keyboard-only navigation.
 

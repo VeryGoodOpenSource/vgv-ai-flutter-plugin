@@ -41,9 +41,9 @@ Per-platform WCAG 2.2 checks for Flutter macOS apps. Read this file during Phase
 
 ## Flutter-Specific Gotchas
 
-**AccessibilityFeatures.highContrast is iOS-only**
+### AccessibilityFeatures.highContrast is iOS-only
 
-`AccessibilityFeatures.highContrast` does **not exist on macOS**. Detect macOS Increase Contrast via `MediaQuery.platformBrightness` or supply separate `MaterialApp.highContrastTheme`:
+`AccessibilityFeatures.highContrast` does **not exist on macOS**. Detect macOS Increase Contrast via `MediaQuery.highContrast` or supply separate `MaterialApp.highContrastTheme`:
 
 ```dart
 final isHighContrast = MediaQuery.of(context).highContrast;
@@ -56,11 +56,11 @@ if (isHighContrast) {
 
 macOS VoiceOver uses keyboard commands (VO + arrows, VO + space) to navigate, unlike iOS VoiceOver which uses swipes. Screen readers speak semantics the same way, but the modality is different. Test with actual keyboard commands, not swipes.
 
-**SemanticsRole is web-only**
+### SemanticsRole is web-only
 
 `SemanticsRole` enum support is web-only in Flutter 3.32. macOS support is planned but not yet shipped. Do not rely on `SemanticsRole` for macOS accessibility.
 
-**Focus indicator visibility is critical**
+### Focus indicator visibility is critical
 
 Since Full Keyboard Access is off by default but users can enable it, always provide a visible focus indicator on all focusable widgets. Users without Full Keyboard Access enabled may still use keyboard navigation with assistive tech.
 
