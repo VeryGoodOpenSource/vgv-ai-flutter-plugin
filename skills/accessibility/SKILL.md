@@ -1,6 +1,8 @@
 ---
 name: vgv-accessibility
 description: Use when building, auditing, or reviewing Flutter widgets for screen reader support, touch targets, focus management, dragging alternatives, color contrast, text scaling, motion sensitivity, accessible authentication, redundant entry, or consistent help. Performs Flutter accessibility auditing and remediation against WCAG 2.2 levels A, AA, and AAA across iOS, Android, Web, macOS, and Windows/Linux desktop.
+when-to-use: Building, auditing, or reviewing Flutter widgets for WCAG 2.2 accessibility across multiple platforms
+effort: medium
 argument-hint: "[wcag-level] [platform...]"
 allowed-tools: Read Glob Grep
 ---
