@@ -1,7 +1,9 @@
 ---
 name: vgv-internationalization
-description: Best practices for internationalization (i18n) and localization (l10n) in Flutter. Use when adding, modifying, or reviewing ARB translations, locale setup, BuildContext l10n extensions, or RTL/directional layout support.
-allowed-tools: Read,Glob,Grep
+description: Best practices for internationalization (i18n) and localization (l10n) in Flutter.
+when_to_use: Use when adding, modifying, or reviewing ARB translations, locale setup, BuildContext l10n extensions, or RTL/directional layout support.
+allowed-tools: Read Glob Grep
+model: sonnet
 ---
 
 # Internationalization
@@ -23,149 +25,17 @@ Apply these standards to ALL internationalization work:
 
 ## Key Definitions
 
-| Term                          | Definition                                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------------------------- |
-| **Locale**                    | Set of properties defining user region, language, and preferences (currency, time, numbers)  |
-| **Localization (l10n)**       | Process of adapting software for a specific language by translating text and adding regional layouts |
+| Term                            | Definition                                                                                            |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Locale**                      | Set of properties defining user region, language, and preferences (currency, time, numbers)           |
+| **Localization (l10n)**         | Process of adapting software for a specific language by translating text and adding regional layouts  |
 | **Internationalization (i18n)** | Process of designing software so it can be adapted to different languages without engineering changes |
 
-## Setup Pipeline
+## Setup Pipeline and ARB File Format
 
-### 1. Add Dependencies
+Add `flutter_localizations` and `intl` as dependencies, enable `generate: true` in `pubspec.yaml`, configure `l10n.yaml`, create ARB files in `lib/l10n/arb/`, run `flutter gen-l10n`, and wire up `MaterialApp` with `localizationsDelegates` and `supportedLocales`. ARB files support simple strings, placeholders, and ICU plural syntax.
 
-```yaml
-# pubspec.yaml
-dependencies:
-  flutter:
-    sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  intl: any
-
-flutter:
-  generate: true
-```
-
-### 2. Configure `l10n.yaml`
-
-Create `l10n.yaml` in the project root:
-
-```yaml
-arb-dir: lib/l10n/arb
-template-arb-file: app_en.arb
-output-localization-file: app_localizations.dart
-nullable-getter: false
-preferred-supported-locales: [en]
-```
-
-Set `preferred-supported-locales` explicitly to avoid alphabetical ordering of locales.
-
-### 3. Create ARB Files
-
-Store translation files in `lib/l10n/arb/`:
-
-**`app_en.arb`** (template — this is the source of truth):
-
-```json
-{
-  "@@locale": "en",
-  "helloWorld": "Hello World!",
-  "@helloWorld": {
-    "description": "Greeting shown on the home page"
-  },
-  "itemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
-  "@itemCount": {
-    "description": "Label showing the number of items",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "welcomeUser": "Welcome, {name}!",
-  "@welcomeUser": {
-    "description": "Welcome message with user name",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  }
-}
-```
-
-**`app_es.arb`**:
-
-```json
-{
-  "@@locale": "es",
-  "helloWorld": "¡Hola Mundo!",
-  "itemCount": "{count, plural, =0{Sin elementos} =1{1 elemento} other{{count} elementos}}",
-  "welcomeUser": "¡Bienvenido, {name}!"
-}
-```
-
-### 4. Generate Localization Code
-
-```bash
-flutter gen-l10n
-```
-
-### 5. Integrate with `MaterialApp`
-
-```dart
-import 'package:flutter_localizations/flutter_localizations.dart';
-
-const MaterialApp(
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
-  supportedLocales: AppLocalizations.supportedLocales,
-);
-```
-
-## ARB File Format
-
-### Simple Strings
-
-```json
-{
-  "helloWorld": "Hello World!",
-  "@helloWorld": {
-    "description": "Greeting shown on the home page"
-  }
-}
-```
-
-### Placeholders
-
-```json
-{
-  "welcomeUser": "Welcome, {name}!",
-  "@welcomeUser": {
-    "description": "Welcome message with user name",
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  }
-}
-```
-
-### Plurals
-
-```json
-{
-  "itemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
-  "@itemCount": {
-    "description": "Label showing the number of items",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  }
-}
-```
+See [references/setup.md](references/setup.md) for the full step-by-step setup pipeline and ARB file format examples.
 
 ## BuildContext Extension
 
@@ -232,93 +102,17 @@ showDialog<bool>(
 );
 ```
 
-
 ## Text Directionality
 
-### The `Directionality` Widget
+Use `EdgeInsetsDirectional` (start/end) instead of `EdgeInsets` (left/right) for all padding and margins. Use directional widget variants (`PositionedDirectional`, `AlignDirectional`, `BorderDirectional`) for RTL-aware layouts. Icons mirror automatically in RTL; images require `matchTextDirection: true`.
 
-Flutter provides a global `Directionality` widget determined by the user's locale. You can override it explicitly:
-
-```dart
-Directionality(
-  textDirection: TextDirection.rtl,
-  child: Row(
-    children: [
-      // Children laid out right-to-left
-    ],
-  ),
-)
-```
-
-Retrieve the current direction: `Directionality.of(context)`
-
-### Visual vs Directional Widgets
-
-| Widget Type     | Direction Terms       | Use Case                                    |
-| --------------- | --------------------- | ------------------------------------------- |
-| **Visual**      | top, left, right, bottom | Absolute positioning that never changes    |
-| **Directional** | top, start, end, bottom  | Relative to text direction (respects RTL)  |
-
-### `EdgeInsetsDirectional` vs `EdgeInsets`
-
-Always use `EdgeInsetsDirectional` for padding and margins that should respect text direction:
-
-```dart
-// Preferred — respects RTL
-Padding(
-  padding: EdgeInsetsDirectional.only(start: 12),
-  child: Text('Padding at text start regardless of direction'),
-)
-
-// Only for absolute positioning that must not change
-Padding(
-  padding: EdgeInsets.only(left: 10),
-  child: Text('Always 10px from left edge'),
-)
-```
-
-Many widgets offer `Directional` variants: `PositionedDirectional`, `AlignDirectional`, `BorderDirectional`, etc.
-
-### Icon and Image Mirroring
-
-- **Icons** mirror automatically in RTL contexts by default. To prevent mirroring, set the `Icon`'s `textDirection` property explicitly.
-- **Images** do not mirror by default. Set `matchTextDirection: true` to mirror images in RTL.
-
-### Material Design Bidirectionality Standards
-
-Follow Material Design conventions:
-
-- **Mirror**: Forward/future directional indicators (arrows, chevrons)
-- **Do not mirror**: Media progress indicators, negation symbols, physical objects (clocks, tools)
+See [references/directionality.md](references/directionality.md) for the full directionality guide including visual vs directional widgets, icon/image mirroring rules, and Material Design bidirectionality standards.
 
 ## Backend Considerations
 
-### Multi-Language Content Storage
+Store backend content with per-locale translations and require clients to transmit the user's locale. For error messages, map HTTP status codes or custom backend error constants to l10n keys on the frontend.
 
-When the backend serves user-facing content:
-
-1. Store database entries with translations for each supported language
-2. Require clients to transmit the user's locale with each request or during session initialization
-3. Return content in the requested locale
-
-### Error Message Localization
-
-Two approaches for localizing error messages from the backend:
-
-**HTTP Status Code Mapping**: The frontend maps standard HTTP status codes to l10n keys.
-
-**Custom Error Constants**: The backend returns error constants that the app maps to localized strings:
-
-```dart
-// Backend returns: { "error": "expired_code" }
-// Frontend maps to l10n key:
-final message = switch (error) {
-  'invalid_code' => context.l10n.errorInvalidCode,
-  'expired_code' => context.l10n.errorExpiredCode,
-  'limit_reached' => context.l10n.errorLimitReached,
-  _ => context.l10n.errorGeneric,
-};
-```
+See [references/backend.md](references/backend.md) for multi-language content storage patterns and error message localization approaches.
 
 ## Common Patterns
 
@@ -346,17 +140,17 @@ final message = switch (error) {
 
 ## Quick Reference
 
-| Package                    | Purpose                                |
-| -------------------------- | -------------------------------------- |
-| `flutter_localizations`    | Flutter's built-in localization support |
-| `intl`                     | Internationalization utilities          |
+| Package                 | Purpose                                 |
+| ----------------------- | --------------------------------------- |
+| `flutter_localizations` | Flutter's built-in localization support |
+| `intl`                  | Internationalization utilities          |
 
-| Command              | Purpose                                     |
-| -------------------- | ------------------------------------------- |
-| `flutter gen-l10n`   | Generate localization classes from ARB files |
+| Command            | Purpose                                      |
+| ------------------ | -------------------------------------------- |
+| `flutter gen-l10n` | Generate localization classes from ARB files |
 
-| File               | Purpose                                          |
-| ------------------ | ------------------------------------------------ |
+| File               | Purpose                                            |
+| ------------------ | -------------------------------------------------- |
 | `l10n.yaml`        | Localization configuration (ARB dir, output, etc.) |
-| `app_en.arb`       | Template ARB file (source of truth)              |
-| `app_<locale>.arb` | Translated ARB file for each locale              |
+| `app_en.arb`       | Template ARB file (source of truth)                |
+| `app_<locale>.arb` | Translated ARB file for each locale                |

@@ -1,11 +1,14 @@
 ---
 name: vgv-static-security
 description: >
-  Best practices for Flutter mobile app security. Use when reviewing or writing
-  code that handles secrets, user data, network communication, authentication,
-  or cryptography. Covers static security concerns — not pen-testing or runtime analysis.
+  Best practices for Flutter mobile app security. Covers static security concerns —
+  not pen-testing or runtime analysis.
+when_to_use: >
+  Use when reviewing or writing code that handles secrets, user data, network
+  communication, authentication, or cryptography.
 argument-hint: "[file-or-directory]"
-allowed-tools: Read,Glob,Grep,mcp__very-good-cli__packages_check_licenses
+allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
+effort: high
 ---
 
 # Security
@@ -214,60 +217,13 @@ Never log: tokens, passwords, full user objects, HTTP request headers (which con
 
 Third-party packages are compiled directly into the app binary. A vulnerable or malicious package affects every user on every platform. This is OWASP Mobile Top 10 M2 (Inadequate Supply Chain Security).
 
-**Real-world example**: `flutter_downloader` (99% pub.dev popularity) contained SQL injection and arbitrary file write vulnerabilities prior to v1.11.2, enabling session token theft from banking and government apps.
+- Run `dart pub get` to surface GitHub Advisory Database hits
+- Any `ignored_advisories` entry in `pubspec.yaml` must have a documented justification comment
+- Scan `pubspec.lock` with `osv-scanner` before every release
+- Run `dart pub outdated` to check for available security patches
 
-### Advisory Detection
-
-`dart pub get` automatically surfaces hits from the GitHub Advisory Database:
-
-```
-http 0.13.0 (affected by advisory: GHSA-4rgh-jx4f-xxxx, 1.2.0 available)
-```
-
-Any entry in `ignored_advisories` in `pubspec.yaml` must have a documented justification comment:
-
-```yaml
-# pubspec.yaml
-ignored_advisories:
-  - GHSA-4rgh-jx4f-xxxx # Not applicable: we do not use the affected http.Client constructor
-```
-
-Scan `pubspec.lock` against the [OSV database](https://osv.dev) with `osv-scanner` before every release:
-
-```bash
-osv-scanner --lockfile=pubspec.lock
-```
-
-Check for packages with available upgrades that may include unannounced security patches:
-
-```bash
-dart pub outdated
-```
-
-## Binary Protection
-
-These are build and configuration concerns rather than source code patterns, but they compound the impact of every other vulnerability category.
-
-**Dart obfuscation** — enable in all release builds to make reverse engineering significantly harder:
-
-```bash
-flutter build apk --obfuscate --split-debug-info=build/symbols/
-flutter build ipa --obfuscate --split-debug-info=build/symbols/
-```
-
-**Android backup** — `android:allowBackup="true"` (the Android default) allows `adb backup` to extract app data, including anything stored by `package:flutter_secure_storage`:
-
-```xml
-<!-- AndroidManifest.xml -->
-<!-- ❌ Default — allows ADB backup of app data -->
-<application android:allowBackup="true" ...>
-
-<!-- ✅ Disable backup for apps storing sensitive data -->
-<application android:allowBackup="false" ...>
-```
-
-**Runtime integrity** — `package:freerasp` detects rooted/jailbroken devices, debugger attachment, and app repackaging at runtime. This is a runtime concern outside the scope of static code review, but relevant for apps handling financial or health data.
+See [references/supply-chain.md](references/supply-chain.md) for advisory detection examples, `osv-scanner` installation, typosquatting signals, and transitive permission creep checks. See [references/binary-protection.md](references/binary-protection.md) for obfuscation, Android backup, and runtime integrity.
 
 ## Additional Resources
 
-See [reference.md](reference.md) for the package quick reference, severity triage guide, certificate pinning implementation, biometric authentication example, password hashing with `package:dart_crypt`, typosquatting detection signals, transitive permission creep checks, and `osv-scanner` installation instructions.
+See [references/packages.md](references/packages.md) for the package quick reference and severity triage guide. See [references/crypto.md](references/crypto.md) for certificate pinning implementation, biometric authentication example, and password hashing with `package:dart_crypt`.

@@ -1,6 +1,17 @@
 {
-  "description": "Very Good AI Flutter Plugin hooks for Dart and Flutter development",
+  "description": "VGV AI Flutter Plugin hooks for Dart and Flutter development",
   "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/warn-missing-mcp.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "mcp__very-good-cli__.*",

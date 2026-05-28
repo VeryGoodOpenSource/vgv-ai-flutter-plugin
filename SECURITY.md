@@ -12,7 +12,7 @@ Only the latest release on `main` receives security updates.
 
 ### GitHub Private Vulnerability Reporting (preferred)
 
-Report vulnerabilities through [GitHub's private vulnerability reporting](https://github.com/VeryGoodOpenSource/very_good_ai_flutter_plugin/security/advisories/new).
+Report vulnerabilities through [GitHub's private vulnerability reporting](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/security/advisories/new).
 
 ### Email
 

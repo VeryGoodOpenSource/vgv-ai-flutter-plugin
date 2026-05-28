@@ -3,11 +3,14 @@ name: vgv-license-compliance
 description: >
   Audits package dependency licenses using the Very Good CLI packages_check_licenses
   MCP tool. Flags non-compliant or unknown licenses and produces a compliance summary.
+when_to_use: >
   Use when user says "check licenses", "license audit", "are our dependencies compliant",
   "check dependency licenses", "license compliance", "review package licenses",
   "scan for license issues", or "pre-release license check".
 argument-hint: "[project-directory]"
-allowed-tools: Read,Glob,Grep,mcp__very-good-cli__packages_check_licenses
+allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
+model: sonnet
+effort: medium
 ---
 
 # License Compliance
@@ -21,6 +24,7 @@ Dependency license auditor for Dart and Flutter projects — verifies that all p
 Apply these standards to ALL license compliance work:
 
 - **Run `packages_check_licenses` MCP tool** on the target project directory with `licenses: true` to display full license information
+- **Pass `directory` to the MCP tool when the project is not at the workspace root** — monorepos with the project in a subdirectory (e.g. `mobile/`) require `directory: 'mobile'`
 - **A missing license is not "no license"** — it means "all rights reserved" by default; always flag
 - **Transitive dependencies matter** — a permissive package that depends on a GPL package still carries the GPL obligation
 - **Flag for manual review when in doubt** — never assume compliance without a clear license identifier
@@ -42,7 +46,7 @@ Apply these standards to ALL license compliance work:
 
 ### 1. Run License Check
 
-Call the `packages_check_licenses` MCP tool on the target project directory.
+Call the `packages_check_licenses` MCP tool on the target project directory. When the project lives in a subdirectory of the workspace (e.g. `mobile/` in a monorepo), pass that path via the `directory` parameter.
 
 ### 2. Categorize Results
 

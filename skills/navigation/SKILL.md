@@ -1,7 +1,9 @@
 ---
 name: vgv-navigation
-description: Best practices for navigation and routing in Flutter using GoRouter. Use when creating, modifying, or reviewing routes, deep links, redirects, or navigation logic that uses package:go_router or package:go_router_builder.
-allowed-tools: Read,Glob,Grep
+description: Best practices for navigation and routing in Flutter using GoRouter.
+when_to_use: Use when creating, modifying, or reviewing routes, deep links, redirects, or navigation logic that uses package:go_router or package:go_router_builder.
+allowed-tools: Read Glob Grep
+model: sonnet
 ---
 
 # Navigation
@@ -27,7 +29,7 @@ Structure routes hierarchically with logical parent-child relationships. Sub-rou
 
 ### Hierarchical Structure (Preferred)
 
-```
+```text
 /flutter
   /flutter/news
   /flutter/chat
@@ -41,7 +43,7 @@ Structure routes hierarchically with logical parent-child relationships. Sub-rou
 
 ### Flat Structure (Avoid)
 
-```
+```text
 /flutter-news
 /flutter-chat
 /android-news
@@ -116,9 +118,9 @@ class FlutterPageRoute extends GoRouteData {
 
 ### `go()` vs `push()`
 
-| Method   | URL Updates | Back Button | Use Case                                    |
-| -------- | ----------- | ----------- | ------------------------------------------- |
-| `go()`   | Yes         | App bar     | Standard navigation between screens         |
+| Method   | URL Updates | Back Button | Use Case                                     |
+| -------- | ----------- | ----------- | -------------------------------------------- |
+| `go()`   | Yes         | App bar     | Standard navigation between screens          |
 | `push()` | No          | System      | When expecting return data from popped route |
 
 ### Using `go()` (Default)
@@ -151,176 +153,21 @@ GoRouter.of(context).goNamed('flutterNews');
 
 ## Parameter Strategies
 
-### Path Parameters — Resource Identification
+Use **path parameters** (`:id`) for resource identification and **query parameters** (`?category=all`) for optional filtering. Never use `extra` — it breaks deep linking and does not work on the web.
 
-Use path parameters to identify specific resources:
-
-```dart
-@TypedGoRoute<FlutterArticlePageRoute>(
-  name: 'flutterArticle',
-  path: 'article/:id',
-)
-@immutable
-class FlutterArticlePageRoute extends GoRouteData {
-  const FlutterArticlePageRoute({required this.id});
-
-  final String id;
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return FlutterArticlePage(id: id);
-  }
-}
-```
-
-Navigation: `FlutterArticlePageRoute(id: article.id).go(context);`
-
-### Query Parameters — Filtering and Sorting
-
-Use query parameters for optional filtering or sorting criteria:
-
-```dart
-@TypedGoRoute<FlutterArticlesPageRoute>(
-  name: 'flutterArticles',
-  path: 'articles',
-)
-@immutable
-class FlutterArticlesPageRoute extends GoRouteData {
-  const FlutterArticlesPageRoute({
-    this.date,
-    this.category,
-  });
-
-  final String? date;
-  final String? category;
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return FlutterArticlesPage(
-      date: date,
-      category: category,
-    );
-  }
-}
-```
-
-URL example: `/flutter/articles?date=07162024&category=all`
-
-### Why `extra` Is Prohibited
-
-The `extra` parameter does not work on the web and cannot be used for deep linking. Instead, pass identifiers via path or query parameters and fetch data within the destination page.
+See [references/parameters.md](references/parameters.md) for full examples of path parameters, query parameters, and why `extra` is prohibited.
 
 ## Redirects
 
-Redirects can be applied at the root router level and at individual route levels. Parent redirects execute before child redirects.
+Redirects can be applied at the root router level (e.g., authentication guards) and at individual route levels (e.g., authorization guards). Parent redirects execute before child redirects.
 
-### Root-Level Redirect (Authentication Guard)
-
-```dart
-GoRouter _routes(GlobalKey<NavigatorState> navigatorKey) {
-  return GoRouter(
-    initialLocation: '/',
-    navigatorKey: navigatorKey,
-    redirect: (context, state) {
-      final status = context.read<AppBloc>().state.status;
-      if (status == AppStatus.unauthenticated) {
-        return SignInPageRoute().location;
-      }
-      return null;
-    },
-    routes: $appRoutes,
-  );
-}
-```
-
-### Route-Level Redirect (Authorization Guard)
-
-```dart
-@TypedGoRoute<PremiumPageRoute>(
-  name: 'premium',
-  path: '/premium',
-  routes: [
-    TypedGoRoute<PremiumShowsPageRoute>(
-      name: 'premiumShows',
-      path: 'shows',
-    ),
-  ],
-)
-class PremiumPageRoute extends GoRouteData {
-  @override
-  String? redirect(BuildContext context, GoRouterState state) {
-    final status = context.read<AppBloc>().state.user.status;
-    if (status != UserStatus.premium) {
-      return RestrictedPageRoute().location;
-    }
-    return null;
-  }
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const PremiumPage();
-  }
-}
-```
+See [references/redirects.md](references/redirects.md) for root-level and route-level redirect examples.
 
 ## Testing
 
-### Mocking GoRouter for Widget Tests
+Mock `GoRouter` with `package:mocktail` and wrap widgets in `InheritedGoRouter` for widget tests. Test redirects by constructing a `GoRouter` with the target redirect logic and asserting the resulting page.
 
-```dart
-import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
-import 'package:mocktail/mocktail.dart';
-
-class MockGoRouter extends Mock implements GoRouter {}
-
-void main() {
-  late MockGoRouter mockRouter;
-
-  setUp(() {
-    mockRouter = MockGoRouter();
-  });
-
-  testWidgets('navigates to details on tap', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: InheritedGoRouter(
-          goRouter: mockRouter,
-          child: const HomePage(),
-        ),
-      ),
-    );
-
-    await tester.tap(find.text('View Details'));
-    verify(() => mockRouter.goNamed('details')).called(1);
-  });
-}
-```
-
-### Testing Redirects
-
-```dart
-testWidgets('redirects unauthenticated user to sign in', (tester) async {
-  final router = GoRouter(
-    initialLocation: '/premium',
-    redirect: (context, state) {
-      // Simulate unauthenticated state
-      return '/sign-in';
-    },
-    routes: [
-      GoRoute(path: '/sign-in', builder: (_, __) => const SignInPage()),
-      GoRoute(path: '/premium', builder: (_, __) => const PremiumPage()),
-    ],
-  );
-
-  await tester.pumpWidget(
-    MaterialApp.router(routerConfig: router),
-  );
-  await tester.pumpAndSettle();
-
-  expect(find.byType(SignInPage), findsOneWidget);
-});
-```
+See [references/testing.md](references/testing.md) for mocking GoRouter and testing redirect examples.
 
 ## Common Patterns
 
@@ -365,12 +212,12 @@ class AppShellRoute extends ShellRouteData {
 
 ## Quick Reference
 
-| Package              | Purpose                                      |
-| -------------------- | -------------------------------------------- |
-| `go_router`          | Declarative routing built on Navigator 2.0   |
-| `go_router_builder`  | Code generation for type-safe route classes   |
+| Package             | Purpose                                     |
+| ------------------- | ------------------------------------------- |
+| `go_router`         | Declarative routing built on Navigator 2.0  |
+| `go_router_builder` | Code generation for type-safe route classes |
 
 | Command                                                    | Purpose                          |
 | ---------------------------------------------------------- | -------------------------------- |
-| `dart run build_runner build --delete-conflicting-outputs`  | Generate type-safe route helpers |
-| `dart run build_runner watch --delete-conflicting-outputs`  | Watch and regenerate on changes  |
+| `dart run build_runner build --delete-conflicting-outputs` | Generate type-safe route helpers |
+| `dart run build_runner watch --delete-conflicting-outputs` | Watch and regenerate on changes  |

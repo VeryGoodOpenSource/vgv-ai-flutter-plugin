@@ -1,25 +1,19 @@
-# Bloc — Reference
+# Testing
 
-Extended examples, testing patterns, and common workflows for the Bloc skill.
-
----
-
-## Testing
-
-### `blocTest()` Parameters
+## `blocTest()` Parameters
 
 | Parameter  | Type                        | Purpose                                        |
 | ---------- | --------------------------- | ---------------------------------------------- |
-| `build`    | `() => Bloc/Cubit`         | Creates the Bloc/Cubit under test              |
-| `act`      | `(bloc) => void`           | Interacts with the Bloc/Cubit                  |
-| `expect`   | `() => List<State>`        | Expected states emitted (in order)             |
-| `seed`     | `() => State`              | Initial state before `act`                     |
-| `setUp`    | `() => void`               | Runs before `build`                            |
-| `verify`   | `(bloc) => void`           | Additional verifications after `expect`        |
-| `errors`   | `() => List<Matcher>`      | Expected errors thrown                         |
-| `wait`     | `Duration`                 | Wait duration before asserting (for debounce)  |
+| `build`    | `() => Bloc/Cubit`          | Creates the Bloc/Cubit under test              |
+| `act`      | `(bloc) => void`            | Interacts with the Bloc/Cubit                  |
+| `expect`   | `() => List<State>`         | Expected states emitted (in order)             |
+| `seed`     | `() => State`               | Initial state before `act`                     |
+| `setUp`    | `() => void`                | Runs before `build`                            |
+| `verify`   | `(bloc) => void`            | Additional verifications after `expect`        |
+| `errors`   | `() => List<Matcher>`       | Expected errors thrown                         |
+| `wait`     | `Duration`                  | Wait duration before asserting (for debounce)  |
 
-### Cubit Test Example
+## Cubit Test Example
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
@@ -51,7 +45,7 @@ void main() {
 }
 ```
 
-### Bloc Test Example
+## Bloc Test Example
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
@@ -106,7 +100,7 @@ void main() {
 }
 ```
 
-### Mocking Dependencies
+## Mocking Dependencies
 
 ```dart
 import 'package:mocktail/mocktail.dart';
@@ -128,7 +122,7 @@ setUpAll(() {
 });
 ```
 
-### Testing Widget Integration
+## Testing Widget Integration
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
@@ -187,73 +181,3 @@ void main() {
   });
 }
 ```
-
----
-
-## Common Patterns
-
-### Adding a New Feature with Bloc
-
-1. Create feature directory: `lib/<feature>/`
-2. Add barrel file: `lib/<feature>/<feature>.dart`
-3. Define events: `lib/<feature>/bloc/<feature>_event.dart` — sealed class with event subclasses
-4. Define state: `lib/<feature>/bloc/<feature>_state.dart` — sealed or single class with Equatable
-5. Implement Bloc: `lib/<feature>/bloc/<feature>_bloc.dart` — register event handlers, inject repository
-6. Create page: `lib/<feature>/view/<feature>_page.dart` — provides Bloc via `BlocProvider`
-7. Create view: `lib/<feature>/view/<feature>_view.dart` — consumes state via `BlocBuilder`
-8. Create test structure: mirror under `test/<feature>/`
-9. Write `blocTest` for every event handler and state transition
-
-### Adding a New Feature with Cubit
-
-1. Create feature directory: `lib/<feature>/`
-2. Add barrel file: `lib/<feature>/<feature>.dart`
-3. Define state: `lib/<feature>/cubit/<feature>_state.dart`
-4. Implement Cubit: `lib/<feature>/cubit/<feature>_cubit.dart` — public methods that `emit`
-5. Create page and view with `BlocProvider` / `BlocBuilder`
-6. Create test structure: mirror under `test/<feature>/`
-7. Write `blocTest` for every public method
-
-### Handling Async Operations
-
-```dart
-Future<void> _onDataRequested(
-  DataRequested event,
-  Emitter<DataState> emit,
-) async {
-  emit(state.copyWith(status: DataStatus.loading));
-  try {
-    final data = await _repository.fetchData();
-    emit(state.copyWith(status: DataStatus.success, data: data));
-  } catch (error, stackTrace) {
-    addError(error, stackTrace);
-    emit(state.copyWith(status: DataStatus.failure, error: '$error'));
-  }
-}
-```
-
-### Event Transformers
-
-Use `package:bloc_concurrency` for controlling event processing:
-
-```dart
-import 'package:bloc_concurrency/bloc_concurrency.dart';
-
-class SearchBloc extends Bloc<SearchEvent, SearchState> {
-  SearchBloc({required SearchRepository repository})
-      : _repository = repository,
-        super(const SearchState()) {
-    on<SearchTermChanged>(
-      _onSearchTermChanged,
-      transformer: restartable(),  // Cancels in-flight when new event arrives
-    );
-  }
-}
-```
-
-| Transformer       | Behavior                                              |
-| ------------------ | ---------------------------------------------------- |
-| `concurrent()`    | Process all events concurrently (default)             |
-| `sequential()`    | Process events one at a time in order                 |
-| `droppable()`     | Ignore new events while one is processing             |
-| `restartable()`   | Cancel current processing, start new event            |

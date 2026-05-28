@@ -6,34 +6,82 @@ on:
       - main
 
 jobs:
+  markdown:
+    name: 📝 Markdown Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Lint Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v23
+        with:
+          globs: |
+            **/*.md
+            !CHANGELOG.md
+          config: 'config/custom.markdownlint.jsonc'
   spelling:
-      name: ✍️ Spelling Check
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - name: Spell Check
-          uses: streetsidesoftware/cspell-action@v6
-          with:
-            files: '**/*.md'
-            config: 'config/cspell.json'
-  structure:
-    name: 🏗️ Structure Validation
+    name: ✍️ Spelling Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Check For Large Files (under 50KB)
-        run: bash ./scripts/check_large_files.sh
-  skill-validation:
-    name: 📋 Skill Validation
+      - uses: actions/checkout@v6
+      - name: Spell Check Code
+        uses: streetsidesoftware/cspell-action@v8
+        with:
+          files: |
+            **/*.md
+            !CHANGELOG.md
+          config: 'config/cspell.json'
+  detect-changed-skills:
+    name: 🔎 Detect Changed Skills
+    runs-on: ubuntu-latest
+    outputs:
+      skills: ${{ steps.changed-skills.outputs.skills }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Get changed skills
+        id: changed-skills
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+          SKILLS=$(git diff --name-only $BASE $HEAD | \
+            { grep 'SKILL.md' || true; } | \
+            xargs -I {} dirname {} | \
+            sort -u | \
+            jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "skills=$SKILLS" >> "$GITHUB_OUTPUT"
+          echo "Changed skills: $SKILLS"
+  validate-skills:
+    name: 🔍 Validate Skills
+    needs: detect-changed-skills
+    if: needs.detect-changed-skills.outputs.skills != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        skill: ${{ fromJson(needs.detect-changed-skills.outputs.skills) }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate ${{ matrix.skill }}
+        id: validate
+        uses: Flash-Brew-Digital/validate-skill@v1
+        with:
+          path: ${{ matrix.skill }}
+          validate-references: 'true'
+          fail-on-warning: 'true'
+          ignore-rules: 'name-match-directory,unknown-field'
+      - name: Check results
+        if: always()
+        run: |
+          echo "Valid: ${{ steps.validate.outputs.valid }}"
+          echo "Errors: ${{ steps.validate.outputs.errors }}"
+          echo "Warnings: ${{ steps.validate.outputs.warnings }}"
+  plugin-validate:
+    name: 📦 Plugin Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Validate SKILL.md Files
-        run: bash ./scripts/validate_skills.sh
-  manifest-validation:
-    name: 📦 Manifest Validation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Validate Plugin Manifest
-        run: bash ./scripts/validate_plugin_manifest.sh
+      - uses: actions/checkout@v6
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate Plugin
+        run: claude plugin validate .

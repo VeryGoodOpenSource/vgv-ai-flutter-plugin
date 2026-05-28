@@ -1,7 +1,9 @@
 ---
 name: vgv-very-good-analysis-upgrade
 description: Upgrade very_good_analysis lint package to new version across Dart/Flutter projects. Handles version bump, lint fixes, and PR creation.
-allowed-tools: Read,Glob,Grep,Bash
+allowed-tools: Read Glob Grep Bash
+model: sonnet
+effort: medium
 ---
 
 # Upgrade very_good_analysis
@@ -123,7 +125,7 @@ git add pubspec.yaml pubspec.lock   # always include these
 
 Commit with a clear message following the project's conventions. A good default:
 
-```
+```text
 chore: upgrade very_good_analysis to x.y.z
 
 Bump very_good_analysis from <old> to <new> and resolve

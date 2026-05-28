@@ -1,4 +1,4 @@
-# Very Good AI Flutter Plugin
+# VGV AI Flutter Plugin
 
 [![Very Good Ventures][logo_white]][very_good_ventures_link_dark]
 [![Very Good Ventures][logo_black]][very_good_ventures_link_light]
@@ -9,18 +9,29 @@ Developed with 💙 by [Very Good Ventures][vgv_link] 🦄
 
 ## Overview
 
-Very Good AI Flutter Plugin is a collection of contextual best-practices skills that Claude uses when helping you write Flutter and Dart code. Each skill provides opinionated, production-quality guidance covering architecture patterns, naming conventions, folder structures, code examples, testing strategies, and anti-patterns to avoid, so you get code that follows [VGV standards][vgv_link] out of the box.
+VGV AI Flutter Plugin is a collection of contextual best-practices skills that Claude uses when helping you write Flutter and Dart code. Each skill provides opinionated, production-quality guidance covering architecture patterns, naming conventions, folder structures, code examples, testing strategies, and anti-patterns to avoid, so you get code that follows [VGV standards][vgv_link] out of the box.
 
 ## Installation
 
-### From the Marketplace
-
-Inside Claude Code:
+One-line install from your terminal:
 
 ```bash
-/plugin marketplace add VeryGoodOpenSource/very_good_claude_marketplace
-/plugin install very-good-ai-flutter-plugin@very_good_claude_marketplace
+claude plugin marketplace add VeryGoodOpenSource/very_good_claude_marketplace && claude plugin install vgv-ai-flutter-plugin
 ```
+
+Or inside an active Claude Code session, run these as **two separate commands** (the second only after the first completes):
+
+1. Add the marketplace:
+
+   ```text
+   /plugin marketplace add VeryGoodOpenSource/very_good_claude_marketplace
+   ```
+
+2. Install the plugin:
+
+   ```text
+   /plugin install vgv-ai-flutter-plugin
+   ```
 
 For more details, see the [Very Good Claude Marketplace][marketplace_link].
 
@@ -29,6 +40,7 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | Skill | Description |
 | ----- | ----------- |
 | [**Create Project**](skills/create-project/SKILL.md) | Scaffold new Dart/Flutter projects from Very Good CLI templates — `flutter_app`, `dart_package`, `flutter_plugin`, `dart_cli`, `flame_game`, and more |
+| [**Animations**](skills/animations/SKILL.md) | Flutter built-in animations — implicit vs explicit decision tree, Material 3 motion tokens (`Durations`, `Easing`), page transitions with GoRouter, Hero animations, staggered animations, and performance guidelines |
 | [**Accessibility**](skills/accessibility/SKILL.md) | WCAG 2.1 AA compliance — semantics, screen reader support, touch targets, focus management, color contrast, text scaling, and motion sensitivity |
 | [**Testing**](skills/testing/SKILL.md) | Unit, widget, and golden testing — `mocktail` mocking, `pumpApp` helpers, test structure & naming, coverage patterns, and `dart_test.yaml` configuration |
 | [**Navigation**](skills/navigation/SKILL.md) | GoRouter routing — `@TypedGoRoute` type-safe routes, deep linking, redirects, shell routes, and widget testing with `MockGoRouter` |
@@ -37,6 +49,7 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | [**Bloc**](skills/bloc/SKILL.md) | State management with Bloc/Cubit — sealed events & states, `BlocProvider`/`BlocBuilder` widgets, event transformers, and testing with `blocTest()` & `mocktail` |
 | [**Layered Architecture**](skills/layered-architecture/SKILL.md) | VGV layered architecture — four-layer package structure (Data, Repository, Business Logic, Presentation), dependency rules, data flow, and bootstrap wiring |
 | [**Security**](skills/static-security/SKILL.md) | Flutter-specific static security review — secrets management, `flutter_secure_storage`, certificate pinning, `Random.secure()`, `formz` validation, dependency vulnerability scanning with `osv-scanner`, and OWASP Mobile Top 10 guidance |
+| [**UI Package**](skills/ui-package/SKILL.md) | Flutter UI package creation — custom widget libraries with `ThemeExtension`-based theming, design tokens, barrel file exports, widget tests, Widgetbook catalog, and consistent API conventions |
 | [**License Compliance**](skills/license-compliance/SKILL.md) | Dependency license auditing — categorizes licenses (permissive, weak/strong copyleft, unknown), flags non-compliant or missing licenses, and produces a structured compliance report using Very Good CLI |
 | [**Dart/Flutter SDK Upgrade**](skills/dart-flutter-sdk-upgrade/SKILL.md) | Bump Dart and Flutter SDK constraints across packages — CI workflow versions, pubspec.yaml environment constraints, and PR preparation for SDK upgrades |
 
@@ -68,6 +81,7 @@ You can also invoke skills directly as slash commands:
 
 ```bash
 /vgv-create-project
+/vgv-animations
 /vgv-accessibility
 /vgv-bloc
 /vgv-internationalization
@@ -76,6 +90,7 @@ You can also invoke skills directly as slash commands:
 /vgv-navigation
 /vgv-static-security
 /vgv-testing
+/vgv-ui-package
 /vgv-license-compliance
 /vgv-dart-flutter-sdk-upgrade
 ```

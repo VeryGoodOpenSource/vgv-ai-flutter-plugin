@@ -1,7 +1,9 @@
 ---
 name: vgv-layered-architecture
-description: Best practices for VGV layered monorepo architecture in Flutter. Use when structuring a multi-package Flutter app, creating data or repository packages, defining layer boundaries, or wiring dependencies between packages.
-allowed-tools: Read,Glob,Grep,mcp__very-good-cli__create,mcp__very-good-cli__packages_get,mcp__very-good-cli__test
+description: Best practices for VGV layered monorepo architecture in Flutter.
+when_to_use: Use when structuring a multi-package Flutter app, creating data or repository packages, defining layer boundaries, or wiring dependencies between packages.
+allowed-tools: Read Glob Grep mcp__very-good-cli__create mcp__very-good-cli__packages_get mcp__very-good-cli__test
+effort: high
 ---
 
 # Layered Architecture
@@ -36,7 +38,7 @@ Apply these standards to ALL layered architecture work:
 | **Business Logic** | State management — processes user actions, emits state changes | `lib/<feature>/bloc/` or `lib/<feature>/cubit/` | Repository layer | `LoginBloc`, `ProfileCubit` |
 | **Presentation** | UI — widgets, pages, views, layout | `lib/<feature>/view/` | Business Logic layer | `LoginPage`, `ProfileView` |
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │              Presentation                   │
 │          (lib/<feature>/view/)              │
@@ -60,7 +62,7 @@ Apply these standards to ALL layered architecture work:
 
 ## Monorepo Structure
 
-```
+```text
 my_app/
 ├── lib/
 │   ├── app/
@@ -169,7 +171,7 @@ class UserApiClient {
 }
 ```
 
-See [reference.md](reference.md) for the complete `user_api_client` package with pubspec, barrel files, response models, and exception class.
+See [worked-example.md](references/worked-example.md) for the complete `user_api_client` package with pubspec, barrel files, response models, and exception class.
 
 ## Repository Layer
 
@@ -229,7 +231,7 @@ class UserRepository {
 }
 ```
 
-See [reference.md](reference.md) for the complete `user_repository` package with pubspec, barrel files, and error handling.
+See [worked-example.md](references/worked-example.md) for the complete `user_repository` package with pubspec, barrel files, and error handling. See [model-transformation.md](references/model-transformation.md) for detailed transformation patterns between data and domain models.
 
 ## Dependency Graph
 
@@ -298,7 +300,7 @@ Future<void> _onLoadRequested(
 }
 ```
 
-See [reference.md](reference.md) for the full data flow walkthrough with code at each layer.
+See [data-flow.md](references/data-flow.md) for the full data flow walkthrough with code at each layer.
 
 ## App Bootstrap
 
@@ -343,7 +345,7 @@ void main() {
 }
 ```
 
-Flavors change only the configuration (base URLs, API keys) — the architecture stays identical across development, staging, and production. See [reference.md](reference.md) for the `App` widget with `MultiRepositoryProvider`.
+Flavors change only the configuration (base URLs, API keys) — the architecture stays identical across development, staging, and production. See [worked-example.md](references/worked-example.md) for the `App` widget with `MultiRepositoryProvider`.
 
 ## Anti-Patterns
 
@@ -369,7 +371,7 @@ Flavors change only the configuration (base URLs, API keys) — the architecture
 5. Implement the client class in `lib/src/<name>_api_client.dart`
 6. Create the package barrel file `lib/<name>_api_client.dart` exporting `src/` contents
 7. Write unit tests in `test/` mirroring `lib/` structure — see the **testing** skill
-8. Use `very_good_cli` MCP server tool `test` from the package directory
+8. Use `very_good_cli` MCP server tool `test` against the package directory — pass `directory: 'packages/<name>_api_client'` to scope the run
 
 ### Adding a New Repository
 
@@ -393,7 +395,9 @@ Flavors change only the configuration (base URLs, API keys) — the architecture
 
 ## Additional Resources
 
-- [Complete worked example and pubspec reference](reference.md)
+- [Complete worked example](references/worked-example.md) and [pubspec reference](references/pubspec.md)
+- [Model transformation patterns](references/model-transformation.md) — data model vs domain model conversion
+- [Package-level testing](references/testing.md) — testing data clients and repositories in isolation
 - For Bloc/Cubit patterns and Page/View separation — see the **bloc** skill
 - For project scaffolding use the `very_good_cli` MCP server `create dart_package` tool
 - For testing data clients, repositories, and Blocs — see the **testing** skill

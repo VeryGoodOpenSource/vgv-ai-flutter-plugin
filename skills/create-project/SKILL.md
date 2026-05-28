@@ -1,8 +1,10 @@
 ---
 name: vgv-create-project
-description: Scaffold a new Dart or Flutter project from a Very Good CLI template. Use when user says "create a new project", "start a new flutter app", "scaffold a package", "initialize a dart cli", "new flame game", or "generate a plugin". Supports flutter_app, dart_package, flutter_package, flutter_plugin, dart_cli, flame_game, and docs_site templates.
-allowed-tools: mcp__very-good-cli__create,mcp__very-good-cli__packages_get
+description: Scaffold a new Dart or Flutter project from a Very Good CLI template. Supports flutter_app, dart_package, flutter_package, flutter_plugin, dart_cli, flame_game, and docs_site templates.
+when_to_use: Use when user says "create a new project", "start a new flutter app", "scaffold a package", "initialize a dart cli", "new flame game", or "generate a plugin".
+allowed-tools: mcp__very-good-cli__create mcp__very-good-cli__packages_get
 argument-hint: "[template] [project-name]"
+model: haiku
 ---
 
 # Create Project
@@ -35,7 +37,7 @@ Use `AskUserQuestion` to collect only what you cannot infer. Batch questions int
 ### Step 3: Create and Set Up
 
 1. Create the project using the Very Good CLI MCP server
-2. Install dependencies using the Very Good CLI MCP server
+2. Install dependencies using the Very Good CLI MCP server — pass `directory: '<path-to-created-project>'` to `packages_get` so it runs against the new project, not the workspace root
 
 ---
 
@@ -85,7 +87,7 @@ Use `AskUserQuestion` to collect only what you cannot infer. Batch questions int
 ### Dependencies fail to install after creation
 
 - Verify the Dart SDK is installed and on PATH
-- Try running from the project root directory
+- Pass `directory: '<path-to-created-project>'` to `packages_get` so it targets the new project
 
 ---
 

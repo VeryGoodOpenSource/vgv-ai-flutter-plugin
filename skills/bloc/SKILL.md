@@ -1,7 +1,8 @@
 ---
 name: vgv-bloc
-description: Best practices for Bloc state management in Flutter/Dart. Use when writing, modifying, or reviewing code that uses package:bloc, package:flutter_bloc, or package:bloc_test.
-allowed-tools: Read,Glob,Grep
+description: Best practices for Bloc state management in Flutter/Dart.
+when_to_use: Use when writing, modifying, or reviewing code that uses package:bloc, package:flutter_bloc, or package:bloc_test.
+allowed-tools: Read Glob Grep
 ---
 
 # Bloc
@@ -30,7 +31,7 @@ Apply these standards to ALL Bloc/Cubit work:
 
 | Aspect            | Cubit                          | Bloc                                    |
 | ----------------- | ------------------------------ | --------------------------------------- |
-| API               | Functions → `emit(state)`      | Events → `on<Event>` → `emit(state)`   |
+| API               | Functions → `emit(state)`      | Events → `on<Event>` → `emit(state)`    |
 | Complexity        | Low                            | Higher                                  |
 | Traceability      | Less (no event log)            | Full (events + transitions)             |
 | When to use       | Simple state, UI-driven logic  | Complex flows, event-driven, transforms |
@@ -76,13 +77,13 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 
 **Pattern:** `BlocSubject` + `Noun` + `VerbPastTense`
 
-| Event class name              | Meaning                          |
-| ----------------------------- | -------------------------------- |
-| `TodoListSubscriptionRequested` | Subscribing to todo list stream |
-| `TodoListTodoDeleted`         | Deleting a specific todo         |
-| `TodoListUndoDeletionRequested` | Undoing the last deletion      |
-| `LoginFormSubmitted`          | Submitting the login form        |
-| `ProfilePageRefreshed`        | Refreshing the profile page      |
+| Event class name                | Meaning                          |
+| ------------------------------- | -------------------------------- |
+| `TodoListSubscriptionRequested` | Subscribing to todo list stream  |
+| `TodoListTodoDeleted`           | Deleting a specific todo         |
+| `TodoListUndoDeletionRequested` | Undoing the last deletion        |
+| `LoginFormSubmitted`            | Submitting the login form        |
+| `ProfilePageRefreshed`          | Refreshing the profile page      |
 
 ```dart
 sealed class TodoListEvent extends Equatable {
@@ -198,145 +199,20 @@ class TodoListState extends Equatable {
 
 ### Data Layer
 
-Repositories abstract data sources and provide a clean API for Blocs/Cubits.
+Repositories abstract data sources and provide a clean API for Blocs/Cubits. Mirror the feature folder structure under `test/` for all test files.
 
-```dart
-class TodoRepository {
-  const TodoRepository({required TodoApiClient apiClient})
-      : _apiClient = apiClient;
-
-  final TodoApiClient _apiClient;
-
-  Future<List<Todo>> getTodos() => _apiClient.fetchTodos();
-
-  Future<void> addTodo(Todo todo) => _apiClient.createTodo(todo);
-
-  Future<void> deleteTodo(String id) => _apiClient.deleteTodo(id);
-}
-```
-
-### Feature Folder Structure
-
-```
-lib/
-├── todos/
-│   ├── todos.dart                  # Barrel file
-│   ├── bloc/
-│   │   ├── todos_bloc.dart
-│   │   ├── todos_event.dart
-│   │   └── todos_state.dart
-│   ├── view/
-│   │   ├── todos_page.dart         # Provides Bloc via BlocProvider
-│   │   └── todos_view.dart         # Consumes Bloc via BlocBuilder
-│   └── widgets/
-│       └── todo_list_tile.dart
-test/
-├── todos/
-│   ├── bloc/
-│   │   └── todos_bloc_test.dart
-│   ├── view/
-│   │   ├── todos_page_test.dart
-│   │   └── todos_view_test.dart
-│   └── widgets/
-│       └── todo_list_tile_test.dart
-```
+See [references/architecture.md](references/architecture.md) for the repository example, feature folder structure, and test directory layout.
 
 ---
 
 ## Flutter Widgets
 
-| Widget              | Purpose                                                    |
-| ------------------- | ---------------------------------------------------------- |
-| `BlocProvider`      | Creates and provides a Bloc/Cubit to the subtree           |
-| `BlocBuilder`       | Rebuilds widget when state changes                         |
-| `BlocListener`      | Executes side effects (navigation, snackbar) on state change |
-| `BlocConsumer`      | Combines `BlocBuilder` + `BlocListener`                    |
-| `BlocSelector`      | Rebuilds only when a selected property changes             |
-| `MultiBlocProvider` | Provides multiple Blocs/Cubits without nesting             |
-| `MultiBlocListener` | Registers multiple listeners without nesting               |
-| `RepositoryProvider`| Provides a repository to the subtree                       |
-
-### Context Extensions
-
-| Extension          | Purpose                                          | Rebuilds? |
-| ------------------ | ------------------------------------------------ | --------- |
-| `context.read<T>()`   | Access Bloc/Cubit instance (one-time read)   | No        |
-| `context.watch<T>()`  | Access Bloc/Cubit and subscribe to changes   | Yes       |
-| `context.select<T, R>()` | Subscribe to a specific state property    | Yes (selective) |
-
-- Use `context.read` in callbacks (`onPressed`, `onTap`, `initState`)
-- Use `context.watch` or `BlocBuilder` in `build` methods
+- `BlocProvider` — creates and provides a Bloc/Cubit to the subtree
+- `BlocBuilder` — rebuilds widget when state changes
+- `BlocListener` — executes side effects (navigation, snackbar) on state change
+- `BlocConsumer` — combines `BlocBuilder` + `BlocListener`
+- `BlocSelector` — rebuilds only when a selected property changes
+- Use `context.read` in callbacks (`onPressed`, `onTap`), `context.watch` or `BlocBuilder` in `build` methods
 - Never use `context.watch` outside of `build`
 
-### Page/View Pattern
-
-```dart
-class TodosPage extends StatelessWidget {
-  const TodosPage({super.key});
-
-  static Route<void> route() {
-    return MaterialPageRoute(builder: (_) => const TodosPage());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => TodosBloc(
-        todoRepository: context.read<TodoRepository>(),
-      )..add(const TodosSubscriptionRequested()),
-      child: const TodosView(),
-    );
-  }
-}
-
-class TodosView extends StatelessWidget {
-  const TodosView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Todos')),
-      body: BlocBuilder<TodosBloc, TodosState>(
-        builder: (context, state) {
-          return switch (state.status) {
-            TodosStatus.initial || TodosStatus.loading =>
-              const Center(child: CircularProgressIndicator()),
-            TodosStatus.success =>
-              ListView.builder(
-                itemCount: state.todos.length,
-                itemBuilder: (context, index) =>
-                    TodoListTile(todo: state.todos[index]),
-              ),
-            TodosStatus.failure =>
-              Center(child: Text('Error: ${state.error}')),
-          };
-        },
-      ),
-    );
-  }
-}
-```
-
-### BlocListener for Side Effects
-
-```dart
-BlocListener<LoginBloc, LoginState>(
-  listener: (context, state) {
-    if (state is LoginFailure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.error)),
-      );
-    }
-    if (state is LoginSuccess) {
-      Navigator.of(context).pushReplacement(HomePage.route());
-    }
-  },
-  child: const LoginForm(),
-)
-```
-
----
-
-## Additional Resources
-
-See [reference.md](reference.md) for detailed testing examples (`blocTest()` parameters, Cubit/Bloc test examples, mocking dependencies, widget integration tests), common patterns (adding features with Bloc/Cubit, async operations, event transformers), and the package quick reference.
+See [references/widgets.md](references/widgets.md) for the full widget and context extension tables, Page/View pattern example, and BlocListener example. See [references/testing.md](references/testing.md) for `blocTest()` parameters, Cubit/Bloc test examples, mocking dependencies, and widget integration tests. See [references/patterns.md](references/patterns.md) for adding features with Bloc/Cubit, async operations, and event transformers.

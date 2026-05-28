@@ -2,13 +2,16 @@
 name: vgv-dart-flutter-sdk-upgrade
 description: >
   VGV-specific reference for bumping Dart and Flutter SDK constraints across packages.
-  Use when upgrading the Flutter or Dart SDK version in any VGV repository — bumping
-  pubspec.yaml environment constraints, updating CI workflow Flutter versions, or preparing
-  an SDK upgrade PR. Flutter CI uses MAJOR.MINOR.x (no caret); Dart CI pins exact MAJOR.MINOR.PATCH; pubspec pins
-  the exact patch version (e.g., ^3.50.1). Trigger on phrases like "bump Flutter to 3.x",
-  "update SDK constraints", "upgrade Dart SDK", "update CI Flutter version",
-  "bump SDK version", or "prep the SDK upgrade PR".
-allowed-tools: Read,Glob,Grep,Edit,Write,Bash
+  Covers pubspec.yaml environment constraints, CI workflow Flutter versions, and SDK
+  upgrade PR preparation. CI uses ^MAJOR.MINOR.x to resolve to the latest patch;
+  pubspec pins the exact patch version (e.g., ^3.50.1).
+when_to_use: >
+  Use when upgrading the Flutter or Dart SDK version in any VGV repository. Trigger on
+  phrases like "bump Flutter to 3.x", "update SDK constraints", "upgrade Dart SDK",
+  "update CI Flutter version", "bump SDK version", or "prep the SDK upgrade PR".
+allowed-tools: Read Glob Grep Edit Write Bash
+model: sonnet
+effort: medium
 ---
 
 # VGV Flutter/Dart SDK Upgrade — Quick Reference
@@ -39,7 +42,7 @@ for the target Flutter release before editing any files.
 
 **How to find the Dart version:**
 
-1. Open https://docs.flutter.dev/install/archive
+1. Open <https://docs.flutter.dev/install/archive>
 2. Find the target Flutter stable release
 3. Note the Dart version listed alongside it
 
@@ -135,7 +138,7 @@ git diff HEAD --name-only
 
 Suggested commit/PR message:
 
-```
+```text
 chore: bump Flutter to 3.41.0 / Dart to 3.11.0
 
 - Update flutter_version in .github/workflows/ to 3.41.x (CI resolves latest patch)

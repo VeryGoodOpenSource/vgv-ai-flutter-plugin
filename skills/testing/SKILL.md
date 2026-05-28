@@ -1,8 +1,9 @@
 ---
 name: vgv-testing
-description: Best practices for Dart unit tests, Flutter widget tests, and golden file tests. Use when writing, modifying, or reviewing tests that use package:test, package:flutter_test, package:mocktail, or package:bloc_test.
+description: Best practices for Dart unit tests, Flutter widget tests, and golden file tests.
+when_to_use: Use when writing, modifying, or reviewing tests that use package:test, package:flutter_test, package:mocktail, or package:bloc_test.
 argument-hint: "[file-or-directory]"
-allowed-tools: Read,Glob,Grep,mcp__very-good-cli__test
+allowed-tools: Read Glob Grep mcp__very-good-cli__test
 ---
 
 # Dart & Flutter Testing
@@ -25,6 +26,7 @@ Apply these standards to ALL test work:
 - **Test behavior, not properties** — widget tests focus on functional outcomes; static visual properties validated via golden tests
 - **Use `pumpApp` test helper** — wrap widgets via shared helper in `test/helpers/pump_app.dart`; never inline `pumpWidget(MaterialApp(...))`
 - **Tag all golden tests** — annotate with `TestTag.golden` so goldens can run/update independently
+- **Pass `directory` to the `test` MCP tool when the project is not at the workspace root** — monorepos with the Flutter project in a subdirectory (e.g. `mobile/`) require `directory: 'mobile'`; omit it only when `pubspec.yaml` is at the workspace root
 
 ## Test Structure
 
@@ -468,4 +470,9 @@ Always call `pump()` (or `pumpAndSettle()`) after every interaction — widgets 
 
 ## Additional Resources
 
-See [reference.md](reference.md) for the full widget test structure example, themes/localization testing, matchers quick reference, golden file testing (setup, writing goldens, tagging, running/updating, anti-patterns), `dart_test.yaml` configuration (tags, commands, platform overrides), coverage patterns (achieving full coverage, `copyWith` testing), and the package/imports quick reference.
+- [references/widget-tests.md](references/widget-tests.md) — widget test structure and themes/localization testing
+- [references/golden-tests.md](references/golden-tests.md) — golden file testing (setup, writing goldens, tagging, running/updating, anti-patterns)
+- [references/matchers.md](references/matchers.md) — matchers quick reference
+- [references/configuration.md](references/configuration.md) — `dart_test.yaml` configuration (tags, commands, platform overrides)
+- [references/coverage.md](references/coverage.md) — coverage patterns and package/imports reference
+- [references/animation-testing.md](references/animation-testing.md) — testing implicit/explicit animations, AnimatedSwitcher, page transitions, and injected controllers

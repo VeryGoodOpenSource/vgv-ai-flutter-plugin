@@ -1,4 +1,4 @@
-# 🦄 Contributing to Very Good AI Flutter Plugin
+# 🦄 Contributing to VGV AI Flutter Plugin
 
 First of all, thank you for taking the time to contribute! 🎉👍 Before you do, please carefully read this guide.
 
@@ -15,7 +15,7 @@ First of all, thank you for taking the time to contribute! 🎉👍 Before you d
 | **New skill** | `skills/<skill-name>/SKILL.md` |
 | **Improve an existing skill** | Edit the relevant `skills/*/SKILL.md` or `reference.md` |
 | **Hooks** | `hooks/` directory |
-| **Bug reports & feature requests** | [GitHub Issues](https://github.com/VeryGoodOpenSource/very_good_ai_flutter_plugin/issues) |
+| **Bug reports & feature requests** | [GitHub Issues](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues) |
 
 ## Adding a New Skill
 
@@ -78,7 +78,7 @@ Every pull request runs the following checks automatically:
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | File size | Ensures no file exceeds 50 KB | `scripts/check_large_files.sh` |
 | Skill validation | Validates `SKILL.md` frontmatter and structure | `scripts/validate_skills.sh` |
-| Manifest validation | Validates `.claude-plugin/plugin.json` | `scripts/validate_plugin_manifest.sh` |
+| Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
 
 If the spelling check flags a legitimate word, add it to `config/cspell.json` in the `words` array.
 
@@ -86,7 +86,7 @@ If the spelling check flags a legitimate word, add it to `config/cspell.json` in
 
 Use [Conventional Commits](https://www.conventionalcommits.org/) with the format:
 
-```
+```text
 type(scope): description
 ```
 
