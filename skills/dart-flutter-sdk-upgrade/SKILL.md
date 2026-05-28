@@ -4,7 +4,7 @@ description: >
   VGV-specific reference for bumping Dart and Flutter SDK constraints across packages.
   Use when upgrading the Flutter or Dart SDK version in any VGV repository — bumping
   pubspec.yaml environment constraints, updating CI workflow Flutter versions, or preparing
-  an SDK upgrade PR. CI uses ^MAJOR.MINOR.x to resolve to the latest patch; pubspec pins
+  an SDK upgrade PR. Flutter CI uses MAJOR.MINOR.x (no caret); Dart CI pins exact MAJOR.MINOR.PATCH; pubspec pins
   the exact patch version (e.g., ^3.50.1). Trigger on phrases like "bump Flutter to 3.x",
   "update SDK constraints", "upgrade Dart SDK", "update CI Flutter version",
   "bump SDK version", or "prep the SDK upgrade PR".
@@ -23,7 +23,8 @@ version bumps, no test changes.
 Apply these standards to ALL SDK upgrade work:
 
 - **Flutter and Dart versions differ** — always look up the Dart version bundled with the target Flutter release from https://docs.flutter.dev/install/archive
-- **CI uses `^MAJOR.MINOR.x`** — wildcard patch so CI always gets the latest patch
+- **Flutter CI uses `MAJOR.MINOR.x`** — no caret, `.x` wildcard resolves to latest patch
+- **Dart CI uses exact patch** — `MAJOR.MINOR.PATCH`, no caret, no wildcard
 - **pubspec pins exact patch** — use `^MAJOR.MINOR.PATCH` with the specific patch version
 - **Pure Dart packages** — use the Dart version directly, no Flutter mapping needed
 - **Verify with `pub get` and `analyze`** — don't silently resolve conflicts
@@ -53,16 +54,17 @@ Confirm both resolved versions with the user before editing files.
 ## 1. CI workflows — `.github/workflows/`
 
 VGV packages use `VeryGoodOpenSource/very_good_workflows` reusable workflows. Leave the
-`@v1` tag untouched. Use `^MAJOR.MINOR.x` — caret with literal `x` as the patch wildcard
-so CI always resolves to the latest release patch automatically. When bumping versions,
-update MAJOR and/or MINOR as appropriate (e.g., `^3.41.x` → `^3.42.x` or `^4.0.x`):
+`@v1` tag untouched. Flutter packages use `MAJOR.MINOR.x` — no caret, literal `x` as the
+patch wildcard so CI resolves to the latest patch automatically. Dart packages pin the exact
+patch version. When bumping versions, update MAJOR and/or MINOR as appropriate
+(e.g., `3.41.x` → `3.42.x` or `4.0.x`):
 
 **Flutter package:**
 
 ```yaml
 uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
 with:
-  flutter_version: "^3.41.x" # ← caret + MAJOR.MINOR.x, resolves to latest patch
+  flutter_version: "3.41.x" # ← MAJOR.MINOR.x, resolves to latest patch
 ```
 
 **Pure Dart package** — note the key is `dart_sdk`, not `flutter_version`. Use the Dart
@@ -71,7 +73,7 @@ version, not the Flutter version:
 ```yaml
 uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/dart_package.yml@v1
 with:
-  dart_sdk: "^3.11.x" # ← Dart version (not Flutter version)
+  dart_sdk: "3.11.0" # ← exact Dart version (not Flutter version)
 ```
 
 If a file uses `flutter_channel: stable` instead of a pinned version,
@@ -136,7 +138,8 @@ Suggested commit/PR message:
 ```
 chore: bump Flutter to 3.41.0 / Dart to 3.11.0
 
-- Update flutter_version in .github/workflows/ to ^3.41.x (CI resolves latest patch)
+- Update flutter_version in .github/workflows/ to 3.41.x (CI resolves latest patch)
+- Update dart_sdk in .github/workflows/ to 3.11.0 (exact patch)
 - Update environment sdk/flutter constraints in pubspec.yaml
 
 No logic or code changes.
