@@ -41,7 +41,7 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | ----- | ----------- |
 | [**Create Project**](skills/create-project/SKILL.md) | Scaffold new Dart/Flutter projects from Very Good CLI templates — `flutter_app`, `dart_package`, `flutter_plugin`, `dart_cli`, `flame_game`, and more |
 | [**Animations**](skills/animations/SKILL.md) | Flutter built-in animations — implicit vs explicit decision tree, Material 3 motion tokens (`Durations`, `Easing`), page transitions with GoRouter, Hero animations, staggered animations, and performance guidelines |
-| [**Accessibility**](skills/accessibility/SKILL.md) | WCAG 2.1 AA compliance — semantics, screen reader support, touch targets, focus management, color contrast, text scaling, and motion sensitivity |
+| [**Accessibility**](skills/accessibility/SKILL.md) | WCAG 2.2 compliance with A/AA/AAA conformance level selection across iOS, Android, Web, macOS, Windows, and Linux — semantics, screen reader support, touch targets, focus management, color contrast, text scaling, and motion sensitivity |
 | [**Testing**](skills/testing/SKILL.md) | Unit, widget, and golden testing — `mocktail` mocking, `pumpApp` helpers, test structure & naming, coverage patterns, and `dart_test.yaml` configuration |
 | [**Navigation**](skills/navigation/SKILL.md) | GoRouter routing — `@TypedGoRoute` type-safe routes, deep linking, redirects, shell routes, and widget testing with `MockGoRouter` |
 | [**Internationalization**](skills/internationalization/SKILL.md) | i18n/l10n — ARB files, `context.l10n` patterns, pluralization, RTL/LTR support with directional widgets, and backend localization strategies |
@@ -52,15 +52,19 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | [**UI Package**](skills/ui-package/SKILL.md) | Flutter UI package creation — custom widget libraries with `ThemeExtension`-based theming, design tokens, barrel file exports, widget tests, Widgetbook catalog, and consistent API conventions |
 | [**License Compliance**](skills/license-compliance/SKILL.md) | Dependency license auditing — categorizes licenses (permissive, weak/strong copyleft, unknown), flags non-compliant or missing licenses, and produces a structured compliance report using Very Good CLI |
 | [**Dart/Flutter SDK Upgrade**](skills/dart-flutter-sdk-upgrade/SKILL.md) | Bump Dart and Flutter SDK constraints across packages — CI workflow versions, pubspec.yaml environment constraints, and PR preparation for SDK upgrades |
+| [**Very Good Analysis Upgrade**](skills/very-good-analysis-upgrade/SKILL.md) | Upgrade the `very_good_analysis` lint package across Dart/Flutter projects — version bump in `pubspec.yaml`, minimal lint fixes for new rules, and PR preparation |
 
 ## Hooks
 
-This plugin includes PostToolUse hooks that automatically run Dart analysis and formatting on `.dart` files after every `Edit` or `Write` tool call.
+This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that validate the Very Good CLI, guard against CLI bypass, and automatically run Dart analysis and formatting on `.dart` files.
 
-| Hook | Behavior |
-| ---- | -------- |
-| **Analyze** | Runs `dart analyze` on the modified file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
-| **Format** | Runs `dart format` on the modified file; always exits 0 (non-blocking — formatting is applied silently) |
+| Hook | Trigger | Behavior |
+| ---- | ------- | -------- |
+| **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing or older than 1.2.0; non-blocking |
+| **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__very-good-cli__.*`) | Validates the Very Good CLI is installed and ≥ 1.2.0; exits 2 on failure (blocking) |
+| **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking) |
+| **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
+| **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
 
 ### Prerequisites
 
@@ -93,6 +97,7 @@ You can also invoke skills directly as slash commands:
 /vgv-ui-package
 /vgv-license-compliance
 /vgv-dart-flutter-sdk-upgrade
+/vgv-very-good-analysis-upgrade
 ```
 
 ## What Each Skill Provides
@@ -115,13 +120,13 @@ This plugin includes a `.mcp.json` configuration that connects Claude Code to th
 | Tool | What it does |
 | ---- | ------------ |
 | `create` | Scaffold projects from templates (`flutter_app`, `dart_cli`, `dart_package`, `flutter_package`, `flutter_plugin`, `flame_game`, `docs_site`) |
-| `tests` | Run tests with coverage enforcement |
+| `test` | Run tests with coverage enforcement |
 | `packages_check_licenses` | Audit dependency licenses against an allowed list |
 | `packages_get` | Get dependencies for a single package or recursively across a monorepo |
 
 **Prerequisites:**
 
-- Very Good CLI v1.0+ installed: `dart pub global activate very_good_cli`
+- Very Good CLI v1.2.0+ installed: `dart pub global activate very_good_cli`
 - `very_good` must be on your PATH
 
 **How it works:**
