@@ -11,7 +11,9 @@ VGV AI Flutter Plugin is a Claude Code plugin that provides best-practices skill
 ```text
 .mcp.json                # MCP server configuration (Very Good CLI)
 .claude-plugin/
-  plugin.json          # Plugin manifest (name, version, tags)
+  plugin.json          # Plugin manifest (name, version, keywords)
+docs/
+  plan/                # Planning and design documents
 hooks/
   hooks.json           # Hook definitions (PreToolUse and PostToolUse)
   scripts/
@@ -23,7 +25,7 @@ hooks/
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
 skills/
   accessibility/SKILL.md
-  accessibility/reference.md
+  accessibility/references/
   animations/SKILL.md
   animations/references/
     explicit-animations.md
@@ -31,20 +33,23 @@ skills/
     page-transitions.md
     staggered-animations.md
   bloc/SKILL.md
-  bloc/reference.md
+  bloc/references/
   create-project/SKILL.md
   dart-flutter-sdk-upgrade/SKILL.md
   internationalization/SKILL.md
   layered-architecture/SKILL.md
-  layered-architecture/reference.md
+  layered-architecture/references/
   license-compliance/SKILL.md
   material-theming/SKILL.md
   navigation/SKILL.md
   static-security/SKILL.md
-  static-security/reference.md
+  static-security/references/
   testing/SKILL.md
-  testing/reference.md
+  testing/references/
   ui-package/SKILL.md
+  ui-package/reference.md
+  very-good-analysis-upgrade/SKILL.md
+  very-good-analysis-upgrade/reference.md
 ```
 
 ## Skill File Format
@@ -72,9 +77,27 @@ Every `SKILL.md` follows this structure:
 ## Adding a New Skill
 
 1. Create `skills/<skill_name>/SKILL.md` following the format above
-2. Update tags in `.claude-plugin/plugin.json`
+2. Update `keywords` in `.claude-plugin/plugin.json`
 3. Update the skills table in `README.md` (skill name must link to the `SKILL.md` file)
-4. Update the repository structure in `CLAUDE.md`
+4. Add the skill's slash command (e.g., `/vgv-<skill-name>`) to the **Usage** list in `README.md`
+5. Add any new domain terms to the `words` list in `config/cspell.json`
+6. Update the repository structure in `CLAUDE.md`
+
+## Maintaining Existing Skills, Hooks, and MCP Tools
+
+Most documentation drift comes from changing existing assets without updating the
+docs that describe them. When you touch any of the following, update the matching
+documentation in the same change:
+
+- **Updating a skill's scope or description** — update the matching row in the
+  `README.md` skills table so the description stays in sync.
+- **Restructuring a skill's reference files** (`reference.md` ↔ `references/`) —
+  update the repository structure block in `CLAUDE.md` to match the new layout.
+- **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
+  section in `README.md` (and the `## Hooks` section in `CLAUDE.md` if behavior
+  changes).
+- **Adding or changing an MCP tool** — update the **MCP Integration** tools table
+  in `README.md`.
 
 ## Hooks
 
