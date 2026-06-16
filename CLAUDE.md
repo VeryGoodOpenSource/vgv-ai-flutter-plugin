@@ -77,7 +77,7 @@ Every `SKILL.md` follows this structure:
 ## Adding a New Skill
 
 1. Create `skills/<skill_name>/SKILL.md` following the format above
-2. Update `keywords` in `.claude-plugin/plugin.json`
+2. Update `keywords` **and** the `description` (marketplace text) in `.claude-plugin/plugin.json`
 3. Update the skills table in `README.md` (skill name must link to the `SKILL.md` file)
 4. Add the skill's slash command (e.g., `/vgv-<skill-name>`) to the **Usage** list in `README.md`
 5. Add any new domain terms to the `words` list in `config/cspell.json`
