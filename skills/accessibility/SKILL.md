@@ -1,7 +1,7 @@
 ---
 name: vgv-accessibility
 description: Audit or remediate Flutter widgets against WCAG 2.2 accessibility conformance levels A, AA, or AAA across iOS, Android, Web, macOS, Windows, and Linux.
-when-to-use: Building, auditing, or reviewing Flutter widgets for WCAG 2.2 accessibility across multiple platforms
+when_to_use: Building, auditing, or reviewing Flutter widgets for WCAG 2.2 accessibility across multiple platforms
 effort: medium
 argument-hint: "[wcag-level] [platform...]"
 allowed-tools: Read Glob Grep
