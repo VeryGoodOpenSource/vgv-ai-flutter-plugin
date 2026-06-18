@@ -1,5 +1,5 @@
 ---
-name: vgv-testing
+name: testing
 description: Best practices for Dart unit tests, Flutter widget tests, and golden file tests.
 when_to_use: Use when writing, modifying, or reviewing tests that use package:test, package:flutter_test, package:mocktail, or package:bloc_test.
 argument-hint: "[file-or-directory]"

@@ -84,20 +84,20 @@ For example:
 You can also invoke skills directly as slash commands:
 
 ```bash
-/vgv-create-project
-/vgv-animations
-/vgv-accessibility
-/vgv-bloc
-/vgv-internationalization
-/vgv-layered-architecture
-/vgv-material-theming
-/vgv-navigation
-/vgv-static-security
-/vgv-testing
-/vgv-ui-package
-/vgv-license-compliance
-/vgv-dart-flutter-sdk-upgrade
-/vgv-very-good-analysis-upgrade
+/create-project
+/animations
+/accessibility
+/bloc
+/internationalization
+/layered-architecture
+/material-theming
+/navigation
+/static-security
+/testing
+/ui-package
+/license-compliance
+/dart-flutter-sdk-upgrade
+/very-good-analysis-upgrade
 ```
 
 ## What Each Skill Provides

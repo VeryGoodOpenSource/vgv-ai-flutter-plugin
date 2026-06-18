@@ -1,5 +1,5 @@
 ---
-name: vgv-create-project
+name: create-project
 description: Scaffold a new Dart or Flutter project from a Very Good CLI template. Supports flutter_app, dart_package, flutter_package, flutter_plugin, dart_cli, flame_game, and docs_site templates.
 when_to_use: Use when user says "create a new project", "start a new flutter app", "scaffold a package", "initialize a dart cli", "new flame game", or "generate a plugin".
 allowed-tools: mcp__very-good-cli__create mcp__very-good-cli__packages_get

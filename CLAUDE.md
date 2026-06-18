@@ -57,7 +57,7 @@ skills/
 Every `SKILL.md` follows this structure:
 
 1. **YAML frontmatter** with the following fields:
-   - `name` _(required)_ — prefixed with `vgv-`, lowercase letters, numbers, and hyphens only (e.g., `vgv-bloc`)
+   - `name` _(required)_ — must match the skill's folder name exactly; lowercase letters, numbers, and hyphens only (e.g., `bloc`)
    - `description` _(required)_ — when the skill should be triggered
    - `allowed-tools` _(optional)_ — space-separated list of tools the skill may use (e.g., `Read Glob Grep`)
    - `argument-hint` _(optional)_ — placeholder hint shown to the user (e.g., `"[file-or-directory]"`)
@@ -79,7 +79,7 @@ Every `SKILL.md` follows this structure:
 1. Create `skills/<skill_name>/SKILL.md` following the format above
 2. Update `keywords` **and** the `description` (marketplace text) in `.claude-plugin/plugin.json`
 3. Update the skills table in `README.md` (skill name must link to the `SKILL.md` file)
-4. Add the skill's slash command (e.g., `/vgv-<skill-name>`) to the **Usage** list in `README.md`
+4. Add the skill's slash command (e.g., `/<skill-name>`) to the **Usage** list in `README.md`
 5. Add any new domain terms to the `words` list in `config/cspell.json`
 6. Update the repository structure in `CLAUDE.md`
 
