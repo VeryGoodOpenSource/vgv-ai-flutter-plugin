@@ -1,5 +1,5 @@
 ---
-name: vgv-dart-flutter-sdk-upgrade
+name: dart-flutter-sdk-upgrade
 description: >
   VGV-specific reference for bumping Dart and Flutter SDK constraints across packages.
   Covers pubspec.yaml environment constraints, CI workflow Flutter versions, and SDK

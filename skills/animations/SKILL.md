@@ -1,5 +1,5 @@
 ---
-name: vgv-animations
+name: animations
 description: Best practices for Flutter animations using the built-in animation framework. Use when creating, modifying, or reviewing animations, transitions, motion, or animated widgets. Covers implicit animations, explicit animations, page transitions, and Material 3 motion tokens.
 allowed-tools: Read,Glob,Grep
 argument-hint: "[file-or-directory]"

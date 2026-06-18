@@ -25,7 +25,7 @@ Create `skills/<skill-name>/SKILL.md`. The file must begin with YAML frontmatter
 
 ```yaml
 ---
-name: vgv-<skill-name>
+name: <skill-name>
 description: When this skill should be triggered — be specific.
 allowed-tools: Read,Glob,Grep
 argument-hint: "[file-or-directory]"   # optional
@@ -34,7 +34,7 @@ argument-hint: "[file-or-directory]"   # optional
 
 | Field | Required | Rules |
 | ----- | -------- | ----- |
-| `name` | Yes | Prefixed with `vgv-`, lowercase letters, numbers, and hyphens only |
+| `name` | Yes | Must match the skill's folder name exactly; lowercase letters, numbers, and hyphens only |
 | `description` | Yes | Describes when the skill should be triggered |
 | `allowed-tools` | Yes | Comma-separated list of tools the skill may use |
 | `argument-hint` | No | Placeholder hint shown to the user |

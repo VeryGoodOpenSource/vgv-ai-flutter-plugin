@@ -1,5 +1,5 @@
 ---
-name: vgv-internationalization
+name: internationalization
 description: Best practices for internationalization (i18n) and localization (l10n) in Flutter.
 when_to_use: Use when adding, modifying, or reviewing ARB translations, locale setup, BuildContext l10n extensions, or RTL/directional layout support.
 allowed-tools: Read Glob Grep
