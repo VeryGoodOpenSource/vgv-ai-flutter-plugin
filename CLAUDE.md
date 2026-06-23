@@ -9,7 +9,7 @@ VGV AI Flutter Plugin is a Claude Code plugin that provides best-practices skill
 ## Repository Structure
 
 ```text
-.mcp.json                # MCP server configuration (Very Good CLI)
+.mcp.json                # MCP server configuration (Dart and Very Good CLI)
 .claude-plugin/
   plugin.json          # Plugin manifest (name, version, keywords)
 docs/

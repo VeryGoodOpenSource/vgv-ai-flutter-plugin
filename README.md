@@ -113,7 +113,31 @@ Every skill includes:
 
 ## MCP Integration
 
-This plugin includes a `.mcp.json` configuration that connects Claude Code to the Very Good CLI's built-in MCP server. This gives Claude the ability to execute CLI commands directly, complementing the skills which provide architectural guidance and best practices.
+This plugin includes a `.mcp.json` configuration that connects Claude Code to two MCP servers — the **Dart and Flutter MCP server** (`dart mcp-server`) and the **Very Good CLI MCP server** (`very_good mcp`). This gives Claude the ability to execute Dart, Flutter, and Very Good CLI actions directly, complementing the skills which provide architectural guidance and best practices.
+
+### Dart and Flutter MCP server (`dart`)
+
+The Dart and Flutter MCP server ships with the Dart SDK and exposes core Dart/Flutter development actions to Claude.
+
+**Available MCP tools:**
+
+| Tool | What it does |
+| ---- | ------------ |
+| Error analysis & fixing | Analyze the project for static errors and apply fixes |
+| Symbol resolution | Resolve symbols to elements and fetch documentation and signature information |
+| App introspection | Introspect and interact with a running Dart or Flutter application |
+| Package search | Search pub.dev for packages that fit a given use case |
+| Dependency management | Add, remove, and update dependencies in `pubspec.yaml` files |
+| Test execution | Run tests and analyze the results |
+| Code formatting | Format code using the same formatter and config as `dart format` |
+
+**Prerequisites:**
+
+- Dart SDK installed with `dart` on your PATH (the MCP server is provided by `dart mcp-server`)
+
+### Very Good CLI MCP server (`very-good-cli`)
+
+The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 **Available MCP tools:**
 
@@ -131,7 +155,7 @@ This plugin includes a `.mcp.json` configuration that connects Claude Code to th
 
 **How it works:**
 
-The `.mcp.json` file at the project root registers a `very-good-cli` MCP server using stdio transport. When Claude Code detects this configuration, it connects to the Very Good CLI MCP server and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
+The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
