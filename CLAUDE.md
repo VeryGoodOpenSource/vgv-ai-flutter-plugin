@@ -19,7 +19,7 @@ hooks/
   scripts/
     analyze.sh         # Runs dart analyze on modified .dart files
     block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
-    check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.2.0
+    check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.3.0
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
@@ -107,13 +107,13 @@ The `hooks/` directory contains SessionStart, PreToolUse, and PostToolUse hooks 
 
 These run **when a session begins**:
 
-- `warn-missing-mcp.sh` — checks if Very Good CLI is installed and >= 1.2.0; outputs a warning to Claude's context if missing or outdated (non-blocking)
+- `warn-missing-mcp.sh` — checks if Very Good CLI is installed and >= 1.3.0; outputs a warning to Claude's context if missing or outdated (non-blocking)
 
 ### PreToolUse Hooks
 
 These run **before** a tool call is executed:
 
-- `mcp__very-good-cli__.*` matcher → `check-vgv-cli.sh` — validates that the Very Good CLI is installed and at version >= 1.2.0; exits 2 on failure (blocking)
+- `mcp__very-good-cli__.*` matcher → `check-vgv-cli.sh` — validates that the Very Good CLI is installed and at version >= 1.3.0; exits 2 on failure (blocking)
 - `Bash` matcher → `block-cli-workarounds.sh` — prevents direct CLI bypass of VGV CLI commands through the Bash tool; exits 2 on failure (blocking)
 
 Both PreToolUse scripts share common utilities from `vgv-cli-common.sh`.

@@ -60,8 +60,8 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 
 | Hook | Trigger | Behavior |
 | ---- | ------- | -------- |
-| **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing or older than 1.2.0; non-blocking |
-| **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__very-good-cli__.*`) | Validates the Very Good CLI is installed and ≥ 1.2.0; exits 2 on failure (blocking) |
+| **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing or older than 1.3.0; non-blocking |
+| **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__very-good-cli__.*`) | Validates the Very Good CLI is installed and ≥ 1.3.0; exits 2 on failure (blocking) |
 | **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking) |
 | **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
 | **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
@@ -150,7 +150,7 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 **Prerequisites:**
 
-- Very Good CLI v1.2.0+ installed: `dart pub global activate very_good_cli`
+- Very Good CLI v1.3.0+ installed: `dart pub global activate very_good_cli`
 - `very_good` must be on your PATH
 
 **How it works:**
