@@ -55,11 +55,11 @@ BLOCKED=$(echo "$COMMAND" | awk '{
 }')
 
 case "$BLOCKED" in
-  create)      deny_with_cli_check "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead." ;;
-  test)        deny_with_cli_check "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead." ;;
-  vg_create)   deny_with_cli_check "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead." ;;
-  vg_test)     deny_with_cli_check "Do not use 'very_good test' via shell. Use the very_good_cli MCP 'test' tool instead." ;;
-  vg_packages) deny_with_cli_check "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead." ;;
+  create)      deny_with_cli_check "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead. If that tool is denied with no prompt, it isn't allowlisted: add mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__create to permissions.allow (run /permissions, or see the plugin README)." ;;
+  test)        deny_with_cli_check "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead. If that tool is denied with no prompt, it isn't allowlisted: add mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__test to permissions.allow (run /permissions, or see the plugin README)." ;;
+  vg_create)   deny_with_cli_check "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead. If that tool is denied with no prompt, it isn't allowlisted: add mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__create to permissions.allow (run /permissions, or see the plugin README)." ;;
+  vg_test)     deny_with_cli_check "Do not use 'very_good test' via shell. Use the very_good_cli MCP 'test' tool instead. If that tool is denied with no prompt, it isn't allowlisted: add mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__test to permissions.allow (run /permissions, or see the plugin README)." ;;
+  vg_packages) deny_with_cli_check "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead. If those tools are denied with no prompt, they aren't allowlisted: add mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_get and mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses to permissions.allow (run /permissions, or see the plugin README)." ;;
 esac
 
 # Not a blocked command — allow

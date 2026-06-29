@@ -62,7 +62,7 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 | ---- | ------- | -------- |
 | **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing or older than 1.3.0; non-blocking |
 | **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__very-good-cli__.*`) | Validates the Very Good CLI is installed and ≥ 1.3.0; exits 2 on failure (blocking) |
-| **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking) |
+| **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking). The redirect targets the Very Good CLI MCP tools, which must be allowlisted — see [Allowlisting the MCP tools](#very-good-cli-mcp-server-very-good-cli) |
 | **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
 | **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
 
@@ -152,6 +152,25 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 - Very Good CLI v1.3.0+ installed: `dart pub global activate very_good_cli`
 - `very_good` must be on your PATH
+
+**Allowlisting the MCP tools:**
+
+The **Block CLI Workarounds** hook redirects shell commands like `very_good create` to these MCP tools, so the tools must be reachable. With `"skipAutoPermissionPrompt": true` in your settings, a non-allowlisted MCP tool fails silently — no approval dialog, no actionable error — and scaffolding dead-ends with nothing explaining why.
+
+To avoid this, allowlist the tools in `.claude/settings.local.json`:
+
+```json
+"permissions": {
+  "allow": [
+    "mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__create",
+    "mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__test",
+    "mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_get",
+    "mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses"
+  ]
+}
+```
+
+Alternatively, run `/permissions` to grant the tools interactively when prompted.
 
 **How it works:**
 
