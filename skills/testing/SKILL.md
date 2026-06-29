@@ -27,6 +27,7 @@ Apply these standards to ALL test work:
 - **Use `pumpApp` test helper** — wrap widgets via shared helper in `test/helpers/pump_app.dart`; never inline `pumpWidget(MaterialApp(...))`
 - **Tag all golden tests** — annotate with `TestTag.golden` so goldens can run/update independently
 - **Pass `directory` to the `test` MCP tool when the project is not at the workspace root** — monorepos with the Flutter project in a subdirectory (e.g. `mobile/`) require `directory: 'mobile'`; omit it only when `pubspec.yaml` is at the workspace root
+- **Pass `timeout_seconds` to the `test` MCP tool** — Flutter tests can hang indefinitely when `pumpAndSettle()` is called without a timeout; set a cap (e.g. `timeout_seconds: 120`) so the run is killed instead of stalling
 
 ## Test Structure
 
@@ -473,6 +474,6 @@ Always call `pump()` (or `pumpAndSettle()`) after every interaction — widgets 
 - [references/widget-tests.md](references/widget-tests.md) — widget test structure and themes/localization testing
 - [references/golden-tests.md](references/golden-tests.md) — golden file testing (setup, writing goldens, tagging, running/updating, anti-patterns)
 - [references/matchers.md](references/matchers.md) — matchers quick reference
-- [references/configuration.md](references/configuration.md) — `dart_test.yaml` configuration (tags, commands, platform overrides)
+- [references/configuration.md](references/configuration.md) — `dart_test.yaml` configuration (tags, platform overrides) and running tests via the MCP `test` tool
 - [references/coverage.md](references/coverage.md) — coverage patterns and package/imports reference
 - [references/animation-testing.md](references/animation-testing.md) — testing implicit/explicit animations, AnimatedSwitcher, page transitions, and injected controllers
