@@ -36,6 +36,7 @@ skills/
   bloc/references/
   create-project/SKILL.md
   dart-flutter-sdk-upgrade/SKILL.md
+  green-gate/SKILL.md
   internationalization/SKILL.md
   layered-architecture/SKILL.md
   layered-architecture/references/
