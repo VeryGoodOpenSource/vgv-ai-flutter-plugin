@@ -197,40 +197,20 @@ The MCP `min_coverage` result is **authoritative** for pass/fail. The
 `coverage/lcov.info` parse is **advisory** — it supplies the displayed
 percentage and per-file fix targets.
 
-- **Default target is `100`** — VGV's house standard. The `very_good_cli`
-  templates ship at 100% and Very Good Core's CI fails below it. "100%" means
-  100% of *testable, hand-written* code: generated files leave the denominator
-  via `exclude_coverage`, and `check_ignore: true` honors `// coverage:ignore`
-  for genuinely unreachable lines, so the target is achievable rather than a
-  ceiling on every generated line. The target is **overridable per invocation**
-  (e.g. `80`) for legacy or non-template packages while the loop raises coverage
-  toward it.
+- **Default target is `100`** (VGV's house standard), **overridable per
+  invocation** (e.g. `80`) for legacy or non-template packages. Generated files
+  leave the denominator via `exclude_coverage` and `check_ignore: true` honors
+  `// coverage:ignore`, so 100% means 100% of testable, hand-written code.
 - **Default `exclude_coverage`** — `**/*.{g,freezed,gen}.dart` plus generated and
-  l10n directories. This is one glob string (not a repeated flag); multiple
-  patterns require brace expansion. If a CLI build does not honor brace
-  expansion, fall back to the single most impactful glob `**/*.g.dart` and note
-  the limitation in the report.
-- **Advisory parse must mirror the gate** — the lcov parser applies the
-  **identical exclusion set** used in `exclude_coverage`, or the displayed
-  percentage will not match the authoritative gate. Read `SF` (source file),
-  `LF` (lines found), `LH` (lines hit) per file; use `DA` (line, hit-count)
-  records to point at specific uncovered lines.
-- **`check_ignore` is Dart-only** — the MCP tool honors `// coverage:ignore`
-  comments only when `dart: true`. For Flutter packages the ignore remedy may
-  not be respected; prefer `exclude_coverage` for generated files and escalate
-  genuinely unreachable Flutter lines rather than relying on the comment.
-
-### Decision tree — a missing `lcov.info` has three distinct causes
-
-| Cause                                                    | Detection                                    | Action                                                                          |
-| -------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------- |
-| **(a) `coverage: true` not passed**                      | The skill's own tool call omitted the flag   | Fix the tool call and retry — **not** an escalation                             |
-| **(b) Tests ran but produced no coverage** (all skipped) | MCP run succeeded, `lcov.info` missing/empty | Escalate as unprovable — surface to the user                                    |
-| **(c) No test files exist**                              | No `test/` dir or zero `_test.dart` files    | Test gate **fails** — author tests via the `testing` skill; never treat as pass |
-
-**Stale `lcov.info`** — trust `coverage/lcov.info` only when the MCP run reported
-success **this round**. Delete it (or timestamp-check it) before each run so a
-previous round's file is never read as current.
+  l10n directories. One glob string (brace expansion; fall back to `**/*.g.dart`
+  if a CLI build does not honor it).
+- **Pass `coverage: true`, `min_coverage`, and `check_ignore: true` together** —
+  see **Core Standards**.
+- **When `coverage/lcov.info` is missing or below target**, follow the decision
+  tree and parsing rules in [`references/coverage.md`](references/coverage.md) —
+  it covers the three absence causes, stale-lcov handling, the lcov record fields
+  (`SF`/`LF`/`LH`/`DA`), the advisory-mirrors-the-gate rule, and the
+  `check_ignore` Dart-only limitation.
 
 ---
 
@@ -308,10 +288,12 @@ For a monorepo, emit one block per package plus a one-line aggregate
 
 ## Additional Resources
 
-- [`skills/testing/SKILL.md`](../testing/SKILL.md) — how to write Dart unit,
-  Flutter widget, and golden tests (structure, `mocktail` mocking, naming).
-- [`skills/testing/references/coverage.md`](../testing/references/coverage.md) —
-  coverage-driven test patterns (`copyWith`, branches, error paths) for closing
-  per-file gaps.
+- [`references/coverage.md`](references/coverage.md) — green-gate's coverage-gate
+  detail (default target, exclude globs, lcov fields, decision tree,
+  `check_ignore`, stale lcov).
+- `skills/testing/SKILL.md` — how to write Dart unit, Flutter widget, and golden
+  tests (structure, `mocktail` mocking, naming).
+- `skills/testing/references/coverage.md` — coverage-driven test patterns
+  (`copyWith`, branches, error paths) for closing per-file gaps.
 - `hooks/scripts/block-cli-workarounds.sh` — why the Bash test path is blocked
   and gates use MCP tools.
