@@ -76,7 +76,10 @@ not review the whole repository.
 
 ## Output
 
-Report findings as a single markdown table, one row per finding:
+Output **exactly one** markdown table, one row per finding. Do **not** split findings into multiple
+tables, do **not** group them by file, and do **not** introduce section headings or extra columns
+around the table. The table has exactly these four columns, in this order — `location`, `problem`,
+`fix`, `standard`:
 
 ```markdown
 | location                          | problem                                  | fix                                  | standard       |
@@ -87,12 +90,17 @@ Report findings as a single markdown table, one row per finding:
 
 Rules:
 
-- `location` — `path:line` of the finding.
+- `location` — `path:line` of the finding, in a single column. Always include the file path on every
+  row; never move the path into a heading and never reduce this column to a bare line number.
 - `problem` — what is wrong, concisely.
 - `fix` — the change you recommend. Describe it; never apply it.
-- `standard` — exactly one of `bloc`, `testing`, `static-security`, `accessibility`. Every row must
-  name one of these four.
+- `standard` — exactly one of `bloc`, `testing`, `static-security`, `accessibility`, in its own
+  column on every row. Every row must name one of these four. Never convey the standard through a
+  section heading instead of this column.
 - Align the pipe characters vertically (VGV markdown convention).
+
+A one-line note after the table (per "Out-of-domain changes" below) is allowed. Any other prose,
+grouping, or additional tables is not.
 
 ### No changed Dart files
 
