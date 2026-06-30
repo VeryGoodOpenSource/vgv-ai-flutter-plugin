@@ -85,3 +85,16 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: Validate Plugin
         run: claude plugin validate .
+  shell-tests:
+    name: 🛡️ Shell Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Agent tools guard
+        run: bash test/agents_tools_guard.sh
+      - name: Agent tools guard self-test
+        run: bash test/agents_tools_guard_test.sh
+      - name: Read-only git hook tests
+        run: bash hooks/scripts/allow-readonly-git_test.sh
+      - name: Block CLI workarounds hook tests
+        run: bash hooks/scripts/block-cli-workarounds_test.sh

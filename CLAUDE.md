@@ -12,17 +12,22 @@ VGV AI Flutter Plugin is a Claude Code plugin that provides best-practices skill
 .mcp.json                # MCP server configuration (Dart and Very Good CLI)
 .claude-plugin/
   plugin.json          # Plugin manifest (name, version, keywords)
+agents/
+  flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 docs/
   plan/                # Planning and design documents
 hooks/
   hooks.json           # Hook definitions (PreToolUse and PostToolUse)
   scripts/
+    allow-readonly-git.sh  # Restricts flutter-reviewer Bash to git diff/status
     analyze.sh         # Runs dart analyze on modified .dart files
     block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
     check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.3.0
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
+test/
+  agents_tools_guard.sh  # Asserts agent tools frontmatter has no write tool
 skills/
   accessibility/SKILL.md
   accessibility/references/
@@ -83,6 +88,30 @@ Every `SKILL.md` follows this structure:
 5. Add any new domain terms to the `words` list in `config/cspell.json`
 6. Update the repository structure in `CLAUDE.md`
 
+## Adding a New Agent
+
+Agents are subagents that Claude Code dispatches as isolated, specialized helpers (e.g., reviewers).
+They live in `agents/<name>.md` at the plugin root and are **auto-discovered** — unlike skills, no
+`.claude-plugin/plugin.json` change is required. An `agents/<name>.md` file registers as
+`vgv-ai-flutter-plugin:<name>`.
+
+1. Create `agents/<agent_name>.md` with YAML frontmatter:
+   - `name` _(required)_ — must match the file name; lowercase letters, numbers, and hyphens only
+   - `description` _(required)_ — when Claude should dispatch the agent
+   - `tools` _(optional)_ — comma-separated bare tool names. The `tools` field cannot scope Bash by
+     command; for a read-only agent, omit write tools (`Edit`, `Write`, `NotebookEdit`) and restrict
+     Bash with an agent-scoped PreToolUse hook (see `flutter-reviewer.md`)
+   - `skills` _(optional)_ — bare skill names to preload at startup (full skill content is injected)
+   - `model` _(optional)_ — `inherit` to use the session model
+   - `hooks` _(optional)_ — agent-scoped hooks, e.g. a PreToolUse `Bash` hook
+2. Add an **Agents** table row in `README.md` (agent name links to the `agents/<name>.md` file)
+3. Add any new domain terms to the `words` list in `config/cspell.json`
+4. Update the repository structure in `CLAUDE.md`
+
+The `test/agents_tools_guard.sh` guard runs in CI and automatically scans every `agents/*.md`: it
+fails if any agent grants a write tool (`Edit`/`Write`/`NotebookEdit`), or grants `Bash` without
+referencing the `allow-readonly-git.sh` hook. No per-agent wiring is needed.
+
 ## Maintaining Existing Skills, Hooks, and MCP Tools
 
 Most documentation drift comes from changing existing assets without updating the
@@ -116,7 +145,13 @@ These run **before** a tool call is executed:
 - `mcp__very-good-cli__.*` matcher → `check-vgv-cli.sh` — validates that the Very Good CLI is installed and at version >= 1.3.0; exits 2 on failure (blocking)
 - `Bash` matcher → `block-cli-workarounds.sh` — prevents direct CLI bypass of VGV CLI commands through the Bash tool; exits 2 on failure (blocking)
 
-Both PreToolUse scripts share common utilities from `vgv-cli-common.sh`.
+The first two PreToolUse hooks are plugin-level (defined in `hooks.json`) and share common utilities
+from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is declared in the
+`flutter-reviewer` agent's frontmatter, not in `hooks.json`, so it only fires for that agent:
+
+- `Bash` matcher → `allow-readonly-git.sh` — restricts the `flutter-reviewer` agent's Bash to
+  `git diff` / `git status` only; exits 2 on anything else, including compound-command bypass
+  (blocking). Enforces the agent's read-only contract.
 
 ### PostToolUse Hooks
 

@@ -2,6 +2,7 @@
   "language": "en",
   "words": [
     "activatable",
+    "adversarial",
     "antipattern",
     "Automator",
     "Bidirectionality",
@@ -38,13 +39,17 @@
     "pasteable",
     "prefs",
     "pubspec",
+    "redirections",
     "serialization",
     "stdio",
+    "subagent",
+    "subagents",
     "subclassing",
     "vsync",
     "WCAG",
     "widgetbook",
     "Widgetbook",
+    "Wingspan",
     "xxlg"
   ],
   "flagWords": []
