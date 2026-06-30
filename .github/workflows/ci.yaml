@@ -85,8 +85,8 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: Validate Plugin
         run: claude plugin validate .
-  shell-tests:
-    name: 🛡️ Shell Tests
+  script-tests:
+    name: 🛡️ Script Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
