@@ -77,7 +77,7 @@ For each package root (see **Recursive / Monorepo**), run this algorithm:
    step 7.
 3. **Format** — run `mcp__dart__dart_format` on the package root. It reformats
    the whole package in place. If it reports changed files, the gate is now
-   green for the next round; if the tool is absent, see **Format Gate**.
+   green for the next round.
 4. **Test** — only if analyze is green this round. Run `mcp__very-good-cli__test`
    with the coverage parameters from **Test Gate**. If tests fail, fix, record
    the fingerprint, go to step 7.
@@ -169,16 +169,6 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
   hook fires only on files the loop edits via Edit/Write. A hand-edited or
   pre-existing unformatted file the loop never touches would otherwise pass
   green-gate and then fail CI. The whole-package format closes that gap.
-- **Availability caveat** — the dart MCP server requires Dart `3.9.0-163.0.dev`+,
-  which is the floor for `analyze_files` too, so it is not format-specific.
-  `dart_format` is a newer server tool than `analyze_files`, so some otherwise
-  working server builds expose analyze but **not** format. Detect this by the
-  tool being unavailable, not by SDK version.
-- **Fallback when `mcp__dart__dart_format` is absent** — the `format.sh` hook
-  still formats every file the loop edits. Document in the success report that
-  untouched files are not covered in this mode, and surface it so the user can
-  upgrade the dart MCP server / SDK to close the gap. **Do not** fall back to
-  `dart format` via Bash — Bash stays reserved for lcov parsing.
 
 ---
 
@@ -312,9 +302,7 @@ an earlier round:
 ```
 
 For a monorepo, emit one block per package plus a one-line aggregate
-(`<P>/<P> packages green`). When the format fallback was used (no
-`mcp__dart__dart_format`), append a note that only loop-edited files were
-formatted and recommend upgrading the dart MCP server / SDK.
+(`<P>/<P> packages green`).
 
 ---
 
