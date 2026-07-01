@@ -113,7 +113,7 @@ These run **when a session begins**:
 
 These run **before** a tool call is executed:
 
-- `mcp__very-good-cli__.*` matcher → `check-vgv-cli.sh` — validates that the Very Good CLI is installed and at version >= 1.3.0; exits 2 on failure (blocking)
+- `mcp__.*very-good-cli__.*` matcher → `check-vgv-cli.sh` — auto-approves the Very Good CLI MCP tool call by returning a PreToolUse `allow` decision, so it is always permitted regardless of run mode (interactive, headless, or `skipAutoPermissionPrompt`) and never dead-ends when the tool isn't on `permissions.allow`; denies with an install/upgrade message if the CLI is missing or < 1.3.0. The `.*` in the matcher covers both the bare `mcp__very-good-cli__*` server (repo-root `.mcp.json`) and the plugin-namespaced `mcp__plugin_<plugin>_very-good-cli__*` form used when installed from a marketplace
 - `Bash` matcher → `block-cli-workarounds.sh` — prevents direct CLI bypass of VGV CLI commands through the Bash tool; exits 2 on failure (blocking)
 
 Both PreToolUse scripts share common utilities from `vgv-cli-common.sh`.
