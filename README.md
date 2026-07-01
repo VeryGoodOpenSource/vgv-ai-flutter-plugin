@@ -56,7 +56,7 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 
 ## Agents
 
-This plugin ships subagents that Claude Code can dispatch as isolated, specialized reviewers. Unlike skills, agents are **not** invoked as slash commands — Claude dispatches them automatically, or you can ask Claude to run one by name (e.g. "review my changes with the flutter-reviewer agent"). They also pair with the [Wingspan][marketplace_link] adversarial-critic round, which can dispatch them.
+This plugin ships subagents that Claude Code can dispatch as isolated, specialized reviewers. Unlike skills, agents are **not** invoked as slash commands — Claude dispatches them automatically, or you can ask Claude to run one by name (e.g. "review my changes with the flutter-reviewer agent").
 
 | Agent | Description |
 | ----- | ----------- |
