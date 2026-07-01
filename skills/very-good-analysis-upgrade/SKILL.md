@@ -1,6 +1,7 @@
 ---
 name: very-good-analysis-upgrade
 description: Upgrade very_good_analysis lint package to new version across Dart/Flutter projects. Handles version bump, lint fixes, and PR creation.
+argument-hint: "[version]"
 allowed-tools: Read Glob Grep Bash
 model: sonnet
 effort: medium
@@ -29,8 +30,9 @@ These standards apply to every `very_good_analysis` upgrade.
 
 Confirm two things before proceeding:
 
-1. **Target version** — if the user didn't specify a version, fetch the latest from the pub.dev API
-   and use that. Don't ask — just look it up and proceed:
+1. **Target version** — use `$ARGUMENTS` as the target version when the user supplied one
+   (e.g. `10.0.0`). If `$ARGUMENTS` is empty, fetch the latest from the pub.dev API and use
+   that. Don't ask — just look it up and proceed:
 
     ```bash
     curl -s https://pub.dev/api/packages/very_good_analysis | jq -r '.latest.version'
