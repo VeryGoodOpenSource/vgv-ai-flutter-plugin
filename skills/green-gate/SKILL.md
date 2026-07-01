@@ -49,8 +49,8 @@ Apply these to ALL green-gate work:
 - **Exit only on observed numbers** — the loop terminates only after a single
   final iteration in which analyze is clean, format reports zero changes, all
   tests pass, and `min_coverage` is satisfied, all observed in the same round.
-  Declaring success from memory is forbidden; the success report carries the
-  actual numbers from that final round.
+  Declaring success from memory is forbidden; confirm success only with the
+  actual numbers observed in that final round.
 - **Pass `coverage: true`, `min_coverage`, and `check_ignore: true` together** —
   omitting `coverage: true` silently produces no `lcov.info` (mimics a
   misconfiguration); omitting `check_ignore: true` makes the `// coverage:ignore`
@@ -85,8 +85,8 @@ For each package root (see **Recursive / Monorepo**), run this algorithm:
    authoritative pass/fail. Parse `coverage/lcov.info` for the displayed
    percentage and per-file fix targets (advisory). If below target, author tests
    for the ranked under-covered files (via the `testing` skill), go to step 7.
-6. **Exit** — if all four gates are green in *this same iteration*, emit the
-   success report and stop. This is the only exit-green path.
+6. **Exit** — if all four gates are green in *this same iteration*, confirm
+   success with the observed numbers and stop. This is the only exit-green path.
 7. **Re-verify** — increment the iteration counter, recompute the failure
    fingerprint, check escalation triggers (no progress, oscillation, cap). If a
    trigger fires, escalate; otherwise loop back to step 2 and re-evaluate **every**
@@ -94,7 +94,7 @@ For each package root (see **Recursive / Monorepo**), run this algorithm:
 
 **One-pass no-op path** — invoked on an already-green package, iteration 1
 finds analyze clean, format reporting zero changes, all tests passing, and
-coverage at or above target. The loop emits the success report and exits without
+coverage at or above target. The loop confirms green and exits without
 editing a single file. A green package costs exactly one verify iteration.
 
 ---
@@ -252,7 +252,7 @@ touched, the iteration count, and the specific decision the user must make.
 ## Recursive / Monorepo
 
 - **All packages must pass** — continue on failure (fix every failing package),
-  then emit an aggregate report. One package's red gate does not abort the others.
+  then confirm each package's result. One package's red gate does not abort the others.
 - **Per-package iteration budget** — the cap of 5 is per package, not global, so
   a 12-package monorepo does not exhaust a global budget on package one.
 - **Shared package-root discovery** — walk for `pubspec.yaml` files. The
@@ -260,29 +260,8 @@ touched, the iteration count, and the specific decision the user must make.
   `mcp__very-good-cli__test --recursive` (`recursive: true`) covers.
 - **lcov path is `<package>/coverage/lcov.info`** — resolved per discovered root.
 - **Single `min_coverage` applies to all packages** — documented limitation: the
-  tool schema has no per-package coverage override. State the shared target in
-  the aggregate report.
-
----
-
-## Success Report
-
-Emit this only after the final iteration proved every gate green in the same
-round. Fill in observed numbers — never placeholders, never values recalled from
-an earlier round:
-
-```markdown
-## Green Gate: PASS — <package>
-
-- Analyze:    0 errors (mcp__dart__analyze_files)
-- Format:     clean — 0 files changed (mcp__dart__dart_format)
-- Tests:      <N> passed, 0 failed (mcp__very-good-cli__test)
-- Coverage:   <observed>% >= <target>% (min_coverage gate; lcov.info parsed)
-- Iterations: <n>/<cap>
-```
-
-For a monorepo, emit one block per package plus a one-line aggregate
-(`<P>/<P> packages green`).
+  tool schema has no per-package coverage override. State the shared target when
+  confirming coverage.
 
 ---
 
