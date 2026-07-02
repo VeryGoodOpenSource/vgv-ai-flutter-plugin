@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.0.5](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.0.4...v0.0.5) (2026-07-02)
+
+
+### Features
+
+* add argument-hint + $ARGUMENTS to sdk-upgrade and analysis-upgrade skills ([#122](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/122)) ([39fc856](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/39fc85684d7d58e79724f81b3465f841d19cd931))
+* add flutter-reviewer read-only subagent ([#117](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/117)) ([d513aac](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/d513aacbf389191c07c6266385d150d6e0276e44))
+* add green-gate skill ([#118](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/118)) ([71f28e7](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/71f28e7ddbb1aaa654a4e4ac912f5ed69089a45c))
+
+
+### Bug Fixes
+
+* auto-allow Very Good CLI MCP tools in all run modes ([#120](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/120)) ([0f3577e](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/0f3577ed87fdf0f51cc13949f82a7ad25101fd54))
+
+
+### Docs
+
+* how to test the plugin locally ([#119](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/119)) ([52c9a8d](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/52c9a8d7699cbe9ab362ee703838f796d34d6431))
+
 ## [0.0.4](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.0.3...v0.0.4) (2026-06-29)
 
 
