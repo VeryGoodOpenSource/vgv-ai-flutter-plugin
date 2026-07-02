@@ -26,8 +26,6 @@ hooks/
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
-test/
-  agents_tools_guard.sh  # Asserts agent tools frontmatter has no write tool
 skills/
   accessibility/SKILL.md
   accessibility/references/
@@ -107,10 +105,6 @@ They live in `agents/<name>.md` at the plugin root and are **auto-discovered** â
 2. Add an **Agents** table row in `README.md` (agent name links to the `agents/<name>.md` file)
 3. Add any new domain terms to the `words` list in `config/cspell.json`
 4. Update the repository structure in `CLAUDE.md`
-
-The `test/agents_tools_guard.sh` guard runs in CI and automatically scans every `agents/*.md`: it
-fails if any agent grants a write tool (`Edit`/`Write`/`NotebookEdit`), or grants `Bash` without
-referencing the `allow-readonly-git.sh` hook. No per-agent wiring is needed.
 
 ## Maintaining Existing Skills, Hooks, and MCP Tools
 

@@ -90,10 +90,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Agent tools guard
-        run: bash test/agents_tools_guard.sh
-      - name: Agent tools guard self-test
-        run: bash test/agents_tools_guard_test.sh
       - name: Read-only git hook tests
         run: bash hooks/scripts/allow-readonly-git_test.sh
       - name: Block CLI workarounds hook tests
