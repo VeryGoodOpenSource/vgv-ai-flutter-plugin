@@ -1,0 +1,51 @@
+{
+  "name": "very-good-engineering",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "gen:docs": "node scripts/generate-site-docs.mjs",
+    "predev": "npm run gen:docs",
+    "prebuild": "npm run gen:docs",
+    "type:check": "tsc",
+    "lint": "mdlint ./src/",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "format:version": "prettier --version"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.6",
+    "@astrojs/mdx": "^4.3.13",
+    "@astrojs/react": "4.4.2",
+    "@astrojs/starlight": "^0.37.5",
+    "@astrojs/starlight-tailwind": "^4.0.2",
+    "@fontsource/poppins": "^5.2.7",
+    "@tailwindcss/vite": "^4.1.18",
+    "astro": "^5.17.1",
+    "astro-iubenda": "^0.4.2",
+    "astro-seo": "^1.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sharp": "^0.34.5",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@laboratoria/mdlint": "^1.2.3",
+    "@octokit/rest": "^22.0.1",
+    "@octokit/types": "^16.0.0",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-astro": "^1.5.0",
+    "eslint-plugin-mdx": "^3.6.2",
+    "js-yaml": "^4.3.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-astro": "^0.14.1"
+  }
+}

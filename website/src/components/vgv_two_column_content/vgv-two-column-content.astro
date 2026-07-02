@@ -1,0 +1,22 @@
+---
+import Default from "@astrojs/starlight/components/TwoColumnContent.astro";
+import VGVFooter from "../vgv_footer/vgv-footer.astro";
+
+const route = Astro.locals.starlightRoute;
+const { hasSidebar } = route;
+---
+
+<Default>
+  <slot name="right-sidebar" slot="right-sidebar" />
+  <slot slot="default" />
+  {hasSidebar && <VGVFooter compact={true} />}
+</Default>
+
+{!hasSidebar && <VGVFooter />}
+
+<style is:inline>
+  .main-frame {
+    display: flex;
+    flex-direction: column;
+  }
+</style>

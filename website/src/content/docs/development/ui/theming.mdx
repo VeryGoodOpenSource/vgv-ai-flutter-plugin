@@ -1,0 +1,260 @@
+---
+title: Theming
+description: Theming best practices.
+---
+
+import { TabItem, Tabs } from "@astrojs/starlight/components";
+
+The theme plays a crucial role in defining the visual properties of an app, such as colors, typography, and other styling attributes. Inconsistencies within the theme can result in poor user experiences and potentially distort the intended design. Fortunately, Flutter offers a great design system that enables us to develop reusable and structured code that ensures a consistent theme.
+
+:::note
+Flutter uses [Material Design](https://docs.flutter.dev/ui/design/material) with [Material 3](https://m3.material.io/develop/flutter) enabled by default as of the Flutter 3.16 release.
+:::
+
+:::tip[Did you know?]
+Not everyone in the community is happy about Material and Cupertino being baked into the framework. Check out these discussions:
+
+- https://github.com/flutter/flutter/issues/101479
+- https://github.com/flutter/flutter/issues/110195
+
+:::
+
+## Use ThemeData
+
+By using `ThemeData`, widgets will inherit their styles automatically which is especially important for managing light/dark themes as it allows referencing the same token in widgets and removes the need for conditional logic.
+
+<Tabs>
+  <TabItem label="Bad ❗️">
+    ```dart
+    class BadWidget extends StatelessWidget {
+      const BadWidget({super.key});
+
+      @override
+      Widget build(BuildContext context) {
+        return ColoredBox(
+          color: Theme.of(context).brightness == Brightness.light
+              ? Colors.white
+              : Colors.black,
+          child: Text(
+            'Bad',
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Colors.black
+                  : Colors.white,
+            ),
+          ),
+        );
+      }
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+The above widget might match the design and visually look fine, but if you continue this structure, any design updates could result in you changing a bunch of files instead of just one.
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    class GoodWidget extends StatelessWidget {
+      const GoodWidget({super.key});
+
+      @override
+      Widget build(BuildContext context) {
+        final theme = Theme.of(context);
+        final colorScheme = theme.colorScheme;
+        final textTheme = theme.textTheme;
+
+        return ColoredBox(
+          color: colorScheme.surface,
+          child: Text(
+            'Good',
+            style: textTheme.bodyLarge,
+          ),
+        );
+      }
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+Now, we are using `ThemeData` to get the `ColorScheme` and `TextTheme` so that any design update will automatically reference the correct value.
+
+## Avoid Conditional Logic
+
+It's generally recommended to steer clear of using conditional logic in UI for theming. This approach can complicate testing and make the code less readable. By leveraging Flutter's built-in design system, your app can have cleaner, more maintainable code that ensures consistent styling.
+
+## Typography
+
+Implementing typography is generally straightforward, but it's also easy to make mistakes, such as forgetting to adjust `TextStyle` attributes like `height` or resorting to hardcoded values instead of utilizing `TextTheme`.
+
+Let's break down typography into three sections:
+
+1. [Importing Fonts](#importing-fonts)
+2. [Custom Text Styles](#custom-text-styles)
+3. [TextTheme](#texttheme)
+
+### Importing Fonts
+
+To keep things organized, fonts are generally stored in an `assets` folder:
+
+```txt
+assets/
+  |- fonts/
+  |   - Inter-Bold.ttf
+  |   - Inter-Regular.ttf
+  |   - Inter-Light.ttf
+```
+
+Then declared in the `pubspec.yaml` file:
+
+```yaml
+flutter:
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Light.ttf
+          weight: 300
+```
+
+At this point, the font is imported and ready to use. However, to ensure type safety, we recommend using [flutter_gen](https://pub.dev/packages/flutter_gen) to generate code for our font. Here's an example what that generated code might look like:
+
+```dart
+/// GENERATED CODE - DO NOT MODIFY BY HAND
+/// *****************************************************
+///  FlutterGen
+/// *****************************************************
+
+// coverage:ignore-file
+// ignore_for_file: type=lint
+// ignore_for_file: directives_ordering,unnecessary_import,implicit_dynamic_list_literal,deprecated_member_use
+
+class FontFamily {
+  FontFamily._();
+
+  /// Font family: Inter
+  static const String inter = 'Inter';
+}
+```
+
+### Custom Text Styles
+
+Whether importing a custom font or using the default one, it's a good idea to create a custom class for your text styles to maintain consistency and simplify updates across your app. Let's take a look at this example:
+
+```dart
+abstract class AppTextStyle {
+  static const TextStyle titleLarge = TextStyle(
+    fontSize: 20,
+    height: 1.3,
+    fontWeight: FontWeight.w500,
+  );
+}
+```
+
+With this setup, any updates to the style are centralized which reduces the need to find it in multiple locations.
+
+### TextTheme
+
+The last step to implement typography is to update the [TextTheme](https://api.flutter.dev/flutter/material/TextTheme-class.html). Both `TextTheme` and [Custom Text Styles](#custom-text-styles) serve important roles but cater to different aspects of text styling. The benefit of using `TextTheme` is the seamless integration into `ThemeData` that allows for consistent application of text styles across widgets that use the current theme.
+
+Here's a basic example:
+
+```dart
+ThemeData(
+  textTheme: TextTheme(
+    titleLarge: AppTextStyle.titleLarge,
+  ),
+),
+```
+
+Widgets can now reference the text style through `ThemeData`:
+
+```dart
+class TitleWidget extends StatelessWidget {
+  const TitleWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Text(
+      'Title',
+      style: textTheme.titleLarge,
+    );
+  }
+}
+```
+
+## Colors
+
+Based on the [Material 3 color system](https://m3.material.io/styles/color/system/overview), Flutter offers a [`ColorScheme`](https://api.flutter.dev/flutter/material/ColorScheme-class.html) class that includes a set of 45 colors, which can be utilized to configure the color properties of most components. Instead of using an absolute color such as `Colors.blue` or `Color(0xFF42A5F5)`, we recommend using [`Theme.of`](https://api.flutter.dev/flutter/material/Theme/of.html) to access the local `ColorScheme`. This `ColorScheme` can be configured within [`ThemeData`](#use-themedata) using a custom colors class such as `AppColors`.
+
+### Custom Colors
+
+Whether using default [Material Colors](https://api.flutter.dev/flutter/material/Colors-class.html) or custom ones, we recommend creating a custom class for your colors for easy access and consistency.
+
+```dart
+abstract class AppColors {
+  static const primaryColor = Color(0xFF4F46E5);
+  static const secondaryColor = Color(0xFF9C27B0);
+}
+```
+
+### ColorScheme
+
+Once we have a custom class for colors, update the `ColorScheme`:
+
+```dart
+ThemeData(
+  colorScheme: ColorScheme(
+    primary: AppColors.primaryColor,
+    secondary: AppColors.secondaryColor,
+  ),
+),
+```
+
+Now widgets referencing those tokens will use the colors defined in `AppColors`, ensuring consistency across the app.
+
+## Component Theming
+
+Flutter provides a variety of [Material component widgets](https://docs.flutter.dev/ui/widgets/material) that implement the Material 3 design specification.
+Material components primarily rely on the [`colorScheme`](https://api.flutter.dev/flutter/material/ThemeData/colorScheme.html) and [`textTheme`](https://api.flutter.dev/flutter/material/ThemeData/textTheme.html) for their styling, but each widget also has its own customizable theme as part of [`ThemeData`](https://api.flutter.dev/flutter/material/ThemeData-class.html).
+
+For instance, if we want all [`FilledButton`](https://api.flutter.dev/flutter/material/FilledButton-class.html) widgets to have a minimum width of `72`, we can use [`FilledButtonThemeData`](https://api.flutter.dev/flutter/material/FilledButtonThemeData-class.html):
+
+```dart
+ThemeData(
+  filledButtonTheme: FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      minimumSize: const Size(72, 0),
+    ),
+  ),
+),
+```
+
+We recommend leveraging component theming to customize widgets whenever possible, rather than applying customizations directly within each widget's code. Centralizing these customizations in `ThemeData` will help your widgets [avoid conditional logic](#avoid-conditional-logic) and ensure theming consistency in your app.
+
+## Spacing
+
+Spacing is one of the most important aspects of theming and design. If the UI is created without intentional spacing, users are likely to have a bad experience as the content of the app may be overwhelming and hard to navigate. Good designs will generally follow a spacing system using a base unit to simplify the creation of page layouts and UI.
+
+Just as [custom text styles](#custom-text-styles) and [custom colors](#custom-colors) can be centralized in a class, spacing can also follow this setup:
+
+```dart
+abstract class AppSpacing {
+  static const double spaceUnit = 16;
+  static const double xs = 0.375 * spaceUnit;
+  static const double sm = 0.5 * spaceUnit;
+  static const double md = 0.75 * spaceUnit;
+  static const double lg = spaceUnit;
+}
+```
+
+Now, anytime spacing needs to be added to a widget, you can reference this class to ensure consistency and avoid hardcoded values.

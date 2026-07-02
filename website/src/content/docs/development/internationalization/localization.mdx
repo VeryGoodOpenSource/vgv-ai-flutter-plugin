@@ -1,0 +1,132 @@
+---
+title: Localization
+description: Recommended practices to localize software and make it accessible in multiple languages.
+---
+
+In the modern and global world, it is likely that your app will be used by people that speak another language. With internationalization, you will write your app in a way that allows you to easily change texts and layouts based on the user language.
+
+Even if you are not planning to support other languages in your app's first version, **we highly recommend using internationalization**. The overhead is small and the advantages in the long run are big, making your project scalable and setting it up for success.
+
+## Definitions
+
+Before we start with the recommendations, let's define some terminology:
+
+- Locale: Set of properties that define the user region, language and other user preferences like the currency, time or number formats.[^1]
+- Localization: Process of adapting software for a specific language by translating text and adding region specific layouts and components.[^1]
+- Internationalization: Process of designing software in a way that can be adapted (localized) to different languages without engineering changes.[^1]
+
+[^1]: Richard Ishida, W3C, Susan K. Miller, Boeing. [Localization vs Internationalization][i18n_l10n_locale_definitions]
+
+:::note
+Internationalization is often referred as i18n and localization as l10n since the 18 and 10 in both acronyms refer to the number of characters between the first and the last letters of each term.
+:::
+
+## Frontend
+
+We can use Flutter's built-in support for localization.
+
+1. Start by setting up internationalization. In Flutter, you will have to install the `flutter_localizations` and `intl` packages. Also, enable the `generate` flag in the `flutter` section of the pubspec file:
+
+```yaml
+flutter:
+  generate: true
+```
+
+2. Add a localization configuration file in the root directory of your project, called `l10n.yaml` with the following content:
+
+```yaml
+arb-dir: lib/l10n/arb
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+nullable-getter: false
+preferred-supported-locales: [en]
+```
+
+Make sure to update these values based on your needs. We recommend setting up the preferred locale manually to avoid Flutter selecting it from a list in alphabetical order.
+
+:::note
+Check out the [documentation][l10n_file_documentation] regarding the configuration values supported by the `l10n.yaml` file to know more.
+:::
+
+3. Create your template localization file inside `<PROJECT>/lib/l10n/arb/` called `app_en.arb`.
+
+```json
+{
+  "helloWorld": "Hello World!"
+}
+```
+
+4. Add other languages by creating new App Resource Bundle (.arb) files in the same folder. For example let's create the Spanish translation in `app_es.arb`.
+
+```json
+{
+  "helloWorld": "¡Hola Mundo!"
+}
+```
+
+5. Generate the localization files to be used across the app by running `flutter gen-l10n`.
+
+6. Add the localizations delegates and supported locales to your app widget:
+
+```dart
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+const MaterialApp(
+  title: 'Localizations Sample App',
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
+);
+```
+
+7. Finally, you can use your localized messages across the app.
+
+```dart
+Text(
+  AppLocalizations.of(context).helloWorld,
+  style: Theme.of(context).textTheme.bodyMedium,
+)
+```
+
+:::tip
+If you find yourself repeating `AppLocalizations.of(context)` many times and find it cumbersome, you can create an extension to make it easier to access the localized strings:
+
+```dart
+extension AppLocalizationsX on BuildContext {
+  AppLocalizations get l10n => AppLocalizations.of(this);
+}
+```
+
+:::
+
+Check out the [Flutter documentation][flutter_i18n_docs] on this topic to find more details about the implementation.
+
+:::tip
+You can save time configuring the localizations when creating a new project by using Very Good CLI and running `very_good create flutter_app <app_name>`. This command will create the demo counter app with the English template file and all the internationalization configuration to start using it, as well as a readme section explaining how to add new strings.
+:::
+
+### UI Libraries
+
+It's common to create components in a different package that do not have access to the localized strings. The easiest solution to support localization is to allow these components to receive the required strings as parameters, passing them from the main app.
+
+## Backend
+
+Some applications don't require the backend to send any user-facing strings to the frontend. However, there are cases where this is needed, like a recipes app where you won't be storing all recipes in the device. To internationalize your app, you can follow a similar approach as we did for the frontend:
+
+- Create database entries with translated content for each language you want to support.
+- Require client to transmit the user's locale with a backend request or when starting a session.
+- Decide which string should be returned based on the user locale.
+
+### Error messages
+
+We can leverage multiple error-handling strategies on the client-side: silently fail, retry, show a message, etc. Whenever an error message is received, however, it must be localized.
+
+We recommend that the backend return the appropriate [HTTP status codes][http_status_codes] so the frontend can map those codes to localization keys and custom messages.
+
+However, there are times where the HTTP status code does not give enough information and we want to be more specific to the user. In these cases, we should return an error constant and map it to a localized string in the app. For example, if we have a shopping cart where we can use a promo code, the server could return a 400 (bad request) with a custom error code in the body if the promo code was invalid: `invalid_code`, `expired_code`, `limit_reached`, `unqualified_item`, `already_used`, etc.
+
+---
+
+[i18n_l10n_locale_definitions]: https://www.w3.org/International/questions/qa-i18n
+[l10n_file_documentation]: https://docs.flutter.dev/ui/accessibility-and-internationalization/internationalization#configuring-the-l10n-yaml-file
+[flutter_i18n_docs]: https://docs.flutter.dev/ui/accessibility-and-internationalization/internationalization
+[http_status_codes]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status

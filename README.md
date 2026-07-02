@@ -113,6 +113,31 @@ Every skill includes:
 - **Common workflows** — step-by-step guides for tasks like "adding a new feature" or "adding a new route"
 - **Anti-patterns** — what to avoid and why
 
+## Website
+
+The [Very Good Engineering](https://engineering.verygood.ventures) website lives in [`website/`](website) (Astro + Starlight). The skills are the **single source of truth** — the site's best-practice and tooling pages are generated from the `SKILL.md` files, so the documentation can never drift from the guidance Claude uses.
+
+A skill is published to the site when its frontmatter includes a `web:` block:
+
+```yaml
+web:
+  section: best-practices   # or "tooling"
+  title: Bloc               # optional
+  order: 2                  # optional
+```
+
+Working on the site:
+
+```bash
+cd website
+npm ci
+npm run gen:docs   # regenerate pages from skills (also runs on predev/prebuild)
+npm run dev        # local preview
+npm run build      # production build
+```
+
+Never hand-edit files under `website/src/content/docs/best-practices/`, `website/src/content/docs/tooling/`, or `website/src/generated/` — they are regenerated from skills and carry a `DO NOT EDIT` banner. CI fails if the committed pages are out of sync with the skills.
+
 ## MCP Integration
 
 This plugin includes a `.mcp.json` configuration that connects Claude Code to two MCP servers — the **Dart and Flutter MCP server** (`dart mcp-server`) and the **Very Good CLI MCP server** (`very_good mcp`). This gives Claude the ability to execute Dart, Flutter, and Very Good CLI actions directly, complementing the skills which provide architectural guidance and best practices.

@@ -1,0 +1,165 @@
+---
+title: Our Philosophy
+description: Development philosophy at Very Good Ventures.
+sidebar:
+  order: 1
+---
+
+import { TabItem, Tabs } from "@astrojs/starlight/components";
+import Diagram from "~/components/diagram.astro";
+import goodCodeDark from "./images/good_code_dark.png";
+import goodCodeLight from "./images/good_code_light.png";
+
+Very Good Ventures has consolidated a wide variety of popular coding practices into a single, opinionated approach we refer to as "Very Good Architecture."
+
+Our architecture practices have repeatedly enabled us to "ship fast and ship safe," ensuring we deliver quality software on time, every time.
+
+We believe a good software architecture is defined by the following qualities:
+
+- 💪 Consistent: offer strong opinions to complex problems, like state management.
+- 🧘‍♀️ Flexible: enable features to be easily refactored or replaced.
+- 🤓 Approachable: facilitate rapid onboarding and training, even for junior developers.
+- 🧪 Testable: easy to create automated tests and achieve 100% code coverage.
+- 🏎️ Performant: execute quickly by default.
+- 📱 Multiplatform: build one app that works on every platform.
+
+Over the years, we have distilled practices from across the industry that allow us to meet these goals. While there are many ways to achieve the same goals, we are happy to demonstrate _at least one way_ that has been proven to work.
+
+## 🏁 Building for Success
+
+It's no secret that software development is expensive, time consuming, and prone to a wide range of challenges that result in the [vast majority of software projects failing][software-project-failure-factors].
+
+While some factors are outside our control as engineers, others are well within our ability to influence. When we make engineering process improvements, we directly increase the odds of positive business outcomes, ensuring the continued success of our business.
+
+To build complex, enterprise-grade software, we need to find a way to make doing each individual step along the way as easy as possible: i.e., [eat our elephant one bite at a time][eating-an-elephant].
+
+## 🍰 Layered Architecture
+
+For client applications, we follow a variation of [layered architecture](/development/architecture/architecture/) consisting of 3 main layers: presentation, business logic, and data.
+
+By clearly differentiating between architectural boundaries, we drastically reduce the amount of knowledge required to contribute to a single layer, as well as improve the code's readability and reduce the cognitive load required to maintain it. Separating layers allows us to test each piece of code individually (i.e., unit testing).
+
+## 🤖 Keep It Simple — for the Humans
+
+As AI continues to improve at code generation, it is becoming increasingly important to create well-organized code that we — the humans — can understand, verify, and maintain in the event of an outage or other emergency.
+
+To reduce the likelihood of introducing errors, we want to _create the least amount of readable code to perform the work by modeling the problem space [correctly][correctness]_. Interestingly enough, "least amount of code," "readable," and "correct" are often at odds, forming a pair of bounding constraints for our definition of _very good code_.
+
+<Diagram
+  light={goodCodeLight}
+  dark={goodCodeDark}
+  alt="Good code is a product of competing constraints: minimal, correct, and descriptive."
+/>
+
+Obviously, terms like "descriptive" are fairly subjective and vary between organizations. Historically, this has always required a human to oversee. We don't see that changing, but we do see AI assisting humans in maintaining code quality.
+
+In general, we try to leverage:
+
+- ✅ Declarative code wherever possible
+- ✅ Thoughtful naming
+- ✅ Object-oriented design patterns
+- ✅ Tests
+
+## 📜 Declarative Programming
+
+Declarative programming is [difficult to define][declarative] and depends on your frame of reference. We mean this to be "declaring" what the presentation logic or business logic of an application should be, depending on the purpose of the code.
+
+<Tabs>
+  <TabItem label="Declarative">
+    ```dart
+    // declarative coding
+    // (saying what it should be)
+
+    return Visualizer(
+      children: [
+        VisualElement(),
+      ],
+    );
+    ```
+
+  </TabItem>
+  <TabItem label="Imperative">
+    ```dart
+    // imperative coding
+    // (saying what should happen)
+
+    final visualizer = Visualizer();
+    final text = VisualElement();
+    visualizer.add(text);
+
+    return visualizer;
+    ```
+
+</TabItem>
+</Tabs>
+
+We've found that most code quality-of-life improvements are the result of making code more declarative. After all, it's usually easier to reason about business logic than it is to reason about business logic **and** all the implementation details.
+
+## 🧨 Reactive Programming
+
+We use reactive programming techniques (where necessary) to manipulate streams of data. Reactive programming technically falls under "declarative" programming because of how it describes data transformations.
+
+```dart
+void main() {
+// The stream does not run the underlying iterator until we
+// add a listener.
+final stream = Stream<int>.fromIterable([1, 2, 3, 4, 5]);
+
+ // 2, 3, 4, 5, 6
+final mappedStream = stream.map((value) => value + 1);
+
+mappedStream.listen((value) {
+  print(value);
+});
+}
+```
+
+:::caution
+We introduce reactive code cautiously, typically only leveraging it at the repository layer to broadcast data changes to view-specific business logic. While reactive code is technically "declarative", it describes how the data is transformed, not necessarily the business logic itself: i.e., it should be the underlying plumbing of the business logic.
+
+Additionally, complex data transformations are known for being difficult to grasp. Because of their tremendous power and flexibility, reactive tools make it easy to accidentally introduce coupling between components in the same architecture layer. In our experience, unintended coupling is by far the most common architectural pain point.
+
+For this reason, we consider reactive programming to be like glue — it's extremely strong, but it's sticky and it gets everywhere if you're not careful.
+:::
+
+## 💪 Consistency
+
+We have strong opinions about tests, dependency injection, state management, and organizing business logic. While these opinions are based on our extensive experience, we are also continually striving to document best practices as they evolve over time — which is why this site exists.
+
+By adopting opinionated solutions, we ensure that each project follows a familiar structure with similar patterns and packages. Consistency reduces the learning curve for developers, enabling them to ramp up in a fraction of the time. Our [code review practices](/general-practices/code_review/) reinforce this consistency across the team.
+
+## 🧘‍♀️ Flexibility
+
+Businesses rapidly change product requirements to meet demand or remain competitive. Our variation of layered architecture allows us to move quickly while still writing high quality code that's easy to refactor. By enforcing strong opinions in the codebase, we create code that is highly similar between features, making it easier for a developer to get up to speed and contribute efficiently.
+
+## 🤓 Approachability
+
+As always, there are trade-offs to every approach. Our approach to state management requires a certain amount of boilerplate, but we find the additional rigor allows us to easily understand what's going on, making it easy to refactor quickly.
+
+## 🏎️ Performance
+
+Wherever feasible, we leverage technologies that compile down to machine code. When implementing business logic or other core algorithms, we are mindful of algorithmic [time complexity][time-complexity], avoiding nested loops and expensive transformations wherever possible.
+
+We also exercise discretion in selecting third party libraries and frameworks, using our extensive client experience to make informed decisions based on learnings consolidated across dozens of projects.
+
+Most multiplatform projects are best served by building with Google's cross-platform app development toolchain, [Flutter]. Flutter is performant, developer friendly, and fully open source — ensuring it is resilient to changes in the industry and supported well into the future.
+
+## 📱 Multiplatform
+
+It's easier to maintain one high-quality codebase than it is to maintain two — especially if exact feature parity and precise deadlines are a priority.
+
+For most apps, we recommend Google's Flutter framework. Flutter allows you to build one app that will run on iOS, Android, Web, Linux, macOS, and Windows. Apps are written in Dart, a modern programming language in the same family as Java and C#. Over 45,000 packages have been published in Dart on [pub.dev], establishing Dart and Flutter as a mature, well-supported ecosystem.
+
+Finally, Flutter provides an excellent out-of-the-box experience that enable developers to build more quickly than other frameworks. Hot reload, an extensive widget library, and a rich set of native platform plugins seamlessly assist developers in building beautiful apps.
+
+## 🎉 A rising tide...
+
+As a team, we have many cumulative years of experience with apps of all kinds, from small startups to large enterprises. We share our secrets because we believe that good software lifts the entire industry. It's already hard enough to write good software — so why make it harder?
+
+[Flutter]: https://flutter.dev
+[software-project-failure-factors]: https://www.academia.edu/23261973/What_factors_lead_to_software_project_failure
+[eating-an-elephant]: https://www.mechanical-orchard.com/insights/how-to-eat-an-elephant
+[correctness]: https://en.wikipedia.org/wiki/Correctness_(computer_science)
+[declarative]: https://stackoverflow.com/a/15382180
+[time-complexity]: https://en.wikipedia.org/wiki/Time_complexity
+[pub.dev]: https://pub.dev

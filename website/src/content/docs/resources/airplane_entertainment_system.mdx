@@ -1,0 +1,241 @@
+---
+title: Airplane Entertainment System
+description: A sample project that simulates an airplane entertainment system.
+sidebar:
+  order: 2
+---
+
+import { Image, Picture } from "astro:assets";
+import airplaneEntertainmentSystemScreenshot from "./images/airplane_entertainment_system.png";
+import flightTrackers from "./images/flight_tracker.png";
+import transitionAnimation from "./images/transition_animation.gif";
+
+The Airplane Entertainment System simulates an in-flight entertainment system that provides mock flight progress updates, weather, and an audio player.
+
+<Image
+  src={airplaneEntertainmentSystemScreenshot}
+  alt="Screenshot of the Airplane Entertainment System."
+/>
+
+The source code for this project is available on [GitHub](https://github.com/VGVentures/airplane_entertainment_system). To view the live demo, click [here](https://vgventures.github.io/airplane_entertainment_system/).
+
+## Architecture
+
+The Airplane Entertainment System was built using [layered architecture](../../architecture/architecture). In the interest of a well organized project, the data, repository, and presentation layers have been separated out into their own packages. We will take an in-depth look at the flight tracker feature of the app to see how it was implemented using this architecture.
+
+### Flight Tracker
+
+<Image
+  src={flightTrackers}
+  alt="Screenshot of the flight tracker."
+  width="500"
+/>
+
+The flight tracker simulates a flight between Newark and New York City, providing updates on the flight's progress every minute. The flight is scheduled to take off at 1:00 PM and is estimated to take 45 minutes, but the simulated delays can change the arrival time. For simplicity, a timestamp is included in the API response that begins at 1:00 PM and is incremented by one minute for each update.
+
+#### Flight API Client
+
+The [Flight API Client](https://github.com/VGVentures/airplane_entertainment_system/tree/main/packages/flight_api_client) emits of stream of mock flight data every minute to its listeners. In our layered architecture, the Flight API Client is part of the data layer. The API is designed to provide basic flight information so that any information that is derived from this data, like the remaining flight time, can be calculated in a different layer.
+
+#### Flight Information Repository
+
+The [Flight Information Repository](https://github.com/VGVentures/airplane_entertainment_system/tree/main/packages/flight_information_repository) is responsible for taking the raw data provided by the Flight API Client, applying domain business logic to the data, then providing that data to the presentation layer.
+
+```dart
+  BehaviorSubject<FlightInformation>? _flightController;
+
+  /// Retrieves the flight information.
+  Stream<FlightInformation> get flightInformation {
+    if (_flightController == null) {
+      _flightController = BehaviorSubject();
+
+      _flightApiClient.flightInformation.listen((flightInformation) {
+        _flightController!.add(flightInformation);
+      });
+    }
+
+    return _flightController!.stream;
+  }
+```
+
+:::tip
+Notice that we are using a [BehaviorSubject](https://pub.dev/documentation/rxdart/latest/rx/BehaviorSubject-class.html) here from the [rxdart](https://pub.dev/packages/rxdart) package as a stream controller. Since the repository could be used to cache the data, the BehaviorSubject is used to provide the last emitted value to any new listeners.
+:::
+
+#### Flight Tracking View
+
+The [Flight Tracking](https://github.com/VGVentures/airplane_entertainment_system/tree/main/lib/flight_tracking) view consists of the UI components to display the flight information. The [FlightTrackingBloc](https://github.com/VGVentures/airplane_entertainment_system/blob/main/lib/flight_tracking/bloc/flight_tracking_bloc.dart) updates the UI with the latest information from the Flight Information Repository. This keeps all of the business logic, like fetching the data and calculating the remaining flight time, outside of the widget.
+
+## Navigation
+
+The Airplane Entertainment System uses bottom and side navigation bars to switch between the different tabs of the app. To maintain each tab's state, we use GoRouter's [StatefulShellRoute](https://pub.dev/documentation/go_router/latest/go_router/StatefulShellRoute-class.html). By using type-safe routes, we can setup our navigation structure in [routes.dart](https://github.com/VGVentures/airplane_entertainment_system/blob/main/lib/app_router/routes.dart).
+
+```dart
+@TypedStatefulShellRoute<HomeScreenRouteData>(
+  branches: [
+    TypedStatefulShellBranch<OverviewPageBranchData>(
+      routes: [
+        TypedGoRoute<OverviewPageRouteData>(
+          name: 'overview',
+          path: '/overview',
+        ),
+      ],
+    ),
+    TypedStatefulShellBranch<MusicPageBranchData>(
+      routes: [
+        TypedGoRoute<MusicPlayerPageRouteData>(
+          name: 'music',
+          path: '/music',
+        ),
+      ],
+    ),
+  ],
+)
+```
+
+The `HomeScreenRouteData` class is the route to our [AirplaneEntertainmentSystemScreen](https://github.com/VGVentures/airplane_entertainment_system/blob/main/lib/airplane_entertainment_system/view/airplane_entertainment_system_screen.dart) widget, which is the container for our navigation bars and content.
+
+```dart
+@immutable
+class HomeScreenRouteData extends StatefulShellRouteData {
+  const HomeScreenRouteData();
+
+  @override
+  Widget builder(
+    BuildContext context,
+    GoRouterState state,
+    StatefulNavigationShell navigationShell,
+  ) =>
+      navigationShell;
+
+  static Widget $navigatorContainerBuilder(
+    BuildContext context,
+    StatefulNavigationShell navigationShell,
+    List<Widget> children,
+  ) {
+    return AirplaneEntertainmentSystemScreen(
+      navigationShell: navigationShell,
+      children: children,
+    );
+  }
+}
+```
+
+:::note
+The `routes.dart` file is used to create the generated routing code. Notice that the `static` `$navigatorContainerBuilder` function is added here so it can be provided to the `StatefulShellRoute` when the code is generated. More information about the `navigatorContainerBuilder` can be found in the [StatefulShellRoute Transition Animations](#statefulshellroute-transition-animations) section below.
+:::
+
+`OverviewPageBranchData` and `MusicPageBranchData` classes represent your branches. `OverviewPageRouteData` and `MusicPlayerPageRouteData` classes represent the routes within the branches. Override `GoRouteData`'s `build` method to return the widget to display for the route.
+
+```dart
+@immutable
+class OverviewPageBranchData extends StatefulShellBranchData {
+  const OverviewPageBranchData();
+}
+
+@immutable
+class OverviewPageRouteData extends GoRouteData {
+  const OverviewPageRouteData();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const OverviewPage();
+}
+
+@immutable
+class MusicPageBranchData extends StatefulShellBranchData {
+  const MusicPageBranchData();
+}
+
+@immutable
+class MusicPlayerPageRouteData extends GoRouteData {
+  const MusicPlayerPageRouteData();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) =>
+      const MusicPlayerPage();
+}
+```
+
+### StatefulShellRoute Transition Animations
+
+<Image
+  src={transitionAnimation}
+  alt="Transition animation when switching between tabs."
+  width="300"
+/>
+
+To add custom transition animations to your routes that are in the same navigation stack, override the `GoRouteData`'s `pageBuilder` method. Your custom animation will then be used anytime you navigate to that route.
+
+However, when using a `StatefulShellRoute`, each tab has a separate [Navigator](https://api.flutter.dev/flutter/widgets/Navigator-class.html) for each branch. To add a transition animation when navigating between routes that are on different branches, like when switching between tabs, you must provide a custom [navigatorContainerBuilder](https://pub.dev/documentation/go_router/latest/go_router/StatefulShellRoute/navigatorContainerBuilder.html) to provide the `StatefulNavigationShell` and the children (Navigators) that are in your shell route to your "container" widget. The `StatefulNavigationShell` provides the current index of the child (Navigator) that is selected and a method to navigate to a specific child. Once you have this data, adding transition animations using [implicit animation](https://docs.flutter.dev/ui/animations/implicit-animations) widgets like `AnimatedSlide` is straightforward.
+
+In `airplane_entertainment_system.dart`, we create a widget that manages the transition animations between the children in the `StatefulShellRoute`.
+
+```dart
+class _AnimatedBranchContainer extends StatelessWidget {
+  const _AnimatedBranchContainer({
+    required this.currentIndex,
+    required this.children,
+  });
+
+  final int currentIndex;
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSmall = AesLayout.of(context) == AesLayoutData.small;
+    final axis = isSmall ? Axis.horizontal : Axis.vertical;
+
+    return Stack(
+      children: children.mapIndexed(
+        (int index, Widget navigator) {
+          return AnimatedSlide(
+            duration: const Duration(milliseconds: 600),
+            curve: index == currentIndex ? Curves.easeOut : Curves.easeInOut,
+            offset: Offset(
+              axis == Axis.horizontal
+                  ? index == currentIndex
+                      ? 0
+                      : 0.25
+                  : 0,
+              axis == Axis.vertical
+                  ? index == currentIndex
+                      ? 0
+                      : 0.25
+                  : 0,
+            ),
+            child: AnimatedOpacity(
+              opacity: index == currentIndex ? 1 : 0,
+              duration: const Duration(milliseconds: 300),
+              child: IgnorePointer(
+                ignoring: index != currentIndex,
+                child: TickerMode(
+                  enabled: index == currentIndex,
+                  child: navigator,
+                ),
+              ),
+            ),
+          );
+        },
+      ).toList(),
+    );
+  }
+}
+```
+
+The `_AnimatedBranchContainer` widget is a custom implementation of the [StatefulShellRoute.indexedStack](https://pub.dev/documentation/go_router/latest/go_router/StatefulShellRoute/StatefulShellRoute.indexedStack.html) constructor. We must provide our own `Stack` widget to contain the children and manually update the index of the children within the `Stack` when the route changes. Since implicit animations automatically update when any of their properties change, we don't have to worry about creating custom animation objects or managing their state. Wrapping our `navigator` widget in a [TickerMode](https://api.flutter.dev/flutter/widgets/TickerMode-class.html) widget ensures that any animation tickers for the non-selected `navigator` are disabled.
+
+To switch between tabs, simply call the `goBranch` method on the `StatefulNavigationShell` with the index of the tab you want to navigate to.
+
+```dart
+navigationShell.goBranch(
+  index,
+  initialLocation:
+      index == navigationShell.currentIndex,
+);
+```
+
+:::note
+Setting the `initialLocation` parameter to `true` will set the route to the initial location. This is sometimes the desired behavior when the user selects the tab that is already active.
+:::

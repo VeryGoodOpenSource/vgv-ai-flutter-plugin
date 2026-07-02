@@ -1,5 +1,9 @@
 ---
 name: navigation
+web:
+  section: best-practices
+  title: Navigation
+  order: 4
 description: Best practices for navigation and routing in Flutter using GoRouter.
 when_to_use: Use when creating, modifying, or reviewing routes, deep links, redirects, or navigation logic that uses package:go_router or package:go_router_builder.
 allowed-tools: Read Glob Grep

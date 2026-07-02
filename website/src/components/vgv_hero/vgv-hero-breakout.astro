@@ -1,0 +1,53 @@
+---
+interface Props {
+  firstUrl?: string;
+  secondUrl?: string;
+}
+
+const props = Astro.props;
+---
+
+<div
+  class="max-w-screen-xl px-5 mx-auto flex flex-col items-center justify-center dark:text-slate-300 text-slate-600"
+>
+  <slot name="heading" />
+
+  <a class="block quiet" href={props.firstUrl ?? ""}>
+    <div class="quiet grid md:grid-cols-2 py-10 min-w-[100%]">
+      <div class="grid place-items-center pb-10 md:pb-0 md:order-2 mx-8">
+        <slot name="first-image" />
+      </div>
+
+      <div class="grid place-items-center">
+        <div class="max-w-lg h-[100%]">
+          <slot name="first-content" />
+        </div>
+      </div>
+    </div>
+  </a>
+
+  <a class="block quiet" href={props.secondUrl ?? ""}>
+    <div class="grid md:grid-cols-2 py-10 min-w-[100%]">
+      <div class="grid place-items-center pb-10 md:pb-0 order-1 mx-8">
+        <slot name="second-image" />
+      </div>
+      <div class="grid place-items-center order-1">
+        <div class="max-w-lg h-[100%]">
+          <slot name="second-content" />
+        </div>
+      </div>
+    </div>
+  </a>
+</div>
+
+<style>
+  .quiet,
+  .quiet:visited,
+  .quiet:hover,
+  .quiet:active,
+  .quiet:focus,
+  .quiet:focus-visible {
+    text-decoration: inherit;
+    color: inherit;
+  }
+</style>

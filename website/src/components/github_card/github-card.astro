@@ -1,0 +1,38 @@
+---
+import { Icon } from "@astrojs/starlight/components";
+import { getRepository } from "~/utils/github_repositories";
+import Forks from "./components/forks.astro";
+import Language from "./components/language.astro";
+import Stars from "./components/stars.astro";
+import css from "./github-card.module.css";
+
+export interface Props {
+  owner: string;
+  repo: string;
+  logo?: string;
+}
+
+const props = Astro.props;
+const repo = await getRepository(props.owner, props.repo);
+---
+
+<a href={repo.url} class={css.ghCard}>
+  <header class={css.header}>
+    <div class={css.ghLogo}>
+      <Icon name="github" size="24px" />
+    </div>
+    <div class={css.headerTitle}>
+      <h2 class="text-nowrap">{props.owner}/</h2>
+      <h1 class="text-nowrap">{props.repo}</h1>
+    </div>
+    <div class={css.headerLogo}>
+      <img src={props.logo} width="auto" height="auto" />
+    </div>
+  </header>
+  <div class={css.description}>{repo.description}</div>
+  <footer class={css.footer}>
+    <Stars stars={repo.stars} />
+    <Forks forks={repo.forks} />
+    <Language language={repo.language} languageColor={repo.languageColor} />
+  </footer>
+</a>

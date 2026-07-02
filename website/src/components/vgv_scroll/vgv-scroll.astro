@@ -1,0 +1,49 @@
+---
+
+---
+
+<div
+  class="max-w-screen-xl px-5 mx-auto flex flex-col items-center justify-center dark:text-slate-300 text-slate-600 text-center"
+>
+  <div class="grid place-items-center">
+    <div class="max-w-lg h-[100%]">
+      <slot name="title" />
+    </div>
+  </div>
+</div>
+
+<div class="relative overflow-x-clip overflow-y-visible mx-8">
+  <div class="relative lg:flex py-5 group overflow-visible">
+    <div class="absolute scroll-shadow left"></div>
+    <div class="absolute scroll-shadow right"></div>
+    <div
+      class="lg:motion-safe:animate-scroll w-auto overflow-x-auto flex flex-nowrap min-w-full shrink-0 items-stretch gap-0 overflow-y-visible"
+    >
+      <slot name="default" />
+    </div>
+    <div
+      class="lg:motion-safe:animate-scroll hidden lg:motion-reduce:hidden lg:flex min-w-full shrink-0 items-stretch gap-0 overflow-y-visible"
+    >
+      <slot name="default" />
+    </div>
+  </div>
+</div>
+<style>
+  .scroll-shadow {
+    overflow: visible;
+    pointer-events: none;
+    width: 25px;
+    height: 100%;
+
+    z-index: 50;
+  }
+
+  .scroll-shadow.left {
+    left: 0px;
+    box-shadow: inset 25px 0px 12.5px -10px var(--sl-color-bg);
+  }
+  .scroll-shadow.right {
+    right: 0px;
+    box-shadow: inset -25px 0px 12.5px -10px var(--sl-color-bg);
+  }
+</style>

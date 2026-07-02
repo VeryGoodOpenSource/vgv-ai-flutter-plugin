@@ -1,5 +1,9 @@
 ---
 name: static-security
+web:
+  section: best-practices
+  title: Security
+  order: 10
 description: >
   Best practices for Flutter mobile app security. Covers static security concerns —
   not pen-testing or runtime analysis.

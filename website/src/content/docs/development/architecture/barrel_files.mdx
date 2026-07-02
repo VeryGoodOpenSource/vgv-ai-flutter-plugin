@@ -1,0 +1,148 @@
+---
+title: Barrel Files
+description: Best practices for exposing public facing files.
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+When building a package, a feature, or an API, we will create a folder structure with all the source code inside. If we stop here and don't export the files that will be required in other places of the app, we will force developers to have a long and messy import section. Furthermore, any refactor that affects file names in one feature will require changes in other places that could be avoided.
+
+For a package, the structure could look something like:
+
+<FileTree>
+
+- my_package/
+  - lib/
+    - src/
+      - models/
+        - model_1.dart
+        - model_2.dart
+      - widgets/
+        - widget_1.dart
+        - widget_2.dart
+  - test/
+  - pubspec.yaml
+
+</FileTree>
+
+And for a feature, it could look like:
+
+<FileTree>
+
+- my_feature/
+  - bloc/
+    - feature_bloc.dart
+    - feature_event.dart
+    - feature_state.dart
+  - view/
+    - feature_page.dart
+    - feature_view.dart
+  - widgets/
+    - widget_1.dart
+    - widget_2.dart
+
+</FileTree>
+
+In both cases, if we want to use both `widget_1.dart` and `widget_2.dart` in other parts of the app, we will have to import them separately like:
+
+```dart
+import 'package:my_package/lib/src/widgets/widget_1';
+import 'package:my_package/lib/src/widgets/widget_2';
+```
+
+In the case of a refactor, updating all those imports is inefficient. Barrel files help solve this problem.
+
+## Barrel files
+
+Barrel files are responsible for exporting other public facing files that should be made available to the rest of the app.
+
+It is recommended to create one barrel file per folder, exporting all files from that folder that could be required elsewhere. You should also have a top level barrel file to export the package as a whole.
+
+With these changes, let's update the folder structures for both scenarios.
+
+A package with barrel files should look like:
+
+<FileTree>
+
+- my_package/
+  - lib/
+    - src/
+      - models/
+        - model_1.dart
+        - model_2.dart
+        - models.dart
+      - widgets/
+        - widget_1.dart
+        - widget_2.dart
+        - widgets.dart
+    - my_package.dart
+  - test/
+  - pubspec.yaml
+
+</FileTree>
+
+And for a feature, it should look like:
+
+<FileTree>
+
+- my_feature/
+  - bloc/
+    - feature_bloc.dart
+    - feature_event.dart
+    - feature_state.dart
+  - view/
+    - feature_page.dart
+    - feature_view.dart
+    - view.dart
+  - my_feature.dart
+
+</FileTree>
+
+Finally let's see what these files contain. Continuing with the package example, we have three barrel files: `models.dart`, `widgets.dart` and `my_package.dart`.
+
+`models.dart`:
+
+```dart
+export 'model_1.dart';
+export 'model_2.dart';
+```
+
+`widgets.dart`:
+
+```dart
+export 'widget_1.dart';
+export 'widget_2.dart';
+```
+
+`my_package.dart`:
+
+```dart
+export 'src/models/models.dart';
+export 'src/widgets/widgets.dart';
+```
+
+:::caution
+In this example, we are exporting all files from the folder, but this is not always the case. If the `model_2.dart` uses the `model_1.dart` inside, but `model_1.dart` is not intended to be imported by the public, it should not be exported in the barrel file.
+:::
+
+## Bloc and barrel files
+
+By convention, blocs are typically broken into separate files consisting of the events, states, and the bloc itself:
+
+<FileTree>
+
+- bloc/
+  - feature_bloc.dart
+  - feature_event.dart
+  - feature_state.dart
+
+</FileTree>
+
+In this case, we don't add an extra barrel file since the `feature_bloc.dart` file is working as such, thanks to the `part of` directives. You can read more about it in the [bloc documentation][bloc_documentation].
+
+:::tip
+When working with barrel files, it might be a bit tedious to export every file manually. There is a handy [VSCode extension][vscode_extension] that allows you to export all files in a folder or export a file by adding it to the barrel file.
+:::
+
+[bloc_documentation]: https://bloclibrary.dev/#/flutterlogintutorial?id=authentication-bloc
+[vscode_extension]: https://github.com/orestesgaolin/dart-export-index

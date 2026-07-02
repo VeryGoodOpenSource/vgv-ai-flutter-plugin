@@ -1,0 +1,45 @@
+name: 🌎 Deploy Website
+
+on:
+  # Deploy on every push to main that touches the site or its source skills.
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - "skills/**"
+      - ".github/workflows/deploy.yaml"
+  workflow_dispatch:
+
+# Allow this job to clone the repo and create a Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Build with Astro
+        uses: withastro/action@v3
+        with:
+          # The website (and its `prebuild` gen:docs step) lives in website/.
+          path: ./website
+          node-version: 22
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,25 @@
+---
+
+---
+
+<div class="overflow-x-clip">
+  <div class="max-w-screen-xl mx-auto px-5">
+    <div class="grid lg:grid-cols-5 place-items-center relative">
+      <div
+        class="hero-contents px-5 max-w-sm md:max-w-max lg:col-span-2 lg:row-span-4 mt-8 ml-0 lg:mt-0 lg:ml-4"
+      >
+        <slot name="content" />
+        <slot name="actions" />
+      </div>
+      <div class="graphic-container py-3 lg:col-span-3 lg:-mr-44">
+        <slot name="graphic" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .hero-contents {
+    z-index: 5;
+  }
+</style>

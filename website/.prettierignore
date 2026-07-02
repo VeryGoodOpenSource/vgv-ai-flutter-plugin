@@ -1,0 +1,4 @@
+# Prettier collapses code blocks inside JSX components in MDX files.
+# This is a known bug: https://github.com/prettier/prettier/issues/15740
+# MDX content is linted by mdlint instead.
+**/*.mdx

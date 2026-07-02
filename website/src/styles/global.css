@@ -1,0 +1,24 @@
+@layer base, starlight, theme, components, utilities;
+
+@import "@astrojs/starlight-tailwind";
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --font-family: "Poppins", sans-serif;
+  --animate-scroll: scroll 75s linear infinite;
+}
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - 2.5rem));
+  }
+}
+
+:root {
+  /* Poppins is the primary font choice for Very Good Ventures */
+  --sl-font: "Poppins", sans-serif;
+}

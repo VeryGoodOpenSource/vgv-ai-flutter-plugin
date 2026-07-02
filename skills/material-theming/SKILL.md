@@ -1,5 +1,9 @@
 ---
 name: material-theming
+web:
+  section: best-practices
+  title: Material Theming
+  order: 5
 description: Best practices for Flutter theming using Material 3.
 when_to_use: Use when creating, modifying, or reviewing ThemeData, ColorScheme, TextTheme, component themes, spacing systems, or light/dark mode support.
 allowed-tools: Read Glob Grep

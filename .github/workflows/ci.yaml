@@ -17,6 +17,7 @@ jobs:
           globs: |
             **/*.md
             !CHANGELOG.md
+            !website
           config: 'config/custom.markdownlint.jsonc'
   spelling:
     name: ✍️ Spelling Check
@@ -29,6 +30,7 @@ jobs:
           files: |
             **/*.md
             !CHANGELOG.md
+            !website/**
           config: 'config/cspell.json'
   detect-changed-skills:
     name: 🔎 Detect Changed Skills
@@ -85,3 +87,28 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: Validate Plugin
         run: claude plugin validate .
+  site:
+    name: 🌐 Website
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate docs from skills
+        run: npm run gen:docs
+      - name: Verify generated docs are in sync with skills
+        run: |
+          if ! git diff --exit-code -- src/content/docs/best-practices src/content/docs/tooling src/generated; then
+            echo "::error::Generated website docs are out of date. Run 'npm run gen:docs' in website/ and commit the result."
+            exit 1
+          fi
+      - name: Build site
+        run: npm run build

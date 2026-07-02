@@ -1,0 +1,8 @@
+{
+  "replacementPatterns": [
+    {
+      "pattern": "^/(.*)$",
+      "replacement": "https://engineering.verygood.ventures/$1"
+    }
+  ]
+}

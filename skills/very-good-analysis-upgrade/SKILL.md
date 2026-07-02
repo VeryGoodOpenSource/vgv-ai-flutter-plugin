@@ -1,5 +1,9 @@
 ---
 name: very-good-analysis-upgrade
+web:
+  section: tooling
+  title: very_good_analysis Upgrade
+  order: 4
 description: Upgrade very_good_analysis lint package to new version across Dart/Flutter projects. Handles version bump, lint fixes, and PR creation.
 argument-hint: "[version]"
 allowed-tools: Read Glob Grep Bash

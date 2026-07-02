@@ -1,0 +1,220 @@
+---
+title: Testing Overview
+description: "VGV's approach to achieving 100% test coverage — why we test, how we organize tests, and what we expect on every project."
+---
+
+import { FileTree, TabItem, Tabs } from "@astrojs/starlight/components";
+
+At Very Good Ventures, our goal is to achieve 100% test coverage on all projects. Writing tests not only helps to reduce the number of bugs, but also encourages code to be written in a very clean, consistent, and maintainable way. While testing can initially add some additional time to the project, the trade-off is fewer bugs, higher confidence when shipping via our [CI/CD pipelines](/development/ci_cd/), and less time spent in QA cycles. For general principles on writing effective tests, see our [testing best practices](/development/testing/testing_best_practices/).
+
+## Organize test files
+
+Test files should be organized to match your project file structure.
+
+This `my_package` library contains `models` and `widgets`. The `test` folder should copy this structure:
+
+<FileTree>
+
+- my_package/
+  - lib/
+    - models/
+      - model_a.dart
+      - model_b.dart
+      - models.dart
+    - widgets/
+      - widget_1.dart
+      - widget_2.dart
+      - widgets.dart
+  - test/
+    ...
+
+</FileTree>
+
+<Tabs>
+  <TabItem label="Good ✅">
+    <FileTree>
+
+        - test/
+          - models/
+            - model_a_test.dart
+            - model_b_test.dart
+          - widgets/
+            - widget_1_test.dart
+            - widget_2_test.dart
+
+    </FileTree>
+
+  </TabItem>
+
+  <TabItem label="Bad ❗️">
+    <FileTree>
+
+      - test/
+        - model_a_test.dart
+        - model_b_test.dart
+        - widgets_test.dart
+
+    </FileTree>
+
+  </TabItem>
+</Tabs>
+
+> Note: `models.dart` and `widgets.dart` are barrel files and do not need to be tested.
+
+:::tip
+You can automatically create or find a test file when using the [Flutter VS Code Extension](https://docs.flutter.dev/tools/vs-code) by right-clicking on the file within the [explorer view](https://code.visualstudio.com/docs/getstarted/userinterface#_explorer-view) and selecting "Go to Tests" or using the ["Go to Test/Implementation File"](https://github.com/Dart-Code/Dart-Code/blob/09cb9828b7b315d667ee5dc97e9287a6c6c8655a/package.json#L323) command within the [command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette).
+:::
+
+:::note
+You can find more information about package layouts in the [Dart Package layout conventions](https://dart.dev/tools/pub/package-layout) and in [What makes a package](https://dart.dev/guides/libraries/create-packages#what-makes-a-package).
+:::
+
+## Assert test results using expect or verify
+
+All tests should have one or more statements at the end of the test asserting the test result using either an [expect](https://api.flutter.dev/flutter/flutter_test/expect.html) or [verify](https://pub.dev/documentation/mocktail/latest/).
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    testWidgets('calls [onTap] on tapping widget', (tester) async {
+      var isTapped = false;
+      await tester.pumpWidget(
+        SomeTappableWidget(
+          onTap: () => isTapped = true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(SomeTappableWidget());
+      await tester.pumpAndSettle();
+
+      expect(isTapped, isTrue);
+    });
+    ```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    testWidgets('can tap widget', (tester) async {
+      await tester.pumpWidget(SomeTappableWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(SomeTappableWidget());
+      await tester.pumpAndSettle();
+    });
+    ```
+
+  </TabItem>
+</Tabs>
+
+The above test would pass coverage on `SomeTappableWidget`, and pass as long as no exception is thrown, but it doesn't really tell any valuable information about what the widget should do.
+
+Now, we are explicitly testing that we have accessed the `onTap` property of `SomeTappableWidget`, which makes this test more valuable, because its behavior is also tested.
+
+## Use matchers in expectations
+
+[Matchers](https://api.flutter.dev/flutter/package-matcher_matcher/package-matcher_matcher-library.html) provides better messages in tests and should always be used in [expectations](https://api.flutter.dev/flutter/flutter_test/expect.html).
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    expect(name, equals('Hank'));
+    expect(people, hasLength(3));
+    expect(valid, isTrue);
+    ```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    expect(name, 'Hank');
+    expect(people.length, 3);
+    expect(valid, true);
+    ```
+
+  </TabItem>
+</Tabs>
+
+## Test with a single purpose
+
+Aim to test one scenario per test. You might end up with more tests in the codebase, but this is preferred over creating one single test to cover several cases. This helps with readability and debugging failing tests.
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    testWidgets('renders $WidgetA', (tester) async {});
+    testWidgets('renders $WidgetB', (tester) async {});
+    ```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    testWidgets('renders $WidgetA and $WidgetB', (tester) async {});
+    ```
+
+  </TabItem>
+</Tabs>
+
+## Test behavior, not properties
+
+When testing, especially when testing widgets, we should test the behavior of the widget, not its properties. For example, write a test that verifies tapping a button triggers the correct action, but don't waste time verifying the button has the correct padding if it's a static number in the code.
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    testWidgets('navigates to settings when button is tapped', (tester) async {
+      await tester.pumpWidget(MyApp());
+      
+      await tester.tap(find.byType(SettingsButton));
+      await tester.pumpAndSettle();
+      
+      expect(find.byType(SettingsPage), findsOneWidget);
+    });
+
+    testWidgets('displays error message when login fails', (tester) async {
+      await tester.pumpWidget(LoginPage());
+
+      await tester.enterText(find.byType(TextField), 'invalid@email.com');
+      await tester.tap(find.byType(LoginButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Invalid credentials'), findsOneWidget);
+    });
+    ```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    testWidgets('button has correct padding', (tester) async {
+      await tester.pumpWidget(
+        SettingsButton(
+          padding: EdgeInsets.all(16),
+        ),
+      );
+      
+      final button = tester.widget<SettingsButton>(find.byType(SettingsButton));
+      expect(button.padding, equals(EdgeInsets.all(16)));
+    });
+
+    testWidgets('text color is red', (tester) async {
+      await tester.pumpWidget(ErrorText('Error'));
+
+      final text = tester.widget<Text>(find.text('Error'));
+      expect(text.style?.color, equals(Colors.red));
+    });
+    ```
+
+  </TabItem>
+</Tabs>
+
+Of course, if the color of a widget changes based on state, that should be tested since you're testing the behavior of the widget. However, if it's a static color, it's better tested by [golden tests](/testing/golden_file_testing/) or visual QA.
+
+## Split your tests by groups
+
+Having multiple tests in a class could cause problems with readability. It is better to split your tests into groups:
+
+- Widget tests: you could potentially group by "renders", "navigation", etc.
+- Bloc tests: group by the name of the event.
+- Repositories and clients: group by name of the method you are testing.
+
+> Tip: If your test file starts to become unreadable or unmanageable, consider splitting the file
+> that you are testing into smaller files.

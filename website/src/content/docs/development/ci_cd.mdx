@@ -1,0 +1,78 @@
+---
+title: CI/CD
+description: Best practices for building CI/CD pipelines.
+---
+
+CI/CD is the combination of practices from continuous integration and continuous delivery. It automates the software development process, from writing new code to deploying in different environments. With a CI/CD pipeline, development teams can reduce the time it takes to make new releases by automatically testing, building, and/or deploying releases whenever code changes are pushed.
+
+Continuous integration and continuous delivery help teams release faster, leading to faster feature iteration, frequent feedback, and happier users overall. Additionally we ensure the quality by running a set of automated tests before deploying, which minimizes downtime and reduces bugs in production.[^1]
+
+[^1]: [GitLab][ci_cd_gitlab]
+
+## Continuous Integration (CI)
+
+Continuous integration refers to the process of joining the code changes to the main branch of your repository frequently. To ensure this process is seamless and does not cause issues, we automatically run a set of tests and kick off a build before merging. With these practices, errors can be identified and fixed earlier.
+
+When multiple people work on the same codebase, it's important to minimize code conflicts. Merging code frequently can help prevent these issues. Additionally, using automatic testing reduces context switching by immediately alerting developers when an error is found.
+
+:::tip
+The advantages of continuous integration rely on a solid set of automatic tests. For us at Very Good Ventures, the only solid set of tests are those that result in 100% code coverage. Setting this rule at the beginning of the project leads to an easier adoption and faster development.
+:::
+
+## Continuous Delivery (CD)
+
+Continuous delivery is a practice that works alongside CI to automate the infrastructure provisioning phase and deployment process.
+
+CD is responsible for creating the build that will be released and provisioning the resources that are required to deploy to a testing or production environment. CD requires software to be built in a way that allows it to be deployed at any point. In practice, this means that new functionality should be hidden behind a feature flag or use other techniques to prevent users from having a poor experience.
+
+### Continuous Deployment
+
+Continuous deployment is often confused with continuous delivery (CD), however, it is a subset of the delivery process. Continuous deployment allows teams to release their applications automatically when the criteria they've established for a release is met.
+
+At Very Good Ventures, we often use a semi-automatic approach. We set up all the pipelines and the workflows to automatically deploy to the testing environment. However, we have a manual step to deploy to production.
+
+## CI/CD pipeline
+
+A CI/CD pipeline is a set of steps that run all the tasks we've discussed: testing, building, deploying, and any other steps that ensure the quality of our app and processes.
+
+There are a variety of platforms where you can set up the CI/CD pipeline. At Very Good Ventures, we work by default with GitHub Actions due to its simplicity and ease of use with our repositories hosted in GitHub. For the mobile apps, we rely on [Codemagic][codemagic] for CD, thanks to its great integration with Flutter.
+
+### GitHub Actions
+
+[GitHub Actions][github_actions] is a CI/CD platform that allows you to automate builds, tests, and deployment. There are a variety of event triggers that you can use to run your pipeline, like opening a pull request, merging to main, pushing a commit, or manually triggering a workflow through the GitHub UI.
+
+GitHub provides Linux, Windows and MacOS machines to run your workflows. You can also host your own runners in your data centers or cloud infrastructure.
+
+#### Our recommendation
+
+At Very Good Ventures, we have built a set of open source [Very Good Workflows][very_good_workflows] that help you run the most common tasks for Flutter and Dart applications.
+
+For every project we work on, we set up a CI/CD pipeline that runs the following workflows for every pull request we open:
+
+- [Flutter Package][flutter_package_workflow] for the main app and all flutter packages we build. This allows us to run all the automatic tests and ensure 100% code coverage.
+- [Semantic Pull Request][semantic_pull_request_workflow]
+- [Spell Check][spell_check_workflow]
+
+:::tip
+Check out some workflow examples we've used in projects like [I/O Crossword][crossword_workflows].
+:::
+
+### Codemagic
+
+[Codemagic][codemagic] is a cloud-based CI/CD platform specifically designed for mobile developers. It is Very Good Ventures' preferred solution for releasing mobile apps, thanks to the ease of use when configuring code signing, certificates, and publishing to the stores.
+
+### GitLab CI/CD
+
+[GitLab CI/CD][gitlab_ci_cd] is the official CI/CD platform for GitLab. They offer a similar set of features as GitHub Actions, enabling us to apply the practices we've discussed above.
+
+---
+
+[ci_cd_gitlab]: https://about.gitlab.com/topics/ci-cd/
+[github_actions]: https://docs.github.com/en/actions
+[very_good_workflows]: https://workflows.vgv.dev/
+[flutter_package_workflow]: https://workflows.vgv.dev/docs/workflows/flutter_package
+[semantic_pull_request_workflow]: https://workflows.vgv.dev/docs/workflows/semantic_pull_request
+[spell_check_workflow]: https://workflows.vgv.dev/docs/workflows/spell_check
+[crossword_workflows]: https://github.com/VGVentures/io_crossword/tree/main/.github/workflows
+[codemagic]: https://docs.codemagic.io/getting-started/about-codemagic/
+[gitlab_ci_cd]: https://docs.gitlab.com/ee/ci/

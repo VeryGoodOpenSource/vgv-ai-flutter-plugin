@@ -1,0 +1,77 @@
+---
+title: Code Reviews
+description: Code reviews best practices
+sidebar:
+  order: 3
+---
+
+Code reviews are an integral part of any high-quality software development workflow. Whether you're a reviewer or an author, following good practices will improve the team's productivity and code quality while ensuring a smoother development flow.
+More than just a checkpoint, code review is a valuable opportunity for knowledge sharing, mentoring, and continuous learning. It’s a space to discuss best practices, teach and learn from one another, and align as a team on coding standards and architectural decisions.
+Writing clean and readable code, preparing code for review, conducting thorough and effective code reviews, and using tools to automate parts of the process, are key points to keep a healthy codebase.
+
+## Consider the review when writing code
+
+When writing code it is essential to consider the review process right from the start. Code that’s designed with the reviewer in mind results in more efficient and productive code reviews, ultimately speeding up the development lifecycle.
+
+- Prioritize clean and readable code: Adopting consistent [coding styles](/development/code_style/) and best practices helps to ensure that everyone on the team can easily understand and maintain each other's code. It also streamlines onboarding for new team members and enhances collaboration across the board.
+- Keep PRs small and focused: Small PRs reduce review complexity, allow for faster feedback, and prevent blockers from piling up in the review pipeline. (Check out more reasons for small PRs from [Google's Engineering practices](https://google.github.io/eng-practices/review/developer/small-cls.html).)
+- Incorporate review time in planning: The time it takes for your code to be reviewed, feedback to be incorporated, and any revisions to be made can have a huge impact on a task's overall timeline. Accurately accounting for this in your task estimations ensures more realistic deadlines and helps prevent bottlenecks.
+
+## Preparing Code for Review
+
+As an author, preparing for code review doesn’t only mean writing clean and maintainable code, but also providing context for reviewers to quickly understand what your code is doing.
+Writing clear and comprehensive commit messages, along with relevant documentation and comments, is especially valuable when working with complex logic. It provides reviewers with deeper insights and makes it easier for them to understand your thought process.
+It can also be helpful to request high-level or detailed feedback about specific code or concepts.
+
+## Conducting Effective Code Reviews
+
+Effective code reviews require a balance between attention to detail and a focus on the bigger picture. Making sure that we allocate enough time to review a pull request is critical to avoid missing anything.
+
+### Code review etiquette
+
+Here are some key principles for effective and respectful code review communication:
+
+#### Be Constructive and Actionable
+
+Focus on feedback that helps the author improve by offering clear suggestions for how to address issues. Avoid vague comments and ensure that your feedback points toward a specific, actionable improvement.
+
+#### Balance Criticism with Praise
+
+Recognize what’s done well before highlighting areas that need improvement. Acknowledging strengths helps build confidence while making the author more receptive to constructive criticism.
+
+#### Focus on Clarity, Maintainability, and Correctness
+
+Ensure that the code adheres to team standards and is easy to read and maintain. It’s not just about fixing errors but also about making the code cleaner and more understandable for future developers.
+
+#### Recognize Effort and Intent
+
+Appreciate the time and thought put into the code, even when revisions are needed. A small note of recognition goes a long way in maintaining a collaborative and supportive team atmosphere.
+
+#### Encourage Collaboration
+
+Frame feedback in a way that invites open discussion and solutions. This creates a culture of shared decision-making and helps the author feel like part of the process rather than simply receiving orders.
+
+By adhering to these practices, you can create a code review culture that improves the code while fostering collaboration, mutual respect, and growth within the team.
+
+## Collaboration and Communication
+
+Good collaboration in code reviews starts before the code is written by anticipating complex changes or implementations and engaging the team in discussions early in the process. By aligning on the approach upfront, reviews become smoother and more efficient.
+
+The actual code review also goes beyond pointing out errors; it requires open communication and empathy. When providing feedback, focus on constructive and actionable comments that help the author understand the problem and how to address it.
+
+## Tools and Automation in Code Reviews
+
+Automation plays a key role in making code reviews more efficient and consistent. By integrating linters and static analysis tools, teams can enforce coding standards and catch errors automatically, allowing reviewers to focus more on logic and architecture.
+
+At Very Good Ventures, we use our open source analysis tool [`very_good_analysis`](https://github.com/VeryGoodOpenSource/very_good_analysis). We believe these linting rules create a healthier, more scalable codebase.
+
+Nowadays there are also many AI tools that can assist in code reviews, providing suggestions and identifying potential issues. While these tools can be helpful, they should not replace human reviewers and as they're non-deterministic, should be paired with lint rules and testing.
+Also, any code generated by AI should be carefully reviewed.
+
+## Post-Review: Merging and Follow-Up
+
+Once the code review is complete, it’s important to make sure that all feedback has been properly addressed before merging. When merging, consider best practices like squashing commits to keep your repository's git history clean and concise.
+
+## Conclusion
+
+Effective code reviews are essential for maintaining a high-quality, maintainable codebase while fostering a collaborative and efficient development process. By prioritizing clear communication, leveraging tools to automate mundane checks, and focusing on collaboration, teams can ensure a smoother, more effective development workflow.

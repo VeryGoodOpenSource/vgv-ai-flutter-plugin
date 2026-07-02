@@ -1,0 +1,22 @@
+---
+import type { LanguageColor } from "~/utils/github_languages";
+import css from "../github-card.module.css";
+
+export interface Props {
+  language: string | null;
+  languageColor: LanguageColor | null;
+}
+
+const props = Astro.props;
+---
+
+<div class={css.footerItemLanguages}>
+  <span
+    class={css.langColor}
+    style={{
+      backgroundColor: props.languageColor?.color ?? "gray",
+    }}></span>
+  <div class={css.symbolAndLabel}>
+    <span class={css.symbol}>{props.language ?? ""}</span>
+  </div>
+</div>

@@ -1,0 +1,28 @@
+---
+interface Props {
+  url: string;
+}
+
+const props = Astro.props;
+---
+
+<div
+  class="drop-shadow-lg rounded-lg overflow-hidden h-[100%] w-[100%] max-w-[478px] bg-[var(--vgv-card-bg)] flex flex-col"
+>
+  <a href={props.url} class="contents">
+    <slot name="thumbnail" />
+    <div class="m-4 grow flex flex-col justify-between">
+      <slot />
+    </div>
+  </a>
+</div>
+
+<style>
+  a,
+  a:visited,
+  a:hover,
+  a:active {
+    color: inherit;
+    text-decoration: none;
+  }
+</style>

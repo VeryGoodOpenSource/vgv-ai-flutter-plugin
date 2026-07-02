@@ -1,0 +1,173 @@
+---
+title: Documentation
+description: Documentation and Code practices that scale.
+---
+
+import { TabItem, Tabs } from "@astrojs/starlight/components";
+
+As Flutter projects grow, maintaining consistency across teams and repositories becomes increasingly difficult, but also increasingly essential.
+In this article, we’ll walk through a set of actionable practices that help teams build scalable, maintainable apps by
+investing in strong documentation and clear development standards.
+
+## Documentation That Lives With the Code
+
+Good documentation doesn't live in a vacuum. It lives alongside your code, evolves with it, and makes your project more accessible to newcomers and seasoned developers alike.
+Here’s what that looks like in practice:
+
+### At the App Level
+
+- **README as the Single Source of Truth**
+  Every repository should have a README that answers key questions:
+
+      - What are the requirements to run the project?
+
+      - How do I run this project? (Ideally in one command.)
+
+      - Where can I learn about architecture?
+
+      - What state management strategy is used, and why?
+
+      - Are there any debugging tips (e.g., Sentry, session replay)?
+
+      - Localization and internationalization setup
+
+- **Docs Folder for Extended Guides**
+  Use a /docs folder to centralize everything that doesn’t belong in the README but is still critical:
+
+      - State management conventions
+
+      - Dependency injection setup
+
+      - Feature/module boundaries
+
+      - ADRs (Architecture Decision Records)
+
+      - Accessibility guide
+
+**_Note_**: Keeping these documents up to date is crucial. If they become stale, they lose their value. Regularly review and update them as part of your development cycle.
+
+- **Architecture Decision Records**
+  ADRs help capture why certain decisions were made. Hosting them in version control keeps the context accessible to the whole team, not just the people who were around at the time.
+
+### At the Package Level
+
+- **Self-Contained README**
+  Each package should include its own README that:
+
+      - Describes the package’s purpose and what problem it solves
+
+      - Explains how to use the package
+
+      - Lists its own dependencies, peer packages, or environment requirements
+
+- **Self explained and Balance Repetition**
+  Avoid assuming readers will reference the root-level README. Package-level documentation should be understandable in isolation, especially when packages are reused or shared across projects.
+
+## Document External Tools
+
+Many Flutter apps rely on external tools for internationalization, code generation, or DevOps workflows. When these tools are part of the development workflow, they should be explicitly documented to reduce onboarding friction and prevent misuse.
+
+- **Add Dedicated Sections for Critical Tools**
+  If your project depends on tools like build_runner, custom_lint, or flutter gen-l10n, document their purpose and usage directly in the README or linked documentation.
+
+- **Include actionable Commands**
+  Copy-pasteable CLI commands, expected file locations, and regeneration steps are essential. Avoid vague notes like "run codegen", be precise.
+
+- **Clarify When & Why to Use the Tool**
+  Include context on why the tool is present and when it should or shouldn’t be used: - Where the config lives (e.g., l10n.yaml, .dart_tool/, pubspec.yaml)
+
+      - How and When the tool should be run
+
+      - Any common pitfalls or edge cases developers should watch for
+
+- **Define Standards, Not Just Steps**
+  If a tool supports flexibility, define the conventions your team adopts, this avoids ambiguity and prevents fragmentation over time.
+
+## Coding Standards Aren’t Optional
+
+Without clearly defined development practices, teams tend to reinvent the wheel,or worse, misalign entirely. Defining coding standards early sets the bar for maintainability, scalability, and code review quality.
+Here’s what to focus on:
+
+- **State Management Patterns**
+  Document not just what is used (e.g., Riverpod), but how. Define preferred patterns, common pitfalls, and where shared logic should live.
+
+- **Dependency Injection**
+  Don’t just rely on DI tools—explain the philosophy behind their usage. Clarify lifecycle expectations, testability benefits, and error boundaries.
+
+- **Folder Structures**
+  If you adopt a modular or feature-driven architecture, enforce it. Consistency helps reduce cognitive load and onboarding time.
+
+- **Naming Conventions & Lint Rules**
+  Use a consistent naming scheme, and automate enforcement with tools like very_good_analysis. Fewer surprises = faster development.
+
+## Documenting Design Systems & Widgets
+
+Reusable UI components are only as effective as their documentation. While some tools provide visual context, they’re not a substitute for structured documentation.
+To improve discoverability and reduce developer friction:
+
+- **Document All Public Widgets and APIs**
+  Use the public_member_api_docs rule, from the [https://pub.dev/packages/very_good_analysis](very_good_analysis package), to enforce this automatically. If it’s public, it should be documented.
+
+- **Adopt a Consistent Format**
+  Each widget should include:
+
+      - A clear description of its purpose
+
+      - Required vs. optional parameters
+
+      - Expected usage or constraints
+
+- **Go Beyond Visuals**
+  Visual reference is helpful, but developers still need to understand when and why to use a widget. Written docs fill that gap.
+
+## Consider using asserts over inline comments
+
+[Dart asserts](https://dart.dev/language/error-handling#assert) with messages enforce conditions during development and
+provide immediate feedback if something goes wrong, while an inline comment only document the code and don't immediately prevent errors.
+Assertions help catch issues early, making debugging easier and more reliable.
+
+<Tabs>
+  <TabItem label="Good ✅">
+
+```dart
+(double?, double?) solveQuadraticEquation(double a, double b, double c) {
+  assert(
+    a != 0,
+    'The coefficient of the square term must not be zero, otherwise is not a '
+    'quadratic equation.',
+  );
+
+  final discriminant = b * b - 4 * a * c;
+  return switch (discriminant) {
+    final d when d > 0 => ((-b + sqrt(d)) / (2 * a), (-b - sqrt(d)) / (2 * a)),
+    final d when d == 0 => (-b / (2 * a), null),
+    _ => (null, null),
+  };
+}
+```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+
+```dart
+(double?, double?) solveQuadraticEquation(double a, double b, double c) {
+  // The coefficient of the square term must not be zero otherwise is not a
+  // quadratic equation.
+
+  final discriminant = b * b - 4 * a * c;
+  return switch (discriminant) {
+    final d when d > 0 => ((-b + sqrt(d)) / (2 * a), (-b - sqrt(d)) / (2 * a)),
+    final d when d == 0 => (-b / (2 * a), null),
+    _ => (null, null),
+  };
+}
+```
+
+  </TabItem>
+</Tabs>
+
+## Why This Matters
+
+These practices aren't just about process, they're about building trust in your codebase.
+When documentation is complete and development standards are shared, teams move faster, onboard easier, and deliver with more confidence.
+And like most things in engineering, the earlier you invest in these foundations, the more they’ll pay off as your project scales.

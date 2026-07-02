@@ -1,5 +1,9 @@
 ---
 name: license-compliance
+web:
+  section: tooling
+  title: License Compliance
+  order: 5
 description: >
   Audits package dependency licenses using the Very Good CLI packages_check_licenses
   MCP tool. Flags non-compliant or unknown licenses and produces a compliance summary.

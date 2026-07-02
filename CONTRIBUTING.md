@@ -61,6 +61,25 @@ Add a row to the skills table in `README.md`. The skill name must link to the `S
 
 Add the new skill directory and files to the repository structure tree in `CLAUDE.md`.
 
+### 5. Publish it to the website (optional)
+
+To surface the skill on [engineering.verygood.ventures](https://engineering.verygood.ventures), add a `web:` block to the skill's frontmatter, then regenerate the site pages:
+
+```yaml
+web:
+  section: best-practices   # or "tooling"
+  title: My Skill           # optional
+  order: 11                 # optional
+```
+
+```bash
+cd website
+npm ci            # first time only
+npm run gen:docs  # regenerate pages from skills
+```
+
+Commit the regenerated files under `website/src/content/docs/{best-practices,tooling}/` and `website/src/generated/`. **Never edit those files by hand** — CI fails if they are out of sync with the skills. See the **Website** section of `CLAUDE.md`.
+
 ## Skill Writing Guidelines
 
 - **Use clear directives** — no soft language ("consider", "prefer"). Say "Use X" or "Do not use Y".
@@ -174,6 +193,7 @@ Every pull request runs the following checks automatically:
 | File size | Ensures no file exceeds 50 KB | `scripts/check_large_files.sh` |
 | Skill validation | Validates `SKILL.md` frontmatter and structure | `scripts/validate_skills.sh` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
+| Website | Regenerates docs from skills, fails on drift, then builds the site | `website/` (`ci.yaml` → `site` job) |
 
 If the spelling check flags a legitimate word, add it to `config/cspell.json` in the `words` array.
 

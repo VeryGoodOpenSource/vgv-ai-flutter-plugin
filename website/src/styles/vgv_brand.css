@@ -1,0 +1,83 @@
+:root {
+  /* Brand Colors */
+  --vgv-navy: #020f30;
+
+  --vgv-grape-purple: #8152e8;
+  --vgv-deep-purple: #6420c6;
+
+  --vgv-code-green: #00ff00;
+  --vgv-code-green-20: #00e500;
+
+  --vgv-unicorn-pink: #ff4f9d;
+  --vgv-unicorn-pink-20: #ff1c81;
+
+  --vgv-peach: #ff8e66;
+
+  --vgv-orange: #fc5d42;
+
+  --vgv-syntax-yellow: #ffff33;
+
+  --vgv-gold: #dfc12a;
+
+  --vgv-aqua: #33ccff;
+  --vgv-shadow-aqua: #2aa3df;
+
+  --vgv-blue: #2a48de;
+  --vgv-blue-20: #cddafb;
+  --vgv-blue-30: #a1b5f3;
+  --vgv-blue-60: #6d92f5;
+  --vgv-blue-80: #2c64f1;
+  --vgv-blue-120: #002890;
+
+  --vgv-gray-10: #fafbff;
+  --vgv-gray-20: #f3f6ff;
+  --vgv-gray-30: #d2d5dd;
+  --vgv-gray-35: #b8bac2;
+  --vgv-gray-40: #838998;
+  --vgv-gray-50: #5a5f6e;
+  --vgv-gray-60: #4b4f5a;
+  --vgv-gray-70: #383c46;
+  --vgv-gray-80: #232938;
+}
+
+:root[data-theme="light"] {
+  --vgv-card-bg: #fafbfe;
+  --vgv-card-bg-hover: var(--vgv-gray-10);
+  --vgv-card-fg: var(--vgv-gray-80);
+  --vgv-card-fg-hover: var(--vgv-blue-80);
+  --vgv-card-shadow: drop-shadow(0px 0px 8px var(--vgv-gray-30));
+  --vgv-card-shadow-hover: drop-shadow(0px 0px 10px var(--vgv-gray-35));
+
+  --vgv-footer-text: var(--vgv-gray-30);
+  --vgv-footer-bg: var(--vgv-navy);
+
+  --vgv-nav-bg: var(--vgv-gray-10);
+  --vgv-nav-glow: var(--vgv-gray-10);
+  --vgv-nav-opacity: 0.6;
+
+  --vgv-home-bg: var(--vgv-gray-20);
+
+  --vgv-title: var(--vgv-gray-60);
+  --vgv-title-emph: black;
+}
+
+:root[data-theme="dark"] {
+  --vgv-card-bg: var(--vgv-gray-80);
+  --vgv-card-bg-hover: var(--vgv-gray-70);
+  --vgv-card-fg: white;
+  --vgv-card-fg-hover: var(--vgv-blue-60);
+  --vgv-card-shadow: drop-shadow(0px 0px 8px var(--vgv-gray-80));
+  --vgv-card-shadow-hover: drop-shadow(0px 0px 16px var(--vgv-gray-60));
+
+  --vgv-footer-text: var(--vgv-gray-30);
+  --vgv-footer-bg: var(--vgv-gray-80);
+
+  --vgv-nav-bg: black;
+  --vgv-nav-glow: var(--vgv-gray-80);
+  --vgv-nav-opacity: 0.4;
+
+  --vgv-home-bg: var(--sl-color-bg);
+
+  --vgv-title: var(--vgv-gray-30);
+  --vgv-title-emph: var(--vgv-gray-20);
+}

@@ -1,0 +1,216 @@
+---
+title: Golden File Testing
+description: Golden testing best practices using Alchemist.
+---
+
+import { TabItem, Tabs } from "@astrojs/starlight/components";
+
+The term golden file refers to a master image that is considered the true rendering of a given widget, state, application, or other visual representation you have chosen to capture.
+
+Golden tests help catch unintended visual regressions early, ensuring that your UI looks exactly the way you expect across changes. We recommend using [Alchemist](https://pub.dev/packages/alchemist) for golden file testing because it provides a declarative API, handles cross-platform rendering inconsistencies, and makes it straightforward to test multiple widget states in a single test file.
+
+:::note
+To learn more about golden file testing, refer to the [Testing Fundamentals video about Using Golden Files to Verify Pixel-Perfect Widgets](https://www.youtube.com/watch?v=_G6GuxJF44Q&list=PLprI2satkVdFwpxo_bjFkCxXz5RluG8FY&index=22) or to the [Flutter matchesGoldenFile documentation](https://api.flutter.dev/flutter/flutter_test/matchesGoldenFile.html).
+:::
+
+## Setting up Alchemist
+
+Add Alchemist as a dev dependency:
+
+```bash
+dart pub add dev:alchemist
+```
+
+### Configure `flutter_test_config.dart`
+
+Create a `flutter_test_config.dart` file at the root of your `test/` directory to configure Alchemist for your project. This file runs before every test file and lets you set a shared theme and control platform-specific behavior:
+
+```dart
+import 'dart:async';
+
+import 'package:alchemist/alchemist.dart';
+
+Future<void> testExecutable(FutureOr<void> Function() testMain) async {
+  const isRunningInCi = bool.fromEnvironment('CI');
+
+  return AlchemistConfig.runWithConfig(
+    config: AlchemistConfig(
+      platformGoldensConfig: PlatformGoldensConfig(
+        enabled: !isRunningInCi,
+      ),
+    ),
+    run: testMain,
+  );
+}
+```
+
+This setup disables platform-specific golden tests in CI, where rendering differences across operating systems can cause false failures. Only CI-safe goldens (which replace text with colored blocks) run in CI, keeping your pipeline stable.
+
+### Directory structure for golden files
+
+Alchemist generates golden images in a `goldens/` directory next to your test files. We recommend tracking only the CI goldens in version control, since platform goldens vary across operating systems:
+
+```
+test/
+├── flutter_test_config.dart
+├── goldens/
+│   ├── ci/            # Tracked in version control
+│   ├── macos/         # Platform-specific, not tracked
+│   └── linux/         # Platform-specific, not tracked
+└── my_widget_golden_test.dart
+```
+
+Add the following to your `.gitignore`:
+
+```bash
+test/**/goldens/**/*.*
+!test/**/goldens/ci/*.*
+```
+
+## Writing golden tests with Alchemist
+
+Use `goldenTest` along with `GoldenTestGroup` and `GoldenTestScenario` to declare your golden tests. This approach groups multiple widget states into a single golden image, making it easy to review visual changes at a glance.
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    import 'package:alchemist/alchemist.dart';
+    import 'package:flutter/material.dart';
+
+    void main() {
+      goldenTest(
+        'renders correctly',
+        fileName: 'my_button',
+        builder: () => GoldenTestGroup(
+          children: [
+            GoldenTestScenario(
+              name: 'default',
+              child: const MyButton(label: 'Click me'),
+            ),
+            GoldenTestScenario(
+              name: 'disabled',
+              child: const MyButton(label: 'Click me', enabled: false),
+            ),
+          ],
+        ),
+      );
+    }
+    ```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    import 'package:flutter_test/flutter_test.dart';
+
+    void main() {
+      // Separate test for every state is harder to review
+      // and more susceptible to cross-platform rendering differences.
+      testWidgets('renders default state', (tester) async {
+        await tester.pumpWidget(const MyButton(label: 'Click me'));
+        await expectLater(
+          find.byType(MyButton),
+          matchesGoldenFile('my_button_default.png'),
+        );
+      });
+
+      testWidgets('renders disabled state', (tester) async {
+        await tester.pumpWidget(
+          const MyButton(label: 'Click me', enabled: false),
+        );
+        await expectLater(
+          find.byType(MyButton),
+          matchesGoldenFile('my_button_disabled.png'),
+        );
+      });
+    }
+    ```
+
+  </TabItem>
+</Tabs>
+
+### Simulating interactions before capture
+
+Alchemist supports performing gestures or other setup before the golden image is captured. Use the `whilePerforming` parameter to simulate interactions like presses, long presses, or scrolls:
+
+```dart
+goldenTest(
+  'renders pressed state',
+  fileName: 'my_button_pressed',
+  whilePerforming: press(find.byType(MyButton)),
+  builder: () => GoldenTestGroup(
+    children: [
+      GoldenTestScenario(
+        name: 'pressed',
+        child: const MyButton(label: 'Click me'),
+      ),
+    ],
+  ),
+);
+```
+
+## Tag golden tests
+
+Golden tests should be tagged to make it easier to run them separately from other tests.
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    goldenTest(
+      'renders correctly',
+      fileName: 'my_widget',
+      builder: () => GoldenTestGroup(
+        children: [
+          GoldenTestScenario(
+            name: 'default',
+            child: const MyWidget(),
+          ),
+        ],
+      ),
+    );
+    ```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    goldenTest(
+      'renders correctly',
+      fileName: 'my_widget',
+      builder: () => GoldenTestGroup(
+        children: [
+          GoldenTestScenario(
+            name: 'default',
+            child: const MyWidget(),
+          ),
+        ],
+      ),
+    );
+    ```
+
+  </TabItem>
+</Tabs>
+
+:::tip
+[You should avoid using magic strings to tag tests](../testing/#avoid-using-magic-strings-to-tag-test). Instead, use constants to tag tests. This helps to avoid typos and makes it easier to refactor.
+:::
+
+### Configure your golden test tag
+
+To configure a golden test tag across multiple files (or an entire package), create a `dart_test.yaml` file and add the tag configuration:
+
+```yaml
+tags:
+  golden:
+    description: "Tests that compare golden files."
+```
+
+:::note
+Learn more about all the `dart_test.yaml` configuration options in the [Dart Test Configuration documentation](https://github.com/dart-lang/test/blob/master/pkgs/test/doc/configuration.md).
+:::
+
+You can then run the tests with the tag `golden` in isolation, or quickly update
+the golden files with the `--update-goldens` flag:
+
+```bash
+flutter test --tags golden # Run only golden tests
+flutter test --tags golden --update-goldens # Update golden files
+```

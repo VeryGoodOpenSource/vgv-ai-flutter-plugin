@@ -1,5 +1,9 @@
 ---
 name: green-gate
+web:
+  section: tooling
+  title: Green Gate
+  order: 2
 description: >
   Drives a Dart or Flutter package to a fully green state through an autonomous
   verify-fix-rerun loop across four quality gates — analyze, format, test, and

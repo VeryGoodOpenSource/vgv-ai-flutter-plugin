@@ -1,0 +1,31 @@
+---
+import { getImage } from "astro:assets";
+
+interface Props {
+  light: ImageMetadata;
+  dark: ImageMetadata;
+  alt: string;
+  classes: string;
+}
+
+const { ...props } = Astro.props;
+
+const light = await getImage({
+  src: props.light,
+  format: props.light.format,
+  inferSize: true,
+});
+
+const dark = await getImage({
+  src: props.dark,
+  format: props.light.format,
+  inferSize: true,
+});
+---
+
+{/* Based on https://stackoverflow.com/a/74639288 */}
+{/* Only downloads what is needed, not both :) */}
+<picture>
+  <source srcset={dark.src} media="(prefers-color-scheme: dark)" />
+  <img src={light.src} class:list={props.classes} />
+</picture>

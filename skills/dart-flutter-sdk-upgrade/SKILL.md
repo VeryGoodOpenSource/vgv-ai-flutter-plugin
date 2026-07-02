@@ -1,5 +1,9 @@
 ---
 name: dart-flutter-sdk-upgrade
+web:
+  section: tooling
+  title: Dart & Flutter SDK Upgrade
+  order: 3
 description: >
   VGV-specific reference for bumping Dart and Flutter SDK constraints across packages.
   Covers pubspec.yaml environment constraints, CI workflow Flutter versions, and SDK

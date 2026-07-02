@@ -1,0 +1,70 @@
+---
+import { Image } from "astro:assets";
+import VGVWordmarkDark from "~/assets/logos/vgv_wordmark_dark.svg";
+
+interface Props {
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+---
+
+<div
+  class:list={[
+    "footer-area bg-[var(--vgv-footer-bg)] flex flex-row justify-center ",
+    compact ? "compact" : "",
+  ]}
+>
+  <section
+    class="max-w-screen-xl flex flex-row gap-2 p-8 flex-wrap grow items-start"
+  >
+    <div
+      class="grow flex flex-row md:justify-start lg:justify-start xl:justify-start 2xl:justify-start justify-center"
+    >
+      <Image src={VGVWordmarkDark} alt="VGV Wordmark" class="logo" />
+    </div>
+    <div
+      class="links-container grow flex md:flex-col items-end justify-center flex-row flex-wrap"
+    >
+      <a href="https://verygood.ventures/">Home</a>
+      <a href="https://verygood.ventures/our-team">About</a>
+      <a href="https://verygood.ventures/testimonials">Testimonials</a>
+      <a href="https://verygood.ventures/careers">Careers</a>
+      <a href="https://verygood.ventures/success-stories">Our Work</a>
+      <a href="/">Engineering</a>
+    </div>
+  </section>
+</div>
+
+<style>
+  @media (min-width: 72rem) {
+    .compact {
+      margin-inline: var(--sl-content-margin-inline, auto);
+    }
+  }
+  .compact {
+    max-width: calc(var(--sl-content-width) + var(--sl-content-pad-x));
+  }
+
+  .logo {
+    display: inline-block;
+  }
+
+  .links-container a,
+  a:visited,
+  a:active {
+    color: var(--vgv-footer-text);
+    text-decoration: none;
+    font-size: 1rem;
+
+    background-color: var(--vgv-footer-bg);
+    border-radius: 16px;
+    padding: 2px 8px;
+    margin: 2px 0px;
+  }
+
+  .links-container a:hover {
+    background-color: var(--vgv-gray-70);
+    font-weight: bold;
+  }
+</style>

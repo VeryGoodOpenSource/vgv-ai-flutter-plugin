@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VGV AI Flutter Plugin is a Claude Code plugin that provides best-practices skills for Flutter and Dart development. It is a **documentation-only repository** — there is no Dart/Flutter source code, no `pubspec.yaml`, and no tests. All value lives in the markdown skill files.
+VGV AI Flutter Plugin is a Claude Code plugin that provides best-practices skills for Flutter and Dart development. There is no Dart/Flutter source code, no `pubspec.yaml`, and no tests — the plugin's value lives in the markdown skill files under `skills/`.
+
+The repo also hosts the **Very Good Engineering website** (Astro + Starlight) under `website/`. The skills are the **single source of truth**: the public best-practices and tooling pages are generated from `SKILL.md` files by `website/scripts/generate-site-docs.mjs`. See the **Website** section below.
 
 ## Repository Structure
 
@@ -53,6 +55,20 @@ skills/
   ui-package/reference.md
   very-good-analysis-upgrade/SKILL.md
   very-good-analysis-upgrade/reference.md
+website/                 # Very Good Engineering website (Astro + Starlight)
+  astro.config.mjs       # Starlight config; imports the generated sidebar
+  package.json           # gen:docs / predev / prebuild scripts live here
+  scripts/
+    generate-site-docs.mjs  # SKILL.md (+references) -> Starlight MDX (generator)
+  src/
+    generated/
+      sidebar.mjs        # GENERATED sidebar groups for best-practices + tooling
+    content/docs/
+      best-practices/    # GENERATED from knowledge skills — DO NOT EDIT
+      tooling/           # GENERATED from workflow skills — DO NOT EDIT
+      general-practices/ # hand-authored (philosophy, code review, conventions)
+      development/       # hand-authored docs (some overlap skills, pending reconciliation)
+      resources/         # hand-authored (demos, services)
 ```
 
 ## Skill File Format
@@ -64,6 +80,15 @@ Every `SKILL.md` follows this structure:
    - `description` _(required)_ — when the skill should be triggered
    - `allowed-tools` _(optional)_ — space-separated list of tools the skill may use (e.g., `Read Glob Grep`)
    - `argument-hint` _(optional)_ — placeholder hint shown to the user (e.g., `"[file-or-directory]"`)
+   - `web` _(optional)_ — publishes the skill to the website. A skill is published only if this block is present:
+
+     ```yaml
+     web:
+       section: best-practices   # or "tooling"
+       title: Bloc               # optional; defaults to a title-cased name
+       order: 2                  # optional; ordering within the section
+     ```
+
 2. **H1 title** — human-readable skill name
 3. **Core Standards** — enforced constraints, always first
 4. **Content sections** — architecture, code examples, workflows, anti-patterns
@@ -85,6 +110,7 @@ Every `SKILL.md` follows this structure:
 4. Add the skill's slash command (e.g., `/<skill-name>`) to the **Usage** list in `README.md`
 5. Add any new domain terms to the `words` list in `config/cspell.json`
 6. Update the repository structure in `CLAUDE.md`
+7. If the skill should appear on the website, add a `web:` frontmatter block (see **Skill File Format**), then run `npm run gen:docs` in `website/` and commit the generated pages
 
 ## Maintaining Existing Skills, Hooks, and MCP Tools
 
@@ -101,6 +127,43 @@ documentation in the same change:
   changes).
 - **Adding or changing an MCP tool** — update the **MCP Integration** tools table
   in `README.md`.
+- **Editing any published skill's `SKILL.md` or `references/`** — regenerate the
+  website with `npm run gen:docs` (from `website/`) and commit the result. CI
+  fails if the committed pages are out of sync (see **Website**).
+
+## Website
+
+The `website/` directory is the Very Good Engineering site (Astro + Starlight),
+deployed to `engineering.verygood.ventures` via GitHub Pages (`.github/workflows/deploy.yaml`).
+
+**Skills are the source of truth.** `website/scripts/generate-site-docs.mjs`
+converts every `SKILL.md` that has a `web:` frontmatter block into Starlight
+Markdown:
+
+- `web.section: best-practices` → full page at `best-practices/<name>/index.md`,
+  with each `references/*.md` (and a single `reference.md`) rendered as a child page.
+- `web.section: tooling` → a short summary page at `tooling/<name>.md` (purpose,
+  when it triggers, how to invoke `/<name>`), not the full procedural body.
+- The generator also writes `src/generated/sidebar.mjs`, imported by `astro.config.mjs`.
+
+Rules:
+
+- **Never hand-edit** anything under `best-practices/`, `tooling/`, or
+  `src/generated/` — those are regenerated. Each file carries a `GENERATED …
+  DO NOT EDIT` banner. Edit the owning skill instead, then `npm run gen:docs`.
+- `npm run predev` / `npm run prebuild` run the generator automatically, so local
+  dev and builds never serve stale content.
+- CI (`ci.yaml` → `site` job) runs the generator and fails on any diff, so a skill
+  edit that skips regeneration is caught.
+- Output is deterministic (no timestamps, stable ordering); running the generator
+  twice yields no diff.
+
+**Pending reconciliation:** some hand-authored docs under
+`website/src/content/docs/development/` (bloc, testing, theming, navigation,
+internationalization, architecture, security) predate the skills and overlap the
+generated `best-practices/` pages. Both are published for now; a follow-up pass
+will migrate any unique prose/diagrams into the owning skills and remove the
+duplicates.
 
 ## Hooks
 

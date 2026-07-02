@@ -1,0 +1,100 @@
+---
+title: Error handling
+description: Error handling best practices.
+---
+
+import { FileTree, TabItem, Tabs } from "@astrojs/starlight/components";
+
+## Document when a call may throw
+
+Document exceptions associated with calling a function in its documentation comments to help understand when an exception might be thrown.
+
+Properly documenting possible exceptions allows developers to handle exceptions, leading to more robust and error-resistant code and reducing the likelihood of unintended errors. Well-documented exceptions also make it easier to write thorough [tests](/development/testing/testing_overview/) that verify error scenarios are handled correctly.
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    /// Permanently deletes an account with the given [name].
+    ///
+    /// Throws:
+    ///
+    /// * [UnauthorizedException] if the active role is not [Role.admin], since only
+    ///  admins are authorized to delete accounts.
+    void deleteAccount(String name) {
+      if (activeRole != Role.admin) {
+        throw UnauthorizedException('Only admin can delete account');
+      }
+      // ...
+    }
+    ```
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    /// Permanently deletes an account with the given [name].
+    void deleteAccount(String name) {
+      if (activeRole != Role.admin) {
+        throw UnauthorizedException('Only admin can delete account');
+      }
+      // ...
+    }
+    ```
+  </TabItem>
+</Tabs>
+
+## Define descriptive exceptions
+
+Implement `Exception` with descriptive names rather than simply throwing a generic `Exception`.
+
+By creating custom exceptions, developers can provide more meaningful error messages and handle different error types in a more granular way. This enhances code readability and maintainability, as it becomes clear what type of error is being dealt with.
+
+<Tabs>
+  <TabItem label="Good ✅">
+    ```dart
+    class UnauthorizedException implements Exception {
+      UnauthorizedException(this.message);
+
+      final String message;
+
+      @override
+      String toString() => 'UnauthorizedException: $message';
+    }
+
+    void deleteAccount(String name) {
+      if (activeRole != Role.admin) {
+        throw UnauthorizedException('Only admin can delete account');
+      }
+      // ...
+    }
+
+    void main() {
+      try {
+        deleteAccount('user');
+      } on UnauthorizedException catch (e) {
+        // Handle the exception.
+      }
+    }
+    ```
+
+  </TabItem>
+  <TabItem label="Bad ❗️">
+    ```dart
+    void deleteAccount(String name) {
+      if (activeRole != Role.admin) {
+        throw Exception('Only admin can delete account');
+      }
+      // ...
+    }
+
+    void main() {
+      try {
+        deleteAccount('user');
+      } on Exception catch (e) {
+        // Exception is a marker interface implemented by all core library exceptions.
+        // It is very generic, potentially catching many different types of exceptions,
+        // lacking intent, and making the code harder to understand.
+      }
+    }
+    ```
+
+  </TabItem>
+</Tabs>

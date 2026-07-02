@@ -1,4 +1,10 @@
 .DS_Store
 *.log
 node_modules/
-docs/
+
+# Plugin planning docs (repo root only — anchored so it does not match website/src/content/docs)
+/docs/
+
+# Astro website build artifacts
+website/dist/
+website/.astro/

@@ -1,0 +1,44 @@
+/* See https://starlight.astro.build/guides/css-and-tailwind/#theming */
+
+/* Dark mode colors. */
+:root {
+  --sl-color-accent-low: #152146;
+  --sl-color-accent: #3557e3;
+  --sl-color-accent-high: #b4c8f8;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #ebeef5;
+  --sl-color-gray-2: #bec2ca;
+  --sl-color-gray-3: #858b9b;
+  --sl-color-gray-4: #525867;
+  --sl-color-gray-5: #323846;
+  --sl-color-gray-6: #212633;
+  --sl-color-black: #16181e;
+
+  --sl-color-bg-sidebar: transparent;
+  --sl-color-hairline-shade: #323846;
+
+  --sl-z-index-navbar: 6000;
+}
+
+/* Make only top-level sidebar group labels bold.
+   Nested group labels (e.g. "Architecture" under "Development") use normal weight. */
+ul ul summary .large {
+  font-weight: normal;
+  font-size: var(--sl-text-sm);
+}
+
+/* Light mode colors. */
+:root[data-theme="light"] {
+  --sl-color-accent-low: #c7d7fb;
+  --sl-color-accent: #365ae5;
+  --sl-color-accent-high: #1a2c68;
+  --sl-color-white: #16181e;
+  --sl-color-gray-1: #212633;
+  --sl-color-gray-2: #323846;
+  --sl-color-gray-3: #525867;
+  --sl-color-gray-4: #858b9b;
+  --sl-color-gray-5: #bec2ca;
+  --sl-color-gray-6: #ebeef5;
+  --sl-color-gray-7: #f5f6fa;
+  --sl-color-black: #ffffff;
+}

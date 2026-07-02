@@ -1,0 +1,476 @@
+---
+import {
+  generateStarlightPageRouteData,
+  type StarlightPageProps,
+} from "../../node_modules/@astrojs/starlight/utils/starlight-page";
+import VgvHeroBreakoutVertical from "~/components/vgv_hero/vgv-hero-breakout-vertical.astro";
+import VgvHeroBreakout from "~/components/vgv_hero/vgv-hero-breakout.astro";
+import VgvHeroFeature from "~/components/vgv_hero/vgv-hero-feature.astro";
+import VgvPage from "~/components/vgv_page/vgv-page.astro";
+export type Props = StarlightPageProps;
+
+import { LinkButton } from "@astrojs/starlight/components";
+import { Image } from "astro:assets";
+import { Icon } from "@astrojs/starlight/components";
+import Diagram from "~/components/diagram.astro";
+import GithubCard from "~/components/github_card/github-card.astro";
+import VeryGoodCliDemo from "~/components/very_good_cli/very-good-cli-demo.astro";
+import VeryGoodCli from "~/components/very_good_cli/very-good-cli.astro";
+import VgvCardHeader from "~/components/vgv_card/vgv-card-header.astro";
+import VgvCard from "~/components/vgv_card/vgv-card.astro";
+import VgvChip from "~/components/vgv_chip/vgv-chip.astro";
+import VgvHeroSectionHeader from "~/components/vgv_hero/vgv-hero-section-header.astro";
+import VgvScrollItem from "~/components/vgv_scroll/vgv-scroll-item.astro";
+import VgvScroll from "~/components/vgv_scroll/vgv-scroll.astro";
+import demoSplash from "./home/demo_splash.png";
+import airplane1 from "./home/demos/airplane_1.png";
+import financialDashboard from "./home/demos/financial_dashboard.png";
+import vehicleCockpit from "./home/demos/vehicle_cockpit.png";
+import hero from "./home/very_good_engineering.png";
+
+const props = await generateStarlightPageRouteData({
+  props: {
+    ...Astro.props,
+    frontmatter: {
+      title: "Very Good Engineering",
+      tableOfContents: false,
+      hero: {
+        actions: [
+          {
+            text: "Read the Best Practices",
+            link: "/general-practices/philosophy",
+            icon: "right-arrow",
+            variant: "primary",
+          },
+          {
+            text: "Learn more about Very Good Ventures",
+            link: "https://verygood.ventures",
+            variant: "minimal",
+            icon: "external",
+          },
+        ],
+      },
+    },
+
+    hasSidebar: false,
+  },
+  context: Astro,
+});
+
+// Set the route data in Astro.locals so components can access it
+Astro.locals.starlightRoute = props;
+
+const actions = props.entry.data.hero?.actions ?? [];
+---
+
+<VgvPage {...props}>
+  <VgvHeroFeature>
+    <Fragment slot="content">
+      <div class="sl-flex stack">
+        <h1
+          class="title font-medium leading-[3rem] lg:leading-[4rem] text-4xl lg:text-5xl xl:text-6xl text-pretty text-center lg:text-start"
+        >
+          &#129412; Very Good<br />
+          <span
+            class="font-bold text-5xl lg:text-6xl xl:text-7xl text-balance text-center lg:text-start text-[var(--vgv-title-emph)]"
+          >
+            Engineering
+          </span>
+        </h1>
+        <p
+          class="subtitle text-lg mt-4 max-w-lg text-pretty text-center lg:text-start"
+        >
+          A comprehensive guide to building better software, faster.
+        </p>
+      </div>
+    </Fragment>
+    <div
+      slot="actions"
+      class="actions-container lg:min-w-[200%] justify-center lg:justify-start"
+    >
+      {
+        actions.map(({ text, link, icon, variant, attrs }) => (
+          <LinkButton
+            href={link}
+            variant={variant}
+            icon={icon?.name}
+            {...attrs}
+          >
+            {text}
+            {icon?.html && <Fragment set:html={icon.html} />}
+          </LinkButton>
+        ))
+      }
+    </div>
+
+    <div slot="graphic">
+      <Diagram
+        classes="max-w-[100%] lg:max-w-[inherit]"
+        light={hero}
+        dark={hero}
+        alt="Hero image."
+      />
+    </div>
+  </VgvHeroFeature>
+
+  <VgvHeroBreakout firstUrl="https://cli.vgv.dev/">
+    <Fragment slot="heading">
+      <VgvChip color="purple">SHIP FASTER</VgvChip>
+      <VgvHeroSectionHeader>
+        <span slot="title"
+          >Very Good <span class="font-bold text-[var(--vgv-title-emph)]"
+            >Development</span
+          ></span
+        >
+        <span slot="subtitle">
+          Stop dreading the hard part — we've already created the tools you need
+          and established best practices that will let you ship
+          <span class="font-bold">fast</span> and
+          <span class="font-bold">safe</span>.
+        </span>
+      </VgvHeroSectionHeader>
+    </Fragment>
+
+    <Fragment slot="first-image">
+      <VeryGoodCliDemo />
+    </Fragment>
+
+    <div slot="first-content" class="md:mr-8">
+      <div class="text-center md:text-left"><VeryGoodCli /></div>
+      <h3
+        class="text-2xl text-center md:text-left font-medium mt-4 text-balance"
+      >
+        &#128187; The Command-Line Interface to generate scalable templates and
+        use helpful commands.
+      </h3>
+      <p
+        class="max-w-[100%] mt-4 text-balance text-center md:text-left flex flex-row flex-wrap"
+      >
+        Generate a&nbsp;<a href="https://cli.vgv.dev/docs/templates/core"
+          >Flutter app</a
+        >,&nbsp;<a href="https://cli.vgv.dev/docs/templates/flame_game"
+          >Flame game
+        </a>,&nbsp;
+        <a href="https://cli.vgv.dev/docs/templates/flutter_pkg">
+          Flutter package
+        </a>,&nbsp;
+        <a href="https://cli.vgv.dev/docs/templates/dart_pkg">Dart package</a
+        >,&nbsp;
+        <a href="https://cli.vgv.dev/docs/templates/federated_plugin">
+          federated plugin
+        </a>, or&nbsp;
+        <a href="https://cli.vgv.dev/docs/templates/dart_cli">Dart CLI</a>&nbsp;
+        with one command.
+      </p>
+      <ul class="pl-4 mt-6 text-center md:text-left">
+        <li class="flex gap-2">
+          <Icon name="approve-check" color="green" class="size-6" />
+
+          <span class="text-sm">Scalable Starter Templates</span>
+        </li>
+        <li class="flex gap-2">
+          <Icon name="approve-check" color="green" class="size-6" />
+
+          <span class="text-sm">Built-In Best Practices</span>
+        </li>
+        <li class="flex gap-2">
+          <Icon name="approve-check" color="green" class="size-6" />
+
+          <span class="text-sm">Utility Commands</span>
+        </li>
+      </ul>
+    </div>
+  </VgvHeroBreakout>
+
+  <VgvScroll>
+    <div slot="title" class="mt-4 md:mt-16">
+      <VgvChip color="purple">SHIP SAFER</VgvChip>
+      <VgvHeroSectionHeader>
+        <span slot="title"
+          >Very Good <span class="font-bold text-[var(--vgv-title-emph)]"
+            >Practices</span
+          ></span
+        >
+        <span slot="subtitle">
+          Quality is really important to us — we've created the tools we need to
+          help us ship <span class="font-bold">fast</span> and
+          <span class="font-bold">safe</span>.
+        </span>
+      </VgvHeroSectionHeader>
+    </div>
+    <Fragment>
+      <VgvScrollItem>
+        <GithubCard owner="VeryGoodOpenSource" repo="formz" />
+      </VgvScrollItem>
+      <VgvScrollItem>
+        <GithubCard owner="VeryGoodOpenSource" repo="very_good_analysis" />
+      </VgvScrollItem>
+      <VgvScrollItem>
+        <GithubCard owner="VeryGoodOpenSource" repo="very_good_workflows" />
+      </VgvScrollItem>
+      <VgvScrollItem>
+        <GithubCard owner="VeryGoodOpenSource" repo="very_good_infinite_list" />
+      </VgvScrollItem>
+      <VgvScrollItem>
+        <GithubCard owner="VeryGoodOpenSource" repo="cli_completion" />
+      </VgvScrollItem>
+      <VgvScrollItem>
+        <GithubCard owner="VeryGoodOpenSource" repo="r13n" />
+      </VgvScrollItem>
+    </Fragment>
+  </VgvScroll>
+
+  <div class="mt-4 md:mt-24">
+    <VgvHeroBreakoutVertical>
+      <div>
+        <VgvHeroSectionHeader>
+          <span slot="title"
+            >Very Good <span class="font-bold text-[var(--vgv-title-emph)]"
+              >Experiences</span
+            ></span
+          >
+          <span slot="subtitle">
+            We've created three unique, open source experiences to showcase the
+            power of our opinionated software architecture and best practices.
+          </span>
+        </VgvHeroSectionHeader>
+      </div>
+      <div class="md:col-span-1 lg:col-span-2 z-10">
+        <Diagram
+          light={demoSplash}
+          classes="max-h-[60vh] max-w-[50vw] drop-shadow-2xl md:-mb-12 lg:-mb-24 lg:-mr-20"
+          dark={demoSplash}
+          alt="Demo previews."
+        />
+      </div>
+      <VgvCard
+        url="https://vgventures.github.io/airplane_entertainment_system/#/overview"
+      >
+        <div
+          slot="thumbnail"
+          class="h-[300px] flex justify-center items-center"
+        >
+          <Image
+            class:list={["h-[100%] w-auto"]}
+            src={airplane1}
+            alt="Airplane entertainment system screenshot"
+          />
+        </div>
+        <VgvCardHeader>
+          <span slot="title">Airplane Entertainment System</span>
+          <span slot="subtitle"
+            >Take flight and watch as the weather changes, all while listening
+            to soothing tunes.
+
+            <ul class="pl-4 mt-6 text-center md:text-left">
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span>
+                  Navigation featuring <a
+                    href="https://pub.dev/packages/go_router">GoRouter</a
+                  >
+                </span>
+              </li>
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span> Custom cloud rendering </span>
+              </li>
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span> Music visualizer </span>
+              </li>
+            </ul>
+            <div class="mt-8 flex flex-row justify-center gap-4">
+              <LinkButton
+                icon="laptop"
+                variant="primary"
+                href="https://vgventures.github.io/airplane_entertainment_system/"
+              >
+                Online Demo
+              </LinkButton>
+              <LinkButton
+                variant="secondary"
+                icon="github"
+                href="https://github.com/VGVentures/airplane_entertainment_system"
+                >GitHub</LinkButton
+              >
+            </div>
+          </span>
+        </VgvCardHeader>
+      </VgvCard>
+      <VgvCard url="https://vgventures.github.io/financial_dashboard/">
+        <div
+          slot="thumbnail"
+          class="h-[300px] flex justify-center items-center"
+        >
+          <Image
+            class:list={["h-[100%] w-auto"]}
+            src={financialDashboard}
+            alt="Financial dashboard screenshot"
+          />
+        </div>
+        <VgvCardHeader>
+          <span slot="title">Financial dashboard</span>
+          <span slot="subtitle"
+            >Pull-to-refresh and watch the numbers change as you randomize your
+            retirement account each time.
+
+            <ul class="pl-4 mt-6 text-center md:text-left">
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span> Multiple light and dark themes </span>
+              </li>
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span> Animated charts and graphs </span>
+              </li>
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span>
+                  State management with <a href="https://bloclibrary.dev/"
+                    >Bloc</a
+                  >
+                </span>
+              </li>
+            </ul>
+            <div class="mt-8 flex flex-row justify-center gap-4">
+              <LinkButton
+                icon="laptop"
+                variant="primary"
+                href="https://vgventures.github.io/financial_dashboard/"
+              >
+                Online Demo
+              </LinkButton>
+              <LinkButton
+                variant="secondary"
+                icon="github"
+                href="https://github.com/VGVentures/financial_dashboard"
+                >GitHub</LinkButton
+              >
+            </div>
+          </span>
+        </VgvCardHeader>
+      </VgvCard>
+      <VgvCard url="https://vgventures.github.io/vehicle_cockpit/">
+        <div
+          slot="thumbnail"
+          class="h-[300px] flex justify-center items-center"
+        >
+          <Image
+            class:list={["h-[100%] w-auto"]}
+            src={vehicleCockpit}
+            alt="Vehicle cockpit screenshot"
+          />
+        </div>
+        <VgvCardHeader>
+          <span slot="title">Vehicle Cockpit</span>
+          <span slot="subtitle"
+            >Hold spacebar, feel the engine rev up, and watch your car speed
+            around the simulated track.
+
+            <ul class="pl-4 mt-6 text-center md:text-left">
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <div>
+                  Animated tachometer created with <a
+                    href="https://flame-engine.org/">Flame</a
+                  >
+                </div>
+              </li>
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span> Custom widget rendering </span>
+              </li>
+              <li class="flex gap-2">
+                <Icon name="approve-check" color="green" class="size-6" />
+                <span> Embedded game in a Flutter app </span>
+              </li>
+            </ul>
+            <div class="mt-8 flex flex-row justify-center gap-4">
+              <LinkButton
+                icon="laptop"
+                variant="primary"
+                href="https://vgventures.github.io/vehicle_cockpit/"
+              >
+                Online Demo
+              </LinkButton>
+              <LinkButton
+                variant="secondary"
+                icon="github"
+                href="https://github.com/VGVentures/vehicle_cockpit"
+                >GitHub</LinkButton
+              >
+            </div>
+          </span>
+        </VgvCardHeader>
+      </VgvCard>
+    </VgvHeroBreakoutVertical>
+  </div>
+
+  <div class="mt-20">
+    <div class="col-span-3">
+      <VgvHeroBreakoutVertical>
+        <div class="text-center lg:col-span-3">
+          <VgvChip color="purple">IN CASE YOU MISSED IT</VgvChip>
+          <VgvHeroSectionHeader>
+            <span slot="title"
+              >Very Good
+              <span class="font-bold text-[var(--vgv-title-emph)]">Work</span>
+            </span>
+            <span slot="subtitle">
+              We've created a wide range of open source experiences to showcase
+              the power of Flutter.
+            </span>
+          </VgvHeroSectionHeader>
+        </div>
+        <GithubCard owner="flutter" repo="pinball" />
+        <GithubCard owner="flutter" repo="photobooth" />
+        <GithubCard owner="flutter" repo="holobooth" />
+        <GithubCard owner="VGVentures" repo="io_crossword" />
+        <GithubCard owner="VeryGoodOpenSource" repo="very_good_ranch" />
+      </VgvHeroBreakoutVertical>
+    </div>
+  </div>
+
+  <style is:inline>
+    body {
+      --sl-color-bg: var(--vgv-home-bg);
+    }
+  </style>
+
+  <style>
+    .actions-container {
+      display: flex;
+      flex-wrap: wrap;
+      flex-direction: row;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .button {
+      max-width: max-content;
+      flex: 0 1 auto;
+    }
+
+    .title {
+      /* Don't ever truncate a single letter. */
+      min-width: max-content;
+    }
+
+    @media (min-width: 50rem) {
+      .stack {
+        text-align: start;
+      }
+    }
+
+    .stack {
+      flex-direction: column;
+      gap: clamp(1.5rem, calc(1.5rem + 1vw), 2rem);
+      text-align: center;
+    }
+
+    .subtitle {
+      max-width: 100%;
+    }
+  </style>
+</VgvPage>

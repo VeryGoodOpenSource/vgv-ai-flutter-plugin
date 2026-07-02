@@ -1,0 +1,168 @@
+---
+// Built-in CSS styles.
+import "node_modules/@astrojs/starlight/style/props.css";
+import "node_modules/@astrojs/starlight/style/reset.css";
+import "node_modules/@astrojs/starlight/style/util.css";
+
+// Components — can override built-in CSS, but not user CSS.
+import Banner from "@astrojs/starlight/components/Banner.astro";
+import Head from "@astrojs/starlight/components/Head.astro";
+import SkipLink from "@astrojs/starlight/components/SkipLink.astro";
+import ThemeProvider from "@astrojs/starlight/components/ThemeProvider.astro";
+import { SEO } from "astro-seo";
+import VgvNav from "~/components/vgv_nav/vgv-nav.astro";
+import VgvPageFrame from "~/components/vgv_page/vgv-page-frame.astro";
+import VGVFooter from "~/components/vgv_footer/vgv-footer.astro";
+
+// Remark component CSS (needs to override `MarkdownContent.astro`)
+import "node_modules/@astrojs/starlight/style/asides.css";
+
+// Important that this is the last import so it can override built-in styles.
+import "virtual:starlight/user-css";
+
+const title = "Very Good Engineering";
+const description =
+  "Very Good Venture's best practices, tips, tricks, and demos.";
+const thumbnail = "https://engineering.verygood.ventures/thumbnail.png";
+
+interface Props {
+  htmlClasses?: string[];
+}
+
+const props = Astro.props;
+const route = Astro.locals.starlightRoute;
+const pageTitle = route.entry.data.title || title;
+const pageDescription = route.entry.data.description || description;
+
+const pagefindEnabled =
+  route.entry.slug !== "404" &&
+  !route.entry.slug.endsWith("/404") &&
+  route.entry.data.pagefind !== false;
+
+const siteUrl = "https://engineering.verygood.ventures";
+const slugParts = route.entry.slug ? route.entry.slug.split("/") : [];
+const breadcrumbItems = [
+  {
+    "@type": "ListItem" as const,
+    position: 1,
+    name: "Home",
+    item: `${siteUrl}/`,
+  },
+  ...slugParts.map((part: string, index: number) => ({
+    "@type": "ListItem" as const,
+    position: index + 2,
+    name:
+      index === slugParts.length - 1
+        ? route.entry.data.title
+        : part
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (c: string) => c.toUpperCase()),
+    item: `${siteUrl}/${slugParts.slice(0, index + 1).join("/")}/`,
+  })),
+];
+
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Very Good Ventures",
+  url: "https://verygood.ventures",
+  logo: `${siteUrl}/favicon.png`,
+};
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: breadcrumbItems,
+};
+---
+
+<html
+  lang={route.lang}
+  dir={route.dir}
+  data-has-toc={Boolean(route.toc)}
+  data-has-sidebar={route.hasSidebar}
+  data-has-hero={Boolean(route.entry.data.hero)}
+  data-theme="dark"
+  class:list={[...(props.htmlClasses ?? [])]}
+>
+  <head>
+    <Head {...props} />
+    <SEO
+      title={pageTitle}
+      description={pageDescription}
+      openGraph={{
+        basic: {
+          title: pageTitle,
+          type: "website",
+          image: thumbnail,
+        },
+        image: {
+          alt: "Very Good Engineering — best practices for building better software",
+        },
+      }}
+      twitter={{
+        creator: "@VGVentures",
+        site: "@VGVentures",
+      }}
+      extend={{
+        link: [{ rel: "icon", href: "/favicon.ico" }],
+        meta: [
+          {
+            name: "twitter:image",
+            content: thumbnail,
+          },
+          { name: "twitter:title", content: pageTitle },
+          { name: "twitter:description", content: pageDescription },
+        ],
+      }}
+    />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(organizationSchema)}
+    />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(breadcrumbSchema)}
+    />
+    <style>
+      html:not([data-has-toc]) {
+        --sl-mobile-toc-height: 0rem;
+      }
+      html:not([data-has-sidebar]) {
+        --sl-content-width: 67.5rem;
+      }
+      /* Add scroll padding to ensure anchor headings aren't obscured by nav */
+      html {
+        /* Additional padding is needed to account for the mobile TOC */
+        scroll-padding-top: calc(
+          1.5rem + var(--sl-nav-height) + var(--sl-mobile-toc-height)
+        );
+      }
+      main {
+        padding-bottom: 3vh;
+      }
+      @media (min-width: 72em) {
+        html {
+          scroll-padding-top: calc(1.5rem + var(--sl-nav-height));
+        }
+      }
+    </style>
+    <ThemeProvider />
+  </head>
+  <body>
+    <SkipLink />
+    <VgvPageFrame>
+      <VgvNav slot="header" />
+      <main
+        data-pagefind-body={pagefindEnabled}
+        lang={route.entryMeta.lang}
+        dir={route.entryMeta.dir}
+      >
+        {/* TODO: Revisit how this logic flows. */}
+        <Banner />
+        <slot />
+      </main>
+      <VGVFooter />
+    </VgvPageFrame>
+  </body>
+</html>
