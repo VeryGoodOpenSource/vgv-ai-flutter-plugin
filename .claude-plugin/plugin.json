@@ -1,6 +1,6 @@
 {
   "name": "vgv-ai-flutter-plugin",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Best-practice skills for Flutter and Dart covering accessibility, animations, BLoC, testing, theming, navigation, security, internationalization, layered architecture, license compliance, UI packages, project creation, SDK/lint upgrades, and an autonomous quality-gate loop that drives analyze, format, test, and coverage to green — plus automated dart analyze and format hooks.",
   "homepage": "https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin",
   "repository": "https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin",
