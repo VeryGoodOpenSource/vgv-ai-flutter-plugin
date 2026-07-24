@@ -34,7 +34,7 @@ argument-hint: "[file-or-directory]"   # optional
 
 | Field | Required | Rules |
 | ----- | -------- | ----- |
-| `name` | Yes | Must match the skill's folder name exactly; lowercase letters, numbers, and hyphens only |
+| `name` | Yes | Lowercase letters, numbers, and hyphens only; no leading, trailing, or consecutive hyphen; 1-64 chars; **must match the skill's directory name** (enforced in CI by `validate-skill`) |
 | `description` | Yes | Describes when the skill should be triggered |
 | `allowed-tools` | Yes | Comma-separated list of tools the skill may use |
 | `argument-hint` | No | Placeholder hint shown to the user |
@@ -73,10 +73,12 @@ Add the new skill directory and files to the repository structure tree in `CLAUD
 
 Skills are authored for Claude Code but target the [Agent Skills open
 standard](https://agentskills.io/specification) (the `npx skills` format, supported by
-many agents). Under that standard a skill is a **static instruction set**: the agent loads
-it by matching its `description`, then reads the body — there is no argument or template
-substitution. `$ARGUMENTS` and `${CLAUDE_SKILL_DIR}` are Claude Code conveniences, not spec
-features, so a body that uses them must still work when they arrive unsubstituted.
+many agents), so they should degrade gracefully on non-Claude harnesses such as Codex,
+Gemini CLI, and OpenCode without changing Claude Code behavior. Under that standard a skill
+is a **static instruction set**: the agent loads it by matching its `description`, then reads
+the body — there is no argument or template substitution. `$ARGUMENTS` and
+`${CLAUDE_SKILL_DIR}` are Claude Code conveniences, not spec features, so a body that uses
+them must still work when they arrive unsubstituted.
 
 **`$ARGUMENTS`** — not a spec concept; on a plain Agent Skill it is never substituted and
 stays literal. Always pair it with a fallback that fires when it is empty *or still shows
