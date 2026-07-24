@@ -64,8 +64,9 @@ Determine the change set adaptively, from the repository root:
    per affected package.
 
 Read the changed files with `Read`/`Grep` to review their full context, not just the diff hunks.
-You may use `mcp__dart__analyze_files` to corroborate a skill-based judgment, but analyzer output is
-not itself a findings source (see "What not to report").
+When the Dart MCP server is connected, you may use `mcp__dart__analyze_files` to corroborate a
+skill-based judgment, but analyzer output is not itself a findings source (see "What not to
+report"). If it is unavailable, rely on the four preloaded standards alone.
 
 ### When scoping fails
 

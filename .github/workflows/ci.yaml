@@ -30,36 +30,31 @@ jobs:
             **/*.md
             !CHANGELOG.md
           config: 'config/cspell.json'
-  detect-changed-skills:
-    name: 🔎 Detect Changed Skills
+  list-skills:
+    name: 🔎 List Skills
     runs-on: ubuntu-latest
     outputs:
-      skills: ${{ steps.changed-skills.outputs.skills }}
+      skills: ${{ steps.list-skills.outputs.skills }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: Get changed skills
-        id: changed-skills
+      - name: List all skills
+        id: list-skills
         run: |
-          BASE=${{ github.event.pull_request.base.sha }}
-          HEAD=${{ github.event.pull_request.head.sha }}
-          SKILLS=$(git diff --name-only $BASE $HEAD | \
-            { grep 'SKILL.md' || true; } | \
+          SKILLS=$(find -L skills -name SKILL.md -type f | \
             xargs -I {} dirname {} | \
             sort -u | \
             jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "skills=$SKILLS" >> "$GITHUB_OUTPUT"
-          echo "Changed skills: $SKILLS"
+          echo "Skills: $SKILLS"
   validate-skills:
     name: 🔍 Validate Skills
-    needs: detect-changed-skills
-    if: needs.detect-changed-skills.outputs.skills != '[]'
+    needs: list-skills
+    if: needs.list-skills.outputs.skills != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        skill: ${{ fromJson(needs.detect-changed-skills.outputs.skills) }}
+        skill: ${{ fromJson(needs.list-skills.outputs.skills) }}
     steps:
       - uses: actions/checkout@v7
       - name: Validate ${{ matrix.skill }}
@@ -76,6 +71,16 @@ jobs:
           echo "Valid: ${{ steps.validate.outputs.valid }}"
           echo "Errors: ${{ steps.validate.outputs.errors }}"
           echo "Warnings: ${{ steps.validate.outputs.warnings }}"
+  frontmatter-guard:
+    name: 🛡️ Frontmatter Guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Covers what validate-skills cannot: UTF-8 BOM detection (Gemini-fatal,
+      # passes validate-skill) and agents/**/*.md frontmatter (validate-skill
+      # only accepts files named SKILL.md).
+      - name: Check frontmatter portability
+        run: bash .github/scripts/check-frontmatter.sh
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest

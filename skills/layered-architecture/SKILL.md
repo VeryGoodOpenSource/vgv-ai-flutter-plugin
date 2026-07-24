@@ -29,6 +29,8 @@ Apply these standards to ALL layered architecture work:
 - **Repositories accept data layer dependencies via constructor injection** — never instantiate clients internally
 - **App bootstrap wires all layers** — `main_<flavor>.dart` creates clients and repositories, provides them via `RepositoryProvider`
 
+> **Cross-harness fallback.** This skill scaffolds and tests packages via the Very Good CLI MCP server. On a host without that MCP server connected, run the equivalent `very_good create dart_package …`, `very_good packages get`, and `very_good test` commands directly.
+
 ## Architecture Overview
 
 | Layer | Responsibility | Location | Depends On | Example |

@@ -17,6 +17,8 @@ effort: medium
 
 Dependency license auditor for Dart and Flutter projects — verifies that all package dependencies use licenses compatible with the project's requirements using the Very Good CLI MCP tools.
 
+> **Cross-harness fallback.** On Claude Code the `packages_check_licenses` MCP tool is the execution path. On a host without the Very Good CLI MCP server connected, run `very_good packages check licenses --licenses` directly (add `--directory <path>` for a project in a subdirectory) and read its output the same way — never block on a missing MCP server.
+
 ---
 
 ## Core Standards

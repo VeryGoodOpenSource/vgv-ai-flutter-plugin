@@ -38,6 +38,7 @@ skills/
   bloc/SKILL.md
   bloc/references/
   create-project/SKILL.md
+  create-project/references/interaction-fallbacks.md  # symlink → skills/shared/references/
   dart-flutter-sdk-upgrade/SKILL.md
   green-gate/SKILL.md
   green-gate/references/
@@ -48,6 +49,9 @@ skills/
   license-compliance/SKILL.md
   material-theming/SKILL.md
   navigation/SKILL.md
+  shared/
+    references/
+      interaction-fallbacks.md  # AskUserQuestion + allowed-tools fallbacks; symlinked into consuming skills
   static-security/SKILL.md
   static-security/references/
   testing/SKILL.md

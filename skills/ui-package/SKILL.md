@@ -83,3 +83,5 @@ my_ui/
 ## Creating the Package
 
 Use the Very Good CLI MCP tool to scaffold the `app_ui_package`.
+
+> **Cross-harness fallback.** On a host without the Very Good CLI MCP server connected, run the equivalent `very_good create` command for the UI package template directly.
