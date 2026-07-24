@@ -64,9 +64,9 @@ Add a row to the skills table in `README.md`. The skill name must link to the `S
 | [**Skill Name**](skills/<skill-name>/SKILL.md) | Short description of what the skill covers |
 ```
 
-### 5. Update `CLAUDE.md` repository structure
+### 5. Update `AGENTS.md` repository structure
 
-Add the new skill directory and files to the repository structure tree in `CLAUDE.md`.
+Add the new skill directory and files to the repository structure tree in `AGENTS.md`.
 
 ## Eval Cases
 
