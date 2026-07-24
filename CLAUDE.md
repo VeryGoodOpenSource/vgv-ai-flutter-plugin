@@ -26,6 +26,9 @@ hooks/
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
+scripts/
+  ci/
+    check-frontmatter.sh  # CI frontmatter guard: UTF-8 BOM + agents/**/*.md frontmatter
 skills/
   accessibility/SKILL.md
   accessibility/references/
@@ -38,6 +41,7 @@ skills/
   bloc/SKILL.md
   bloc/references/
   create-project/SKILL.md
+  create-project/references/interaction-fallbacks.md  # symlink → skills/shared/references/
   dart-flutter-sdk-upgrade/SKILL.md
   green-gate/SKILL.md
   green-gate/references/
@@ -48,6 +52,9 @@ skills/
   license-compliance/SKILL.md
   material-theming/SKILL.md
   navigation/SKILL.md
+  shared/
+    references/
+      interaction-fallbacks.md  # AskUserQuestion + allowed-tools fallbacks; symlinked into consuming skills
   static-security/SKILL.md
   static-security/references/
   testing/SKILL.md

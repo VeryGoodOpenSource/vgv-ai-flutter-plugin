@@ -69,6 +69,74 @@ Add the new skill directory and files to the repository structure tree in `CLAUD
 - **Reference packages by full name** (e.g., `package:mocktail`, not just "mocktail").
 - **Show anti-patterns alongside correct patterns** when helpful, so readers understand both what to do and what to avoid.
 
+## Cross-harness portability
+
+Skills are authored for Claude Code but target the [Agent Skills open
+standard](https://agentskills.io/specification) (the `npx skills` format, supported by
+many agents). Under that standard a skill is a **static instruction set**: the agent loads
+it by matching its `description`, then reads the body — there is no argument or template
+substitution. `$ARGUMENTS` and `${CLAUDE_SKILL_DIR}` are Claude Code conveniences, not spec
+features, so a body that uses them must still work when they arrive unsubstituted.
+
+**`$ARGUMENTS`** — not a spec concept; on a plain Agent Skill it is never substituted and
+stays literal. Always pair it with a fallback that fires when it is empty *or still shows
+the literal text* `$ARGUMENTS`:
+
+```markdown
+<feature_description>$ARGUMENTS</feature_description>
+
+**If the feature description above is empty or still shows the literal text
+`$ARGUMENTS` (the host did not substitute it), ask the user** for it (or read it
+from the conversation).
+```
+
+**`${CLAUDE_SKILL_DIR}`** — no skill here uses it today (the hooks use
+`${CLAUDE_PLUGIN_ROOT}`, resolved by Claude Code, not by skill bodies). If a future skill
+references a bundled file, prefer the spec form — a **relative path from the skill root**
+(`scripts/x.sh`) — and add a fallback for hosts that do not substitute the absolute form.
+
+**Frontmatter** — an agent silently skips a skill whose frontmatter is malformed. Keep the
+opening `---` on line 1, close the block with `---`, and include a non-empty `name:`
+(kebab-case, **matching the directory name**) and `description:`. The spec also allows
+`license`, `compatibility`, `metadata`, and `allowed-tools`. This plugin's Claude Code
+extras (`when_to_use`, `argument-hint`, `effort`, `model`) are not spec fields, but
+`npx skills` and other agents ignore unknown frontmatter — keep them top-level so Claude
+Code reads them and nothing else breaks. The `Skill validation` CI job
+(`Flash-Brew-Digital/validate-skill@v1`) enforces the spec (including
+name-matches-directory) across every skill on each pull request, and
+`scripts/ci/check-frontmatter.sh` guards the gaps it leaves — a UTF-8 BOM (Gemini-fatal but
+passes `validate-skill`) and `agents/**/*.md` frontmatter, which no other check covers.
+
+**MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
+Flutter actions) and `very-good-cli` (scaffolding, tests, license checks). On Claude Code
+they are the primary execution path, and the `check-vgv-cli.sh` / `block-cli-workarounds.sh`
+hooks deliberately steer the quality gates through the MCP tools instead of the raw CLI — do
+not weaken that on Claude Code. Those hooks do not run on other hosts and the MCP servers may
+not be connected there, so every skill that drives an MCP tool must name the equivalent
+`very_good` / `dart` / `flutter` CLI command as a fallback and never block when the server is
+absent. The `dart-flutter-sdk-upgrade` and `very-good-analysis-upgrade` skills already phrase
+this as "use the MCP tool if available; otherwise Bash" — match that.
+
+**Subagents** — subagents are not part of the Agent Skills standard, and no skill in this
+plugin dispatches one. The `flutter-reviewer` agent (`agents/flutter-reviewer.md`) is a
+Claude Code construct; on a host without a subagent mechanism its four preloaded standards
+(`bloc`, `testing`, `static-security`, `accessibility`) still apply — run the review inline
+against those skills instead of dispatching the agent.
+
+**`AskUserQuestion` and `allowed-tools`** — both are Claude Code conveniences. A skill that
+asks the user a structured question or declares a narrow `allowed-tools` list carries the
+cross-harness fallbacks in [`skills/shared/references/interaction-fallbacks.md`](skills/shared/references/interaction-fallbacks.md):
+ask the same question as plain numbered text where `AskUserQuestion` is absent, and treat
+`allowed-tools` as a permission hint rather than a hard cap.
+
+**Shared content via symlinks** — references shared across skills live once under
+`skills/shared/references/` and are symlinked into each consuming skill's `references/`
+directory (for example `interaction-fallbacks.md`). `npx skills` dereferences symlinks when
+it copies a cloned or local skill, so those install paths work as-is. Before relying on a
+server-side snapshot install, verify with a real `npx skills add` that the shared files
+arrive intact; if they do not, materialize them (dereference the symlinks into real files at
+publish time, or vendor real copies).
+
 ## Testing Locally
 
 Editing a skill or hook and pushing straight to a PR only tells you the files
@@ -144,15 +212,20 @@ Then, inside a session:
 
 ### Validate before you push
 
-Run the same check CI runs, from the repository root:
+Run the same checks CI runs, from the repository root:
 
 ```bash
 claude plugin validate .
 ```
 
-This validates the manifest, skill frontmatter, hook JSON, MCP config, and file
-references. It is static, so it confirms structure but does not replace the live
-checks above.
+```bash
+bash scripts/ci/check-frontmatter.sh
+```
+
+The first validates the manifest, skill frontmatter, hook JSON, MCP config, and file
+references. The second is the frontmatter guard (UTF-8 BOM detection plus `agents/**/*.md`
+frontmatter). Both are static, so they confirm structure but do not replace the live checks
+above.
 
 ### Troubleshooting
 
@@ -170,10 +243,12 @@ Every pull request runs the following checks automatically:
 
 | Check | What it does | Config |
 | ----- | ------------ | ------ |
+| Markdown lint | Lints all `*.md` files (except `CHANGELOG.md`) | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
-| File size | Ensures no file exceeds 50 KB | `scripts/check_large_files.sh` |
-| Skill validation | Validates `SKILL.md` frontmatter and structure | `scripts/validate_skills.sh` |
-| Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
+| Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
+| Frontmatter guard | Fails on a UTF-8 BOM in any `SKILL.md` or agent file (Gemini-fatal, passes validate-skill) and validates `agents/**/*.md` frontmatter, which no other check covers | `scripts/ci/check-frontmatter.sh` |
+| Plugin validation | Validates the plugin manifests via the Claude Code CLI | `claude plugin validate .` |
+| Script tests | Runs the hook script unit tests | `hooks/scripts/*_test.sh` |
 
 If the spelling check flags a legitimate word, add it to `config/cspell.json` in the `words` array.
 

@@ -42,7 +42,11 @@ Apply these to ALL green-gate work:
   coverage via `mcp__very-good-cli__test`. The Bash test path
   (`very_good test`, `flutter test`, `dart test`) is hook-blocked by
   `block-cli-workarounds.sh`; `dart analyze` via Bash is redundant with the MCP
-  tool. **Bash is reserved for parsing `coverage/lcov.info` only.**
+  tool. **Bash is reserved for parsing `coverage/lcov.info` only.** This MCP-only
+  rule is a Claude Code constraint enforced by that hook; it does not run on other
+  hosts. **Cross-harness fallback:** on a host without the hook and without the MCP
+  servers connected, run the equivalent `dart analyze`, `dart format`, and
+  `very_good test` CLI commands instead — never block on a missing MCP server.
 - **Never cache green** — re-evaluate every gate every round. Fixing analyze or
   test failures and writing new test files shifts both formatting and the
   coverage denominator, so a previously green gate can regress.

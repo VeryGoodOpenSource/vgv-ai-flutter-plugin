@@ -48,9 +48,10 @@ for the target Flutter release before editing any files.
 3. Note the Dart version listed alongside it
 
 The target version comes from `$ARGUMENTS` (e.g. `3.41.0`) when the user supplied one. If
-`$ARGUMENTS` is empty, look up the latest Flutter stable release from that same page. For pure
-Dart packages (no Flutter dependency), the Dart version is whatever `$ARGUMENTS` specifies or
-the latest stable — no Flutter mapping needed.
+`$ARGUMENTS` is empty or still shows the literal text `$ARGUMENTS` (the host did not substitute
+it), look up the latest Flutter stable release from that same page. For pure Dart packages (no
+Flutter dependency), the Dart version is whatever `$ARGUMENTS` specifies or the latest stable —
+no Flutter mapping needed.
 
 Confirm both resolved versions with the user before editing files.
 

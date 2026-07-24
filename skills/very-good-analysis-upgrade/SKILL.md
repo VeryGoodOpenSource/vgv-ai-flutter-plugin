@@ -31,7 +31,8 @@ These standards apply to every `very_good_analysis` upgrade.
 Confirm two things before proceeding:
 
 1. **Target version** — use `$ARGUMENTS` as the target version when the user supplied one
-   (e.g. `10.0.0`). If `$ARGUMENTS` is empty, fetch the latest from the pub.dev API and use
+   (e.g. `10.0.0`). If `$ARGUMENTS` is empty or still shows the literal text `$ARGUMENTS`
+   (the host did not substitute it), fetch the latest from the pub.dev API and use
    that. Don't ask — just look it up and proceed:
 
     ```bash
