@@ -100,10 +100,12 @@ opening `---` on line 1, close the block with `---`, and include a non-empty `na
 (kebab-case, **matching the directory name**) and `description:`. The spec also allows
 `license`, `compatibility`, `metadata`, and `allowed-tools`. This plugin's Claude Code
 extras (`when_to_use`, `argument-hint`, `effort`, `model`) are not spec fields, but
-`npx skills` and other agents ignore unknown frontmatter — keep them top-level so Claude
-Code reads them and nothing else breaks. The `Skill validation` CI job
-(`Flash-Brew-Digital/validate-skill@v1`) enforces the spec (including
-name-matches-directory) across every skill on each pull request, and
+`npx skills` and other agents ignore unknown frontmatter keys — keep them top-level so
+Claude Code reads them and nothing else breaks. (The spec's optional `skills-ref` linter is
+stricter, rejecting any top-level field outside the six it allows; `npx skills` does not run
+it, and nesting these extras under `metadata:` is the escape hatch if strict conformance is
+ever needed.) The `Skill validation` CI job (`Flash-Brew-Digital/validate-skill@v1`) enforces
+the spec (including name-matches-directory) across every skill on each pull request, and
 `.github/scripts/check-frontmatter.sh` guards the gaps it leaves — a UTF-8 BOM (Gemini-fatal but
 passes `validate-skill`) and `agents/**/*.md` frontmatter, which no other check covers.
 
