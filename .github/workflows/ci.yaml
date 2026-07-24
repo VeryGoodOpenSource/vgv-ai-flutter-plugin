@@ -80,7 +80,7 @@ jobs:
       # passes validate-skill) and agents/**/*.md frontmatter (validate-skill
       # only accepts files named SKILL.md).
       - name: Check frontmatter portability
-        run: bash scripts/ci/check-frontmatter.sh
+        run: bash .github/scripts/check-frontmatter.sh
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest
