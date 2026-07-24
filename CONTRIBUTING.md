@@ -104,7 +104,7 @@ extras (`when_to_use`, `argument-hint`, `effort`, `model`) are not spec fields, 
 Code reads them and nothing else breaks. The `Skill validation` CI job
 (`Flash-Brew-Digital/validate-skill@v1`) enforces the spec (including
 name-matches-directory) across every skill on each pull request, and
-`scripts/ci/check-frontmatter.sh` guards the gaps it leaves — a UTF-8 BOM (Gemini-fatal but
+`.github/scripts/check-frontmatter.sh` guards the gaps it leaves — a UTF-8 BOM (Gemini-fatal but
 passes `validate-skill`) and `agents/**/*.md` frontmatter, which no other check covers.
 
 **MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
@@ -219,7 +219,7 @@ claude plugin validate .
 ```
 
 ```bash
-bash scripts/ci/check-frontmatter.sh
+bash .github/scripts/check-frontmatter.sh
 ```
 
 The first validates the manifest, skill frontmatter, hook JSON, MCP config, and file
@@ -246,7 +246,7 @@ Every pull request runs the following checks automatically:
 | Markdown lint | Lints all `*.md` files (except `CHANGELOG.md`) | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
-| Frontmatter guard | Fails on a UTF-8 BOM in any `SKILL.md` or agent file (Gemini-fatal, passes validate-skill) and validates `agents/**/*.md` frontmatter, which no other check covers | `scripts/ci/check-frontmatter.sh` |
+| Frontmatter guard | Fails on a UTF-8 BOM in any `SKILL.md` or agent file (Gemini-fatal, passes validate-skill) and validates `agents/**/*.md` frontmatter, which no other check covers | `.github/scripts/check-frontmatter.sh` |
 | Plugin validation | Validates the plugin manifests via the Claude Code CLI | `claude plugin validate .` |
 | Script tests | Runs the hook script unit tests | `hooks/scripts/*_test.sh` |
 

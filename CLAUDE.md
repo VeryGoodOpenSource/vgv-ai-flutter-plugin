@@ -26,9 +26,6 @@ hooks/
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
-scripts/
-  ci/
-    check-frontmatter.sh  # CI frontmatter guard: UTF-8 BOM + agents/**/*.md frontmatter
 skills/
   accessibility/SKILL.md
   accessibility/references/
