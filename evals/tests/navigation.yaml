@@ -1,0 +1,139 @@
+# Behavior cases for the navigation skill.
+
+- description: navigation-writes-type-safe-routes
+  vars:
+    prompt: >-
+      Add a route for an article detail page at /flutter/article/:id, nested under a
+      /flutter parent route. Show the code and the steps to make it work.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:navigation'
+    - type: regex
+      value: '@TypedGoRoute<'
+    - type: regex
+      value: 'extends GoRouteData'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The article route is declared as a nested sub-route inside the parent /flutter
+        route's routes list, not as a separate top-level route.
+    - type: llm-rubric
+      value: >-
+        The response mentions running build_runner to generate the type-safe route
+        helpers.
+
+- description: navigation-refuses-extra-parameter
+  vars:
+    prompt: >-
+      I want to pass a whole Product object to my details screen. Show me how to do it
+      with GoRouter's extra parameter.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:navigation'
+    - type: llm-rubric
+      value: >-
+        The response declines to use GoRouter's extra parameter, rather than complying
+        with the request as asked.
+    - type: llm-rubric
+      value: >-
+        The response gives the reason: extra breaks deep linking and does not work on
+        the web.
+    - type: llm-rubric
+      value: >-
+        The response offers an alternative: pass an identifier as a path parameter and
+        load the object at the destination.
+
+- description: navigation-uses-hyphens-in-paths
+  vars:
+    prompt: >-
+      I need a route for the order history screen, at the top level of the app. What
+      should its full URL path be? Answer with only the path, starting with a slash,
+      and nothing else.
+  # No `skill-used` on purpose, same reason as the create-project one-word cases: a
+  # prompt demanding a single token does not justify a Skill round-trip, so asserting
+  # routing here would report the harness rather than the skill. Routing for this skill
+  # is covered by the cases that ask for actual route code.
+  assert:
+    - type: not-contains
+      value: '_'
+    # Unanchored: `^...$` would fail a correct answer over a trailing newline.
+    - type: regex
+      value: '/[a-z]+(-[a-z]+)+'
+
+- description: navigation-guards-routes-with-redirect
+  vars:
+    prompt: >-
+      Send unauthenticated users to /login when they try to open /settings. Output
+      Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:navigation'
+    - type: regex
+      value: 'redirect'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The guard is implemented with GoRouter's redirect callback rather than by
+        checking auth state inside a page's build method and pushing a route.
+
+- description: navigation-prefers-go-over-push
+  vars:
+    # Asks for code, not a one-word verdict. Both terser phrasings were flaky: the
+    # skill often failed to activate on a bare "go() or push()?" question and the
+    # unaided model answers "push", the opposite of the SKILL.md standard. A code
+    # request routes reliably and the choice is still mechanically gradeable.
+    prompt: >-
+      My app routes with GoRouter. Write the onTap callback that takes the user from
+      the product list to the product details route at /products/p1. Nothing is
+      returned to the caller. Output Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:navigation'
+    # The whole go family counts, and so does the whole push family: the skill emits
+    # context.goNamed(...) here, which `\.go\(` alone does not match.
+    - type: regex
+      value: '\.go(Named)?\('
+    - type: not-regex
+      value: '\.push(Named|Replacement|ReplacementNamed)?\('
+
+- description: navigation-tests-with-mock-go-router
+  vars:
+    # "Write a widget test ..." alone routes to the testing skill, which answers with
+    # a Navigator.push test and never touches GoRouter. Naming the router and the
+    # route keeps this a navigation case.
+    prompt: >-
+      My app routes with GoRouter. Write a widget test asserting that tapping a
+      ProductCard navigates to the /products/:id route, mocking the router rather
+      than building a real one. Output Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:navigation'
+    - type: regex
+      value: 'Mock.*GoRouter|GoRouter.*Mock'
+    - type: llm-rubric
+      value: >-
+        The test mocks GoRouter and provides it to the widget tree, for example via
+        InheritedGoRouter, rather than constructing a full real router with page
+        builders.
+
+# Negative control.
+- description: navigation-stays-out-of-non-routing-work
+  vars:
+    prompt: >-
+      Write a Dart extension on String that capitalizes the first letter. Return only
+      the code.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:navigation'
+    - type: not-regex
+      value: 'GoRoute|go_router|context\.go|ShellRoute'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it provide the extension" is unanswerable from the output alone.
+    - type: regex
+      value: 'extension \w+ on String'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the extension is correct. It
+        must not introduce routing, GoRouter, or navigation concepts.
