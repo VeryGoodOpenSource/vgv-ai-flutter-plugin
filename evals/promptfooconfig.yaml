@@ -1,0 +1,115 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+#
+# Behavior evals: send each case's prompt through the Claude Agent SDK with this
+# plugin loaded, then grade what the model produced.
+#
+#   npx promptfoo@latest eval -c evals/promptfooconfig.yaml
+#   npx promptfoo@latest eval -c evals/promptfooconfig.yaml --filter-pattern bloc
+#   npx promptfoo@latest view
+#
+# Two providers run every case: `with-skill` loads the plugin, `sealed-baseline`
+# loads nothing. A grader passing in both columns is measuring the model, not the
+# skill, so read the comparison view rather than the score.
+#
+# See evals/README.md for the case format and what these evals do not cover.
+description: VGV AI Flutter Plugin skill behavior evals
+
+prompts:
+  - '{{prompt}}'
+
+providers:
+  # `skills: all` lets the model route on its own instead of being forced into a
+  # skill, which is what makes `skill-used` a real routing test.
+  - id: anthropic:claude-agent-sdk
+    label: with-skill
+    config:
+      # The agent under test uses the local Claude Code session, not a key. The
+      # llm-rubric judge does need one — see defaultTest below.
+      apiKeyRequired: false
+      # Export PROMPTFOO_MODEL to try another model; defaults to sonnet. Both
+      # providers must stay on the same one or the ablation compares models rather
+      # than the plugin.
+      model: "{{ env.PROMPTFOO_MODEL | default('sonnet', true) }}"
+      working_dir: ./fixture
+      plugins:
+        - type: local
+          path: ../
+      skills: all
+      # `tools` is the availability control. Read/Glob/Grep stay because skills
+      # delegate to references/*.md and must be able to open them.
+      tools: ['Skill', 'Read', 'Glob', 'Grep']
+      # Required for isolation, and easy to get backwards: omitting the key loads
+      # user, project and local settings *and* CLAUDE.md. Both columns must have
+      # it, or the ablation compares contexts instead of the plugin. Plugins
+      # arrive via --plugin-dir, so `skills: all` still works.
+      setting_sources: []
+      strict_mcp_config: true
+      # 8 was too low: a case asking for Dart code plus pubspec changes reads two
+      # reference files first and then dies on "Reached maximum number of turns",
+      # which scores 0 and reads exactly like a content failure.
+      max_turns: 12
+      max_budget_usd: 0.5
+
+  # The bare model. Sealing it takes three keys, and the reason each is here was
+  # established by watching a real run leak:
+  #
+  #   tools: []            `working_dir` is inside the checkout, so once the Skill
+  #                        tool refuses, the model walks up to ../../skills and
+  #                        reads SKILL.md, then passes rubrics on content it should
+  #                        never have seen. Observed with Read, Grep and Bash.
+  #                        `--tools ""` removes all 34 built-ins, so the walk-up is
+  #                        impossible rather than merely detectable. Do not reach
+  #                        for custom_allowed_tools here — see below.
+  #   setting_sources: []  Otherwise CLAUDE.md loads, and it lists every skill.
+  #                        No tool call is involved, so nothing would catch it.
+  #   strict_mcp_config    Without it, `--tools ""` still leaves the mcp__* tools.
+  #
+  # The fixture has no source and prompts are required to be self-contained, so a
+  # tool-less baseline loses nothing legitimate.
+  - id: anthropic:claude-agent-sdk
+    label: sealed-baseline
+    config:
+      apiKeyRequired: false
+      model: "{{ env.PROMPTFOO_MODEL | default('sonnet', true) }}"
+      working_dir: ./fixture
+      tools: []
+      setting_sources: []
+      strict_mcp_config: true
+      max_turns: 12
+      max_budget_usd: 0.5
+
+defaultTest:
+  # The llm-rubric judge is pinned to the same Agent SDK provider so it also
+  # authenticates through the local Claude Code session — the whole suite runs on a
+  # subscription with no API key. Left unpinned, promptfoo picks a judge from
+  # whatever key happens to be in the environment, which is neither deterministic
+  # nor free. `max_turns: 2` keeps the judge a grader rather than an agent.
+  options:
+    provider:
+      id: anthropic:claude-agent-sdk
+      config:
+        apiKeyRequired: false
+        model: "{{ env.PROMPTFOO_MODEL | default('sonnet', true) }}"
+        # A grader needs no tools, and omitting these does not give it none: with
+        # no working_dir the provider still ships the full default tool set.
+        tools: []
+        setting_sources: []
+        strict_mcp_config: true
+        max_turns: 2
+  # A case passes when its assertions average this or better. The threshold is
+  # per-case, so a weak case cannot hide behind strong siblings.
+  threshold: 0.8
+  # Do not add a harness self-check as an assertion here. Isolation is a *validity*
+  # question, not a graded one, and an assertion that returns true on every clean run
+  # is a full-weight free point in all 66 results — which lifted two sealed cases over
+  # this threshold and masked the ablation when it was tried. `weight: 0` is not the
+  # escape hatch it looks like either: promptfoo reports a zero-weight assertion as
+  # passing no matter what the function returns. Isolation is held by the provider
+  # keys above; see the README section on it.
+
+tests:
+  - file://tests/bloc.yaml
+  - file://tests/testing.yaml
+  - file://tests/navigation.yaml
+  - file://tests/layered-architecture.yaml
+  - file://tests/create-project.yaml

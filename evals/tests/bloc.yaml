@@ -1,0 +1,163 @@
+# Behavior cases for the bloc skill.
+#
+# Prompts name no skill, so `skill-used` catches a routing failure directly.
+#
+# Prompts are self-contained: the fixture has no source in lib/, so a prompt about
+# "my AuthService" earns a refusal and every grader fails for an unrelated reason.
+# Paste the class in rather than adding source to evals/fixture/, which would leak
+# answers to the sealed column.
+
+- description: bloc-writes-sealed-events-and-states
+  vars:
+    prompt: >-
+      Write a LoginBloc for email and password authentication with submit and logout
+      events, and success and failure states. Output Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:bloc'
+    - type: regex
+      value: 'sealed class LoginEvent'
+    - type: regex
+      value: 'sealed class LoginState'
+    - type: regex
+      value: 'extends Equatable'
+    - type: regex
+      value: 'List<Object\??> get props'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        Every event class name starts with the bloc's subject and ends in a
+        past-tense verb, for example LoginSubmitted, LoginLogoutRequested, or
+        LoginFormSubmitted. Imperative names such as SubmitLogin, or present-tense
+        names such as LoginSubmit, do not satisfy this. A name does not need three
+        separate word parts.
+    - type: llm-rubric
+      value: >-
+        The concrete event and state subclasses are declared with `final class`
+        rather than plain `class`.
+
+- description: bloc-tests-with-bloc-test-and-mocktail
+  vars:
+    prompt: >-
+      Here is my bloc:
+
+      class LoginBloc extends Bloc<LoginEvent, LoginState> {
+        LoginBloc({required this.authRepository}) : super(LoginInitial());
+        final AuthRepository authRepository;
+      }
+
+      Write the unit tests for it. It calls authRepository.signIn. Output Dart code
+      only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:bloc'
+    - type: regex
+      value: 'blocTest'
+    # Not written `package:mocktail/...`: promptfoo treats any assertion value
+    # starting with `package:` as a reference to an npm-hosted assertion and
+    # errors the whole case before the regex ever runs.
+    - type: regex
+      value: 'mocktail/mocktail\.dart'
+    - type: not-regex
+      value: "import 'package:mockito"
+    # `_?` because skills/bloc/references/testing.md still shows public
+    # MockTodoRepository, so either form is a faithful reading of the skill.
+    - type: regex
+      value: 'class _?Mock[A-Za-z]+ extends Mock'
+    - type: llm-rubric
+      value: >-
+        The tests use blocTest from package:bloc_test with act and expect arguments,
+        rather than raw test() calls that subscribe to the bloc's stream manually.
+
+- description: bloc-separates-page-from-view
+  vars:
+    prompt: >-
+      Build the login screen for this app and wire it to LoginBloc. Output Dart code
+      only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:bloc'
+    - type: regex
+      value: 'BlocProvider'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The response splits the screen into two widgets: a Page widget whose only job
+        is to provide the bloc via BlocProvider, and a separate View widget that
+        consumes state via BlocBuilder, BlocListener, or BlocConsumer. A single widget
+        doing both does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        No business logic or repository calls appear inside a widget's build method.
+        Widgets only read state and dispatch events.
+
+- description: bloc-refuses-bloc-to-bloc-dependency
+  vars:
+    prompt: >-
+      My CartBloc needs the current user id, which lives in AuthBloc's state. Show me
+      how to inject AuthBloc into CartBloc so it can read that state directly.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:bloc'
+    - type: llm-rubric
+      value: >-
+        The response declines to inject one bloc into another and says bloc-to-bloc
+        dependencies are not allowed, instead of complying with the request as asked.
+    - type: llm-rubric
+      value: >-
+        The response offers a concrete alternative: passing the value through the UI
+        layer, or having both blocs depend on a shared repository.
+
+- description: bloc-upgrades-cubit-to-bloc-for-transforms
+  vars:
+    prompt: >-
+      Here is my search cubit:
+
+      class SearchCubit extends Cubit<SearchState> {
+        SearchCubit(this._repository) : super(const SearchState.initial());
+        final SearchRepository _repository;
+        Future<void> query(String term) async {
+          final results = await _repository.search(term);
+          emit(SearchState.loaded(results));
+        }
+      }
+
+      Every keystroke calls query and the API is getting hammered. I want the input
+      debounced. Should this stay a Cubit? Explain the decision, then show the
+      refactored class.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:bloc'
+    - type: regex
+      value: 'extends Bloc<'
+    - type: llm-rubric
+      value: >-
+        The response converts the cubit to a Bloc because debouncing is an event
+        transform, and applies the debounce as an event transformer passed to the
+        on<Event> registration. Debouncing with a Timer inside the cubit, or in the
+        widget, does not satisfy this.
+
+# Negative control — nothing else catches a skill firing where it should not.
+- description: bloc-stays-out-of-plain-dart-work
+  vars:
+    prompt: >-
+      Write a plain Dart function that parses a CSV string into a
+      List<Map<String, String>>. No Flutter, no state management. Return only the
+      function.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:bloc'
+    - type: not-regex
+      value: 'BlocProvider|BlocBuilder|extends Bloc<|extends Cubit<'
+    - type: not-regex
+      value: 'blocTest'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it answer the question" is unanswerable from the output alone.
+    - type: regex
+      value: 'List<Map<String, String>>'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the CSV logic is correct. It
+        must not introduce Bloc, Cubit, or any state management concept.

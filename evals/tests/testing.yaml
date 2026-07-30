@@ -1,0 +1,160 @@
+# Behavior cases for the testing skill.
+
+- description: testing-structures-unit-tests-as-sentences
+  vars:
+    prompt: >-
+      Here is my class:
+
+      class UserRepository {
+        UserRepository({required this.apiClient});
+        final ApiClient apiClient;
+        Future<User> getUser(String id) => apiClient.fetchUser(id);
+      }
+
+      Write unit tests for it. getUser throws UserNotFoundException on a 404. Output
+      Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:testing'
+    - type: regex
+      value: 'class _Mock[A-Za-z]+ extends Mock implements'
+    # Matches the import, not the bare word: a response that mentions mockito while
+    # explaining why it used mocktail is correct. Note the value must not start with
+    # `package:` — promptfoo would load that as an npm assertion package and error.
+    - type: not-regex
+      value: "import 'package:mockito"
+    - type: regex
+      value: 'late [A-Za-z]+'
+    - type: regex
+      value: 'setUp\('
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: 'Every setUp call sits inside a group block, never at the top level of main().'
+    - type: llm-rubric
+      value: >-
+        Test names read as sentences describing behavior, such as 'returns $User when
+        API call succeeds'. Names like 'works', 'test getUser', or 'getUser test' do
+        not satisfy this.
+    - type: llm-rubric
+      value: >-
+        Test descriptions use Dart string interpolation for type references, writing
+        'returns $User' rather than the literal text 'returns User'.
+
+- description: testing-declines-mockito
+  vars:
+    prompt: >-
+      Here is my class:
+
+      class AuthService {
+        AuthService({required this.repository});
+        final AuthRepository repository;
+        Future<bool> signIn(String email, String password) =>
+            repository.signIn(email, password);
+      }
+
+      Write a test for it using package:mockito to mock AuthRepository.
+  # Grades that the standard is *surfaced*, not that the request is refused. The
+  # earlier version asserted `not-regex: import 'package:mockito'` plus a mocktail
+  # import, which demanded outright substitution and flaked 1 run in 3: the model
+  # names mocktail as the standard, then honors the explicit request and offers the
+  # alternative, which is reasonable behavior to reward rather than fail. The skill
+  # knowledge is still what is being measured — a bare model never raises mocktail at
+  # all, and scores 0.25 here.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:testing'
+    - type: icontains
+      value: 'mocktail'
+    - type: llm-rubric
+      value: >-
+        The response names package:mocktail as the project's standard mocking package
+        and offers it in place of the requested package:mockito. It may still provide
+        the mockito test that was asked for; what it must not do is switch or comply
+        silently without raising mocktail.
+
+- description: testing-uses-pump-app-in-widget-tests
+  vars:
+    # "using our existing widget-test helpers" is here because without it the skill
+    # reached for pumpWidget(MaterialApp(...)) inline on some runs, failing both the
+    # helper regex and the rubric. The convention under test is still the skill's —
+    # the prompt names no helper.
+    prompt: >-
+      Write a widget test for a LoginView that shows an error SnackBar when the bloc
+      emits LoginFailure, using our existing widget-test helpers. Output Dart code
+      only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:testing'
+    - type: regex
+      value: 'testWidgets'
+    - type: regex
+      value: 'pumpApp'
+    - type: regex
+      value: 'MockBloc|MockCubit'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The test wraps the widget with a pumpApp helper rather than calling
+        pumpWidget(MaterialApp(...)) inline in the test body.
+    - type: llm-rubric
+      value: 'The bloc under the widget is a mock, not a real bloc instance.'
+
+- description: testing-avoids-asserting-visual-properties
+  vars:
+    prompt: >-
+      Write a widget test that asserts my AppButton has 16 pixels of padding, a blue
+      background, and 14pt font. Output Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:testing'
+    - type: llm-rubric
+      value: >-
+        The response recommends a golden test for these visual properties instead of a
+        widget test. Pass if it recommends golden testing, whether or not it also
+        shows the widget-test approach.
+    # Current behaviour: the skill supplies the widget test the user asked for while
+    # stating that these assertions are fragile and golden tests are the right tool.
+    # This grades that it never complies silently. An earlier version demanded the
+    # test be withheld entirely, which the skill does not do.
+    - type: llm-rubric
+      value: >-
+        If the response includes a widget test asserting padding, background colour or
+        font size, it also states plainly that such property assertions are fragile or
+        brittle. Silently handing over the test with no such caveat fails.
+
+- description: testing-tags-golden-tests-with-a-constant
+  vars:
+    prompt: 'Add a golden test for my AppButton widget. Output Dart code only.'
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:testing'
+    - type: regex
+      value: 'TestTag'
+    - type: llm-rubric
+      value: >-
+        The golden test is tagged using a constant from an abstract class such as
+        TestTag.golden, not a raw string literal like tags: 'golden'.
+
+# Negative control.
+- description: testing-stays-out-of-non-test-work
+  vars:
+    prompt: >-
+      Rename the variable `usr` to `user` in this Dart line: `final usr = getUser();`
+      Return only the corrected line.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:testing'
+    - type: not-regex
+      value: 'testWidgets|pumpApp|mocktail|setUp\('
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it rename the variable" is unanswerable from the output alone.
+    - type: regex
+      value: 'final user = getUser\(\);'
+    - type: not-regex
+      value: '\busr\b'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the rename is correct. It must
+        not add tests, mocks, or unsolicited testing advice.

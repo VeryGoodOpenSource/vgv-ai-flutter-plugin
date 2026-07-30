@@ -1,0 +1,166 @@
+# Behavior cases for the layered-architecture skill.
+
+- description: layered-architecture-lays-out-four-layers
+  vars:
+    prompt: >-
+      I'm starting a weather app that reads from a REST API. Lay out the package
+      structure.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:layered-architecture'
+    - type: regex
+      value: 'packages/'
+    - type: regex
+      value: '_repository'
+    - type: llm-rubric
+      value: >-
+        The layout places the data layer and repository layer as separate packages
+        under packages/, and keeps business logic and presentation in the app's lib/
+        directory organized by feature.
+    - type: llm-rubric
+      value: >-
+        The layout has each layer depending only on the layer directly beneath it:
+        presentation on business logic, business logic on the repository package, the
+        repository package on the data package. The app's main_<flavor>.dart bootstrap
+        is the one exception and may construct data clients in order to inject them
+        into repositories; that is the expected pattern, not a violation. Judge the
+        structure shown, not whether the response recites the chain in words.
+
+- description: layered-architecture-keeps-flutter-out-of-data-packages
+  vars:
+    # Says "data layer package" and "layer boundaries" on purpose. Phrased as plain
+    # code review it routed to no skill on roughly half of runs, which made the case
+    # flaky rather than wrong — both rubrics passed either way.
+    prompt: >-
+      My monorepo puts weather_api_client under packages/ as the data layer package.
+      Does this file respect the layer boundaries?
+
+      import 'dart:convert';
+      import 'package:flutter/material.dart';
+      import 'package:http/http.dart' as http;
+
+      class WeatherApiClient {
+        WeatherApiClient({http.Client? client}) : _client = client ?? http.Client();
+        final http.Client _client;
+        Future<Map<String, dynamic>> fetchWeather(String city) async {
+          debugPrint('fetching weather for $city');
+          final response = await _client.get(Uri.parse('https://api.example.com/weather?q=$city'));
+          return jsonDecode(response.body) as Map<String, dynamic>;
+        }
+      }
+
+      Anything wrong with the dependencies here?
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:layered-architecture'
+    - type: llm-rubric
+      value: >-
+        The response identifies the package:flutter import as the problem: a data
+        package must not depend on the Flutter SDK. Flagging only other issues
+        without the Flutter dependency does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The fix removes the Flutter dependency instead of working around it, for
+        example replacing debugPrint with a plain Dart alternative or dropping the
+        logging, so the package stays pure Dart.
+
+- description: layered-architecture-transforms-models-in-the-repository
+  vars:
+    prompt: >-
+      Write the WeatherRepository that sits on top of WeatherApiClient. The API returns
+      temperature in Fahrenheit and a nested location object. Output Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:layered-architecture'
+    - type: regex
+      value: 'class WeatherRepository'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The repository receives its data client through the constructor rather than
+        instantiating one internally.
+    - type: llm-rubric
+      value: >-
+        The repository converts the API response model into a separate domain model
+        rather than returning the API response type to callers.
+    - type: llm-rubric
+      value: >-
+        The domain model is presented as belonging to the repository package rather
+        than the data package.
+
+- description: layered-architecture-refuses-domain-model-in-data-layer
+  vars:
+    prompt: >-
+      Put my User domain model inside the user_api_client package so both the
+      repository and the app can import it from one place.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:layered-architecture'
+    - type: llm-rubric
+      value: >-
+        The response declines to put the domain model in the data layer package,
+        rather than complying with the request as asked.
+    - type: llm-rubric
+      value: >-
+        The response explains that the data layer holds response models matching the
+        external schema, while domain models belong to the repository layer.
+
+- description: layered-architecture-refuses-repository-to-repository-dependency
+  vars:
+    prompt: >-
+      My OrderRepository needs the current user, so I want it to depend on
+      UserRepository. Add that dependency to its pubspec.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:layered-architecture'
+    - type: llm-rubric
+      value: >-
+        The response declines to make one repository depend on another, rather than
+        complying with the request as asked.
+    - type: llm-rubric
+      value: >-
+        The response suggests combining the two repositories' data at the business
+        logic layer instead.
+
+- description: layered-architecture-wires-repositories-in-bootstrap
+  vars:
+    prompt: >-
+      Wire my AuthRepository and UserRepository into the app so every feature can
+      reach them. Show the Dart code and the pubspec changes.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:layered-architecture'
+    - type: regex
+      value: 'MultiRepositoryProvider|RepositoryProvider'
+    - type: llm-rubric
+      value: >-
+        Data clients and repositories are constructed in a main entrypoint file and
+        passed into the App widget, which provides them to the tree.
+    - type: llm-rubric
+      value: >-
+        The pubspec changes reference the local repository packages with path
+        dependencies, not git or hosted pub version references.
+
+# Negative control.
+- description: layered-architecture-stays-out-of-single-file-work
+  vars:
+    prompt: >-
+      Fix the off-by-one error in this plain Dart loop:
+      `for (var i = 0; i <= list.length; i++) { print(list[i]); }`
+      Return only the corrected loop.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:layered-architecture'
+    - type: not-regex
+      value: 'packages/|_api_client|_repository|RepositoryProvider'
+    # Task success is graded mechanically, not by the judge. Both columns once returned
+    # byte-identical correct output here and the judge scored one 1.0 and the other
+    # 0.3, because "does this fix the loop bound" cannot be answered without the
+    # prompt the judge never receives.
+    - type: regex
+      value: 'i < list\.length'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the loop is correct. It must
+        not propose packages, layers, repositories, or any restructuring.

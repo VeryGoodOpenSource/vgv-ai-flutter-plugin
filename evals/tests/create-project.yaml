@@ -1,0 +1,165 @@
+# Behavior cases for the create-project skill.
+#
+# No MCP server is configured for these providers, so these cases grade the
+# decisions the skill drives — template inference, name normalization, what it
+# declines — not the create call. Only assert template names the SKILL.md teaches,
+# never ones the MCP server supplies at run time.
+#
+# Consequence worth knowing before writing a case here: with no `create` tool the
+# skill cannot execute, and every response says so and hands the user a command to
+# run instead. Do not assert that the response *uses* the MCP tools — that is
+# unsatisfiable in this environment, and asserting it measured the harness rather
+# than the skill. Wiring the real server in is not the fix either: `create` would
+# scaffold a project into evals/fixture on every run.
+
+- description: create-project-infers-dart-package-for-api-client
+  vars:
+    # "HTTP only, no Flutter widgets" is stated because the terser version answered
+    # `flutter_package` on some runs. The inference under test is still the skill's:
+    # a package with no Flutter dependency takes dart_package.
+    prompt: >-
+      I need a weather API client package under packages/ in my Flutter monorepo. It
+      does HTTP and JSON only, no Flutter widgets. Which Very Good CLI template
+      should it use? Answer with only the template name, nothing else.
+  # No `skill-used` on purpose. A one-word template question does not activate the
+  # skill — measured at 0/2 with the answer correct both times — so asserting
+  # routing here would only ever report the harness. Routing is covered by the
+  # cases below that ask for actual scaffolding work.
+  assert:
+    - type: icontains
+      value: 'dart_package'
+    - type: not-icontains
+      value: 'flutter_package'
+
+- description: create-project-asks-for-organization-when-required
+  vars:
+    prompt: 'Create a Flutter app called my_store.'
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:create-project'
+    - type: llm-rubric
+      value: >-
+        The response asks for an organization name rather than proceeding without one
+        or silently accepting a placeholder, because the template produces an app.
+
+# Replaces an earlier `create-project-normalizes-dashed-project-name` case, which asked
+# what a dashed project name becomes. It scored 1.00 in *both* columns: snake_case Dart
+# package names are common knowledge, so the case measured Claude rather than the skill.
+# This asks instead about the two things in the skill a bare model cannot guess — the
+# `packages_get` tool name, and that its `directory` must point at the new project
+# rather than the workspace root.
+- description: create-project-scopes-dependency-install-to-the-new-project
+  vars:
+    # The organization is deliberately withheld. Supplying it made the "org is required"
+    # half of this case untestable: with `for org com.example` in the prompt there is no
+    # reason to discuss the requirement, and the plugin column missed that assertion on
+    # every run for asking about something the prompt had already settled.
+    prompt: >-
+      I want to scaffold a new Flutter app named storefront, placed at apps/storefront
+      inside my existing monorepo, and then install its dependencies. Which tools would
+      you call, in order, and what arguments would you pass to each? Tell me anything
+      you still need from me. Do not run anything yet.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:create-project'
+    # Both surface forms count: the MCP tool is `packages_get`, the shell equivalent is
+    # `very_good packages get`. An earlier `icontains: packages_get` failed a correct
+    # answer that used the shell form, which tested syntax rather than knowledge.
+    - type: regex
+      value: 'packages[ _]get'
+    # The load-bearing detail, in either form: `--directory apps/storefront` or
+    # `directory: 'apps/storefront'`. This is the part a bare model does not know.
+    - type: regex
+      value: 'directory[^\n]{0,14}apps/storefront'
+    - type: not-icontains
+      value: 'flutter create'
+    - type: llm-rubric
+      value: >-
+        The dependency-install step is explicitly scoped to the newly created project
+        directory, for example by passing a directory argument of `apps/storefront`. A
+        response that installs dependencies without saying which directory they apply
+        to, or that runs the install against the monorepo root, does not satisfy this.
+    # The discriminator. A bare model happily invents an org and moves on; the skill
+    # knows this template cannot be scaffolded without one. Either asking for it or
+    # flagging it as required satisfies this, so it does not demand a specific phrasing.
+    - type: llm-rubric
+      value: >-
+        The response does not silently invent an organization identifier. It either asks
+        the user for the organization or flags it as required and not skippable for this
+        template. Emitting a made-up value such as com.example with no comment fails.
+
+- description: create-project-asks-when-the-template-is-ambiguous
+  vars:
+    prompt: 'Create a new package for me.'
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:create-project'
+    - type: llm-rubric
+      value: >-
+        The response asks a clarifying question instead of guessing a template, because
+        'a package' could be either a pure Dart package or a Flutter package.
+    - type: llm-rubric
+      value: >-
+        The clarifying question is framed around what the user is building, not around
+        which CLI subcommand or template name they want to type.
+
+- description: create-project-does-not-over-ask
+  vars:
+    prompt: 'Create a Flutter app named my_store for organization com.example.mystore.'
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:create-project'
+    - type: llm-rubric
+      value: >-
+        The response does not interrogate the user for optional parameters such as a
+        description, an output directory, or an application id. It proceeds with the
+        name and organization it was given. Supplying its own value for an optional
+        parameter satisfies this; so does handing the user a ready-to-run command,
+        since no create tool is available in this environment. Only asking the user
+        to supply more input before proceeding fails.
+
+- description: create-project-plans-dependency-install
+  vars:
+    prompt: >-
+      Create a Flutter app named my_store for organization com.example. Walk me through
+      every step you will take.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:create-project'
+    - type: llm-rubric
+      value: >-
+        The plan includes installing dependencies after the project is created, not
+        just creating it.
+    - type: llm-rubric
+      value: >-
+        The plan scaffolds through Very Good CLI with an explicit template name, rather
+        than reaching for `flutter create`. Naming the CLI command is acceptable here
+        because no MCP tool is available to call; using the Flutter SDK's own create
+        command instead of Very Good CLI is what fails.
+
+# Negative control.
+- description: create-project-stays-out-of-existing-project-work
+  vars:
+    prompt: >-
+      Here is my existing class:
+
+      class ApiConfig {
+        const ApiConfig({required this.baseUrl, required this.timeout});
+        final String baseUrl;
+        final Duration timeout;
+      }
+
+      Add a `retryCount` int field with a default of 3. Return only the updated class.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:create-project'
+    - type: not-regex
+      value: 'very_good create|dart_package|flutter_app|--org'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it edit the class" is unanswerable from the output alone.
+    - type: regex
+      value: 'this\.retryCount = 3'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the class compiles. It must not
+        propose scaffolding a new project or package.
