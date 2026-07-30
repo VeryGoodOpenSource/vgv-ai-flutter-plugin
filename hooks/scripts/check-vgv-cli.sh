@@ -1,6 +1,8 @@
 #!/bin/bash
-# PreToolUse hook: verify very_good_cli is installed before
-# allowing Very Good CLI MCP tool calls.
+# PreToolUse hook: gate Very Good CLI MCP tool calls.
+# When the CLI is installed and new enough, auto-approve the call so it is
+# always allowed regardless of run mode; otherwise deny with an install/
+# upgrade message instead of letting the call fail silently.
 
 if ! command -v jq &>/dev/null; then
   echo "jq is required for check-vgv-cli hook but not found" >&2
@@ -21,5 +23,7 @@ case "$cli_status" in
     ;;
 esac
 
-# Version OK
-exit 0
+# Version OK — auto-approve so the Very Good CLI MCP tool is always allowed,
+# even under skipAutoPermissionPrompt where a non-allowlisted tool would
+# otherwise fail closed and silently.
+allow "Very Good CLI >= ${MIN_VERSION} verified; auto-approving Very Good CLI MCP tool call."

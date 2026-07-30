@@ -1,9 +1,9 @@
 #!/bin/bash
 # Shared helpers for Very Good CLI version checks and hook deny responses.
 
-MIN_VERSION="1.2.0"
+MIN_VERSION="1.3.0"
 MIN_MAJOR=1
-MIN_MINOR=2
+MIN_MINOR=3
 MIN_PATCH=0
 
 deny() {
@@ -13,6 +13,23 @@ deny() {
       hookSpecificOutput: {
         hookEventName: "PreToolUse",
         permissionDecision: "deny",
+        permissionDecisionReason: $reason
+      }
+    }'
+  exit 0
+}
+
+# Auto-approve the tool call, skipping the interactive permission prompt.
+# A PreToolUse "allow" fires before the permission-mode check, so the call
+# proceeds in every run mode (interactive, headless, skipAutoPermissionPrompt).
+# Explicit deny/ask rules and managed deny lists still take precedence.
+allow() {
+  jq -n \
+    --arg reason "$1" \
+    '{
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "allow",
         permissionDecisionReason: $reason
       }
     }'

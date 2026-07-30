@@ -76,12 +76,14 @@ testWidgets('matches golden', tags: TestTag.golden, (tester) async {
 
 ## Running and Updating Goldens
 
-| Command | Purpose |
-| --- | --- |
-| `flutter test --tags golden` | Run only golden tests |
-| `flutter test --tags golden --update-goldens` | Regenerate golden reference files |
-| `flutter test --exclude-tags golden` | Run all tests except goldens |
-| `flutter test` | Run all tests including goldens |
+Run goldens through the `very_good_cli` MCP `test` tool — never `flutter test` via the shell (the `block-cli-workarounds` hook denies it).
+
+| Goal | MCP `test` tool parameters |
+| ---- | -------------------------- |
+| Run only golden tests | `tags: 'golden'` |
+| Regenerate golden reference files | `tags: 'golden', update_goldens: true` |
+| Run all tests except goldens | `exclude_tags: 'golden'` |
+| Run all tests including goldens | _(no parameters)_ |
 
 After updating goldens, review and commit the new `.png` files --- they are the source of truth.
 

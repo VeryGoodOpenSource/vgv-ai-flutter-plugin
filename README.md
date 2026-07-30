@@ -16,7 +16,7 @@ VGV AI Flutter Plugin is a collection of contextual best-practices skills that C
 One-line install from your terminal:
 
 ```bash
-claude plugin marketplace add VeryGoodOpenSource/very_good_claude_marketplace && claude plugin install vgv-ai-flutter-plugin
+claude plugin marketplace add VeryGoodOpenSource/very-good-claude-code-marketplace && claude plugin install vgv-ai-flutter-plugin
 ```
 
 Or inside an active Claude Code session, run these as **two separate commands** (the second only after the first completes):
@@ -24,7 +24,7 @@ Or inside an active Claude Code session, run these as **two separate commands** 
 1. Add the marketplace:
 
    ```text
-   /plugin marketplace add VeryGoodOpenSource/very_good_claude_marketplace
+   /plugin marketplace add VeryGoodOpenSource/very-good-claude-code-marketplace
    ```
 
 2. Install the plugin:
@@ -40,7 +40,8 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | Skill | Description |
 | ----- | ----------- |
 | [**Create Project**](skills/create-project/SKILL.md) | Scaffold new Dart/Flutter projects from Very Good CLI templates — `flutter_app`, `dart_package`, `flutter_plugin`, `dart_cli`, `flame_game`, and more |
-| [**Accessibility**](skills/accessibility/SKILL.md) | WCAG 2.1 AA compliance — semantics, screen reader support, touch targets, focus management, color contrast, text scaling, and motion sensitivity |
+| [**Animations**](skills/animations/SKILL.md) | Flutter built-in animations — implicit vs explicit decision tree, Material 3 motion tokens (`Durations`, `Easing`), page transitions with GoRouter, Hero animations, staggered animations, and performance guidelines |
+| [**Accessibility**](skills/accessibility/SKILL.md) | WCAG 2.2 compliance with A/AA/AAA conformance level selection across iOS, Android, Web, macOS, Windows, and Linux — semantics, screen reader support, touch targets, focus management, color contrast, text scaling, and motion sensitivity |
 | [**Testing**](skills/testing/SKILL.md) | Unit, widget, and golden testing — `mocktail` mocking, `pumpApp` helpers, test structure & naming, coverage patterns, and `dart_test.yaml` configuration |
 | [**Navigation**](skills/navigation/SKILL.md) | GoRouter routing — `@TypedGoRoute` type-safe routes, deep linking, redirects, shell routes, and widget testing with `MockGoRouter` |
 | [**Internationalization**](skills/internationalization/SKILL.md) | i18n/l10n — ARB files, `context.l10n` patterns, pluralization, RTL/LTR support with directional widgets, and backend localization strategies |
@@ -51,18 +52,29 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | [**UI Package**](skills/ui-package/SKILL.md) | Flutter UI package creation — custom widget libraries with `ThemeExtension`-based theming, design tokens, barrel file exports, widget tests, Widgetbook catalog, and consistent API conventions |
 | [**License Compliance**](skills/license-compliance/SKILL.md) | Dependency license auditing — categorizes licenses (permissive, weak/strong copyleft, unknown), flags non-compliant or missing licenses, and produces a structured compliance report using Very Good CLI |
 | [**Dart/Flutter SDK Upgrade**](skills/dart-flutter-sdk-upgrade/SKILL.md) | Bump Dart and Flutter SDK constraints across packages — CI workflow versions, pubspec.yaml environment constraints, and PR preparation for SDK upgrades |
+| [**Very Good Analysis Upgrade**](skills/very-good-analysis-upgrade/SKILL.md) | Upgrade the `very_good_analysis` lint package across Dart/Flutter projects — version bump in `pubspec.yaml`, minimal lint fixes for new rules, and PR preparation |
+| [**Green Gate**](skills/green-gate/SKILL.md) | Autonomous verify-fix-rerun loop that drives a package to green across four quality gates — analyze, format, test, and coverage — exiting only when a final iteration proves all four pass with observed numbers (default 100% coverage, overridable) |
+
+## Agents
+
+This plugin ships subagents that Claude Code can dispatch as isolated, specialized reviewers. Unlike skills, agents are **not** invoked as slash commands — Claude dispatches them automatically, or you can ask Claude to run one by name (e.g. "review my changes with the flutter-reviewer agent").
+
+| Agent | Description |
+| ----- | ----------- |
+| [**Flutter Reviewer**](agents/flutter-reviewer.md) | Read-only reviewer of changed Dart code against the preloaded `bloc`, `testing`, `static-security`, and `accessibility` standards — emits a `location \| problem \| fix \| standard` findings table. Never edits files; Bash is hook-restricted to `git diff`/`git status` |
 
 ## Hooks
 
-> **Fork note:** The upstream plugin runs `dart analyze` and `dart format` automatically after every `Edit` or `Write` on a `.dart` file. **Those PostToolUse hooks are disabled by default in this fork** — they caused unwanted reformatting on every edit and blocked edits in legacy codebases full of pre-existing analyzer warnings. The scripts are still present in `hooks/scripts/`; run them manually when you want, or restore the `PostToolUse` block in `hooks/hooks.json` to opt back in. See `CLAUDE.md` for the exact JSON snippet.
+This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that validate the Very Good CLI, guard against CLI bypass, and automatically run Dart analysis and formatting on `.dart` files.
 
-The active hooks in this fork are:
-
-| Hook | When | Behavior |
-| ---- | ---- | -------- |
-| **warn-missing-mcp** | SessionStart | Warns if Very Good CLI is not installed or is below the required version (non-blocking) |
-| **check-vgv-cli** | Before `mcp__very-good-cli__*` calls | Blocks the tool call if Very Good CLI is missing or outdated |
-| **block-cli-workarounds** | Before `Bash` | Prevents bypassing Very Good CLI via direct shell commands |
+| Hook | Trigger | Behavior |
+| ---- | ------- | -------- |
+| **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing or older than 1.3.0; non-blocking |
+| **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__.*very-good-cli__.*`) | Auto-approves Very Good CLI MCP tool calls in every run mode via a PreToolUse `allow` decision, so they never dead-end when the tool isn't on `permissions.allow` (including under `skipAutoPermissionPrompt`); denies with an install/upgrade message if the CLI is missing or < 1.3.0 |
+| **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking) |
+| **Allow Read-only Git** (`allow-readonly-git.sh`) | PreToolUse (`Bash`, `flutter-reviewer` agent only) | Restricts the `flutter-reviewer` agent's Bash to `git diff`/`git status`; exits 2 on anything else (blocking). Scoped via the agent's frontmatter, not `hooks.json` |
+| **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
+| **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
 
 ### Prerequisites
 
@@ -82,18 +94,21 @@ For example:
 You can also invoke skills directly as slash commands:
 
 ```bash
-/vgv-create-project
-/vgv-accessibility
-/vgv-bloc
-/vgv-internationalization
-/vgv-layered-architecture
-/vgv-material-theming
-/vgv-navigation
-/vgv-static-security
-/vgv-testing
-/vgv-ui-package
-/vgv-license-compliance
-/vgv-dart-flutter-sdk-upgrade
+/create-project
+/animations
+/accessibility
+/bloc
+/internationalization
+/layered-architecture
+/material-theming
+/navigation
+/static-security
+/testing
+/ui-package
+/license-compliance
+/dart-flutter-sdk-upgrade
+/very-good-analysis-upgrade
+/green-gate
 ```
 
 ## What Each Skill Provides
@@ -109,27 +124,51 @@ Every skill includes:
 
 ## MCP Integration
 
-This plugin includes a `.mcp.json` configuration that connects Claude Code to the Very Good CLI's built-in MCP server. This gives Claude the ability to execute CLI commands directly, complementing the skills which provide architectural guidance and best practices.
+This plugin includes a `.mcp.json` configuration that connects Claude Code to two MCP servers — the **Dart and Flutter MCP server** (`dart mcp-server`) and the **Very Good CLI MCP server** (`very_good mcp`). This gives Claude the ability to execute Dart, Flutter, and Very Good CLI actions directly, complementing the skills which provide architectural guidance and best practices.
+
+### Dart and Flutter MCP server (`dart`)
+
+The Dart and Flutter MCP server ships with the Dart SDK and exposes core Dart/Flutter development actions to Claude.
+
+**Available MCP tools:**
+
+| Tool | What it does |
+| ---- | ------------ |
+| Error analysis & fixing | Analyze the project for static errors and apply fixes |
+| Symbol resolution | Resolve symbols to elements and fetch documentation and signature information |
+| App introspection | Introspect and interact with a running Dart or Flutter application |
+| Package search | Search pub.dev for packages that fit a given use case |
+| Dependency management | Add, remove, and update dependencies in `pubspec.yaml` files |
+| Test execution | Run tests and analyze the results |
+| Code formatting | Format code using the same formatter and config as `dart format` |
+
+**Prerequisites:**
+
+- Dart SDK installed with `dart` on your PATH (the MCP server is provided by `dart mcp-server`)
+
+### Very Good CLI MCP server (`very-good-cli`)
+
+The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 **Available MCP tools:**
 
 | Tool | What it does |
 | ---- | ------------ |
 | `create` | Scaffold projects from templates (`flutter_app`, `dart_cli`, `dart_package`, `flutter_package`, `flutter_plugin`, `flame_game`, `docs_site`) |
-| `tests` | Run tests with coverage enforcement |
+| `test` | Run tests with coverage enforcement |
 | `packages_check_licenses` | Audit dependency licenses against an allowed list |
 | `packages_get` | Get dependencies for a single package or recursively across a monorepo |
 
 **Prerequisites:**
 
-- Very Good CLI v1.0+ installed: `dart pub global activate very_good_cli`
+- Very Good CLI v1.3.0+ installed: `dart pub global activate very_good_cli`
 - `very_good` must be on your PATH
 
 **How it works:**
 
-The `.mcp.json` file at the project root registers a `very-good-cli` MCP server using stdio transport. When Claude Code detects this configuration, it connects to the Very Good CLI MCP server and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
+The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
-[marketplace_link]: https://github.com/VeryGoodOpenSource/very_good_claude_marketplace
+[marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures
 [very_good_ventures_link_dark]: https://verygood.ventures#gh-dark-mode-only

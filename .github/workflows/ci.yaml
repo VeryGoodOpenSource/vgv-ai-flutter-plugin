@@ -10,9 +10,9 @@ jobs:
     name: 📝 Markdown Quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Lint Markdown
-        uses: DavidAnson/markdownlint-cli2-action@v23
+        uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: |
             **/*.md
@@ -22,7 +22,7 @@ jobs:
     name: ✍️ Spelling Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Spell Check Code
         uses: streetsidesoftware/cspell-action@v8
         with:
@@ -36,7 +36,7 @@ jobs:
     outputs:
       skills: ${{ steps.changed-skills.outputs.skills }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Get changed skills
@@ -61,7 +61,7 @@ jobs:
       matrix:
         skill: ${{ fromJson(needs.detect-changed-skills.outputs.skills) }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Validate ${{ matrix.skill }}
         id: validate
         uses: Flash-Brew-Digital/validate-skill@v1
@@ -69,7 +69,7 @@ jobs:
           path: ${{ matrix.skill }}
           validate-references: 'true'
           fail-on-warning: 'true'
-          ignore-rules: 'name-match-directory,unknown-field'
+          ignore-rules: 'unknown-field'
       - name: Check results
         if: always()
         run: |
@@ -80,8 +80,17 @@ jobs:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
       - name: Validate Plugin
         run: claude plugin validate .
+  script-tests:
+    name: 🛡️ Script Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read-only git hook tests
+        run: bash hooks/scripts/allow-readonly-git_test.sh
+      - name: Block CLI workarounds hook tests
+        run: bash hooks/scripts/block-cli-workarounds_test.sh

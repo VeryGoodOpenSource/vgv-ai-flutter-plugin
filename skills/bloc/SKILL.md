@@ -1,5 +1,5 @@
 ---
-name: vgv-bloc
+name: bloc
 description: Best practices for Bloc state management in Flutter/Dart.
 when_to_use: Use when writing, modifying, or reviewing code that uses package:bloc, package:flutter_bloc, or package:bloc_test.
 allowed-tools: Read Glob Grep

@@ -70,16 +70,20 @@ test('renders correctly', tags: TestTag.golden, () {
 });
 ```
 
-## Common Commands
+## Running Tests
 
-| Command | Purpose |
-| --- | --- |
-| `dart test` | Run all Dart tests |
-| `flutter test` | Run all Flutter tests |
-| `dart test test/src/models/user_test.dart` | Run a specific test file |
-| `dart test --name "returns"` | Filter tests by description substring |
-| `dart test --tags unit` | Run only tests with the `unit` tag |
-| `dart test --exclude-tags integration` | Skip integration-tagged tests |
-| `flutter test --coverage` | Generate `coverage/lcov.info` |
-| `dart test --test-randomize-ordering-seed random` | Randomize test execution order |
-| `dart test --reporter expanded` | Verbose test output |
+Run tests through the `very_good_cli` MCP `test` tool — never `dart test` or `flutter test` via the shell (the `block-cli-workarounds` hook denies those). Pass `timeout_seconds` to cap the run so a hung `pumpAndSettle()` cannot stall it indefinitely.
+
+| Goal | MCP `test` tool parameters |
+| ---- | -------------------------- |
+| Run all tests (Flutter auto-detected) | _(no parameters)_ |
+| Run Dart tests | `dart: true` |
+| Run tests in a subdirectory | `directory: 'mobile'` |
+| Run only tests with a tag | `tags: 'unit'` |
+| Skip tests with a tag | `exclude_tags: 'integration'` |
+| Generate coverage (`coverage/lcov.info`) | `coverage: true` |
+| Enforce a minimum coverage percentage | `min_coverage: '100'` |
+| Run on a specific platform | `platform: 'chrome'` |
+| Randomize test execution order | `test_randomize_ordering_seed: 'random'` |
+| Run recursively across nested packages | `recursive: true` |
+| Cap runtime to avoid a hung test process | `timeout_seconds: 120` |

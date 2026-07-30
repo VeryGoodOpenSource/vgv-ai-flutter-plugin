@@ -32,6 +32,6 @@ Quick-reference table mapping Flutter widgets to their accessibility requirement
 
 ## References
 
-- [Flutter Accessibility Guide](https://docs.flutter.dev/ui/accessibility) — official Flutter documentation on accessibility APIs, TalkBack/VoiceOver integration, and `Semantics` widget usage
-- [WCAG 2.1 Understanding Document](https://www.w3.org/WAI/WCAG21/Understanding/) — W3C explanations of each success criterion, including intent, examples, and sufficient techniques
-- [WCAG 2.1 Quick Reference](https://www.w3.org/WAI/WCAG21/quickref/) — filterable checklist of all success criteria by level
+- [Flutter Accessibility Guide](https://docs.flutter.dev/ui/accessibility) — official Flutter documentation on accessibility APIs, TalkBack/VoiceOver integration, WCAG 2.2 patterns, and `Semantics` widget usage
+- [WCAG 2.2 Understanding Document](https://www.w3.org/WAI/WCAG22/Understanding/) — W3C explanations of each WCAG 2.2 success criterion, including intent, examples, and sufficient techniques
+- [WCAG 2.2 Quick Reference](https://www.w3.org/WAI/WCAG22/quickref/) — filterable checklist of all WCAG 2.2 success criteria by level

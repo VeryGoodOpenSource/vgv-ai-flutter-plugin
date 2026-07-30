@@ -14,7 +14,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "mcp__very-good-cli__.*",
+        "matcher": "mcp__.*very-good-cli__.*",
         "hooks": [
           {
             "type": "command",
