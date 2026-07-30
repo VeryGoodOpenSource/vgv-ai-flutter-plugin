@@ -14,7 +14,7 @@ when_to_use: >
   skills when the request spans multiple gates or asks to fix and re-verify
   until clean.
 argument-hint: "[directory]"
-allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__dart__dart_format mcp__very-good-cli__test
+allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__very-good-cli__test
 model: sonnet
 effort: medium
 ---
@@ -37,12 +37,16 @@ coverage-pattern guidance.
 
 Apply these to ALL green-gate work:
 
-- **Use MCP tools, never the Bash CLI, for gates** — analyze via
-  `mcp__dart__analyze_files`, format via `mcp__dart__dart_format`, test and
-  coverage via `mcp__very-good-cli__test`. The Bash test path
-  (`very_good test`, `flutter test`, `dart test`) is hook-blocked by
-  `block-cli-workarounds.sh`; `dart analyze` via Bash is redundant with the MCP
-  tool. **Bash is reserved for parsing `coverage/lcov.info` only.**
+- **Use the MCP tools for analyze, test, and coverage** — analyze via
+  `mcp__dart__analyze_files`, test and coverage via `mcp__very-good-cli__test`.
+  The Bash test path (`very_good test`, `flutter test`, `dart test`) is
+  hook-blocked by `block-cli-workarounds.sh`; `dart analyze` via Bash is
+  redundant with the MCP tool.
+- **Format is the one gate that runs through Bash** — the Dart MCP server
+  exposes no formatting tool, so the format gate runs `dart format` via Bash.
+  `block-cli-workarounds.sh` blocks only `flutter`/`dart create`, `flutter`/`dart
+  test`, and `very_good create`/`test`/`packages`, so `dart format` is permitted.
+  **Bash is reserved for `dart format` and parsing `coverage/lcov.info`.**
 - **Never cache green** — re-evaluate every gate every round. Fixing analyze or
   test failures and writing new test files shifts both formatting and the
   coverage denominator, so a previously green gate can regress.
@@ -75,7 +79,7 @@ For each package root (see **Recursive / Monorepo**), run this algorithm:
 2. **Analyze** — run `mcp__dart__analyze_files` with `applyFixes: true`. If any
    errors remain, this is the active gate. Fix, record the fingerprint, go to
    step 7.
-3. **Format** — run `mcp__dart__dart_format` on the package root. It reformats
+3. **Format** — run `dart format .` via Bash from the package root. It reformats
    the whole package in place. If it reports changed files, the gate is now
    green for the next round.
 4. **Test** — only if analyze is green this round. Run `mcp__very-good-cli__test`
@@ -160,11 +164,15 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
 
 ## Format Gate
 
-- Run `mcp__dart__dart_format` on the package root each round. It runs
-  `dart format .` over the **whole package** in place, so the gate is
-  observation-based (it catches manual edits and pre-existing drift, not just
-  files the loop edited) and self-fixing (one call leaves the package green; a
-  second call reports zero changes).
+- Run `dart format .` via Bash from the package root each round. It formats the
+  **whole package** in place, so the gate is observation-based (it catches manual
+  edits and pre-existing drift, not just files the loop edited) and self-fixing
+  (one call leaves the package green; a second call reports zero changes).
+- **Read the changed count, not the exit code** — in-place `dart format .` exits
+  `0` whether or not it rewrote anything, so the exit code proves nothing. It
+  prints `Formatted N files (M changed)`; the gate is green when `M` is `0`. Use
+  `dart format --output=none --set-exit-if-changed .` when a non-writing check is
+  wanted instead — it exits `1` on drift and mirrors what CI runs.
 - **Why format is a real gate, not just the hook** — the PostToolUse `format.sh`
   hook fires only on files the loop edits via Edit/Write. A hand-edited or
   pre-existing unformatted file the loop never touches would otherwise pass
@@ -275,4 +283,5 @@ touched, the iteration count, and the specific decision the user must make.
 - `skills/testing/references/coverage.md` — coverage-driven test patterns
   (`copyWith`, branches, error paths) for closing per-file gaps.
 - `hooks/scripts/block-cli-workarounds.sh` — why the Bash test path is blocked
-  and gates use MCP tools.
+  and the analyze and test gates use MCP tools, and why `dart format` is not
+  blocked.

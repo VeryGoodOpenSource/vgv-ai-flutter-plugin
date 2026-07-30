@@ -83,3 +83,5 @@ my_ui/
 ## Creating the Package
 
 Use the Very Good CLI MCP tool to scaffold the `app_ui_package`.
+
+See [reference.md](reference.md) for the `ThemeExtension` class table (`AppColors`, `AppSpacing`, `AppTheme`, the `BuildContext` extension), the `pumpApp` test helper, a barrel file example, the Widgetbook catalog concepts and `build_runner` commands, and step-by-step workflows for adding a widget or a custom token.
