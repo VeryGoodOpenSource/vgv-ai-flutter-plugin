@@ -126,9 +126,12 @@ One custom assertion lives in `evals/assertions/`:
 - **`dart-parses.js`** — every fenced ```` ```dart ```` block parses. Runs
   `dart format --output=none`, which parses without resolving, because snippets
   reference classes absent from the fixture and semantic analysis would fail every
-  case. A block that fails standalone is retried wrapped in a function body, since a
-  one-line usage snippet like `ArticleRoute(id).go(context);` is valid Dart but not a
-  compilation unit.
+  case. A block is tried three ways before it counts as a failure: as-is, wrapped in a
+  function body for a statement like `ArticleRoute(id).go(context);`, and wrapped as an
+  expression for a widget tree pasted with no trailing semicolon. The third shape was
+  added after a measured run failed three cases whose Dart was fine — a bare
+  `AppButton(label: 'Save')` is neither a compilation unit nor a statement. Verified
+  that it still rejects unbalanced parens, stray keywords and truncated classes.
 
 **Rubrics are graded blind.** The judge sees the response text and the criterion, never
 the prompt. So a criterion like "the response fixes the loop bound" is unanswerable, and

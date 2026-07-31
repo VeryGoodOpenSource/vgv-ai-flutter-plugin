@@ -163,6 +163,20 @@
     # padding while leaving the asset unmirrored is the half-answer this catches.
     - type: regex
       value: 'matchTextDirection:\s*true'
+    # The half of references/directionality.md the bare model does not have: "Icons
+    # mirror automatically in RTL contexts by default." Measured, the sealed column
+    # wrapped the arrow in `Transform.flip(flipX: isRtl)` off a
+    # `Directionality.of(context)` read — machinery that duplicates what the directional
+    # IconData already does, and the only assertion in this case it fails. Everything
+    # else here (EdgeInsetsDirectional, matchTextDirection on the Image) it produced
+    # unaided.
+    - type: not-regex
+      value: 'Transform\.flip|Directionality\.of\(context\)'
+    # The mirror-image mistake: `matchTextDirection` is a field of `IconData` and a
+    # parameter of `Image`, and is not a parameter of the `Icon` widget, so this form
+    # does not compile. dart-parses cannot catch it — it checks syntax, not resolution.
+    - type: not-regex
+      value: 'Icon\(\s*Icons\.[A-Za-z0-9_]+,\s*matchTextDirection'
     - type: javascript
       value: file://assertions/dart-parses.js
 

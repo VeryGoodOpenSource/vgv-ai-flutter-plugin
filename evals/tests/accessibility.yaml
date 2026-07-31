@@ -177,14 +177,27 @@
 # Second prohibition: "Never use ExcludeSemantics on non-decorative content", plus
 # the MergeSemantics correctness rule from references/examples.md — merge the static
 # label/value pair only, keep the interactive child independently focusable.
+#
+# The pasted row used to hold a single `Text('Total: 42.00 USD')`, which made the case
+# unmeasurable two ways. There was nothing to group, so the alternative rubric asked
+# for a pattern the widget could not carry — the plugin column diagnosed the premise as
+# false, asked for the parent widget and failed that rubric. And the refusal itself is
+# baseline behavior: the sealed column declined ExcludeSemantics, gave the reason and
+# cited 4.1.2 unaided. The row now carries a real label/value pair, which is the exact
+# shape references/examples.md marks CORRECT, and the criterion-ID regex is gone
+# because it was a measured free point in both columns and criterion IDs are already
+# graded in three other cases here.
 - description: accessibility-declines-exclude-semantics-on-actionable-content
   vars:
     prompt: >-
-      WCAG 2.2 AA on Android. TalkBack reads this row twice. Here it is:
+      WCAG 2.2 AA on Android. TalkBack stops three times on this row: "Total", then
+      "42.00 USD", then the button. The amount should be announced together with its
+      label. Here it is:
 
         Row(
           children: [
-            const Text('Total: 42.00 USD'),
+            const Text('Total'),
+            const Text('42.00 USD'),
             ElevatedButton(
               onPressed: _submit,
               child: const Text('Pay now'),
@@ -192,16 +205,16 @@
           ],
         )
 
-      Fix it by wrapping the whole Row in ExcludeSemantics so the duplicate
-      announcement goes away.
+      Fix it by wrapping the whole Row in ExcludeSemantics so the extra stops go away.
   # No dart-parses: both the pasted subject and the fix are bare Row expressions.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # With the paren, so the fix has to arrive as code. The sealed column named
+    # `MergeSemantics` in prose only — and named it as a possible *cause* of the
+    # duplicate rather than as the fix — which the bare word matched.
     - type: regex
-      value: 'MergeSemantics'
-    - type: regex
-      value: '1\.1\.1|4\.1\.2'
+      value: 'MergeSemantics\('
     - type: llm-rubric
       value: >-
         The response refuses to wrap the row in ExcludeSemantics and says that doing
@@ -210,10 +223,10 @@
         satisfy this.
     - type: llm-rubric
       value: >-
-        The response offers the alternative of grouping only the static text content,
-        for example with MergeSemantics around the non-interactive children, while the
-        button stays its own independently focusable node. Wrapping the button itself
-        in MergeSemantics or ExcludeSemantics does not satisfy this.
+        The grouping covers only the two static Text children, so the label and the
+        amount are announced as one node, while the ElevatedButton remains its own
+        independently focusable node outside the grouping. A fix that puts the button
+        inside the MergeSemantics, or that wraps the whole Row, does not satisfy this.
 
 # iOS-specific remediation. Two skill facts drive this: the Cupertino Semantics core
 # standard ("Cupertino widgets ship with weaker semantic defaults ... Always wrap
@@ -309,6 +322,14 @@
     # Buttons core standard, WCAG 4.1.2), so the alternative control must be named.
     - type: regex
       value: 'tooltip:|Semantics\('
+    # The one assertion here that the sealed column misses. Measured: an unaided model
+    # already knows the Dismissible-plus-trailing-IconButton shape, so every other
+    # assertion in this case passed with no plugin loaded. What it does not do is name
+    # the criterion it is remediating. The skill does, everywhere — Core Standards pins
+    # 2.5.7 to drag alternatives and references/examples.md titles the pattern with it —
+    # and "Output Dart code only" still leaves a doc comment on the widget class.
+    - type: regex
+      value: '2\.5\.7'
     - type: javascript
       value: file://assertions/dart-parses.js
     - type: llm-rubric

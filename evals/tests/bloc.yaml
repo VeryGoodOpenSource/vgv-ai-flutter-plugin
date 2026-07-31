@@ -23,6 +23,14 @@
       value: 'extends Equatable'
     - type: regex
       value: 'List<Object\??> get props'
+    # The state naming table in SKILL.md pins the four names for exactly this bloc:
+    # LoginInitial, LoginInProgress, LoginSuccess, LoginFailure. `LoginInProgress` is
+    # the one an unaided answer misses — it reaches for `LoginLoading` instead, which
+    # was measured in the sealed column while every other assertion here passed there.
+    # Everything else in this case (sealed/final classes, Equatable, props, past-tense
+    # event names) is baseline knowledge, so this is the assertion that discriminates.
+    - type: regex
+      value: 'LoginInProgress'
     - type: javascript
       value: file://assertions/dart-parses.js
     - type: llm-rubric

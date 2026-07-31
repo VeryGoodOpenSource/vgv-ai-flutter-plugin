@@ -46,20 +46,38 @@
 
 - description: navigation-uses-hyphens-in-paths
   vars:
+    # Earlier this asked for the bare path as a single token ("answer with only the
+    # path"). Both columns answered `/order-history`, so the case scored 1.00 twice and
+    # measured nothing: hyphenated URL segments are baseline knowledge. Asking for the
+    # route declaration and the call site keeps the hyphen standard under test and adds
+    # the two standards the bare model misses — the path is declared through
+    # `@TypedGoRoute`, and navigation never passes a raw path string.
     prompt: >-
-      I need a route for the order history screen, at the top level of the app. What
-      should its full URL path be? Answer with only the path, starting with a slash,
-      and nothing else.
-  # No `skill-used` on purpose, same reason as the create-project one-word cases: a
-  # prompt demanding a single token does not justify a Skill round-trip, so asserting
-  # routing here would report the harness rather than the skill. Routing for this skill
-  # is covered by the cases that ask for actual route code.
+      I need a route for the order history screen, at the top level of the app. Add it,
+      and give me the onTap callback that opens it from the account menu. Output Dart
+      code only.
   assert:
-    - type: not-contains
-      value: '_'
-    # Unanchored: `^...$` would fail a correct answer over a trailing newline.
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:navigation'
+    # "Use @TypedGoRoute annotations for type-safe routes — never raw string paths in
+    # route definitions." The unaided answer is a plain `GoRoute(path: ..., builder:)`.
     - type: regex
-      value: '/[a-z]+(-[a-z]+)+'
+      value: '@TypedGoRoute<'
+    # The hyphen standard, graded on the declared path rather than on the noun the
+    # model picks, so a route named /order-history or /purchase-history both count.
+    - type: regex
+      value: "path: '/[a-z]+(-[a-z]+)+'"
+    # The violations the standard names: an underscore or a camelCase hump inside a
+    # path. Anchored on `path: '/` so a camelCase route *name* does not trip it.
+    - type: not-regex
+      value: "path: '/[a-z0-9]*[_A-Z]"
+    # "Navigate by route name, not raw path strings." Both skill-sanctioned call sites
+    # pass — `context.goNamed('orderHistory')` and `const OrderHistoryRoute().go(context)`
+    # — while the bare model's `context.go('/order-history')` fails.
+    - type: not-regex
+      value: "\\.go(Named)?\\('/"
+    - type: javascript
+      value: file://assertions/dart-parses.js
 
 - description: navigation-guards-routes-with-redirect
   vars:
