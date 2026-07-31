@@ -3,8 +3,8 @@ name: dart-flutter-sdk-upgrade
 description: >
   VGV-specific reference for bumping Dart and Flutter SDK constraints across packages.
   Covers pubspec.yaml environment constraints, CI workflow Flutter versions, and SDK
-  upgrade PR preparation. CI uses ^MAJOR.MINOR.x to resolve to the latest patch;
-  pubspec pins the exact patch version (e.g., ^3.50.1).
+  upgrade PR preparation. Flutter CI uses MAJOR.MINOR.x with no caret to resolve to
+  the latest patch; pubspec pins the exact patch with a caret (e.g., ^3.50.1).
 when_to_use: >
   Use when upgrading the Flutter or Dart SDK version in any VGV repository. Trigger on
   phrases like "bump Flutter to 3.x", "update SDK constraints", "upgrade Dart SDK",
