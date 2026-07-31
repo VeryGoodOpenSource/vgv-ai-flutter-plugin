@@ -1,0 +1,259 @@
+# Behavior cases for the ui-package skill.
+#
+# Two things shape every case here.
+#
+# 1. No MCP server is configured for these providers, so the scaffolding half of this
+#    skill cannot execute: `mcp__very-good-cli__create` is unavailable and the response
+#    will say so and hand the user a command instead. Do not assert that a response
+#    *calls* the tool — that is unsatisfiable here and would measure the harness. The
+#    scaffolding case grades the decision instead: which template, through which CLI,
+#    and the layout it produces.
+# 2. The skill's `when_to_use` is narrow ("create a ui package"), so every prompt below
+#    names the UI package explicitly. That is how a user would phrase it anyway, and
+#    without it routing is a coin flip and every downstream assertion cascades.
+#
+# The skill overlaps material-theming on purpose (SKILL.md delegates ThemeData setup to
+# it). `skill-used` only requires ui-package to be among the skills invoked, so a run
+# that uses both still passes.
+#
+# Not measurable here: the file-mutation half of the widget workflow. `Edit` is in
+# `allowed-tools` but the fixture has no UI package to edit, so these cases ask the
+# model to list the files and paths it would create and grade those.
+
+- description: ui-package-scaffolds-with-app-ui-package-template
+  vars:
+    prompt: >-
+      Set up a new UI package called storefront_ui in my monorepo for our shared
+      widgets and design tokens. Which tool or command would you use, with which
+      arguments, and what will the package layout look like? Do not run anything yet.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:ui-package'
+    # The template name is the whole point of this case: it appears only in this
+    # SKILL.md, so a bare model cannot guess it, and create-project's template list
+    # does not contain it either. Graded twice — mechanically here, structurally in the
+    # first rubric — because it is the single most important property in this case.
+    - type: regex
+      value: 'app_ui_package'
+    - type: regex
+      value: '[Vv]ery[-_ ][Gg]ood'
+    # A `not-icontains: 'flutter create'` was here and has been removed: the rubric
+    # below names `flutter create --template=package` as the wrong path, so a correct
+    # answer routinely writes that string in order to reject it, and the negative
+    # would have failed the right answer. Same trap as `flutter test` in green-gate.
+    - type: llm-rubric
+      value: >-
+        The package is scaffolded from the Very Good CLI `app_ui_package` template. A
+        response that builds the package by hand, or reaches for the Flutter SDK's own
+        `flutter create --template=package`, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The described layout keeps widget and theme source files under `lib/src/` and
+        exposes the public API through a single barrel file directly under `lib/`. A
+        layout that puts public widgets at the top of `lib/` with no barrel file, or
+        that names no barrel file at all, does not satisfy this.
+
+- description: ui-package-adds-widget-with-barrel-export-and-test
+  vars:
+    # The barrel file is deliberately NOT pasted in. Showing it would hand the sealed
+    # column the convention this case measures. Naming AppButton and AppCard is enough
+    # for the class-prefix standard to be gradeable.
+    prompt: >-
+      Add an unread-count badge widget to my UI package storefront_ui, which already
+      has AppButton and AppCard. List every file you would create or change with its
+      full path, and give me the code.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:ui-package'
+    # One widget per file, named after the widget in snake_case, under src/. `\w`
+    # covers underscores, so app_badge.dart and app_unread_badge.dart both match.
+    - type: regex
+      value: 'lib/src/widgets/app_\w*badge\w*\.dart'
+    # The barrel-export step. The bounded gap after `export ` absorbs whatever comes
+    # between the keyword and `src/`: a bare quote for the relative form the reference
+    # file shows, or a quote plus `package:storefront_ui/` for the absolute form, which
+    # is an equally correct barrel export. A single wildcard character there — the
+    # earlier pattern — rejected the absolute form outright.
+    - type: regex
+      value: 'export [^\n]{0,48}src/widgets/app_\w*badge\w*\.dart'
+    # "Every widget has a corresponding widget test", at the mirrored test path.
+    - type: regex
+      value: 'test/src/widgets/app_\w*badge\w*_test\.dart'
+    # reference.md's widget workflow ends with a Widgetbook use case and a build_runner
+    # regeneration. Nothing outside the skill's references mentions Widgetbook.
+    - type: icontains
+      value: 'widgetbook'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The widget has a `const` constructor, a dartdoc comment on the class and on
+        each public parameter, and is built by composing Material widgets rather than
+        from GestureDetector, DecoratedBox, or a custom RenderObject.
+
+- description: ui-package-declines-hand-rolled-button
+  vars:
+    prompt: >-
+      I am building the button for our UI package storefront_ui. I do not want
+      Material's ripple or its defaults, so build AppButton from scratch: a
+      GestureDetector wrapping a DecoratedBox, filled with Color(0xFF6750A4), corner
+      radius 12. Here is the signature I want:
+
+      class AppButton extends StatelessWidget {
+        const AppButton({required this.label, required this.onTap, super.key});
+        final String label;
+        final Function onTap;
+      }
+
+      Write it.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:ui-package'
+    - type: llm-rubric
+      value: >-
+        The response declines to build the button out of GestureDetector and
+        DecoratedBox, and says a UI package should compose the Material button widgets
+        instead of rebuilding a primitive Material already provides. Complying with the
+        hand-rolled construction, even while noting a caveat, does not satisfy this.
+    # The documented alternative, graded mechanically alongside the rubric above.
+    - type: regex
+      value: 'FilledButton|OutlinedButton|ElevatedButton|TextButton'
+    - type: llm-rubric
+      value: >-
+        Inside the widget's build method there is no hardcoded color literal such as
+        Color(0xFF6750A4); colors are read from Theme.of(context).colorScheme or from a
+        ThemeExtension token. Keeping the hex literal in the widget fails. Mentioning
+        the hex only to say where it belongs instead, for example as a ColorScheme
+        seed, passes.
+    # "Expose callbacks with ValueChanged<T> or VoidCallback — do not use raw
+    # Function." The prompt hands the model `final Function onTap` to see if it keeps it.
+    - type: regex
+      value: 'VoidCallback'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+
+- description: ui-package-refuses-parallel-theme-system
+  vars:
+    prompt: >-
+      Our UI package storefront_ui needs the design tokens Material does not have:
+      success, warning and info colors, plus a spacing scale. Our lead wants one
+      StorefrontTheme InheritedWidget at the app root holding all of those plus our own
+      primary, onPrimary, surface and onSurface values, so widgets never touch
+      ColorScheme. Show me the implementation and the StorefrontTheme.of(context)
+      lookup our widgets would use.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:ui-package'
+    - type: llm-rubric
+      value: >-
+        The solution the response recommends is a ThemeExtension read off Material's
+        ThemeData, not a custom InheritedWidget theme. It says a parallel theme system
+        built on InheritedWidget is the wrong approach. Delivering the requested
+        InheritedWidget as the recommended implementation does not satisfy this.
+    - type: regex
+      value: 'ThemeExtension<'
+    # Registering the extension on ThemeData is what replaces the InheritedWidget at
+    # the app root, and it is the step a response that only renames the class misses.
+    - type: regex
+      value: 'extensions:'
+    - type: llm-rubric
+      value: >-
+        The custom token class carries only values Material does not provide, such as
+        success, warning, info, or spacing. Standard color roles — primary, onPrimary,
+        surface, onSurface — stay in Material's ColorScheme. A custom class that
+        redeclares primary or onSurface alongside the new tokens fails.
+    # reference.md's AppThemeBuildContext: the documented replacement for the
+    # StorefrontTheme.of(context) lookup the prompt asked for. `\w*` so an unnamed
+    # extension counts too — the shorthand accessor is the standard, not the name.
+    - type: regex
+      value: 'extension \w* ?on BuildContext'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+
+- description: ui-package-tests-widget-through-pump-app-helper
+  vars:
+    prompt: >-
+      This widget lives in my UI package storefront_ui at
+      lib/src/widgets/app_counter_button.dart:
+
+      class AppCounterButton extends StatelessWidget {
+        const AppCounterButton({required this.count, required this.onPressed, super.key});
+        final int count;
+        final VoidCallback onPressed;
+        @override
+        Widget build(BuildContext context) {
+          return FilledButton(onPressed: onPressed, child: Text('$count'));
+        }
+      }
+
+      Write its tests. Output Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:ui-package'
+    # The pumpApp extension on WidgetTester from reference.md. The unaided answer is an
+    # inline tester.pumpWidget(MaterialApp(...)) in every test.
+    - type: regex
+      value: 'pumpApp'
+    - type: llm-rubric
+      value: >-
+        The widget is pumped through a reusable `pumpApp` helper that wraps it in a
+        MaterialApp carrying the package's theme, rather than each test constructing
+        MaterialApp inline. A helper defined in the response counts, and so does one
+        called as `tester.pumpApp(...)` on the assumption it already exists in the
+        package's test helpers.
+    - type: javascript
+      value: file://assertions/dart-parses.js
+
+- description: ui-package-refuses-imports-from-src
+  vars:
+    prompt: >-
+      My app imports widgets from our UI package one file at a time, like this:
+
+      import 'package:storefront_ui/src/widgets/app_button.dart';
+
+      I want to keep it that way so I only pull in what I use. Is that fine?
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:ui-package'
+    - type: llm-rubric
+      value: >-
+        The response says importing individual files from under a package's `src/`
+        directory is wrong because everything under `src/` is private to the package,
+        and tells the consumer to import the package's single public barrel file
+        instead. Endorsing the per-file imports, or treating it as a matter of taste,
+        does not satisfy this.
+    # The barrel path. Not written with a `package:` prefix: promptfoo reads any
+    # assertion value starting with `package:` as an npm-hosted assertion package and
+    # errors the whole case before the regex runs.
+    - type: regex
+      value: 'storefront_ui/storefront_ui\.dart'
+    # SKILL.md: the barrel "also re-exports material.dart". A bare model recommending a
+    # barrel file does not know that, so this is the discriminator in this case.
+    - type: llm-rubric
+      value: >-
+        The response says the barrel file re-exports `material.dart`, so a consumer
+        gets Material's widgets from that one import and does not need a separate
+        Material import alongside it.
+
+# Negative control — nothing else catches the skill firing where it should not.
+- description: ui-package-stays-out-of-plain-dart-work
+  vars:
+    prompt: >-
+      Write a plain Dart function that formats a Duration as a mm:ss string. Signature:
+      String formatDuration(Duration duration). No Flutter. Return only the function.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:ui-package'
+    - type: not-regex
+      value: 'ThemeExtension|app_ui_package|[Ww]idgetbook|pumpApp|barrel file'
+    - type: not-regex
+      value: 'context\.app(Colors|Spacing)'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it format the Duration" is unanswerable from the output alone.
+    - type: regex
+      value: 'String formatDuration\(Duration duration\)'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the formatting logic is
+        correct. It must not introduce Flutter widgets, theming, or UI package
+        structure.

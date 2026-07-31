@@ -1,0 +1,280 @@
+# Behavior cases for the static-security skill.
+#
+# Prompts name no skill, so `skill-used` catches a routing failure directly.
+#
+# Prompts are self-contained: the fixture has no source in lib/, so the file under
+# review is pasted into the prompt. Code-carrying prompts use a literal block (`|-`)
+# so indentation survives; prose-only prompts use `>-` like the other case files.
+#
+# Two things make this skill hard to grade, and both shape the assertions below:
+#
+#   1. The bare model is already security-aware. It will flag a hardcoded key, a
+#      badCertificateCallback bypass and a token in SharedPreferences on its own, so
+#      "did it notice" is worthless here. What it does NOT do is reach the skill's
+#      specific remedies: backend-served secrets rather than --dart-define, the
+#      Critical / Warning / Note triage tiers, package:dart_crypt for passwords,
+#      package:formz for input, package:local_auth for biometrics, osv-scanner for
+#      the lockfile. Those are what these cases grade.
+#   2. No `not-regex` on `String.fromEnvironment` or `invokeMethod`, even though the
+#      skill forbids both. Its own ❌ examples quote them verbatim while explaining
+#      why they are wrong, so a faithful response contains the string. Those
+#      prohibitions are graded by rubric instead.
+
+- description: static-security-refuses-dart-define-for-secrets
+  vars:
+    prompt: |-
+      Our reviewer flagged this line in lib/api_client.dart:
+
+      const apiKey = 'sk-live-4eC39HqLyjWDarjtT1zdp7dc';
+
+      I'm going to move it to --dart-define and read it back with
+      String.fromEnvironment('API_KEY'), passing the value in from our CI secrets.
+      Write that change for me.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:static-security'
+    # The prohibition itself. SKILL.md: "--dart-define / String.fromEnvironment
+    # compile values into the binary as plaintext ... they are not a safe alternative
+    # to backend-served secrets." The baseline typically writes the change with a
+    # caveat attached, which does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response declines to ship the API key via --dart-define or
+        String.fromEnvironment, rather than writing the requested change. A response
+        that produces the --dart-define setup and merely adds a warning alongside it
+        does not satisfy this.
+    # Same property, graded on the reason rather than the refusal.
+    - type: llm-rubric
+      value: >-
+        The response states that a value supplied through --dart-define or
+        String.fromEnvironment is still compiled into the app binary as plaintext and
+        can be recovered by reverse engineering it.
+    - type: llm-rubric
+      value: >-
+        The recommended fix is to serve the secret from a backend service at runtime
+        so it never ships inside the app. Recommending a .env file, an obfuscated
+        constant, a native config file such as google-services.json, or splitting the
+        string up instead does not satisfy this.
+
+- description: static-security-audits-file-with-severity-tiers
+  vars:
+    prompt: |-
+      Review this for security problems before we ship. It is our whole auth client:
+
+      import 'dart:io';
+      import 'dart:math';
+      import 'package:flutter/foundation.dart';
+      import 'package:shared_preferences/shared_preferences.dart';
+
+      class AuthClient {
+        AuthClient() {
+          _client = HttpClient()
+            ..badCertificateCallback = (cert, host, port) => true;
+        }
+
+        static const _apiKey = 'AIzaSyB3kQ9tHhVv1LmNoPqRsTuVwXyZ0123456';
+        late final HttpClient _client;
+
+        Future<String> login(String email, String password) async {
+          final sessionId = Random().nextInt(1 << 32).toRadixString(16);
+          final token = await _post('/login', {
+            'email': email,
+            'password': password,
+            'session': sessionId,
+            'key': _apiKey,
+          });
+          debugPrint('Auth token for $email: $token');
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('auth_token', token);
+          return token;
+        }
+      }
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:static-security'
+    # The triage vocabulary is the skill's, from references/packages.md ("triage
+    # findings using these tiers: Critical / Warning / Note"). The unaided model
+    # reaches for High/Medium/Low or CVSS, so this is the discriminator.
+    - type: llm-rubric
+      value: >-
+        Every finding carries a severity label, and the labels are drawn only from the
+        set Critical, Warning, Note. Any other scheme — High, Medium, Low, Info, P0,
+        CVSS scores, or emoji-only markers — does not satisfy this.
+    # The same property, graded mechanically, because the rubric alone was not enough:
+    # with five assertions a High/Medium/Low report failed only that rubric and still
+    # averaged 0.8. The middle tier is the tell — `Warning` is the skill's word and
+    # `Medium` is the one the bare model reaches for. No trailing `\b` on Warning so a
+    # "Warnings" section heading still counts; `\bMedium\b` will not fire on
+    # `Durations.medium2`-style text.
+    - type: regex
+      value: '\bWarning'
+    - type: not-regex
+      value: '\bMedium\b'
+    - type: regex
+      value: 'flutter_secure_storage'
+    - type: regex
+      value: 'Random\.secure\(\)'
+    # Second grading of the secrets prohibition, on an audit rather than a refusal.
+    - type: llm-rubric
+      value: >-
+        The fix given for the hardcoded key is to fetch it from a backend service at
+        runtime. Moving it to --dart-define, String.fromEnvironment, a .env file, or
+        any other build-time constant is either absent or explicitly rejected as
+        insufficient.
+
+- description: static-security-hashes-passwords-with-dart-crypt
+  vars:
+    prompt: |-
+      Here is the password handling in our Dart auth package:
+
+      import 'dart:convert';
+      import 'package:crypto/crypto.dart';
+
+      class PasswordStore {
+        String hash(String password) =>
+            sha256.convert(utf8.encode(password)).toString();
+
+        bool verify(String password, String stored) => hash(password) == stored;
+      }
+
+      Is this the right way to store a password hash? Show me the corrected code.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:static-security'
+    # references/crypto.md mandates package:dart_crypt and SHA-512-crypt for password
+    # storage. The unaided model answers bcrypt or argon2 — correct in general, but not
+    # what this skill teaches, so these three are the lift.
+    - type: regex
+      value: 'dart_crypt'
+    - type: regex
+      value: 'Crypt\.sha512\('
+    - type: regex
+      value: '\.match\('
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The response says sha256 is unsuitable for storing passwords because it is
+        fast, and requires a deliberately slow, salted password-hashing algorithm
+        instead.
+
+- description: static-security-validates-input-with-formz
+  vars:
+    prompt: |-
+      This is the submit button on our login form:
+
+      ElevatedButton(
+        onPressed: () => context.read<AuthBloc>().add(
+          LoginRequested(
+            email: _emailController.text,
+            password: _passwordController.text,
+          ),
+        ),
+        child: const Text('Login'),
+      );
+
+      Nothing is checked before this hits the API. Add the validation. Output Dart
+      code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:static-security'
+    # SKILL.md: "Use package:formz for all form validation. Define a FormzInput
+    # subclass per field." The baseline hand-rolls a RegExp check in the widget or a
+    # TextFormField validator, neither of which matches these two.
+    - type: regex
+      value: 'extends FormzInput<'
+    - type: regex
+      value: 'formz/formz\.dart'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The submit callback is gated on the form's validation status and passes the
+        validated field values from state (for example state.email.value) into the
+        event. Reading TextEditingController.text at the submit site does not satisfy
+        this.
+
+- description: static-security-refuses-platform-channel-biometrics
+  vars:
+    prompt: >-
+      Gate our payments screen behind Face ID and fingerprint. Set up a MethodChannel
+      named com.acme/biometrics and write the Dart side that calls
+      invokeMethod('authenticate') on it, so we control the native prompt ourselves.
+      Show me the Dart.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:static-security'
+    # references/crypto.md: "Use package:local_auth ... Do not invoke platform
+    # channels directly." The baseline writes the MethodChannel as asked.
+    - type: regex
+      value: 'local_auth'
+    - type: regex
+      value: 'LocalAuthentication\('
+    - type: llm-rubric
+      value: >-
+        The response declines to implement the biometric check over a MethodChannel or
+        platform channel of its own, and routes it through a package that wraps the
+        platform biometric APIs instead. Delivering the requested MethodChannel setup,
+        even with a note recommending a package, does not satisfy this.
+    - type: javascript
+      value: file://assertions/dart-parses.js
+
+- description: static-security-scans-dependencies-before-release
+  vars:
+    prompt: |-
+      We cut a release tomorrow. Here is the top of pubspec.yaml:
+
+      name: acme_app
+      publish_to: none
+      environment:
+        sdk: ^3.12.0
+      ignored_advisories:
+        - GHSA-4rgh-jx4f-xxxx
+      dependencies:
+        flutter:
+          sdk: flutter
+        http: 0.13.0
+        flutter_downloader: 1.10.4
+
+      How do we check this for known vulnerabilities before we cut the build?
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:static-security'
+    # SKILL.md: "Scan pubspec.lock with osv-scanner before every release" and "Run
+    # dart pub outdated to check for available security patches". osv-scanner against
+    # the lockfile specifically is the part the bare model does not produce.
+    - type: regex
+      value: 'osv-scanner'
+    - type: regex
+      value: 'pubspec\.lock'
+    - type: regex
+      value: 'dart pub outdated'
+    - type: llm-rubric
+      value: >-
+        The response requires the ignored_advisories entry to carry a written
+        justification recording why that advisory does not apply to this app, rather
+        than accepting it as listed.
+
+# Negative control — nothing else catches a skill firing where it should not.
+- description: static-security-stays-out-of-plain-formatting-work
+  vars:
+    prompt: >-
+      Write a Dart function `String formatDuration(Duration d)` that renders a
+      duration as mm:ss, zero padded. Return only the function.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:static-security'
+    - type: not-regex
+      value: 'flutter_secure_storage|FormzInput|Random\.secure|osv-scanner|local_auth'
+    - type: not-icontains
+      value: 'certificate pinning'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it write the formatter" is unanswerable from the output alone.
+    - type: regex
+      value: 'String formatDuration\(Duration'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the formatting logic is
+        correct. It must not raise security concerns, threat models, secret handling,
+        secure storage, cryptography, input-validation packages, or dependency
+        scanning.
