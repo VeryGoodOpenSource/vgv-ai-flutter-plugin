@@ -228,4 +228,4 @@ Naming only "there is a conflict" is not enough — name the two constraints.
 
 ## Additional Resources
 
-See [reference.md](reference.md) for a quick-reference table of common lint rules introduced by `very_good_analysis` upgrades and their typical fixes (`prefer_const_constructors`, `use_super_parameters`, `unnecessary_late`, `avoid_dynamic_calls`, `require_trailing_commas`, `unnecessary_null_checks`).
+See [`references/lint-fixes.md`](references/lint-fixes.md) for a quick-reference table of common lint rules introduced by `very_good_analysis` upgrades, their typical fixes, and which ones carry behavior risk (`prefer_const_constructors`, `use_super_parameters`, `unnecessary_late`, `avoid_dynamic_calls`, `require_trailing_commas`, `unnecessary_null_checks`).
