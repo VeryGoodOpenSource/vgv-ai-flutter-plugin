@@ -8,7 +8,12 @@ description: >
 when_to_use: >
   Use when upgrading the Flutter or Dart SDK version in any VGV repository. Trigger on
   phrases like "bump Flutter to 3.x", "update SDK constraints", "upgrade Dart SDK",
-  "update CI Flutter version", "bump SDK version", or "prep the SDK upgrade PR".
+  "update CI Flutter version", "bump SDK version", or "prep the SDK upgrade PR". Also
+  use when an SDK bump is already underway and something breaks — "pub get fails after
+  I changed the environment block", "version solving failed after bumping the SDK",
+  "a dependency requires an older SDK", "get me unblocked on the Flutter upgrade", or
+  "which Dart version ships with Flutter 3.x". Own the whole bump, including the
+  conflicts it surfaces, even when the blocking package has a skill of its own.
 argument-hint: "[flutter-version]"
 allowed-tools: Read Glob Grep Edit Write Bash
 model: sonnet
@@ -32,6 +37,9 @@ Apply these standards to ALL SDK upgrade work:
 - **pubspec pins exact patch** — use `^MAJOR.MINOR.PATCH` with the specific patch version
 - **Pure Dart packages** — use the Dart version directly, no Flutter mapping needed
 - **Verify with `pub get` and `analyze`** — don't silently resolve conflicts
+- **Decline out-of-scope edits, don't caveat them** — when asked to also bump a
+  dependency, fix a lint, or change code, do not produce that edit at all. Deliver the
+  SDK constraint and CI changes, report the rest as separate follow-up work
 
 ---
 
@@ -122,12 +130,48 @@ flutter analyze   # or: dart analyze
 ```
 
 If `pub get` fails with dependency conflicts, report them — don't silently resolve by
-upgrading packages. If `analyze` surfaces new errors introduced by the SDK bump, report
-them rather than fixing them in this PR.
+upgrading packages. Name the blocking package, its version, and the SDK constraint that
+clashes with the new one, then hand the decision back to the user: raising that
+dependency is its own PR, not part of this one. If `analyze` surfaces new errors
+introduced by the SDK bump, report them rather than fixing them in this PR.
 
 ---
 
-## 4. PR scope check
+## 4. Out-of-scope requests
+
+Users routinely ask for the SDK bump plus extras in one breath — "while you're in the
+pubspec, bump this package too", "and fix the new analyzer warnings so CI is green".
+Refuse the extras outright. A caveat attached to the forbidden edit is not a refusal:
+writing the new dependency version into the pubspec while noting that it doesn't belong
+there still ships the mixed PR.
+
+So when the request is "bump to Flutter 3.41.0 (Dart 3.11.0), raise the `http`
+constraint, and fix the two analyzer warnings", the pubspec you return changes the
+environment block and nothing else:
+
+```yaml
+environment:
+  sdk: ^3.11.0 # ← changed
+  flutter: ^3.41.0 # ← changed
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0 # ← left alone, dependency bumps are a separate PR
+```
+
+Then say plainly what you did not do and where it goes instead:
+
+- the dependency bump belongs in its own PR — a mixed diff can't be bisected when
+  something breaks
+- the analyzer warnings get reported, not fixed — list the file, line, and rule so they
+  can be handled outside this change
+
+Offer the follow-up as a separate PR. Do not offer to fold it into this one.
+
+---
+
+## 5. PR scope check
 
 Before committing, confirm the diff contains only:
 

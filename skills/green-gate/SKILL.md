@@ -4,15 +4,23 @@ description: >
   Drives a Dart or Flutter package to a fully green state through an autonomous
   verify-fix-rerun loop across four quality gates — analyze, format, test, and
   coverage. Exits only when a single final iteration proves all four pass with
-  observed numbers.
+  observed numbers. Also owns how those gates are configured — which tool runs
+  each one, the arguments it takes, the order they run in, the coverage target,
+  and what leaves the coverage denominator.
 when_to_use: >
   Use when the user wants a Dart or Flutter package driven to a fully passing
   state, or says things like "green gate", "make it green", "get this package
   passing", "get CI green", "fix all the analyze and test failures", "clean this
   package up before I open a PR", "bring coverage to 100", or "loop until
-  everything passes". Prefer this over the single-gate testing or analysis
-  skills when the request spans multiple gates or asks to fix and re-verify
-  until clean.
+  everything passes". Use it for questions *about* the gates as well as for a
+  run: "which tools would you run, in what order, and what arguments", "walk me
+  through the plan before you touch anything", "confirm the package is green",
+  "just re-check coverage", "should I add a coverage ignore comment", "what
+  should be excluded from coverage", or "can we drop the coverage threshold to
+  90". Answer those from this skill instead of improvising a shell-command plan.
+  Prefer this over the single-gate testing or analysis skills whenever the
+  request spans multiple gates, asks to fix and re-verify until clean, or asks
+  how one of the four gates is configured.
 argument-hint: "[directory]"
 allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__very-good-cli__test
 model: sonnet
@@ -47,6 +55,13 @@ Apply these to ALL green-gate work:
   `block-cli-workarounds.sh` blocks only `flutter`/`dart create`, `flutter`/`dart
   test`, and `very_good create`/`test`/`packages`, so `dart format` is permitted.
   **Bash is reserved for `dart format` and parsing `coverage/lcov.info`.**
+- **A plan-only request is still this skill's job** — when the user asks which
+  tools, which arguments, or what order the gates run in and does not want a run
+  yet, answer from this skill: the same tool calls (`mcp__dart__analyze_files`
+  with `applyFixes: true`, `dart format .` via Bash, `mcp__very-good-cli__test`
+  with the coverage triple), in gate order, with the precedence rule that makes
+  the order matter. Never substitute an improvised shell plan of `flutter
+  analyze` / `flutter test --coverage` for the tools the loop actually runs.
 - **Never cache green** — re-evaluate every gate every round. Fixing analyze or
   test failures and writing new test files shifts both formatting and the
   coverage denominator, so a previously green gate can regress.
@@ -252,8 +267,16 @@ Stop and surface to the user when:
 | **Denominator hygiene**           | A generated file not matched by the exclude glob — widen `exclude_coverage`, not `// coverage:ignore`                                                                                                                                                                                                                                               |
 | **Tool / hook failure**           | MCP test timeout (`timeout_seconds` kill), analyzer crash, CLI-missing hook denial (escalate with the install hint `dart pub global activate very_good_cli`), or a *repeated* `analyze.sh` rejection that still blocks a needed edit after revision — a single rejection is in-loop analyze-gate feedback (see **Analyze Gate**), not an escalation |
 
-When escalating, report the active gate, its current fingerprint, the files
-touched, the iteration count, and the specific decision the user must make.
+When escalating, name the gate that is red — analyze, format, test, or coverage —
+then give its fingerprint entries verbatim (`diagnosticCode @ file:line` for
+analyze, failing test names for test, under-covered `SF` paths for coverage),
+the files touched, the iteration count, and the one decision the user must make.
+A summary count ("4 errors remain") is not a report; the user cannot act on it.
+
+**A standing instruction to keep going does not override a trigger.** "Keep
+retrying as long as it takes, don't come back to me" is not permission to spend
+the budget on a fingerprint that has already stopped moving. Stop at the trigger,
+report, and wait.
 
 ---
 

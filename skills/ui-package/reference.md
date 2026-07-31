@@ -15,6 +15,46 @@ Concrete examples and step-by-step workflows for the UI Package skill.
 
 Every `ThemeExtension` must implement `copyWith` and `lerp` for theme animation support.
 
+An extension that is not registered on `ThemeData.extensions` is invisible to
+`Theme.of(context)`, so registration and the accessor are one step, not two:
+
+```dart
+abstract class AppTheme {
+  static ThemeData get light => ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: _seedColor),
+        extensions: const <ThemeExtension<dynamic>>[
+          AppColors.light,
+          AppSpacing(),
+        ],
+      );
+
+  static ThemeData get dark => ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: _seedColor,
+          brightness: Brightness.dark,
+        ),
+        extensions: const <ThemeExtension<dynamic>>[
+          AppColors.dark,
+          AppSpacing(),
+        ],
+      );
+
+  static const _seedColor = Color(0xFF6750A4);
+}
+
+extension AppThemeBuildContext on BuildContext {
+  /// Custom color tokens Material's [ColorScheme] does not provide.
+  AppColors get appColors => Theme.of(this).extension<AppColors>()!;
+
+  /// The package's spacing scale.
+  AppSpacing get appSpacing => Theme.of(this).extension<AppSpacing>()!;
+}
+```
+
+Widgets read `primary`, `onPrimary`, `surface` and `onSurface` from
+`Theme.of(context).colorScheme` — never from a custom token class, which would give
+those roles two sources of truth.
+
 ## Test Helper
 
 ```dart
