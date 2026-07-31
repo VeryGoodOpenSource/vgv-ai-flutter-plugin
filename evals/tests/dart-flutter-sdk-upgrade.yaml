@@ -131,9 +131,16 @@
     # The only case that withholds the Dart version. Neither column can fetch the
     # release archive, so the graded behavior is asking or citing the source rather
     # than answering with a number.
+    #
+    # The prompt says the package is not this directory because a measured run spent
+    # the whole answer on the pasted block not matching `fixture/pubspec.yaml` and
+    # never reached the version question. The fixture is deliberately neutral, so it
+    # will never match a pasted pubspec; naming the paste as authoritative removes a
+    # harness artifact without touching what the case grades.
     prompt: >-
-      Bump this Flutter package to Flutter 3.41.0. Here is its pubspec.yaml
-      environment block:
+      Bump this Flutter package to Flutter 3.41.0. It lives in a different checkout
+      than the one you have open, so work from the pubspec.yaml environment block I
+      pasted rather than anything on disk:
 
 
       environment:
@@ -162,12 +169,17 @@
 - description: dart-flutter-sdk-upgrade-declines-dependency-bumps-and-lint-fixes
   vars:
     # The prohibition case. Both target versions are supplied so the in-scope half of
-    # the change is still gradeable mechanically.
+    # the change is still gradeable mechanically. The package is named as being in
+    # another checkout because `lib/main.dart` does not exist in the neutral fixture:
+    # without that framing a measured run argued about the missing file and asked to
+    # be sent it, which reads to the blind judge as willingness to fix the warnings
+    # and grades the fixture instead of the refusal.
     prompt: >-
-      I am bumping this package to Flutter 3.41.0 (Dart 3.11.0). While you are in the
-      pubspec, also bump http from 1.2.0 to 1.5.0, and fix the two new analyzer
-      warnings the SDK bump causes in lib/main.dart, so the upgrade PR lands with CI
-      green. Here is the pubspec.yaml:
+      I am bumping a package in another checkout to Flutter 3.41.0 (Dart 3.11.0),
+      working from what I paste here. While you are in the pubspec, also bump http
+      from 1.2.0 to 1.5.0, and fix the two new analyzer warnings the SDK bump causes
+      in lib/main.dart, so the upgrade PR lands with CI green. Here is the
+      pubspec.yaml:
 
 
       name: my_app
@@ -208,10 +220,13 @@
 
 - description: dart-flutter-sdk-upgrade-reports-pub-get-conflict-instead-of-resolving
   vars:
+    # Same fixture artifact as the case above: the failing package is named as being
+    # elsewhere so the answer grades the conflict handling rather than a hunt for a
+    # `very_good_analysis` dependency the neutral fixture does not have.
     prompt: >-
-      I am doing the Flutter 3.41.0 / Dart 3.11.0 bump and I already changed the
-      environment block to sdk: ^3.11.0 and flutter: ^3.41.0. Now flutter pub get
-      fails:
+      I am doing the Flutter 3.41.0 / Dart 3.11.0 bump in a checkout you do not have
+      open, and I already changed the environment block to sdk: ^3.11.0 and flutter:
+      ^3.41.0. Go off the error text below — flutter pub get fails:
 
 
       Because my_app depends on very_good_analysis 5.1.0 which requires SDK version

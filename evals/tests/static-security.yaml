@@ -92,9 +92,9 @@
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
-    # The triage vocabulary is the skill's, from references/packages.md ("triage
-    # findings using these tiers: Critical / Warning / Note"). The unaided model
-    # reaches for High/Medium/Low or CVSS, so this is the discriminator.
+    # The triage vocabulary is the skill's, from the `## Severity Triage` section of
+    # SKILL.md ("Critical / Warning / Note"). The unaided model reaches for
+    # High/Medium/Low or CVSS, so this is the discriminator.
     - type: llm-rubric
       value: >-
         Every finding carries a severity label, and the labels are drawn only from the

@@ -103,13 +103,23 @@
 
 - description: very-good-analysis-upgrade-fixes-only-the-new-lints
   vars:
+    # The pre-existing-versus-new split alone measured nothing: with the prompt saying
+    # outright which two predate the bump, the sealed column made the same call, in the
+    # same words, and passed every content assertion here. The third new lint is what
+    # discriminates. `avoid_dynamic_calls` is the case Core Standards was written for —
+    # "Avoid behavior changes — if a lint fix alters runtime behavior, flag it for
+    # review" — because the obvious fix, casting the receiver, throws a TypeError on a
+    # JSON int where the dynamic call returned a value. An unaided model casts it and
+    # moves on, and no other case in this file grades that standard.
     prompt: |
-      I bumped very_good_analysis from ^6.0.0 to ^10.0.0 in a pure Dart-and-Flutter
-      package and `flutter analyze` now reports this. The two unused_element infos in
-      lib/legacy/csv.dart were already reported before the bump; the other two are new.
+      I bumped very_good_analysis from ^6.0.0 to ^10.0.0 in a Flutter package and
+      `flutter analyze` now reports this. The two unused_element infos in
+      lib/legacy/csv.dart were already reported before the bump; the other three are
+      new.
 
-        info - Use 'const' with the constructor to improve performance - lib/cart/cart_total.dart:11:9 - prefer_const_constructors
-        info - Missing a required trailing comma - lib/cart/cart_total.dart:11:9 - require_trailing_commas
+        info - Method invocation or property access on a 'dynamic' target - lib/cart/cart_total.dart:14:28 - avoid_dynamic_calls
+        info - Use 'const' with the constructor to improve performance - lib/cart/cart_total.dart:15:9 - prefer_const_constructors
+        info - Missing a required trailing comma - lib/cart/cart_total.dart:15:9 - require_trailing_commas
         info - The declaration '_legacyParse' isn't referenced - lib/legacy/csv.dart:31:8 - unused_element
         info - The declaration '_legacyHeader' isn't referenced - lib/legacy/csv.dart:44:8 - unused_element
 
@@ -119,15 +129,17 @@
       import 'package:flutter/material.dart';
 
       class CartTotal extends StatelessWidget {
-        const CartTotal({super.key, required this.label});
+        const CartTotal({super.key, required this.label, required this.cart});
 
         final String label;
+        final Map<String, dynamic> cart;
 
         @override
         Widget build(BuildContext context) {
           return Row(
             children: [
               Text(label),
+              Text(cart['total'].toStringAsFixed(2)),
               Text('Checkout')
             ],
           );
@@ -135,12 +147,12 @@
       }
       ```
 
-      Tell me which of the four you are fixing in this PR and which you are leaving,
+      Tell me which of the five you are fixing in this PR and which you are leaving,
       then give me the updated cart_total.dart.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
-    # One regex covers both new lints: prefer_const_constructors wants the `const`,
+    # One regex covers both style lints: prefer_const_constructors wants the `const`,
     # require_trailing_commas wants the comma, and both land on the same line.
     - type: regex
       value: 'const Text\(''Checkout''\),'
@@ -155,6 +167,15 @@
         out of this change, and gives the reason that they existed before the version
         bump and belong in a separate PR. Fixing or deleting those declarations, or
         leaving them out with no reason given, does not satisfy this.
+    # The behavior-change standard. Graded on the reasoning, which is visible in the
+    # text: a cast is not a style fix, and the response has to say so.
+    - type: llm-rubric
+      value: >-
+        The response singles out the dynamic-call lint as the one whose fix would change
+        runtime behavior — casting the value can throw where the dynamic call did not —
+        and hands it to a human to review rather than silently inserting a cast.
+        Treating it as an equivalent style fix, or fixing it with no mention of the
+        behavior risk, does not satisfy this.
     # Phrased as "what the response says it changed" rather than "what it changed":
     # the judge never sees the original file, so it cannot detect a rename or a reorder
     # by comparison. What it can check is that the response enumerates its edits and
@@ -163,8 +184,8 @@
       value: >-
         The response enumerates the edits it made to the file, and that list is exactly
         two: adding a const keyword and adding a trailing comma. A response that also
-        claims a rename, an extraction, a reordering, a reformat, or any other cleanup
-        of the file does not satisfy this.
+        claims a cast, a rename, an extraction, a reordering, a reformat, or any other
+        cleanup of the file does not satisfy this.
 
 - description: very-good-analysis-upgrade-bumps-each-monorepo-package
   vars:
@@ -178,6 +199,9 @@
 
       Take all of them to 10.0.0. Walk me through exactly what you would change and
       what you would run, and where you would run it from. Don't run anything.
+
+      This layout is what you are working from — the packages are not in your working
+      directory, so answer from the description rather than looking for them on disk.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
@@ -185,11 +209,13 @@
     # per-package." A single root-level pub get fails this.
     - type: regex
       value: 'pub get[\s\S]*pub get'
+    # Phrased as what the response prescribes, not what it executed: the prompt ends
+    # "Don't run anything", so a judge reading "edits" literally fails a correct plan.
     - type: llm-rubric
       value: >-
-        The response edits the very_good_analysis entry in all three pubspec.yaml files
-        separately, one per package. A single root-level or workspace-level change
-        standing in for all three does not satisfy this.
+        The response prescribes a separate edit to the very_good_analysis entry in each of
+        the three packages' own pubspec.yaml files, one per package. A single root-level or
+        workspace-level change standing in for all three does not satisfy this.
     - type: llm-rubric
       value: >-
         The response draws the distinction that pub get has to be run inside each
@@ -198,11 +224,34 @@
 
 - description: very-good-analysis-upgrade-refuses-scope-creep
   vars:
-    prompt: >-
+    # The first version of this prompt said "I am describing my package from memory"
+    # while describing nothing, so the model refused the whole request rather than
+    # guess, and all three rubrics failed on that refusal instead of on scope
+    # judgment. The
+    # pubspec below gives it something concrete to reason about, and the closing
+    # sentence asks for the PR contents rather than for edits.
+    prompt: |
+      Here is my Dart package's pubspec.yaml — it is the source of truth for this task,
+      the package is not in your working directory:
+
+      name: cart_repository
+      version: 0.1.0
+
+      environment:
+        sdk: ^3.5.0
+
+      dependencies:
+        http: ^1.1.0
+
+      dev_dependencies:
+        test: ^1.24.0
+        very_good_analysis: ^6.0.0
+
       Bump very_good_analysis to 10.0.0 for me. While you're in there, also strip every
       `// TODO(dev)` comment out of lib/, run `dart fix --apply` across the whole
       package to clean up the older warnings we've been ignoring, and take `http` to its
-      latest version too. One PR please.
+      latest version too. One PR please. Tell me exactly what will and will not be in
+      that PR.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
@@ -242,7 +291,9 @@
         So, because cart_repository depends on both build_runner ^2.4.0 and
         very_good_analysis ^10.0.0, version solving failed.
 
-      Just upgrade whatever else you need to make it resolve and keep going.
+      Just upgrade whatever else you need to make it resolve and keep going. The error
+      text above is what you are working from; the package is not in your working
+      directory, so do not go looking for it.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'

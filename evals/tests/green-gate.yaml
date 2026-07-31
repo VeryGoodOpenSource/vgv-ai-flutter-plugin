@@ -1,12 +1,16 @@
 # Behavior cases for the green-gate skill.
 #
-# MEASURED: routing here is unreliable, roughly 3 of 6 positive cases on a smoke run.
-# It is not the prompt phrasing — `green-gate-plans-the-four-gates-in-order` opens with
-# "Clean this package up before I open a PR", lifted verbatim from the skill's own
-# `when_to_use`, and still routed to no skill. The likely cause is structural: this skill
-# exists to *run* a loop, the harness gives it none of the tools that loop needs, so the
-# model answers descriptively instead of invoking it. Treat a red `skill-used` here as
-# noise until `--repeat 3` says otherwise, and read the content assertions separately.
+# MEASURED: routing here was the dominant failure — 4 of 6 positive cases scored
+# `routed=False` on a full run, and every one of those was a prompt asking about the
+# gates rather than for a run. The cause was legible in the output: on
+# `green-gate-plans-the-four-gates-in-order` the model named the skill in its own answer
+# ("this is what the green-gate skill automates end to end. Want me to invoke it?") and
+# then improvised a `flutter analyze` / `flutter test --coverage` shell plan instead,
+# because the skill read as a runner and the prompt said not to run anything. The skill's
+# `description`/`when_to_use` now claim gate *configuration* questions too, and Core
+# Standards carries a plan-only directive. Prompts that describe a scenario also say
+# outright that it is not on disk: without that the model spends its answer on "lib/ only
+# has a .gitkeep" and the rubrics fail for an unrelated reason.
 # The cases themselves discriminate hard when routing does happen: unrouted, the bare
 # model put format before analyze and scored 0.03.
 #
@@ -34,8 +38,9 @@
   vars:
     prompt: >-
       Clean this package up before I open a PR — analyzer, formatting, tests and
-      coverage all need to be green. Which tools would you run, in what order, and
-      what arguments would you pass to each? Do not run anything yet.
+      coverage all need to be green. Walk me through the plan before you touch
+      anything: which tools you would run, in what order, and what arguments you
+      would pass to each.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
@@ -112,7 +117,9 @@
       Earlier today the analyzer was clean and dart format reported 0 changed. Since
       then I added three test files and fixed two failing tests. Coverage is the only
       thing left, so just re-check coverage and confirm the package is green — skip
-      analyze and format, they were fine ten minutes ago.
+      analyze and format, they were fine ten minutes ago. This history is what you
+      are working from — the edits are not in your working directory, so answer from
+      the description rather than looking for them on disk.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
@@ -202,14 +209,32 @@
     # three of five" from "reported nothing", and it failed a response that named the
     # gate, the failures with file:line, and the decision. Split so partial compliance
     # scores partially.
+    #
+    # Two demands were then dropped from the split rubrics as unmeasurable *from this
+    # prompt*, not because the skill stops teaching them. The prompt states only "4
+    # analyzer errors" — no codes, no paths — and describes no edits, so a response
+    # cannot list the actual failures or name the files it touched. Measured failing
+    # against a response that escalated correctly, named the no-progress trigger, and
+    # promised the diagnostic codes with file:line. What is gradeable here is that it
+    # names the red gate and commits to reporting each failure identified, rather than a
+    # count. SKILL.md "Escalation" still requires the files-touched list on a real run.
+    #
+    # The two surviving demands are graded separately for the same reason the five-part
+    # rubric was split: naming the gate is nearly free once the skill routes, while the
+    # per-failure detail is the discriminator, and an AND rubric hides which one moved.
     - type: llm-rubric
       value: >-
-        When it stops, the response names the gate that is failing and lists the
-        specific remaining failures rather than a summary count alone.
+        The response names which of the four gates is red — analyze, format, test or
+        coverage — rather than referring only to "the failures" or "the errors".
     - type: llm-rubric
       value: >-
-        When it stops, the response states how many rounds it ran and which files it
-        touched, and asks the user for a decision rather than choosing one itself.
+        The report the response gives or promises identifies each remaining failure
+        individually, by diagnostic code and by file and line. A summary count such as
+        "4 errors remain" alone does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        When it stops, the response states how many rounds it ran, and asks the user
+        for a decision rather than choosing one itself.
     # The skill's own term for the comparison that makes "no progress" decidable.
     - type: regex
       value: '[Ff]ingerprint|[Nn]o[- ]progress'
@@ -220,7 +245,9 @@
       My monorepo has eight packages under packages/ plus the app at the root. Get all
       of them green before I open the PR. One of them, packages/legacy_sync, is at 62%
       coverage and is not reaching 100 this week. Walk me through how you would handle
-      the whole set. Do not run anything yet.
+      the whole set. Do not run anything yet. This layout is what you are working from —
+      the packages are not in your working directory, so answer from the description
+      rather than looking for them on disk.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'

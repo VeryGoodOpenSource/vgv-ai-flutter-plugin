@@ -5,8 +5,18 @@
  * reference classes absent from the fixture, so semantic analysis would fail every
  * case. This proves syntax only.
  *
- * A bare statement like `ArticleRoute(id).go(context);` is valid Dart but not a
- * compilation unit, so a failing block is retried wrapped in a function body.
+ * A block is tried three ways before it is called a failure, because a snippet can be
+ * legitimate Dart without being a compilation unit:
+ *
+ *   1. as-is                      — `class Foo {}`
+ *   2. wrapped in a function body — `ArticleRoute(id).go(context);`
+ *   3. wrapped as an expression   — a widget tree pasted with no trailing semicolon,
+ *                                   e.g. `AppButton(label: 'Save', onPressed: _save)`
+ *
+ * Attempt 3 was added after a measured run: three cases failed on responses whose Dart
+ * was fine, because a bare widget expression is neither a compilation unit nor a
+ * statement, so attempts 1 and 2 both reject it. Without it the assertion punishes a
+ * perfectly normal way to show a widget.
  *
  * A missing `dart` binary fails rather than passing quietly.
  */
@@ -19,22 +29,33 @@ const DART_BIN = process.env.VGV_EVAL_DART_BIN || 'dart';
 const FENCE = /```dart\s*\n([\s\S]*?)```/gi;
 
 function parses(source, dir, index) {
-  const direct = path.join(dir, `block-${index}.dart`);
-  fs.writeFileSync(direct, source);
-  try {
-    execFileSync(DART_BIN, ['format', '--output=none', direct], { stdio: 'ignore' });
-    return true;
-  } catch {
-    // Retry as a statement fragment.
-    const wrapped = path.join(dir, `block-${index}.fragment.dart`);
-    fs.writeFileSync(wrapped, `void _fragment() async {\n${source}\n}\n`);
+  // Strip one trailing semicolon for the expression attempt only, so a statement does
+  // not become `final _expr = x();;`, which is not valid Dart.
+  const asExpression = source.trim().replace(/;$/, '');
+
+  const attempts = [
+    ['direct', source],
+    ['fragment', `void _fragment() async {\n${source}\n}\n`],
+    ['expression', `final _expr = ${asExpression};\n`],
+    // A single named argument as it appears inside a constructor call, e.g.
+    // `style: FilledButton.styleFrom(...)`. Measured: a real response showed exactly
+    // this and the three shapes above all rejected it. Wrapping in a call accepts a
+    // named argument or an argument list, including a trailing comma, and still
+    // rejects unbalanced delimiters and stray keywords.
+    ['argument', `final _arg = _f(\n${asExpression}\n);\n`],
+  ];
+
+  for (const [kind, contents] of attempts) {
+    const file = path.join(dir, `block-${index}.${kind}.dart`);
+    fs.writeFileSync(file, contents);
     try {
-      execFileSync(DART_BIN, ['format', '--output=none', wrapped], { stdio: 'ignore' });
+      execFileSync(DART_BIN, ['format', '--output=none', file], { stdio: 'ignore' });
       return true;
     } catch {
-      return false;
+      // Try the next shape.
     }
   }
+  return false;
 }
 
 module.exports = (output) => {

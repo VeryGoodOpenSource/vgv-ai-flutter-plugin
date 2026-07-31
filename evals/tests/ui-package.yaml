@@ -8,9 +8,11 @@
 #    *calls* the tool — that is unsatisfiable here and would measure the harness. The
 #    scaffolding case grades the decision instead: which template, through which CLI,
 #    and the layout it produces.
-# 2. The skill's `when_to_use` is narrow ("create a ui package"), so every prompt below
-#    names the UI package explicitly. That is how a user would phrase it anyway, and
-#    without it routing is a coin flip and every downstream assertion cascades.
+# 2. Every prompt below names the UI package explicitly. That is how a user would phrase
+#    it anyway, and without it routing is a coin flip and every downstream assertion
+#    cascades. The skill's `when_to_use` originally covered only "create a ui package",
+#    which sent the widget-test case to the testing skill instead; it now covers work
+#    inside an existing UI package too.
 #
 # The skill overlaps material-theming on purpose (SKILL.md delegates ThemeData setup to
 # it). `skill-used` only requires ui-package to be among the skills invoked, so a run
@@ -211,7 +213,9 @@
 
       import 'package:storefront_ui/src/widgets/app_button.dart';
 
-      I want to keep it that way so I only pull in what I use. Is that fine?
+      I want to keep it that way so I only pull in what I use. Is that fine, and if
+      not, what does the single import you would replace them all with actually give
+      me?
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
@@ -228,7 +232,11 @@
     - type: regex
       value: 'storefront_ui/storefront_ui\.dart'
     # SKILL.md: the barrel "also re-exports material.dart". A bare model recommending a
-    # barrel file does not know that, so this is the discriminator in this case.
+    # barrel file does not know that, so this is the discriminator in this case. The
+    # prompt's second clause exists to make it answerable: asked only "is that fine?",
+    # a correct response declines the deep import and stops, with no occasion to say
+    # what the barrel hands back. Asking what the single import gives you puts the
+    # re-export on topic without naming it.
     - type: llm-rubric
       value: >-
         The response says the barrel file re-exports `material.dart`, so a consumer

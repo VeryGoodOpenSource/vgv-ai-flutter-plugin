@@ -66,14 +66,42 @@
 
 - description: layered-architecture-transforms-models-in-the-repository
   vars:
+    # Asking where each file goes is what makes the layer boundary gradeable. Under
+    # "Output Dart code only" alone, both columns returned one correct-looking snippet
+    # with no package context: the two surviving rubrics passed in the sealed column
+    # too, and the third — whether the domain model belongs to the repository package —
+    # was unanswerable from the text and failed in the plugin column for that reason.
     prompt: >-
-      Write the WeatherRepository that sits on top of WeatherApiClient. The API returns
-      temperature in Fahrenheit and a nested location object. Output Dart code only.
+      Write the WeatherRepository that sits on top of WeatherApiClient, which is a data
+      layer package in my monorepo. The API returns temperature in Fahrenheit and a
+      nested location object. Output Dart code only, with a comment at the top of each
+      file giving the path it belongs at.
   assert:
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
     - type: regex
       value: 'class WeatherRepository'
+    # "Domain models extend Equatable and represent the app's internal data shape."
+    # Measured, the sealed column wrote a plain `class Weather` with no value equality.
+    - type: regex
+      value: 'class Weather extends Equatable'
+    # Placement, graded mechanically now that the prompt asks for paths: the domain
+    # model and the repository live in the repository package, not the data package.
+    # This replaces the rubric that asked the same question of a snippet that could not
+    # answer it.
+    - type: regex
+      value: 'packages/weather_repository/'
+    # "Barrel exports at every package boundary — src/ is never imported directly," and
+    # local packages are reached as packages. The sealed column reached for a
+    # same-directory `import 'weather_api_client.dart';` instead.
+    #
+    # Anchored on `import '` rather than written as `package:weather_api_client/...`:
+    # promptfoo reads any assertion value starting with `package:` as a reference to an
+    # npm-hosted assertion and errors the whole case before the regex runs. Double-quoted
+    # so the inner single quotes need no escaping, and the `.` is left unescaped since an
+    # any-char match is harmless here.
+    - type: regex
+      value: "import 'package:weather_api_client/weather_api_client.dart'"
     - type: javascript
       value: file://assertions/dart-parses.js
     - type: llm-rubric
@@ -84,10 +112,6 @@
       value: >-
         The repository converts the API response model into a separate domain model
         rather than returning the API response type to callers.
-    - type: llm-rubric
-      value: >-
-        The domain model is presented as belonging to the repository package rather
-        than the data package.
 
 - description: layered-architecture-refuses-domain-model-in-data-layer
   vars:
