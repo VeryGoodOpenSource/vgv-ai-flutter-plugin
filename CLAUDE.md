@@ -78,7 +78,8 @@ skills/
   ui-package/SKILL.md
   ui-package/reference.md
   very-good-analysis-upgrade/SKILL.md
-  very-good-analysis-upgrade/reference.md
+  very-good-analysis-upgrade/references/
+    lint-fixes.md
 ```
 
 ## Skill File Format
