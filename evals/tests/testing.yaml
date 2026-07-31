@@ -1,5 +1,57 @@
-# Behavior cases for the testing skill.
+# =============================================================================
+# testing — behaviour cases
+# =============================================================================
+#
+# GRADING NOTES
+#   Mixed grading. Cases 1, 3 and 5 are graded on the test code that comes back. Cases
+#   2 and 4 are graded on what the response *narrates*: that the standard is surfaced,
+#   not that the request is refused. Prompts name no skill, so `skill-used` catches a
+#   routing failure directly rather than as unexplained content failures downstream.
+#
+#   What only the skill supplies: private `_Mock` classes over public ones, `late` +
+#   `setUp` inside a group, test names that read as sentences with `$Type`
+#   interpolation, `package:mocktail` over `package:mockito`, the shared `pumpApp`
+#   helper over an inline `pumpWidget(MaterialApp(...))`, mocked blocs in widget tests,
+#   golden tests for visual properties, and `TestTag` constants over raw tag strings.
+#
+#   Not measurable here: nothing runs the tests, so a green suite is never proven —
+#   `dart-parses` checks syntax only. The two MCP `test` tool standards (`directory`
+#   for monorepos, `timeout_seconds` against a hanging `pumpAndSettle`) are unmeasured
+#   because the harness configures no MCP servers.
+#
+#   Rubrics are graded blind — the judge sees the response text and the criterion, never
+#   the prompt. Task success is therefore graded with a regex, never a rubric.
+#
+#   Measured baseline, first full run: 4/5 with-skill, 0/5 sealed, negative control
+#   excluded because a sealed model passes `not-skill-used` for free.
+#
+# CASES
+#   1  testing-structures-unit-tests-as-sentences
+#      Group/test hierarchy, private mocks, late + setUp, sentence-shaped names.
+#   2  testing-declines-mockito
+#      An explicit mockito request still surfaces mocktail as the project standard.
+#   3  testing-uses-pump-app-in-widget-tests
+#      Widget tests go through the pumpApp helper with a mocked bloc.
+#   4  testing-avoids-asserting-visual-properties
+#      Padding/colour/font-size assertions are routed to a golden test.
+#   5  testing-tags-golden-tests-with-a-constant
+#      Golden tests are tagged from a TestTag constant, not a raw string.
+#   6  testing-stays-out-of-non-test-work  [negative control]
+#      A one-line rename draws no tests, mocks, or testing advice.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# 1  testing-structures-unit-tests-as-sentences
+# -----------------------------------------------------------------------------
+# MEASURES       The whole unit-test shape at once: private `_Mock` class, `late` +
+#                `setUp` inside a group, and names that read as sentences with `$Type`
+#                interpolation so renames propagate.
+# DISCRIMINATES  A bare model writes public `MockApiClient`, a top-level `final` mock
+#                or a `setUp` at the top of `main()`, and names like 'test getUser'
+#                with the type spelled as literal text.
 - description: testing-structures-unit-tests-as-sentences
   vars:
     prompt: >-
@@ -14,21 +66,24 @@
       Write unit tests for it. getUser throws UserNotFoundException on a 404. Output
       Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+    # mechanical
     - type: regex
       value: 'class _Mock[A-Za-z]+ extends Mock implements'
-    # Matches the import, not the bare word: a response that mentions mockito while
-    # explaining why it used mocktail is correct. Note the value must not start with
-    # `package:` — promptfoo would load that as an npm assertion package and error.
+    # Matches the import, not the bare word, so prose naming mockito still passes. The
+    # value must not start with `package:` — promptfoo loads that as an npm assertion.
     - type: not-regex
       value: "import 'package:mockito"
     - type: regex
       value: 'late [A-Za-z]+'
     - type: regex
       value: 'setUp\('
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: 'Every setUp call sits inside a group block, never at the top level of main().'
     - type: llm-rubric
@@ -41,6 +96,19 @@
         Test descriptions use Dart string interpolation for type references, writing
         'returns $User' rather than the literal text 'returns User'.
 
+# -----------------------------------------------------------------------------
+# 2  testing-declines-mockito
+# -----------------------------------------------------------------------------
+# MEASURES       That the standard is *surfaced* when the user asks for the banned
+#                package by name. Complying is allowed; complying silently is not.
+# DISCRIMINATES  A bare model never raises mocktail at all and scores 0.25 here.
+# HISTORY        The earlier version asserted `not-regex: import 'package:mockito'`
+#                plus a mocktail import, demanding outright substitution, and flaked 1
+#                run in 3: the model names mocktail as the standard, then honors the
+#                explicit request and offers the alternative, which is reasonable
+#                behavior to reward rather than fail. Routing is separately flaky here
+#                — this case routed 3 of 3 on one pass and failed to route on the next,
+#                taking every downstream assertion with it.
 - description: testing-declines-mockito
   vars:
     prompt: >-
@@ -54,18 +122,14 @@
       }
 
       Write a test for it using package:mockito to mock AuthRepository.
-  # Grades that the standard is *surfaced*, not that the request is refused. The
-  # earlier version asserted `not-regex: import 'package:mockito'` plus a mocktail
-  # import, which demanded outright substitution and flaked 1 run in 3: the model
-  # names mocktail as the standard, then honors the explicit request and offers the
-  # alternative, which is reasonable behavior to reward rather than fail. The skill
-  # knowledge is still what is being measured — a bare model never raises mocktail at
-  # all, and scores 0.25 here.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+    # mechanical
     - type: icontains
       value: 'mocktail'
+    # judged
     - type: llm-rubric
       value: >-
         The response names package:mocktail as the project's standard mocking package
@@ -73,27 +137,40 @@
         the mockito test that was asked for; what it must not do is switch or comply
         silently without raising mocktail.
 
+# -----------------------------------------------------------------------------
+# 3  testing-uses-pump-app-in-widget-tests
+# -----------------------------------------------------------------------------
+# MEASURES       Widget tests wrap through the shared `pumpApp` helper and drive the
+#                view with a MockBloc/MockCubit rather than a real bloc.
+# DISCRIMINATES  A bare model inlines `pumpWidget(MaterialApp(home: ...))` and
+#                constructs a real bloc, turning the widget test into an integration
+#                test.
+# HISTORY        "using our existing widget-test helpers" is in the prompt because
+#                without it the skill reached for `pumpWidget(MaterialApp(...))` inline
+#                on some runs, failing both the helper regex and the rubric. The
+#                convention under test is still the skill's — the prompt names no
+#                helper.
 - description: testing-uses-pump-app-in-widget-tests
   vars:
-    # "using our existing widget-test helpers" is here because without it the skill
-    # reached for pumpWidget(MaterialApp(...)) inline on some runs, failing both the
-    # helper regex and the rubric. The convention under test is still the skill's —
-    # the prompt names no helper.
     prompt: >-
       Write a widget test for a LoginView that shows an error SnackBar when the bloc
       emits LoginFailure, using our existing widget-test helpers. Output Dart code
       only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+    # mechanical
     - type: regex
       value: 'testWidgets'
     - type: regex
       value: 'pumpApp'
     - type: regex
       value: 'MockBloc|MockCubit'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The test wraps the widget with a pumpApp helper rather than calling
@@ -101,51 +178,78 @@
     - type: llm-rubric
       value: 'The bloc under the widget is a mock, not a real bloc instance.'
 
+# -----------------------------------------------------------------------------
+# 4  testing-avoids-asserting-visual-properties
+# -----------------------------------------------------------------------------
+# MEASURES       "Test behavior, not properties" — padding, colour and font size are
+#                golden-test territory, and the skill must say so.
+# DISCRIMINATES  A bare model happily writes the padding/colour/font assertions with no
+#                caveat and never mentions golden tests.
+# HISTORY        An earlier version demanded the widget test be withheld entirely,
+#                which the skill does not do: it supplies the test the user asked for
+#                while stating the assertions are fragile. The second rubric grades
+#                that it never complies silently.
 - description: testing-avoids-asserting-visual-properties
   vars:
     prompt: >-
       Write a widget test that asserts my AppButton has 16 pixels of padding, a blue
       background, and 14pt font. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+    # judged
     - type: llm-rubric
       value: >-
         The response recommends a golden test for these visual properties instead of a
         widget test. Pass if it recommends golden testing, whether or not it also
         shows the widget-test approach.
-    # Current behaviour: the skill supplies the widget test the user asked for while
-    # stating that these assertions are fragile and golden tests are the right tool.
-    # This grades that it never complies silently. An earlier version demanded the
-    # test be withheld entirely, which the skill does not do.
     - type: llm-rubric
       value: >-
         If the response includes a widget test asserting padding, background colour or
         font size, it also states plainly that such property assertions are fragile or
         brittle. Silently handing over the test with no such caveat fails.
 
+# -----------------------------------------------------------------------------
+# 5  testing-tags-golden-tests-with-a-constant
+# -----------------------------------------------------------------------------
+# MEASURES       Golden tests carry a tag, and the tag comes from an abstract
+#                `TestTag` class so goldens can be run or updated independently.
+# DISCRIMINATES  A bare model either omits the tag or passes the raw literal
+#                `tags: 'golden'`.
 - description: testing-tags-golden-tests-with-a-constant
   vars:
     prompt: 'Add a golden test for my AppButton widget. Output Dart code only.'
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+    # mechanical
     - type: regex
       value: 'TestTag'
+    # judged
     - type: llm-rubric
       value: >-
         The golden test is tagged using a constant from an abstract class such as
         TestTag.golden, not a raw string literal like tags: 'golden'.
 
-# Negative control.
+# -----------------------------------------------------------------------------
+# 6  testing-stays-out-of-non-test-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       That a one-line variable rename leaves the skill dormant. Nothing else
+#                catches it firing where it should not.
+# DISCRIMINATES  testing must not be invoked, and none of its vocabulary may appear:
+#                no testWidgets, pumpApp, mocktail or setUp bolted onto the rename.
 - description: testing-stays-out-of-non-test-work
   vars:
     prompt: >-
       Rename the variable `usr` to `user` in this Dart line: `final usr = getUser();`
       Return only the corrected line.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+    # mechanical
     - type: not-regex
       value: 'testWidgets|pumpApp|mocktail|setUp\('
     # Task success is graded mechanically, not by the judge. The judge never sees the
@@ -154,6 +258,7 @@
       value: 'final user = getUser\(\);'
     - type: not-regex
       value: '\busr\b'
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the rename is correct. It must

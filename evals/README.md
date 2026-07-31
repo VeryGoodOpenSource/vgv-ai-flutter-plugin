@@ -205,30 +205,38 @@ $P eval -c evals/promptfooconfig.yaml --no-table -o evals/.runs/latest.json
 node -e 'const r=require("./evals/.runs/latest.json"),c={};for(const x of r.results.results){const l=x.provider.label;c[l]??={n:0,pass:0};c[l].n++;c[l].pass+=x.success?1:0}console.table(c)'
 ```
 
-**Only 33 of the 100 cases have ever been run.** The five original skills have a measured
-baseline; the ten added later do not, so treat their first run as calibration rather than
-as a verdict on those skills.
+Measured baseline. Full run, `--no-cache`, 200 results, 24 minutes. Negative controls
+excluded because a sealed model passes `not-skill-used` for free:
 
-Measured baseline, first full run of the original five skills, negative controls excluded
-because a sealed model passes `not-skill-used` for free:
+| Skill | `with-skill` | `sealed` | Lift |
+| ----- | ------------ | -------- | ---- |
+| create-project | 6/6 | 0/6 | 100 pt |
+| green-gate | 6/6 | 0/6 | 100 pt |
+| ui-package | 6/6 | 0/6 | 100 pt |
+| static-security | 6/6 | 0/6 | 100 pt |
+| layered-architecture | 6/6 | 0/6 | 100 pt |
+| navigation | 6/6 | 0/6 | 100 pt |
+| internationalization | 5/5 | 0/5 | 100 pt |
+| testing | 5/5 | 0/5 | 100 pt |
+| accessibility | 6/6 | 1/6 | 83 pt |
+| animations | 5/6 | 0/6 | 83 pt |
+| dart-flutter-sdk-upgrade | 5/6 | 0/6 | 83 pt |
+| very-good-analysis-upgrade | 5/6 | 0/6 | 83 pt |
+| material-theming | 4/5 | 0/5 | 80 pt |
+| bloc | 4/5 | 1/5 | 60 pt |
+| license-compliance | 4/5 | 1/5 | 60 pt |
+| **total** | **79/85** | **3/85** | **89 pt** |
 
-| Skill | `with-skill` | `sealed` |
-| ----- | ------------ | -------- |
-| navigation | 6/6 | 0/6 |
-| layered-architecture | 6/6 | 0/6 |
-| create-project | 5/6 | 0/6 |
-| bloc | 5/5 | 1/5 |
-| testing | 4/5 | 0/5 |
-| **total** | **26/28** | **1/28** |
-
-That run took 12m37s and 66,904 tokens for 66 results, and the sealed column made zero
-tool calls.
+The sealed column made zero tool calls, so isolation held. Six skills were fixed on the
+strength of this suite's findings, which is what moved the total from 57/85; the two with
+no case changes at all, `static-security` and `material-theming`, went 4/6 → 6/6 and
+2/5 → 4/5, so their gains isolate skill work from case work.
 
 The plugin column is not reliably perfect, and the variance is routing rather than content.
-Both misses in that run cascaded from `Actual skills: (none)`, and one of them passed 3/3 on
-a `--repeat`. So a red case there is worth a `--repeat 3` before it is worth an edit. If the
-sealed column climbs toward the other one, isolation has broken rather than the model having
-improved — that has already happened twice here.
+A red case there is worth a `--repeat 3` before it is worth an edit: `bloc` dropped 5/5 →
+4/5 on an unedited case that returned no test code at all, and an unedited `material-theming`
+case moved 0.27 on its own. If the sealed column climbs toward the other one, isolation has
+broken rather than the model having improved — that has already happened twice here.
 
 Two things about the numbers. promptfoo caches by default, so `--no-cache` is needed
 for fresh generations, and `--repeat N` shows the noise floor. And a `529 Overloaded`
@@ -254,7 +262,7 @@ regression. `--repeat 2` is the cheapest way to tell a real failure from noise.
 | **Tool execution** | No MCP servers are configured, so the six skills whose real job is calling tools or mutating files — `create-project`, `green-gate`, `license-compliance`, `ui-package`, `dart-flutter-sdk-upgrade`, `very-good-analysis-upgrade` — are graded only on the decisions they narrate. Their numbers are weaker evidence than the other nine skills' by construction |
 | **Whether the code compiles** | `dart_parses` proves syntax only. Snippets reference classes absent from the fixture |
 | **Judge independence** | Generator and rubric grader are the same model family and may share blind spots |
-| **Unmeasured cases** | All 15 skills have cases, but 67 of the 100 have never been run. Only the original five skills have a measured baseline |
+| **Repeat measurement** | All 100 cases have been run once with `--no-cache`. A single run is not a noise floor: two unedited cases moved on their own between runs, one of them across the pass/fail line. Nothing here has been run with `--repeat` at the suite level |
 | **Stable routing** | Whether a skill activates is itself nondeterministic. `testing-declines-mockito` routed 3 of 3 on one pass and failed to route on the next, taking every downstream assertion with it. This is why `skill-used` is its own assertion rather than inferred from content |
 | **Prose in a `SKILL.md`** | Deliberate. An earlier version asserted about a hundred `contains` patterns against skill bodies, so a copy-edit failed the gate while teaching exactly the same thing |
 | **The skills' own surfaces** | Nothing verifies that a name in `allowed-tools` still exists, that a markdown link to a reference file resolves, or that `name` agrees with the directory. See below |

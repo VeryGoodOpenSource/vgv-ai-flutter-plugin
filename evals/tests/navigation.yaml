@@ -1,19 +1,75 @@
-# Behavior cases for the navigation skill.
+# =============================================================================
+# navigation — behaviour cases
+# =============================================================================
+#
+# GRADING NOTES
+#   Graded on the artifact. Every case here asks for Dart, so the standards are
+#   checked against the emitted route declarations and call sites rather than against
+#   prose about routing. dart_parses proves syntax only — the generated `*.g.dart`
+#   route helpers never exist in the fixture, so no snippet in this file can be
+#   compiled or run.
+#
+#   Prompts name no skill, so `skill-used` catches a routing failure directly, and
+#   they are self-contained because the fixture has no source in lib/.
+#
+#   Rubrics are graded blind: the judge sees the response and the criterion, never the
+#   prompt. So task success is graded with a regex and rubrics are kept to properties
+#   visible in the response text alone.
+#
+#   The trap in this file is neighbouring skills. A prompt that reads as generic
+#   testing or generic Flutter work routes to the testing skill instead, which answers
+#   with Navigator.push and never touches GoRouter, so every navigation prompt names
+#   the router and the route explicitly.
+#
+#   Measured baseline, first full run of the original five skills, negative control
+#   excluded: 6/6 with-skill against 0/6 sealed. That column split is what to read.
+#
+# CASES
+#   1  navigation-writes-type-safe-routes
+#      A new route is declared as a nested @TypedGoRoute sub-route, plus build_runner.
+#   2  navigation-refuses-extra-parameter
+#      Refusing GoRouter's `extra`, with the reason and the path-parameter alternative.
+#   3  navigation-uses-hyphens-in-paths
+#      Hyphenated URL segments, declared through @TypedGoRoute, navigated by name.
+#   4  navigation-guards-routes-with-redirect
+#      An auth guard implemented as a router redirect, not a check in build().
+#   5  navigation-prefers-go-over-push
+#      go() for one-way navigation; push() only when the destination returns data.
+#   6  navigation-tests-with-mock-go-router
+#      A widget test that mocks GoRouter rather than building a real router.
+#   7  navigation-stays-out-of-non-routing-work  [negative control]
+#      A plain String extension draws no routing content.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# 1  navigation-writes-type-safe-routes
+# -----------------------------------------------------------------------------
+# MEASURES       The route is declared with @TypedGoRoute on a GoRouteData class,
+#                nested under the /flutter parent, and the response says to run
+#                build_runner to generate the helpers.
+# DISCRIMINATES  The baseline writes a flat `GoRoute(path: '/flutter/article/:id')`
+#                at the top level and never mentions code generation.
 - description: navigation-writes-type-safe-routes
   vars:
     prompt: >-
       Add a route for an article detail page at /flutter/article/:id, nested under a
       /flutter parent route. Show the code and the steps to make it work.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+    # mechanical
     - type: regex
       value: '@TypedGoRoute<'
     - type: regex
       value: 'extends GoRouteData'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The article route is declared as a nested sub-route inside the parent /flutter
@@ -23,14 +79,23 @@
         The response mentions running build_runner to generate the type-safe route
         helpers.
 
+# -----------------------------------------------------------------------------
+# 2  navigation-refuses-extra-parameter
+# -----------------------------------------------------------------------------
+# MEASURES       The skill's flat prohibition on `extra`: it declines, gives the
+#                reason, and offers the id-in-path alternative.
+# DISCRIMINATES  The baseline demonstrates `extra` as asked, since passing an object
+#                through it is a documented GoRouter feature.
 - description: navigation-refuses-extra-parameter
   vars:
     prompt: >-
       I want to pass a whole Product object to my details screen. Show me how to do it
       with GoRouter's extra parameter.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+    # judged
     - type: llm-rubric
       value: >-
         The response declines to use GoRouter's extra parameter, rather than complying
@@ -44,71 +109,99 @@
         The response offers an alternative: pass an identifier as a path parameter and
         load the object at the destination.
 
+# -----------------------------------------------------------------------------
+# 3  navigation-uses-hyphens-in-paths
+# -----------------------------------------------------------------------------
+# MEASURES       Three standards at once on one new top-level route: hyphens for word
+#                separation in the path, the path declared through @TypedGoRoute, and
+#                a call site that navigates by name instead of a raw path string.
+# DISCRIMINATES  The bare model writes `GoRoute(path: '/order-history', builder:)` and
+#                opens it with `context.go('/order-history')` — right hyphen, wrong
+#                declaration and wrong call site.
+# HISTORY        Earlier this asked for the bare path as a single token ("answer with
+#                only the path"). Both columns answered `/order-history`, so the case
+#                scored 1.00 twice and measured nothing: hyphenated URL segments are
+#                baseline knowledge. Asking for the declaration and the call site is
+#                what gave it lift.
 - description: navigation-uses-hyphens-in-paths
   vars:
-    # Earlier this asked for the bare path as a single token ("answer with only the
-    # path"). Both columns answered `/order-history`, so the case scored 1.00 twice and
-    # measured nothing: hyphenated URL segments are baseline knowledge. Asking for the
-    # route declaration and the call site keeps the hyphen standard under test and adds
-    # the two standards the bare model misses — the path is declared through
-    # `@TypedGoRoute`, and navigation never passes a raw path string.
     prompt: >-
       I need a route for the order history screen, at the top level of the app. Add it,
       and give me the onTap callback that opens it from the account menu. Output Dart
       code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+    # mechanical
     # "Use @TypedGoRoute annotations for type-safe routes — never raw string paths in
-    # route definitions." The unaided answer is a plain `GoRoute(path: ..., builder:)`.
+    # route definitions."
     - type: regex
       value: '@TypedGoRoute<'
-    # The hyphen standard, graded on the declared path rather than on the noun the
-    # model picks, so a route named /order-history or /purchase-history both count.
+    # Graded on the declared path rather than on the noun the model picks, so
+    # /order-history and /purchase-history both count.
     - type: regex
       value: "path: '/[a-z]+(-[a-z]+)+'"
     # The violations the standard names: an underscore or a camelCase hump inside a
     # path. Anchored on `path: '/` so a camelCase route *name* does not trip it.
     - type: not-regex
       value: "path: '/[a-z0-9]*[_A-Z]"
-    # "Navigate by route name, not raw path strings." Both skill-sanctioned call sites
-    # pass — `context.goNamed('orderHistory')` and `const OrderHistoryRoute().go(context)`
-    # — while the bare model's `context.go('/order-history')` fails.
+    # "Navigate by route name, not raw path strings." Both sanctioned call sites pass —
+    # `context.goNamed('orderHistory')` and `OrderHistoryRoute().go(context)`.
     - type: not-regex
       value: "\\.go(Named)?\\('/"
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
 
+# -----------------------------------------------------------------------------
+# 4  navigation-guards-routes-with-redirect
+# -----------------------------------------------------------------------------
+# MEASURES       The auth guard lives in GoRouter's redirect callback.
+# DISCRIMINATES  The baseline checks auth state inside the page's build method and
+#                pushes /login from there, or wraps the page in a conditional widget.
 - description: navigation-guards-routes-with-redirect
   vars:
     prompt: >-
       Send unauthenticated users to /login when they try to open /settings. Output
       Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+    # mechanical
     - type: regex
       value: 'redirect'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The guard is implemented with GoRouter's redirect callback rather than by
         checking auth state inside a page's build method and pushing a route.
 
+# -----------------------------------------------------------------------------
+# 5  navigation-prefers-go-over-push
+# -----------------------------------------------------------------------------
+# MEASURES       "Prefer go() over push() — use push() only when expecting return
+#                data." Nothing is returned here, so any push variant is a failure.
+# DISCRIMINATES  The unaided model answers push(), the opposite of the standard.
+# HISTORY        Both terser phrasings were flaky: the skill often failed to activate
+#                on a bare "go() or push()?" question, taking every downstream
+#                assertion with it. A code request routes reliably and the choice is
+#                still mechanically gradeable.
 - description: navigation-prefers-go-over-push
   vars:
-    # Asks for code, not a one-word verdict. Both terser phrasings were flaky: the
-    # skill often failed to activate on a bare "go() or push()?" question and the
-    # unaided model answers "push", the opposite of the SKILL.md standard. A code
-    # request routes reliably and the choice is still mechanically gradeable.
     prompt: >-
       My app routes with GoRouter. Write the onTap callback that takes the user from
       the product list to the product details route at /products/p1. Nothing is
       returned to the caller. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+    # mechanical
     # The whole go family counts, and so does the whole push family: the skill emits
     # context.goNamed(...) here, which `\.go\(` alone does not match.
     - type: regex
@@ -116,41 +209,60 @@
     - type: not-regex
       value: '\.push(Named|Replacement|ReplacementNamed)?\('
 
+# -----------------------------------------------------------------------------
+# 6  navigation-tests-with-mock-go-router
+# -----------------------------------------------------------------------------
+# MEASURES       The skill's testing guidance: mock GoRouter with mocktail and provide
+#                it through InheritedGoRouter instead of building a real router.
+# DISCRIMINATES  The baseline builds a full GoRouter with page builders inside the
+#                test, or asserts on Navigator instead.
+# HISTORY        "Write a widget test ..." alone routes to the testing skill, which
+#                answers with a Navigator.push test and never touches GoRouter. Naming
+#                the router and the route keeps this a navigation case.
 - description: navigation-tests-with-mock-go-router
   vars:
-    # "Write a widget test ..." alone routes to the testing skill, which answers with
-    # a Navigator.push test and never touches GoRouter. Naming the router and the
-    # route keeps this a navigation case.
     prompt: >-
       My app routes with GoRouter. Write a widget test asserting that tapping a
       ProductCard navigates to the /products/:id route, mocking the router rather
       than building a real one. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+    # mechanical
     - type: regex
       value: 'Mock.*GoRouter|GoRouter.*Mock'
+    # judged
     - type: llm-rubric
       value: >-
         The test mocks GoRouter and provides it to the widget tree, for example via
         InheritedGoRouter, rather than constructing a full real router with page
         builders.
 
-# Negative control.
+# -----------------------------------------------------------------------------
+# 7  navigation-stays-out-of-non-routing-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       A plain String extension does not activate the skill.
+# DISCRIMINATES  Nothing else catches a skill firing where it should not. No GoRoute,
+#                go_router, context.go or ShellRoute may appear, and the prose must
+#                not raise routing or navigation at all.
 - description: navigation-stays-out-of-non-routing-work
   vars:
     prompt: >-
       Write a Dart extension on String that capitalizes the first letter. Return only
       the code.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+    # mechanical
     - type: not-regex
       value: 'GoRoute|go_router|context\.go|ShellRoute'
     # Task success is graded mechanically, not by the judge. The judge never sees the
     # prompt, so "did it provide the extension" is unanswerable from the output alone.
     - type: regex
       value: 'extension \w+ on String'
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the extension is correct. It

@@ -1,39 +1,69 @@
-# Behavior cases for the green-gate skill.
+# =============================================================================
+# green-gate — behaviour cases
+# =============================================================================
 #
-# MEASURED: routing here was the dominant failure — 4 of 6 positive cases scored
-# `routed=False` on a full run, and every one of those was a prompt asking about the
-# gates rather than for a run. The cause was legible in the output: on
-# `green-gate-plans-the-four-gates-in-order` the model named the skill in its own answer
-# ("this is what the green-gate skill automates end to end. Want me to invoke it?") and
-# then improvised a `flutter analyze` / `flutter test --coverage` shell plan instead,
-# because the skill read as a runner and the prompt said not to run anything. The skill's
-# `description`/`when_to_use` now claim gate *configuration* questions too, and Core
-# Standards carries a plan-only directive. Prompts that describe a scenario also say
-# outright that it is not on disk: without that the model spends its answer on "lib/ only
-# has a .gitkeep" and the rubrics fail for an unrelated reason.
-# The cases themselves discriminate hard when routing does happen: unrouted, the bare
-# model put format before analyze and scored 0.03.
+# GRADING NOTES
+#   Graded on narration, not on the artifact. No MCP server is configured for these
+#   providers and the fixture has no source in lib/ or test/, so the loop this skill
+#   exists to run cannot execute here. The cases grade the decisions the skill narrates:
+#   which tool it says it would call for each gate, the arguments it would pass, the
+#   order it would run them in, what it refuses to weaken, and when it stops and
+#   escalates. Never assert that a response *called* a tool — unsatisfiable here, and it
+#   measures the harness.
 #
-# No MCP server is configured for these providers, and the fixture has no source in
-# lib/ or test/, so the loop this skill exists to run cannot execute here. These
-# cases grade the decisions the skill narrates — which tool it says it would call for
-# each gate, the arguments it would pass, the order it would run them in, what it
-# refuses to weaken, and when it stops and escalates. Do not assert that a response
-# *called* a tool: that is unsatisfiable here and measures the harness.
+#   Every prompt therefore ends by asking for a plan or a verdict rather than for a run,
+#   and every scenario is stated in the prompt rather than left on disk. A prompt that
+#   says "fix my package" earns "there is no code here" and every grader then fails for
+#   an unrelated reason. Prompts describing a repo also say outright that it is not on
+#   disk; without that the model spends its answer on "lib/ only has a .gitkeep".
 #
-# Every prompt therefore ends by asking for a plan or a verdict rather than for a
-# run, and every scenario is stated in the prompt rather than left on disk. A prompt
-# that says "fix my package" earns "there is no code here" and every grader then
-# fails for an unrelated reason.
+#   Routing is the dominant failure mode here. On a full run 4 of 6 positive cases
+#   scored `routed=False`, and every one of those was a prompt asking *about* the gates
+#   rather than for a run. The cause was legible: on case 1 the model named the skill in
+#   its own answer ("this is what the green-gate skill automates end to end. Want me to
+#   invoke it?") and then improvised a `flutter analyze` / `flutter test --coverage`
+#   shell plan, because the skill read as a runner and the prompt said not to run
+#   anything. The skill's `description`/`when_to_use` now claim gate *configuration*
+#   questions too, and Core Standards carries a plan-only directive.
 #
-# Two things deliberately absent:
+#   Two things deliberately absent:
+#     - No `dart_parses` assertion. No case demands Dart code, so no case has fenced
+#       dart blocks to parse.
+#     - No `not-icontains: 'flutter test'`. The skill teaches *why* that command is
+#       hook-blocked, so a correct answer often names it in order to reject it. The
+#       tool-routing rule is graded by the MCP tool names instead.
 #
-#   - No `dart_parses` assertion. No case demands Dart code, so no case has fenced
-#     dart blocks to parse.
-#   - No `not-icontains: 'flutter test'`. The skill teaches *why* that command is
-#     hook-blocked, so a correct answer often names it in order to reject it. The
-#     tool-routing rule is graded by the MCP tool names instead.
+# CASES
+#   1  green-gate-plans-the-four-gates-in-order
+#      Gate order, the precedence rule behind it, and the tool per gate.
+#   2  green-gate-refuses-to-weaken-the-coverage-gate
+#      Refuses a lowered threshold and a bogus coverage-ignore; offers the test.
+#   3  green-gate-refuses-to-carry-green-forward
+#      Never caches green; re-runs all four gates in one final round.
+#   4  green-gate-excludes-generated-files-instead-of-ignoring-them
+#      Generated files leave the denominator via exclude_coverage, not ignore comments.
+#   5  green-gate-escalates-when-the-loop-stops-making-progress
+#      Stops on an unchanged fingerprint and reports per-failure detail.
+#   6  green-gate-budgets-per-package-across-a-monorepo
+#      Per-package iteration budget, continue-on-failure, one shared coverage target.
+#   7  green-gate-stays-out-of-plain-function-work  [negative control]
+#      A one-function request must not pull in the gate loop.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# 1  green-gate-plans-the-four-gates-in-order
+# -----------------------------------------------------------------------------
+# MEASURES       The plan-only path: the four gates in analyze → format → test →
+#                coverage order, each through the tool the loop actually calls.
+# DISCRIMINATES  Unrouted, the bare model improvises a `flutter analyze` /
+#                `flutter test --coverage` shell plan and puts format before analyze.
+# HISTORY        Order is graded by two rubrics, one on the sequence and one on the
+#                precedence rule that produces it. With a single rubric on it, the four
+#                tool-name regexes carried a wrong order over the 0.8 threshold on their
+#                own. The unrouted baseline formatted before analyzing and scored 0.03.
 - description: green-gate-plans-the-four-gates-in-order
   vars:
     prompt: >-
@@ -42,8 +72,10 @@
       anything: which tools you would run, in what order, and what arguments you
       would pass to each.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+    # mechanical
     # The analyze gate goes through the Dart MCP server, not `dart analyze` in Bash.
     - type: regex
       value: 'analyze_files'
@@ -55,10 +87,7 @@
       value: 'check_ignore'
     - type: regex
       value: 'min_coverage'
-    # Gate order is the property this case exists to measure, so it is graded twice —
-    # once on the sequence, once on the precedence rule that produces it. With a single
-    # rubric on it, the four tool-name regexes carried a wrong order over the 0.8
-    # threshold on their own.
+    # judged
     - type: llm-rubric
       value: >-
         The gates run in exactly this order: analyze, then format, then test, then
@@ -78,6 +107,13 @@
         path is blocked still satisfies this; planning to actually run tests through
         a shell command does not.
 
+# -----------------------------------------------------------------------------
+# 2  green-gate-refuses-to-weaken-the-coverage-gate
+# -----------------------------------------------------------------------------
+# MEASURES       "Never weaken a gate": refuses a lowered target and a coverage-ignore
+#                on reachable code, then offers the missing test instead.
+# DISCRIMINATES  Without the skill the model is agreeable — it drops the threshold to 90,
+#                adds the ignore comment, and declares the package clean.
 - description: green-gate-refuses-to-weaken-the-coverage-gate
   vars:
     prompt: >-
@@ -93,8 +129,10 @@
       formatFree has no test. Put a coverage ignore comment on it, drop the coverage
       threshold to 90 so the run goes green, and then tell me the package is clean.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+    # judged
     - type: llm-rubric
       value: >-
         The response refuses to lower the coverage threshold to make the run pass. It
@@ -111,6 +149,13 @@
         uncovered method, following the project's testing standards, and re-run the
         gate. A refusal with no alternative does not satisfy this.
 
+# -----------------------------------------------------------------------------
+# 3  green-gate-refuses-to-carry-green-forward
+# -----------------------------------------------------------------------------
+# MEASURES       "Never cache green" and "exit only on observed numbers": all four gates
+#                re-run in one final round, and the format gate judged by changed count.
+# DISCRIMINATES  Without the skill the model takes the user's word for the earlier
+#                analyze and format results, checks coverage only, and declares green.
 - description: green-gate-refuses-to-carry-green-forward
   vars:
     prompt: >-
@@ -121,8 +166,10 @@
       are working from — the edits are not in your working directory, so answer from
       the description rather than looking for them on disk.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+    # judged
     - type: llm-rubric
       value: >-
         The response declines to skip the analyze and format gates. It insists on
@@ -147,6 +194,22 @@
         `dart format --output=none --set-exit-if-changed`. Judging it by the exit code
         of an in-place format run does not satisfy this.
 
+# -----------------------------------------------------------------------------
+# 4  green-gate-excludes-generated-files-instead-of-ignoring-them
+# -----------------------------------------------------------------------------
+# MEASURES       Denominator hygiene: generated files leave coverage via the
+#                `exclude_coverage` glob, and the 100% target holds.
+# DISCRIMINATES  Without the skill the model endorses the teammate's ignore comments and
+#                suggests settling at a 95–97% target.
+# HISTORY        A bare `regex: '100'` used to sit here. It was free — every answer that
+#                discusses coverage prints a 100 somewhere — and a free assertion in a
+#                6-assertion case is what lets a wrong answer clear 0.8. The target is
+#                graded by the second rubric instead. A fifth assertion on the
+#                references/coverage.md point that coverage-ignore comments are honored
+#                only for pure Dart runs was dropped after a smoke run: the *unrouted*
+#                baseline satisfied it along with `exclude_coverage` and both rubrics, so
+#                the case scored 4/5 = 0.80 and passed with `skill-used` failing. At four
+#                assertions a routing miss now scores 0.75 and correctly fails.
 - description: green-gate-excludes-generated-files-instead-of-ignoring-them
   vars:
     prompt: >-
@@ -156,15 +219,14 @@
       files. What is the right way to get the coverage gate green, and what target
       should this package be held to?
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+    # mechanical
     # The parameter name is the skill's, not general Dart knowledge.
     - type: regex
       value: 'exclude_coverage'
-    # A bare `regex: '100'` used to sit here. It was free — every answer that discusses
-    # coverage at all prints a 100 somewhere — and a free assertion in a 6-assertion
-    # case is what lets a wrong answer clear 0.8. The target is graded by the rubric
-    # below instead.
+    # judged
     - type: llm-rubric
       value: >-
         Generated files are taken out of the coverage denominator with an exclusion
@@ -175,13 +237,36 @@
       value: >-
         The response holds the package to a 100% coverage target rather than lowering
         it to accommodate the current 97%.
-    # A fourth assertion used to sit here, on the references/coverage.md point that
-    # coverage-ignore comments are honored only for pure Dart runs. Dropped after a
-    # smoke run: the *unrouted* baseline satisfied it, along with `exclude_coverage`
-    # and both rubrics above, so the case scored 4/5 = 0.80 and passed with
-    # `skill-used` failing — a case that measured nothing. At four assertions a
-    # routing miss now scores 0.75 and correctly fails.
 
+# -----------------------------------------------------------------------------
+# 5  green-gate-escalates-when-the-loop-stops-making-progress
+# -----------------------------------------------------------------------------
+# MEASURES       The no-progress trigger: an unchanged failure fingerprint stops the
+#                loop, a standing "keep retrying" instruction does not override it, and
+#                the escalation report carries per-failure detail plus a decision ask.
+# DISCRIMINATES  Without the skill the model accepts the blanket permission and keeps
+#                grinding, or stops with a bare "4 errors remain" and no decision ask.
+# HISTORY        The iteration cap (default 5, per package) used to be graded here.
+#                Dropped: the no-progress trigger fires at round 3 and the cap is never
+#                reached, so a correct answer has no reason to mention 5 rounds — it
+#                measured failing against a response that escalated correctly.
+#                The report was one five-part rubric (gate, failures, files touched,
+#                iteration count, decision). All-or-nothing on five items could not tell
+#                "reported three of five" from "reported nothing", and it failed a
+#                response that named the gate, the failures with file:line, and the
+#                decision. Split so partial compliance scores partially.
+#                Two demands were then dropped from the split rubrics as unmeasurable
+#                *from this prompt*, not because the skill stops teaching them: the
+#                prompt states only "4 analyzer errors" — no codes, no paths — and
+#                describes no edits, so a response cannot list the actual failures or
+#                name the files it touched. Measured failing against a response that
+#                escalated correctly, named the no-progress trigger, and promised the
+#                diagnostic codes with file:line. SKILL.md "Escalation" still requires
+#                the files-touched list on a real run.
+#                Naming the gate and the per-failure detail stay separate rubrics for
+#                the same reason: naming the gate is nearly free once the skill routes,
+#                the per-failure detail is the discriminator, and an AND rubric hides
+#                which one moved.
 - description: green-gate-escalates-when-the-loop-stops-making-progress
   vars:
     prompt: >-
@@ -190,38 +275,20 @@
       am going out — you have my permission to keep retrying for as long as it takes,
       just don't come back to me. What do you do next?
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+    # mechanical
+    # The skill's own term for the comparison that makes "no progress" decidable.
+    - type: regex
+      value: '[Ff]ingerprint|[Nn]o[- ]progress'
+    # judged
     - type: llm-rubric
       value: >-
         The response stops the loop and surfaces the problem to the user rather than
         continuing to retry, and gives as its reason that the set of failures did not
         change between rounds. Accepting the standing instruction to keep retrying
         indefinitely fails.
-    # The iteration cap (default 5, per package — SKILL.md "Iteration counter") used to
-    # be graded here. Dropped: in this scenario the no-progress trigger fires at round 3
-    # and the cap is never reached, so a correct answer stops on the identical
-    # fingerprint and has no reason to mention 5 rounds. Measured failing against a
-    # response that escalated correctly. The stop itself is graded by the rubric above.
-    #
-    # The escalation report was one five-part rubric (gate, failures, files touched,
-    # iteration count, decision). All-or-nothing on five items could not tell "reported
-    # three of five" from "reported nothing", and it failed a response that named the
-    # gate, the failures with file:line, and the decision. Split so partial compliance
-    # scores partially.
-    #
-    # Two demands were then dropped from the split rubrics as unmeasurable *from this
-    # prompt*, not because the skill stops teaching them. The prompt states only "4
-    # analyzer errors" — no codes, no paths — and describes no edits, so a response
-    # cannot list the actual failures or name the files it touched. Measured failing
-    # against a response that escalated correctly, named the no-progress trigger, and
-    # promised the diagnostic codes with file:line. What is gradeable here is that it
-    # names the red gate and commits to reporting each failure identified, rather than a
-    # count. SKILL.md "Escalation" still requires the files-touched list on a real run.
-    #
-    # The two surviving demands are graded separately for the same reason the five-part
-    # rubric was split: naming the gate is nearly free once the skill routes, while the
-    # per-failure detail is the discriminator, and an AND rubric hides which one moved.
     - type: llm-rubric
       value: >-
         The response names which of the four gates is red — analyze, format, test or
@@ -235,10 +302,16 @@
       value: >-
         When it stops, the response states how many rounds it ran, and asks the user
         for a decision rather than choosing one itself.
-    # The skill's own term for the comparison that makes "no progress" decidable.
-    - type: regex
-      value: '[Ff]ingerprint|[Nn]o[- ]progress'
 
+# -----------------------------------------------------------------------------
+# 6  green-gate-budgets-per-package-across-a-monorepo
+# -----------------------------------------------------------------------------
+# MEASURES       Monorepo rules: per-package iteration budget, continue-on-failure with a
+#                per-package report, one shared `min_coverage` with no per-package
+#                override, and pubspec.yaml-walk discovery shared by analyze and test.
+# DISCRIMINATES  Without the skill the model gives a generic "run the tests in each
+#                package" plan, invents a per-package coverage override for the 62%
+#                package, and aborts on the first red one.
 - description: green-gate-budgets-per-package-across-a-monorepo
   vars:
     prompt: >-
@@ -249,10 +322,13 @@
       the packages are not in your working directory, so answer from the description
       rather than looking for them on disk.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+    # mechanical
     - type: regex
       value: 'min_coverage'
+    # judged
     - type: llm-rubric
       value: >-
         The iteration budget is described as per package rather than shared across the
@@ -272,24 +348,34 @@
         Package roots are found by walking the repository for pubspec.yaml files, and
         the set of roots handed to the analyzer is the same set the test run covers.
 
-# Negative control — nothing else catches the skill firing where it should not. Its
-# rubric grades only the absence of the skill's concepts, never whether the merge
-# logic is right: the judge never sees the prompt.
+# -----------------------------------------------------------------------------
+# 7  green-gate-stays-out-of-plain-function-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       A self-contained one-function request does not pull in the gate loop.
+# DISCRIMINATES  Nothing else catches the skill firing where it should not. Must NOT
+#                appear: the skill's parameter vocabulary (`min_coverage`,
+#                `exclude_coverage`, `check_ignore`, `analyze_files`, `lcov`), the phrase
+#                "quality gate", a verify-fix-rerun loop, coverage targets, or the
+#                four-gate sequence.
 - description: green-gate-stays-out-of-plain-function-work
   vars:
     prompt: >-
       Write a plain Dart function that merges two already-sorted List<int> values into
       a single sorted list. Return only the function.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+    # mechanical
     - type: not-regex
       value: 'min_coverage|exclude_coverage|check_ignore|analyze_files|lcov'
     - type: not-icontains
       value: 'quality gate'
-    # Task success is graded mechanically, not by the judge.
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "is the merge logic right" is unanswerable from the output alone.
     - type: regex
       value: 'List<int>'
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the merge logic is correct. It

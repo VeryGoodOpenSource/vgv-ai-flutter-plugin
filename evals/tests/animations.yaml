@@ -1,29 +1,65 @@
-# Behavior cases for the animations skill.
+# =============================================================================
+# animations — behaviour cases
+# =============================================================================
 #
-# The load-bearing thing this skill teaches is Material 3 motion tokens: SKILL.md
-# says "never hardcode `Duration(milliseconds: ...)` or use `Curves.*` for new
-# code", and the bare model hardcodes both every time. So most cases grade tokens
-# twice, once positively (`Durations.`/`Easing.`) and once as the absence of the
-# forbidden form.
+# GRADING NOTES
+#   Graded on the artifact: cases 1, 2, 3, 4 and 6 ask for Dart, grade the code that
+#   comes back, and carry dart-parses. Case 5 is the exception — it asks for a list
+#   of findings, so it is graded on the review prose. Case 7 asks for Dart too but
+#   grades the absence of motion vocabulary, so it needs no syntax check.
 #
-# The hardcoded-value negatives are anchored to the argument position
-# (`duration: Duration(`, `curve: Curves.`) rather than matching the bare type
-# name. An unanchored `Duration\(milliseconds:` also fires on a response that
-# names the bad form in a comment while writing the good one, which is a false
-# failure.
+#   The load-bearing thing this skill teaches is Material 3 motion tokens. SKILL.md
+#   says never hardcode `Duration(milliseconds: ...)` or use `Curves.*` for new
+#   code, and the bare model hardcodes both every time. So most cases grade tokens
+#   twice: once positively (`Durations.` / `Easing.`) and once as the absence of the
+#   forbidden form.
 #
-# Not covered: the Core Standard "Clarify visual intent when the request is
-# ambiguous". A single-shot harness gives the model nobody to ask, so a
-# deliberately vague prompt grades the harness rather than the skill.
+#   Trap: every hardcoded-value negative is anchored to the argument position
+#   (`duration: Duration(`, `curve: Curves.`), never to the bare type name. An
+#   unanchored `Duration\(milliseconds:` also fires on a response that names the bad
+#   form in a comment while writing the good one, which is a false failure.
+#
+#   Not measurable here: the Core Standard "Clarify visual intent when the request
+#   is ambiguous". A single-shot harness gives the model nobody to ask, so a
+#   deliberately vague prompt grades the harness rather than the skill.
+#
+# CASES
+#   1  animations-uses-m3-motion-tokens-for-implicit-animation
+#      A rebuild-driven fade-and-slide is built implicitly, with M3 tokens.
+#   2  animations-declines-controller-for-simple-fade
+#      The prohibition: refuses an AnimationController where AnimatedOpacity fits.
+#   3  animations-staggers-on-a-single-controller
+#      Two staggered animations share one controller through Interval.
+#   4  animations-custom-page-transition-via-go-route-data
+#      A GoRouteData page transition goes through buildPage + CustomTransitionPage.
+#   5  animations-reviews-planted-violations
+#      Review mode: finds the per-frame rebuild and the animated layout property.
+#   6  animations-centralizes-motion-constants
+#      Multi-feature motion is centralized in AppMotion built from M3 tokens.
+#   7  animations-stays-out-of-non-motion-work  [negative control]
+#      A hex-to-Color helper does not pull in the skill or its vocabulary.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# 1  animations-uses-m3-motion-tokens-for-implicit-animation
+# -----------------------------------------------------------------------------
+# MEASURES       The decision tree: a value with a target on a rebuilding widget is
+#                an implicit animation, timed with M3 tokens.
+# DISCRIMINATES  Without the skill the model reaches for a StatefulWidget with an
+#                AnimationController and hardcodes 300ms / Curves.easeOut.
 - description: animations-uses-m3-motion-tokens-for-implicit-animation
   vars:
     prompt: >-
       A summary card in my app is invisible until its data arrives, then it should
       fade in and slide up into place. Write the widget. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+    # mechanical
     - type: regex
       value: 'Durations\.'
     - type: regex
@@ -31,14 +67,14 @@
     # The Anti-Patterns section's "Hardcoded magic values" example, inverted.
     - type: not-regex
       value: '(duration|transitionDuration):\s*(const )?Duration\(|curve:\s*Curves\.'
-    # Decision tree: the value has a target and the widget rebuilds, so this is an
-    # implicit animation and no controller should appear at all. `vsync:` is the
-    # mechanical proof a controller was constructed, and `\s*` because the argument
-    # is sometimes written without the space.
+    # `vsync:` is the mechanical proof a controller was constructed; `\s*` because
+    # the argument is sometimes written without the space.
     - type: not-regex
       value: 'vsync:\s*this'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The animation is built from implicit animation widgets such as
@@ -46,7 +82,13 @@
         from TweenAnimationBuilder. A StatefulWidget that creates an
         AnimationController with a ticker provider mixin does not satisfy this.
 
-# The prohibition case: the user asks for the anti-pattern by name.
+# -----------------------------------------------------------------------------
+# 2  animations-declines-controller-for-simple-fade
+# -----------------------------------------------------------------------------
+# MEASURES       The prohibition. The user asks for the anti-pattern by name, and
+#                the skill has to push back with AnimatedOpacity instead.
+# DISCRIMINATES  Without the skill the model complies: it writes the StatefulWidget,
+#                the controller and the AnimatedBuilder exactly as asked.
 - description: animations-declines-controller-for-simple-fade
   vars:
     prompt: >-
@@ -54,28 +96,41 @@
       Set it up with an AnimationController and an AnimatedBuilder inside a
       StatefulWidget so it is wired properly. Show me the code.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+    # mechanical
     # SKILL.md, Anti-Patterns, "Using explicit when implicit suffices": the good
     # form for this exact request is AnimatedOpacity.
     - type: regex
       value: 'AnimatedOpacity'
-    # Grades that no controller was actually written. Anchored on `vsync:`, the one
-    # argument a constructed controller cannot omit. Matching AnimationController or
-    # the ticker mixin names by name would be wrong here: a response that declines
-    # names both while explaining what it is declining.
+    # Anchored on `vsync:`, the one argument a constructed controller cannot omit.
+    # Matching AnimationController by name fails a decline that explains itself.
     - type: not-regex
       value: 'vsync:\s*this'
     - type: regex
       value: 'Durations\.'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The response declines to build this with an AnimationController and says an
         implicit animation is the simpler approach that is sufficient here, instead
         of complying with the request as asked.
 
+# -----------------------------------------------------------------------------
+# 3  animations-staggers-on-a-single-controller
+# -----------------------------------------------------------------------------
+# MEASURES       Two animations that share timing run off one controller with
+#                Interval, on SingleTickerProviderStateMixin, timed by M3 tokens.
+# DISCRIMINATES  Without the skill the model spins up a controller per animation
+#                and hardcodes each duration, so the two-controller negative fires.
+# HISTORY        Controller disposal is deliberately not asserted. The bare model
+#                disposes too, so it would score in both columns, and pinning
+#                `_controller.dispose()` fails a correct answer that named the field
+#                `_animationController`.
 - description: animations-staggers-on-a-single-controller
   vars:
     prompt: >-
@@ -83,31 +138,38 @@
       slides it up when the widget first appears, with the slide starting a little
       after the fade begins. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+    # mechanical
     # Performance, Do Not: "Do not create multiple AnimationController instances for
     # animations that share timing — use Interval on a single controller."
     - type: regex
       value: 'Interval\('
-    # Two `AnimationController(` constructions anywhere in the response is the
-    # mechanical form of the same rule. `[\s\S]*` because the two are lines apart.
+    # Two `AnimationController(` constructions anywhere in the response is that same
+    # rule in mechanical form. `[\s\S]*` because the two are lines apart.
     - type: not-regex
       value: 'AnimationController\([\s\S]*AnimationController\('
     # Core Standards: SingleTickerProviderStateMixin for one controller.
     - type: regex
       value: 'SingleTickerProviderStateMixin'
     # references/staggered-animations.md drives the controller with Durations.long2
-    # and curves each Interval with Easing. Controller disposal is deliberately NOT
-    # asserted here: the bare model disposes too, so it would score in both columns,
-    # and pinning the field name (`_controller.dispose()`) fails a correct answer
-    # that calls the field `_animationController`.
+    # and curves each Interval with Easing.
     - type: regex
       value: 'Durations\.'
     - type: not-regex
       value: 'duration:\s*(const )?Duration\(|curve:\s*Curves\.'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
 
+# -----------------------------------------------------------------------------
+# 4  animations-custom-page-transition-via-go-route-data
+# -----------------------------------------------------------------------------
+# MEASURES       A custom route transition goes through a buildPage override
+#                returning CustomTransitionPage, curved with an emphasized easing.
+# DISCRIMINATES  Without the skill the model wraps the page body in a FadeTransition
+#                inside build, or passes a hand-rolled Duration and Curves value.
 - description: animations-custom-page-transition-via-go-route-data
   vars:
     prompt: |
@@ -128,8 +190,10 @@
       Give this page a fade-and-slide-up entrance instead of the default platform
       transition. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+    # mechanical
     - type: regex
       value: 'CustomTransitionPage'
     # The mechanism the skill prescribes: override buildPage on the GoRouteData,
@@ -142,9 +206,22 @@
       value: 'Easing\.emphasized'
     - type: not-regex
       value: '(duration|transitionDuration|reverseTransitionDuration):\s*(const )?Duration\(|curve:\s*Curves\.'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
 
+# -----------------------------------------------------------------------------
+# 5  animations-reviews-planted-violations
+# -----------------------------------------------------------------------------
+# MEASURES       Review mode over code carrying four planted violations: hardcoded
+#                duration and curve, the wrong ticker mixin, an ExpensiveChart
+#                rebuilt every frame, and an animated width. Graded on prose, so no
+#                dart-parses — the prompt asks for findings, not for Dart.
+# DISCRIMINATES  Without the skill the review stops at the missing dispose and does
+#                not mention M3 tokens, the mixin choice, or the layout cost.
+# HISTORY        The missing `_controller.dispose()` is deliberately not asserted:
+#                the bare model catches it too, so grading it would measure Flutter
+#                common knowledge rather than the skill.
 - description: animations-reviews-planted-violations
   vars:
     prompt: |
@@ -184,13 +261,11 @@
           );
         }
       }
-  # No dart-parses: the prompt asks for a list of findings, not for Dart.
-  #
-  # The missing `_controller.dispose()` is deliberately NOT asserted. The bare
-  # model catches it too, so grading it would measure Flutter common knowledge.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+    # mechanical
     - type: regex
       value: 'Durations\.'
     - type: regex
@@ -199,6 +274,7 @@
     # TickerProviderStateMixin only for several.
     - type: regex
       value: 'SingleTickerProviderStateMixin'
+    # judged
     - type: llm-rubric
       value: >-
         The review states that the expensive child widget is rebuilt on every frame
@@ -210,6 +286,14 @@
         and recommends animating a Transform (for example Transform.scale or
         Transform.translate) instead.
 
+# -----------------------------------------------------------------------------
+# 6  animations-centralizes-motion-constants
+# -----------------------------------------------------------------------------
+# MEASURES       Motion spread across features gets a centralized AppMotion class
+#                whose constants are M3 tokens, then one usage of it.
+# DISCRIMINATES  Without the skill the model either inlines timings per feature or
+#                writes a constants class full of raw `Duration(milliseconds: ...)`,
+#                which the third arm of the negative catches.
 - description: animations-centralizes-motion-constants
   vars:
     prompt: >-
@@ -218,8 +302,10 @@
       piece keeps their timing and easing consistent, then show one card fade using
       it. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+    # mechanical
     # Core Standards: "durations, curves, and offsets go in named constants or a
     # centralized AppMotion class, not inline."
     - type: regex
@@ -231,18 +317,29 @@
       value: 'Easing\.'
     - type: not-regex
       value: '(duration|transitionDuration):\s*(const )?Duration\(|curve:\s*Curves\.|=\s*(const )?Duration\(milliseconds'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
 
-# Negative control — nothing else catches the skill firing where it should not.
+# -----------------------------------------------------------------------------
+# 7  animations-stays-out-of-non-motion-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       Negative control: a hex-string-to-Color helper is not animation
+#                work, so the skill must not fire.
+# DISCRIMINATES  Must NOT appear: the skill in `skillCalls`, any animation widget
+#                (AnimationController, AnimatedBuilder, TweenAnimationBuilder,
+#                CustomTransitionPage), or the token vocabulary (Durations., Easing.,
+#                AppMotion). Nothing else catches the skill firing where it should not.
 - description: animations-stays-out-of-non-motion-work
   vars:
     prompt: >-
       Write a Dart function that turns a hex string like '#3366FF' into a Flutter
       Color. Return only the function.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+    # mechanical
     - type: not-regex
       value: 'AnimationController|AnimatedBuilder|TweenAnimationBuilder|CustomTransitionPage'
     - type: not-regex
@@ -255,6 +352,7 @@
     # int.tryParse, which a bare `int\.parse` would fail.
     - type: regex
       value: 'int\.(try)?[pP]arse'
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the color parsing is

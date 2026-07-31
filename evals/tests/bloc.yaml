@@ -1,20 +1,69 @@
-# Behavior cases for the bloc skill.
+# =============================================================================
+# bloc — behaviour cases
+# =============================================================================
 #
-# Prompts name no skill, so `skill-used` catches a routing failure directly.
+# GRADING NOTES
+#   Graded on the artifact in cases 1, 2, 3 and 5: they ask for Dart and the
+#   assertions read the code, though only 1 and 3 carry dart-parses. Case 4 is
+#   graded on the decision it narrates — two rubrics, nothing mechanical, because
+#   the right answer is a refusal plus an alternative rather than a snippet.
 #
-# Prompts are self-contained: the fixture has no source in lib/, so a prompt about
-# "my AuthService" earns a refusal and every grader fails for an unrelated reason.
-# Paste the class in rather than adding source to evals/fixture/, which would leak
-# answers to the sealed column.
+#   Prompts name no skill, so `skill-used` catches a routing failure directly
+#   instead of leaving it to show up as unexplained content failures downstream.
+#
+#   Prompts are self-contained. The fixture has no source in lib/, so a prompt about
+#   "my AuthService" earns a refusal and every grader then fails for an unrelated
+#   reason. Paste the class into the prompt rather than adding source to
+#   evals/fixture/, which would leak answers to the sealed column.
+#
+#   Trap specific to this skill: the fixture pubspec must not list bloc,
+#   flutter_bloc, equatable or mocktail. An earlier version did, the sealed column
+#   read the dependency list and inferred the conventions these cases exist to
+#   measure, and bloc's measured lift collapsed from +10 points to +1.
+#
+#   Measured baseline, first full run: 5/5 with-skill against 1/5 sealed, negative
+#   control excluded because a sealed model passes `not-skill-used` for free.
+#
+# CASES
+#   1  bloc-writes-sealed-events-and-states
+#      Sealed hierarchies, Equatable, and the pinned state names for a LoginBloc.
+#   2  bloc-tests-with-bloc-test-and-mocktail
+#      Bloc tests go through blocTest and mocktail, never mockito.
+#   3  bloc-separates-page-from-view
+#      The screen splits into a Page that provides and a View that consumes.
+#   4  bloc-refuses-bloc-to-bloc-dependency
+#      The prohibition: refuses bloc-to-bloc injection and offers the alternative.
+#   5  bloc-upgrades-cubit-to-bloc-for-transforms
+#      Debouncing is an event transform, so the Cubit becomes a Bloc.
+#   6  bloc-stays-out-of-plain-dart-work  [negative control]
+#      A CSV parser does not pull in the skill or any state-management concept.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# 1  bloc-writes-sealed-events-and-states
+# -----------------------------------------------------------------------------
+# MEASURES       The house shape of a bloc: sealed event and state hierarchies with
+#                `final class` subclasses, Equatable with props, past-tense event
+#                names, and the state names SKILL.md pins for a login flow.
+# DISCRIMINATES  Sealed classes, Equatable, props and past-tense events are baseline
+#                knowledge — an unaided model writes them. `LoginInProgress` is the
+#                one it misses, reaching for `LoginLoading` instead, so that is the
+#                assertion carrying this case.
+# HISTORY        Measured: the sealed column passed every other assertion here and
+#                failed only on `LoginInProgress`.
 - description: bloc-writes-sealed-events-and-states
   vars:
     prompt: >-
       Write a LoginBloc for email and password authentication with submit and logout
       events, and success and failure states. Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:bloc'
+    # mechanical
     - type: regex
       value: 'sealed class LoginEvent'
     - type: regex
@@ -23,16 +72,14 @@
       value: 'extends Equatable'
     - type: regex
       value: 'List<Object\??> get props'
-    # The state naming table in SKILL.md pins the four names for exactly this bloc:
-    # LoginInitial, LoginInProgress, LoginSuccess, LoginFailure. `LoginInProgress` is
-    # the one an unaided answer misses — it reaches for `LoginLoading` instead, which
-    # was measured in the sealed column while every other assertion here passed there.
-    # Everything else in this case (sealed/final classes, Equatable, props, past-tense
-    # event names) is baseline knowledge, so this is the assertion that discriminates.
+    # The state naming table pins the four names for exactly this bloc:
+    # LoginInitial, LoginInProgress, LoginSuccess, LoginFailure.
     - type: regex
       value: 'LoginInProgress'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         Every event class name starts with the bloc's subject and ends in a
@@ -45,6 +92,13 @@
         The concrete event and state subclasses are declared with `final class`
         rather than plain `class`.
 
+# -----------------------------------------------------------------------------
+# 2  bloc-tests-with-bloc-test-and-mocktail
+# -----------------------------------------------------------------------------
+# MEASURES       Two Core Standards at once: blocTest from package:bloc_test for
+#                every bloc test, and package:mocktail for the repository double.
+# DISCRIMINATES  Without the skill the model writes raw `test()` calls that subscribe
+#                to bloc.stream by hand, and may reach for mockito over mocktail.
 - description: bloc-tests-with-bloc-test-and-mocktail
   vars:
     prompt: >-
@@ -58,13 +112,14 @@
       Write the unit tests for it. It calls authRepository.signIn. Output Dart code
       only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:bloc'
+    # mechanical
     - type: regex
       value: 'blocTest'
     # Not written `package:mocktail/...`: promptfoo treats any assertion value
-    # starting with `package:` as a reference to an npm-hosted assertion and
-    # errors the whole case before the regex ever runs.
+    # starting with `package:` as an npm-hosted assertion and errors the whole case.
     - type: regex
       value: 'mocktail/mocktail\.dart'
     - type: not-regex
@@ -73,23 +128,35 @@
     # MockTodoRepository, so either form is a faithful reading of the skill.
     - type: regex
       value: 'class _?Mock[A-Za-z]+ extends Mock'
+    # judged
     - type: llm-rubric
       value: >-
         The tests use blocTest from package:bloc_test with act and expect arguments,
         rather than raw test() calls that subscribe to the bloc's stream manually.
 
+# -----------------------------------------------------------------------------
+# 3  bloc-separates-page-from-view
+# -----------------------------------------------------------------------------
+# MEASURES       Page/View separation: the Page's only job is BlocProvider, the View
+#                consumes state, and no repository call sits in a build method.
+# DISCRIMINATES  Without the skill the model writes one widget that both creates the
+#                bloc and builds the form, which the first rubric rejects by name.
 - description: bloc-separates-page-from-view
   vars:
     prompt: >-
       Build the login screen for this app and wire it to LoginBloc. Output Dart code
       only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:bloc'
+    # mechanical
     - type: regex
       value: 'BlocProvider'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The response splits the screen into two widgets: a Page widget whose only job
@@ -101,14 +168,24 @@
         No business logic or repository calls appear inside a widget's build method.
         Widgets only read state and dispatch events.
 
+# -----------------------------------------------------------------------------
+# 4  bloc-refuses-bloc-to-bloc-dependency
+# -----------------------------------------------------------------------------
+# MEASURES       The prohibition. The user asks for bloc-to-bloc injection outright,
+#                and the skill has to refuse and name a concrete alternative: pass
+#                the value through the UI, or share a repository.
+# DISCRIMINATES  Without the skill the model obliges with a BlocProvider.value or a
+#                constructor taking AuthBloc, and never says the pattern is banned.
 - description: bloc-refuses-bloc-to-bloc-dependency
   vars:
     prompt: >-
       My CartBloc needs the current user id, which lives in AuthBloc's state. Show me
       how to inject AuthBloc into CartBloc so it can read that state directly.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:bloc'
+    # judged
     - type: llm-rubric
       value: >-
         The response declines to inject one bloc into another and says bloc-to-bloc
@@ -118,6 +195,14 @@
         The response offers a concrete alternative: passing the value through the UI
         layer, or having both blocs depend on a shared repository.
 
+# -----------------------------------------------------------------------------
+# 5  bloc-upgrades-cubit-to-bloc-for-transforms
+# -----------------------------------------------------------------------------
+# MEASURES       The Cubit vs Bloc decision under pressure: debouncing is an event
+#                transform, so the Cubit is converted to a Bloc and the debounce
+#                becomes a transformer on the on<Event> registration.
+# DISCRIMINATES  Without the skill the model keeps the Cubit and debounces with a
+#                Timer inside it, or pushes the debounce into the widget.
 - description: bloc-upgrades-cubit-to-bloc-for-transforms
   vars:
     prompt: >-
@@ -136,10 +221,13 @@
       debounced. Should this stay a Cubit? Explain the decision, then show the
       refactored class.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:bloc'
+    # mechanical
     - type: regex
       value: 'extends Bloc<'
+    # judged
     - type: llm-rubric
       value: >-
         The response converts the cubit to a Bloc because debouncing is an event
@@ -147,7 +235,14 @@
         on<Event> registration. Debouncing with a Timer inside the cubit, or in the
         widget, does not satisfy this.
 
-# Negative control — nothing else catches a skill firing where it should not.
+# -----------------------------------------------------------------------------
+# 6  bloc-stays-out-of-plain-dart-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       Negative control: parsing CSV in plain Dart is not bloc work, so the
+#                skill must not fire.
+# DISCRIMINATES  Must NOT appear: the skill in `skillCalls`, any flutter_bloc widget
+#                or `extends Bloc<`/`extends Cubit<`, blocTest, or state-management
+#                framing in the prose. Nothing else catches the skill over-firing.
 - description: bloc-stays-out-of-plain-dart-work
   vars:
     prompt: >-
@@ -155,8 +250,10 @@
       List<Map<String, String>>. No Flutter, no state management. Return only the
       function.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:bloc'
+    # mechanical
     - type: not-regex
       value: 'BlocProvider|BlocBuilder|extends Bloc<|extends Cubit<'
     - type: not-regex
@@ -165,6 +262,7 @@
     # prompt, so "did it answer the question" is unanswerable from the output alone.
     - type: regex
       value: 'List<Map<String, String>>'
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the CSV logic is correct. It

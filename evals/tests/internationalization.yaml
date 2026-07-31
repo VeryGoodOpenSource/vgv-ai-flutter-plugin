@@ -1,23 +1,52 @@
-# Behavior cases for the internationalization skill.
+# =============================================================================
+# internationalization — behaviour cases
+# =============================================================================
 #
-# Grading this skill needs care, because half of what it covers is Flutter's own
-# documented pipeline and the bare model already knows it. `flutter_localizations`,
-# `intl`, `l10n.yaml`, `flutter gen-l10n` and ICU plural syntax all show up in the
-# sealed column, so asserting them measures Claude rather than the plugin. What the
-# skill adds on top, and what these cases grade, is:
+# GRADING NOTES
+#   Graded on the artifact. Cases 3, 4 and 5 ask for Dart and carry dart-parses; cases
+#   1 and 2 are graded on the config files and the refusal the response produces.
 #
-#   - the l10n.yaml fingerprint from references/setup.md: `arb-dir: lib/l10n/arb`,
-#     `nullable-getter: false`, `preferred-supported-locales` (Flutter's own docs use
-#     `lib/l10n` and set neither of the other two)
-#   - the `context.l10n` BuildContext extension over `AppLocalizations.of(context)`
-#   - `EdgeInsetsDirectional` / `matchTextDirection` for RTL
-#   - the two prohibitions: no third-party i18n package, and no `AppLocalizations`
-#     inside a shared widget package
+#   Half of what this skill covers is Flutter's own documented pipeline and the bare
+#   model already knows it. `flutter_localizations`, `intl`, `l10n.yaml`,
+#   `flutter gen-l10n` and ICU plural syntax all show up in the sealed column, so
+#   asserting them measures Claude rather than the plugin. What the skill adds on top,
+#   and what these cases grade, is:
+#     - the l10n.yaml fingerprint from references/setup.md: `arb-dir: lib/l10n/arb`,
+#       `nullable-getter: false`, `preferred-supported-locales`. Flutter's own docs use
+#       `lib/l10n` and set neither of the other two
+#     - the `context.l10n` BuildContext extension over `AppLocalizations.of(context)`
+#     - `EdgeInsetsDirectional` / `matchTextDirection` for RTL
+#     - the two prohibitions: no third-party i18n package, and no `AppLocalizations`
+#       inside a shared widget package
+#   Prompts are self-contained. The fixture has no source in lib/, so a prompt about
+#   "my CartSummary" would earn a refusal and every grader would fail for an unrelated
+#   reason. Paste the widget in rather than adding source to evals/fixture/.
 #
-# Prompts are self-contained. The fixture has no source in lib/, so a prompt about
-# "my CartSummary" would earn a refusal and every grader would fail for an unrelated
-# reason. Paste the widget in rather than adding source to evals/fixture/.
+# CASES
+#   1  internationalization-sets-up-l10n-pipeline
+#      The VGV l10n.yaml keys, plus context.l10n at the widget call site.
+#   2  internationalization-refuses-third-party-i18n-package
+#      Declines easy_localization and redirects to the built-in ARB pipeline.
+#   3  internationalization-localizes-hardcoded-strings-with-plural
+#      Hardcoded strings move to ARB, with int placeholder metadata on the plural.
+#   4  internationalization-uses-directional-insets-for-rtl
+#      Directional padding and image mirroring, without hand-rolled icon mirroring.
+#   5  internationalization-keeps-shared-package-widget-l10n-free
+#      Refuses l10n inside a shared package; the label becomes a parameter.
+#   6  internationalization-stays-out-of-plain-string-utilities  [negative control]
+#      A plain Dart string helper attracts no localization machinery.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# 1  internationalization-sets-up-l10n-pipeline
+# -----------------------------------------------------------------------------
+# MEASURES       Setting up localization from nothing: the three VGV l10n.yaml keys and
+#                a widget that reads its string through the extension.
+# DISCRIMINATES  A bare model writes Flutter's documented setup — ARB files in
+#                lib/l10n, no nullable-getter, AppLocalizations.of(context) in build.
 - description: internationalization-sets-up-l10n-pipeline
   vars:
     prompt: >-
@@ -25,29 +54,35 @@
       Spanish, and show me how a widget should read a translated string. Show every
       file I need.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
-    # The three l10n.yaml keys from references/setup.md. Flutter's own setup docs put
-    # ARB files in lib/l10n and set neither nullable-getter nor
-    # preferred-supported-locales, so each of these is a plugin fingerprint rather
-    # than Flutter common knowledge.
+    # mechanical
+    # Each of the next three is a plugin fingerprint, not Flutter common knowledge:
+    # Flutter's setup docs use lib/l10n and set neither of the other two keys.
     - type: regex
       value: 'arb-dir:\s*lib/l10n/arb'
     - type: regex
       value: 'nullable-getter:\s*false'
     - type: regex
       value: 'preferred-supported-locales'
-    # The extension is a Core Standard and is written out verbatim in SKILL.md.
-    # Graded twice: once for its declaration here, once for its use at the call site
-    # in the rubric below.
+    # The extension declaration, written out verbatim in SKILL.md. Its use at the call
+    # site is graded separately by the rubric below.
     - type: regex
       value: 'get l10n =>\s*AppLocalizations\.of\(this\)'
+    # judged
     - type: llm-rubric
       value: >-
         The example widget reads its string as `context.l10n.<key>`. A widget that
         calls `AppLocalizations.of(context).<key>` at the point of use does not
         satisfy this, even if an extension is declared elsewhere in the response.
 
+# -----------------------------------------------------------------------------
+# 2  internationalization-refuses-third-party-i18n-package
+# -----------------------------------------------------------------------------
+# MEASURES       The prohibition on third-party i18n packages, and whether the refusal
+#                comes with the built-in alternative rather than a flat no.
+# DISCRIMINATES  A bare model adds easy_localization to the pubspec as asked.
 - description: internationalization-refuses-third-party-i18n-package
   vars:
     prompt: >-
@@ -55,14 +90,17 @@
       simpler than Flutter's built-in one. Add it to my pubspec and show me the
       config.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+    # mechanical
     # Matches a real pubspec dependency line, not the package name in prose: a
     # response that declines has to name easy_localization to decline it.
     - type: not-regex
       value: 'easy_localization:\s*[\^~>=\d]'
     - type: regex
       value: 'flutter_localizations'
+    # judged
     - type: llm-rubric
       value: >-
         The response declines to add a third-party localization package and says
@@ -74,6 +112,13 @@
         source of truth, plus generated localizations (l10n.yaml and/or
         `flutter gen-l10n`).
 
+# -----------------------------------------------------------------------------
+# 3  internationalization-localizes-hardcoded-strings-with-plural
+# -----------------------------------------------------------------------------
+# MEASURES       Moving hardcoded strings into ARB, including an ICU plural that
+#                declares its count placeholder as an int.
+# DISCRIMINATES  A bare model reads strings with AppLocalizations.of(context) at the
+#                call site and writes the plural without placeholder metadata.
 - description: internationalization-localizes-hardcoded-strings-with-plural
   vars:
     prompt: >-
@@ -101,25 +146,36 @@
       widget, and make the item count read correctly for zero, one and many items.
       Show the ARB entries and the updated widget.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
-    # The Core Standard is graded from both sides: the extension must be used, and
-    # the form SKILL.md lists under "Avoid" must not appear at a call site. The
-    # extension's own body reads `AppLocalizations.of(this)`, so declaring it does not
-    # trip the not-regex.
+    # mechanical
+    # The Core Standard from both sides. The extension's own body reads
+    # `AppLocalizations.of(this)`, so declaring it does not trip the not-regex.
     - type: regex
       value: 'context\.l10n\.'
     - type: not-regex
       value: 'AppLocalizations\.of\(context\)'
     - type: regex
       value: 'plural,'
-    # Step 2 of the skill's Pluralization workflow: the placeholder metadata must
-    # declare the count as an int. An ARB plural entry without it does not generate.
+    # Step 2 of the skill's Pluralization workflow: an ARB plural entry whose
+    # placeholder metadata does not declare the count as an int never generates.
     - type: regex
       value: '"type"\s*:\s*"int"'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
 
+# -----------------------------------------------------------------------------
+# 4  internationalization-uses-directional-insets-for-rtl
+# -----------------------------------------------------------------------------
+# MEASURES       RTL remediation: directional padding, an explicitly mirrored image,
+#                and no hand-rolled mirroring of an icon that mirrors itself.
+# DISCRIMINATES  A bare model swaps the padding and then mirrors the arrow manually.
+# HISTORY        Measured, the sealed column produced EdgeInsetsDirectional and
+#                matchTextDirection unaided, and failed only the Transform.flip
+#                assertion — it wrapped the arrow in `Transform.flip(flipX: isRtl)`
+#                off a `Directionality.of(context)` read.
 - description: internationalization-uses-directional-insets-for-rtl
   vars:
     prompt: >-
@@ -148,38 +204,41 @@
       Make it lay out correctly in Arabic. Output Dart code only, and do not repeat
       the original version back to me.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
-    # Core Standard, graded from both sides: the directional form must appear and the
-    # visual form the skill forbids for direction-sensitive padding must be gone.
-    # The prompt bars repeating the original, so the not-regex cannot fire on an echo
-    # of the pasted widget. `EdgeInsets\.only\(` does not match inside
-    # `EdgeInsetsDirectional.only(`, so a correct answer cannot trip it either.
+    # mechanical
+    # Core Standard from both sides. The prompt bars repeating the original, so the
+    # not-regex cannot fire on an echo of the pasted widget.
     - type: regex
       value: 'EdgeInsetsDirectional\.only\('
+    # `EdgeInsets\.only\(` does not match inside `EdgeInsetsDirectional.only(`, so a
+    # correct answer cannot trip this either.
     - type: not-regex
       value: 'EdgeInsets\.only\(\s*left:'
     # references/directionality.md: images do not mirror by default. Swapping the
     # padding while leaving the asset unmirrored is the half-answer this catches.
     - type: regex
       value: 'matchTextDirection:\s*true'
-    # The half of references/directionality.md the bare model does not have: "Icons
-    # mirror automatically in RTL contexts by default." Measured, the sealed column
-    # wrapped the arrow in `Transform.flip(flipX: isRtl)` off a
-    # `Directionality.of(context)` read — machinery that duplicates what the directional
-    # IconData already does, and the only assertion in this case it fails. Everything
-    # else here (EdgeInsetsDirectional, matchTextDirection on the Image) it produced
-    # unaided.
+    # "Icons mirror automatically in RTL contexts by default" — hand-rolled mirroring
+    # duplicates what the directional IconData already does.
     - type: not-regex
       value: 'Transform\.flip|Directionality\.of\(context\)'
-    # The mirror-image mistake: `matchTextDirection` is a field of `IconData` and a
-    # parameter of `Image`, and is not a parameter of the `Icon` widget, so this form
-    # does not compile. dart-parses cannot catch it — it checks syntax, not resolution.
+    # `matchTextDirection` is a field of `IconData` and a parameter of `Image`, not a
+    # parameter of `Icon`, so this form does not compile. dart-parses cannot catch it.
     - type: not-regex
       value: 'Icon\(\s*Icons\.[A-Za-z0-9_]+,\s*matchTextDirection'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
 
+# -----------------------------------------------------------------------------
+# 5  internationalization-keeps-shared-package-widget-l10n-free
+# -----------------------------------------------------------------------------
+# MEASURES       The prohibition on coupling a shared widget package to
+#                AppLocalizations, and the parameter-passing alternative it replaces
+#                it with.
+# DISCRIMINATES  A bare model adds AppLocalizations to app_ui exactly as instructed.
 - description: internationalization-keeps-shared-package-widget-l10n-free
   vars:
     prompt: >-
@@ -201,14 +260,20 @@
       with AppLocalizations.of(context) inside build, so every app using the button
       gets the translation for free.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+    # mechanical
     # The documented alternative, graded mechanically: the shared widget grows a
     # String field, and the app-level call site supplies it through the extension.
     - type: regex
       value: 'final String \w+;'
     - type: regex
       value: 'context\.l10n\.'
+    # syntax
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The response refuses to make the shared design-system package depend on
@@ -218,26 +283,32 @@
         The shared widget receives its label as a constructor parameter, and a
         separate app-level snippet passes the localized string in when constructing
         it.
-    - type: javascript
-      value: file://assertions/dart-parses.js
 
-# Negative control — nothing else catches a skill firing where it should not. A
-# string-manipulation task is the tempting case: it is about user-facing text without
-# being about localization.
+# -----------------------------------------------------------------------------
+# 6  internationalization-stays-out-of-plain-string-utilities  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       That the skill stays out of plain string work. Nothing else catches a
+#                skill firing where it should not, and a string-manipulation task is
+#                the tempting case: user-facing text without being localization.
+# DISCRIMINATES  No ARB files, AppLocalizations, context.l10n, gen-l10n or text
+#                directionality may appear, and the skill must not be invoked.
 - description: internationalization-stays-out-of-plain-string-utilities
   vars:
     prompt: >-
       Write a plain Dart function that truncates a String to a maximum length and
       appends an ellipsis when it had to cut. No Flutter. Return only the function.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+    # mechanical
     - type: not-regex
       value: 'AppLocalizations|context\.l10n|gen-l10n|EdgeInsetsDirectional|\.arb\b'
     # Task success is graded mechanically, not by the judge. The judge never sees the
     # prompt, so "did it write the function" is unanswerable from the output alone.
     - type: regex
       value: 'String \w+\('
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the truncation logic is

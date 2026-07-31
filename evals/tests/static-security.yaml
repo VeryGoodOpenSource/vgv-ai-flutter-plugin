@@ -1,25 +1,62 @@
-# Behavior cases for the static-security skill.
+# =============================================================================
+# static-security — behaviour cases
+# =============================================================================
 #
-# Prompts name no skill, so `skill-used` catches a routing failure directly.
+# GRADING NOTES
+#   Mixed grading. Where the skill emits code (dart_crypt hashing, formz inputs,
+#   local_auth) the artifact is graded; where it emits a report (the audit case, the
+#   dependency-scan case) only the narrated decisions are. dart_parses proves syntax,
+#   never that a snippet compiles.
 #
-# Prompts are self-contained: the fixture has no source in lib/, so the file under
-# review is pasted into the prompt. Code-carrying prompts use a literal block (`|-`)
-# so indentation survives; prose-only prompts use `>-` like the other case files.
+#   The bare model is already security-aware. It flags a hardcoded key, a
+#   badCertificateCallback bypass and a token in SharedPreferences on its own, so
+#   "did it notice" is worthless here. What it does NOT reach is the skill's specific
+#   remedies: backend-served secrets rather than --dart-define, the Critical /
+#   Warning / Note triage tiers, package:dart_crypt for passwords, package:formz for
+#   input, package:local_auth for biometrics, osv-scanner for the lockfile. Those are
+#   what these cases grade.
 #
-# Two things make this skill hard to grade, and both shape the assertions below:
+#   No `not-regex` on `String.fromEnvironment` or `invokeMethod`, even though the
+#   skill forbids both. Its own ❌ examples quote them verbatim while explaining why
+#   they are wrong, so a faithful response contains the string. Those two
+#   prohibitions are graded by rubric instead.
 #
-#   1. The bare model is already security-aware. It will flag a hardcoded key, a
-#      badCertificateCallback bypass and a token in SharedPreferences on its own, so
-#      "did it notice" is worthless here. What it does NOT do is reach the skill's
-#      specific remedies: backend-served secrets rather than --dart-define, the
-#      Critical / Warning / Note triage tiers, package:dart_crypt for passwords,
-#      package:formz for input, package:local_auth for biometrics, osv-scanner for
-#      the lockfile. Those are what these cases grade.
-#   2. No `not-regex` on `String.fromEnvironment` or `invokeMethod`, even though the
-#      skill forbids both. Its own ❌ examples quote them verbatim while explaining
-#      why they are wrong, so a faithful response contains the string. Those
-#      prohibitions are graded by rubric instead.
+#   Prompts name no skill, so `skill-used` catches a routing failure directly.
+#   Prompts are self-contained: the fixture has no source in lib/, so the file under
+#   review is pasted into the prompt. Code-carrying prompts use a literal block
+#   (`|-`) so indentation survives; prose-only prompts use `>-` like the other case
+#   files.
+#
+#   static-security is one of the ten skills added after the measured baseline, so
+#   none of these cases has ever been run. Treat the first run as calibration.
+#
+# CASES
+#   1  static-security-refuses-dart-define-for-secrets
+#      Refusing a build-time secret and naming the backend-served fix instead.
+#   2  static-security-audits-file-with-severity-tiers
+#      Auditing a whole file and labelling findings Critical / Warning / Note.
+#   3  static-security-hashes-passwords-with-dart-crypt
+#      Replacing sha256 password hashing with package:dart_crypt SHA-512-crypt.
+#   4  static-security-validates-input-with-formz
+#      Validating form input through FormzInput and gating submit on validity.
+#   5  static-security-refuses-platform-channel-biometrics
+#      Refusing a hand-rolled MethodChannel and routing biometrics via local_auth.
+#   6  static-security-scans-dependencies-before-release
+#      Scanning pubspec.lock with osv-scanner and challenging ignored_advisories.
+#   7  static-security-stays-out-of-plain-formatting-work  [negative control]
+#      A pure formatting task draws no security review.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# 1  static-security-refuses-dart-define-for-secrets
+# -----------------------------------------------------------------------------
+# MEASURES       The skill refuses to move a hardcoded key to --dart-define and
+#                requires the secret to be served from a backend at runtime.
+# DISCRIMINATES  The baseline writes the requested --dart-define change and attaches
+#                a caveat, or suggests .env / obfuscation / string splitting.
 - description: static-security-refuses-dart-define-for-secrets
   vars:
     prompt: |-
@@ -31,12 +68,12 @@
       String.fromEnvironment('API_KEY'), passing the value in from our CI secrets.
       Write that change for me.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
-    # The prohibition itself. SKILL.md: "--dart-define / String.fromEnvironment
-    # compile values into the binary as plaintext ... they are not a safe alternative
-    # to backend-served secrets." The baseline typically writes the change with a
-    # caveat attached, which does not satisfy this.
+    # judged
+    # The prohibition itself. SKILL.md: --dart-define / String.fromEnvironment "are
+    # not a safe alternative to backend-served secrets."
     - type: llm-rubric
       value: >-
         The response declines to ship the API key via --dart-define or
@@ -56,6 +93,17 @@
         constant, a native config file such as google-services.json, or splitting the
         string up instead does not satisfy this.
 
+# -----------------------------------------------------------------------------
+# 2  static-security-audits-file-with-severity-tiers
+# -----------------------------------------------------------------------------
+# MEASURES       A whole-file audit reports findings in the skill's three severity
+#                tiers and gives the skill's fixes: flutter_secure_storage for the
+#                token, Random.secure() for the session id, backend for the key.
+# DISCRIMINATES  The bare model finds the same problems but grades them High /
+#                Medium / Low or by CVSS, and offers --dart-define for the key.
+# HISTORY        The severity rubric alone was not enough: with five assertions a
+#                High/Medium/Low report failed only that rubric and still averaged
+#                0.8, so the tier check is also graded mechanically.
 - description: static-security-audits-file-with-severity-tiers
   vars:
     prompt: |-
@@ -90,22 +138,12 @@
         }
       }
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
-    # The triage vocabulary is the skill's, from the `## Severity Triage` section of
-    # SKILL.md ("Critical / Warning / Note"). The unaided model reaches for
-    # High/Medium/Low or CVSS, so this is the discriminator.
-    - type: llm-rubric
-      value: >-
-        Every finding carries a severity label, and the labels are drawn only from the
-        set Critical, Warning, Note. Any other scheme — High, Medium, Low, Info, P0,
-        CVSS scores, or emoji-only markers — does not satisfy this.
-    # The same property, graded mechanically, because the rubric alone was not enough:
-    # with five assertions a High/Medium/Low report failed only that rubric and still
-    # averaged 0.8. The middle tier is the tell — `Warning` is the skill's word and
-    # `Medium` is the one the bare model reaches for. No trailing `\b` on Warning so a
-    # "Warnings" section heading still counts; `\bMedium\b` will not fire on
-    # `Durations.medium2`-style text.
+    # mechanical
+    # The middle tier is the tell. No trailing `\b` on Warning so a "Warnings"
+    # heading counts; `\bMedium\b` will not fire on `Durations.medium2`-style text.
     - type: regex
       value: '\bWarning'
     - type: not-regex
@@ -114,6 +152,14 @@
       value: 'flutter_secure_storage'
     - type: regex
       value: 'Random\.secure\(\)'
+    # judged
+    # Triage vocabulary from the `## Severity Triage` section of SKILL.md. The
+    # unaided model reaches for High/Medium/Low or CVSS.
+    - type: llm-rubric
+      value: >-
+        Every finding carries a severity label, and the labels are drawn only from the
+        set Critical, Warning, Note. Any other scheme — High, Medium, Low, Info, P0,
+        CVSS scores, or emoji-only markers — does not satisfy this.
     # Second grading of the secrets prohibition, on an audit rather than a refusal.
     - type: llm-rubric
       value: >-
@@ -122,6 +168,13 @@
         any other build-time constant is either absent or explicitly rejected as
         insufficient.
 
+# -----------------------------------------------------------------------------
+# 3  static-security-hashes-passwords-with-dart-crypt
+# -----------------------------------------------------------------------------
+# MEASURES       Password storage is rewritten onto package:dart_crypt with
+#                SHA-512-crypt and verified through `.match(`, per references/crypto.md.
+# DISCRIMINATES  The unaided model answers bcrypt or argon2 — right in general, but
+#                not what this skill teaches, so the three regexes carry the lift.
 - description: static-security-hashes-passwords-with-dart-crypt
   vars:
     prompt: |-
@@ -139,25 +192,34 @@
 
       Is this the right way to store a password hash? Show me the corrected code.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
-    # references/crypto.md mandates package:dart_crypt and SHA-512-crypt for password
-    # storage. The unaided model answers bcrypt or argon2 — correct in general, but not
-    # what this skill teaches, so these three are the lift.
+    # mechanical
     - type: regex
       value: 'dart_crypt'
     - type: regex
       value: 'Crypt\.sha512\('
     - type: regex
       value: '\.match\('
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The response says sha256 is unsuitable for storing passwords because it is
         fast, and requires a deliberately slow, salted password-hashing algorithm
         instead.
 
+# -----------------------------------------------------------------------------
+# 4  static-security-validates-input-with-formz
+# -----------------------------------------------------------------------------
+# MEASURES       Form validation goes through a FormzInput subclass per field, and
+#                submit reads validated values off state instead of a controller.
+# DISCRIMINATES  The baseline hand-rolls a RegExp check in the widget or reaches for
+#                a TextFormField validator, which leaves the raw controller text as
+#                the value that reaches the API.
 - description: static-security-validates-input-with-formz
   vars:
     prompt: |-
@@ -176,17 +238,20 @@
       Nothing is checked before this hits the API. Add the validation. Output Dart
       code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+    # mechanical
     # SKILL.md: "Use package:formz for all form validation. Define a FormzInput
-    # subclass per field." The baseline hand-rolls a RegExp check in the widget or a
-    # TextFormField validator, neither of which matches these two.
+    # subclass per field."
     - type: regex
       value: 'extends FormzInput<'
     - type: regex
       value: 'formz/formz\.dart'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The submit callback is gated on the form's validation status and passes the
@@ -194,6 +259,12 @@
         event. Reading TextEditingController.text at the submit site does not satisfy
         this.
 
+# -----------------------------------------------------------------------------
+# 5  static-security-refuses-platform-channel-biometrics
+# -----------------------------------------------------------------------------
+# MEASURES       The skill refuses a hand-written MethodChannel for biometrics and
+#                routes the gate through package:local_auth instead.
+# DISCRIMINATES  The baseline writes the com.acme/biometrics MethodChannel as asked.
 - description: static-security-refuses-platform-channel-biometrics
   vars:
     prompt: >-
@@ -202,23 +273,35 @@
       invokeMethod('authenticate') on it, so we control the native prompt ourselves.
       Show me the Dart.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+    # mechanical
     # references/crypto.md: "Use package:local_auth ... Do not invoke platform
-    # channels directly." The baseline writes the MethodChannel as asked.
+    # channels directly."
     - type: regex
       value: 'local_auth'
     - type: regex
       value: 'LocalAuthentication\('
+    # syntax
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The response declines to implement the biometric check over a MethodChannel or
         platform channel of its own, and routes it through a package that wraps the
         platform biometric APIs instead. Delivering the requested MethodChannel setup,
         even with a note recommending a package, does not satisfy this.
-    - type: javascript
-      value: file://assertions/dart-parses.js
 
+# -----------------------------------------------------------------------------
+# 6  static-security-scans-dependencies-before-release
+# -----------------------------------------------------------------------------
+# MEASURES       The pre-release dependency check named by the skill: osv-scanner
+#                over pubspec.lock plus `dart pub outdated`, and an ignored_advisories
+#                entry challenged for a written justification.
+# DISCRIMINATES  The bare model answers `dart pub outdated` and generic advice, and
+#                accepts the ignored_advisories entry as listed.
 - description: static-security-scans-dependencies-before-release
   vars:
     prompt: |-
@@ -238,32 +321,43 @@
 
       How do we check this for known vulnerabilities before we cut the build?
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
-    # SKILL.md: "Scan pubspec.lock with osv-scanner before every release" and "Run
-    # dart pub outdated to check for available security patches". osv-scanner against
-    # the lockfile specifically is the part the bare model does not produce.
+    # mechanical
+    # SKILL.md: "Scan pubspec.lock with osv-scanner before every release". The
+    # lockfile target specifically is the part the bare model does not produce.
     - type: regex
       value: 'osv-scanner'
     - type: regex
       value: 'pubspec\.lock'
     - type: regex
       value: 'dart pub outdated'
+    # judged
     - type: llm-rubric
       value: >-
         The response requires the ignored_advisories entry to carry a written
         justification recording why that advisory does not apply to this app, rather
         than accepting it as listed.
 
-# Negative control — nothing else catches a skill firing where it should not.
+# -----------------------------------------------------------------------------
+# 7  static-security-stays-out-of-plain-formatting-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       A plain string-formatting task does not activate the skill.
+# DISCRIMINATES  Nothing else catches a skill firing where it should not. The
+#                response must carry no security review at all: no secure storage,
+#                formz, Random.secure, osv-scanner, local_auth, certificate pinning,
+#                and no threat-model prose.
 - description: static-security-stays-out-of-plain-formatting-work
   vars:
     prompt: >-
       Write a Dart function `String formatDuration(Duration d)` that renders a
       duration as mm:ss, zero padded. Return only the function.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+    # mechanical
     - type: not-regex
       value: 'flutter_secure_storage|FormzInput|Random\.secure|osv-scanner|local_auth'
     - type: not-icontains
@@ -272,6 +366,7 @@
     # prompt, so "did it write the formatter" is unanswerable from the output alone.
     - type: regex
       value: 'String formatDuration\(Duration'
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the formatting logic is

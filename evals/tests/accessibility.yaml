@@ -1,36 +1,67 @@
-# Behavior cases for the accessibility skill.
+# =============================================================================
+# accessibility — behaviour cases
+# =============================================================================
 #
-# Prompts name no skill, so `skill-used` catches a routing failure directly.
+# GRADING NOTES
+#   Mixed grading. Cases 5 and 6 are graded on the artifact — they ask for a widget
+#   class and carry dart-parses. Cases 1 to 4 are graded on what the response narrates:
+#   the question it asks, the report it writes, the request it declines.
 #
-# Prompts are self-contained: the fixture has no source in lib/, so a prompt about
-# "my SettingsView" earns a refusal and every grader fails for an unrelated reason.
-# The widget under audit is pasted in.
+#   Prompts name no skill, so `skill-used` catches a routing failure directly.
 #
-# Two things are specific to grading this skill:
+#   Prompts are self-contained. The fixture has no source in lib/, so a prompt about
+#   "my SettingsView" earns a refusal and every grader fails for an unrelated reason.
+#   The widget under audit is pasted in.
 #
-# 1. Phases 1 and 2 of the workflow call `AskUserQuestion`, which neither provider
-#    exposes (`tools` is Skill/Read/Glob/Grep). So the level-and-platform gate is
-#    graded on the question the response *narrates* in text, not on a tool call —
-#    same treatment the MCP-backed skills get.
-# 2. Most cases state the WCAG level and platforms up front. Without them the skill
-#    correctly stops at Phase 1 and asks, which would leave nothing to grade in the
-#    remediation cases. Exactly one case omits them on purpose, to grade the gate.
+#   Phases 1 and 2 of the workflow call `AskUserQuestion`, which neither provider
+#   exposes (`tools` is Skill/Read/Glob/Grep). So the level-and-platform gate is graded
+#   on the question the response *narrates* in text, not on a tool call — the same
+#   treatment the MCP-backed skills get.
 #
-# WCAG criterion IDs are graded mechanically (`2.5.8`, `2.1.1`, ...) because the
-# Core Standards section pins a specific ID to each rule, and the sealed column
-# tends to answer in generic "add a label" prose without citing WCAG 2.2 at all.
+#   Most cases state the WCAG level and the platforms up front. Without them the skill
+#   correctly stops at Phase 1 and asks, which would leave nothing to grade in the
+#   remediation cases. Exactly one case (1) omits them on purpose, to grade the gate.
 #
-# Two cases deliberately omit `dart-parses`, and each says so at the case. The
-# assertion requires every ```dart block to parse either standalone or wrapped in a
-# function body, so a report's `// Before` / `// After` fragments — bare widget
-# expressions with no trailing semicolon — fail it for reasons unrelated to
-# accessibility. Cases whose answer is a whole widget class keep the assertion.
+#   WCAG criterion IDs are graded mechanically (`2.5.8`, `2.1.1`, ...) because Core
+#   Standards pins a specific ID to each rule, and the sealed column tends to answer in
+#   generic "add a label" prose without citing WCAG 2.2 at all.
+#
+#   Of the cases whose answer carries Dart, three (2, 3, 4) omit `dart-parses` on
+#   purpose and each says so at the case.
+#   The assertion requires every ```dart block to parse standalone or wrapped in a
+#   function body, so a report's `// Before` / `// After` fragments — bare widget
+#   expressions with no trailing semicolon — fail it for reasons unrelated to
+#   accessibility. Cases whose answer is a whole widget class keep the assertion.
+#
+# CASES
+#   1  accessibility-asks-level-and-platform-before-auditing
+#      Phase 1 + Phase 2 gate: no level and no platforms given, so it must ask first.
+#   2  accessibility-audits-with-criterion-ids-and-severities
+#      Audit report shape — WCAG ID + name, CRITICAL/MAJOR/MINOR, before/after fix.
+#   3  accessibility-declines-gesture-detector-tap-target
+#      Refuses a bare GestureDetector tap target when asked for one by name.
+#   4  accessibility-declines-exclude-semantics-on-actionable-content
+#      Refuses ExcludeSemantics and scopes MergeSemantics to the static pair only.
+#   5  accessibility-wraps-cupertino-and-announces-on-ios
+#      Cupertino semantic wrapper plus the iOS liveRegion announcement gotcha.
+#   6  accessibility-adds-non-drag-alternative-to-dismissible
+#      2.5.7: keeps the swipe and adds a labelled non-drag delete control.
+#   7  accessibility-stays-out-of-plain-dart-work  [negative control]
+#      Plain Dart formatter must not pull in the skill or its vocabulary.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
 
-# The one case that withholds the level and the platforms. SKILL.md: "Begin every
-# audit by asking which WCAG 2.2 conformance level the project targets ... Never
-# assume AA" and "Begin every audit by asking which of the six platforms are
-# targeted". `AA + selected AAA` is verbatim from the Phase 1 option list and is
-# not something an unaided model volunteers.
+# -----------------------------------------------------------------------------
+# 1  accessibility-asks-level-and-platform-before-auditing
+# -----------------------------------------------------------------------------
+# MEASURES       The Phase 1 / Phase 2 gate. Level and platforms are withheld, so the
+#                skill must ask both before auditing. SKILL.md: "Never assume AA" and
+#                "Begin every audit by asking which of the six platforms are targeted".
+# DISCRIMINATES  An unaided model assumes AA, audits the widget on the spot, and talks
+#                about iOS and Android only. `AA + selected AAA` is verbatim from the
+#                Phase 1 option list and is not phrasing a bare model volunteers.
 - description: accessibility-asks-level-and-platform-before-auditing
   vars:
     prompt: >-
@@ -57,14 +88,17 @@
           }
         }
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # mechanical
     - type: regex
       value: 'AA \+ selected AAA'
     # The six-platform list from Phase 2. Linux is the tell: an unaided answer talks
     # about iOS and Android, not about Orca on Linux desktop.
     - type: icontains
       value: 'linux'
+    # judged
     - type: llm-rubric
       value: >-
         The response asks the reader which WCAG 2.2 conformance level is being
@@ -77,11 +111,17 @@
         platforms as options, at minimum iOS, Android, Web, and at least one desktop
         platform (macOS, Windows, or Linux).
 
-# Level and platforms supplied, so the skill proceeds to Phase 3 and must emit the
-# report shape from references/audit-templates.md: per-finding WCAG ID + name +
-# level, a CRITICAL/MAJOR/MINOR severity from the severity guide, and a
-# before/after fix. 2.5.8 Target Size (Minimum) is the WCAG 2.2 criterion the
-# 16x16 close button violates.
+# -----------------------------------------------------------------------------
+# 2  accessibility-audits-with-criterion-ids-and-severities
+# -----------------------------------------------------------------------------
+# MEASURES       Level and platforms are supplied, so the skill proceeds to Phase 3 and
+#                must emit the report shape from references/audit-templates.md: per
+#                finding a WCAG ID + name + level, a CRITICAL/MAJOR/MINOR severity from
+#                the severity guide, and a before/after fix. The 16x16 close button is
+#                the 2.5.8 Target Size (Minimum) violation; its GestureDetector is 2.1.1.
+# DISCRIMINATES  An unaided model returns generic "add a label" prose with no WCAG 2.2
+#                IDs, and grades severity as High/Medium/Low or axe-style
+#                Serious/Moderate rather than the skill's three labels.
 - description: accessibility-audits-with-criterion-ids-and-severities
   vars:
     prompt: >-
@@ -120,17 +160,19 @@
         }
   # No dart-parses: the answer is a report whose fixes are before/after fragments.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # mechanical
     - type: regex
       value: '2\.5\.8'
     - type: regex
       value: '2\.1\.1'
-    # Upper-case severity labels are the skill's vocabulary, from the severity guide
-    # in references/audit-templates.md. The unaided model reaches for High/Medium/Low
-    # or axe-style Serious/Moderate.
+    # Upper-case severity labels are the skill's vocabulary, from the severity guide in
+    # references/audit-templates.md.
     - type: regex
       value: 'CRITICAL'
+    # judged
     - type: llm-rubric
       value: >-
         Every finding in the report carries a severity that is one of exactly
@@ -141,9 +183,16 @@
         Each finding shows the fix as before-and-after Flutter code, not as prose
         advice alone.
 
-# The skill's flagship prohibition: "Never use bare GestureDetector for tap targets
-# ... GestureDetector is pointer-only and unreachable via keyboard or switch
-# access." The prompt asks for it by name, so complying is the failure mode.
+# -----------------------------------------------------------------------------
+# 3  accessibility-declines-gesture-detector-tap-target
+# -----------------------------------------------------------------------------
+# MEASURES       The skill's flagship prohibition: "Never use bare GestureDetector for
+#                tap targets ... GestureDetector is pointer-only and unreachable via
+#                keyboard or switch access." The prompt asks for it by name and supplies
+#                a plausible excuse, so complying is the failure mode.
+# DISCRIMINATES  An unaided model obliges the request, ships the GestureDetector version
+#                as its recommendation with at most a passing caveat, and never cites
+#                2.1.1 Keyboard as the criterion being broken.
 - description: accessibility-declines-gesture-detector-tap-target
   vars:
     prompt: >-
@@ -155,13 +204,16 @@
   # as a "before" fragment, and a bare widget expression with no trailing semicolon
   # does not parse even wrapped in a function body.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # mechanical
     # The documented replacement list from the Gesture Detector core standard.
     - type: regex
       value: 'InkWell|ElevatedButton|TextButton|IconButton'
     - type: regex
       value: '2\.1\.1'
+    # judged
     - type: llm-rubric
       value: >-
         The response refuses to use a bare GestureDetector as the tap target and
@@ -174,19 +226,25 @@
         target. If GestureDetector appears anywhere in the response, it appears only
         as the rejected "before" or "wrong" version.
 
-# Second prohibition: "Never use ExcludeSemantics on non-decorative content", plus
-# the MergeSemantics correctness rule from references/examples.md — merge the static
-# label/value pair only, keep the interactive child independently focusable.
-#
-# The pasted row used to hold a single `Text('Total: 42.00 USD')`, which made the case
-# unmeasurable two ways. There was nothing to group, so the alternative rubric asked
-# for a pattern the widget could not carry — the plugin column diagnosed the premise as
-# false, asked for the parent widget and failed that rubric. And the refusal itself is
-# baseline behavior: the sealed column declined ExcludeSemantics, gave the reason and
-# cited 4.1.2 unaided. The row now carries a real label/value pair, which is the exact
-# shape references/examples.md marks CORRECT, and the criterion-ID regex is gone
-# because it was a measured free point in both columns and criterion IDs are already
-# graded in three other cases here.
+# -----------------------------------------------------------------------------
+# 4  accessibility-declines-exclude-semantics-on-actionable-content
+# -----------------------------------------------------------------------------
+# MEASURES       Second prohibition — "Never use ExcludeSemantics on non-decorative
+#                content" — plus the MergeSemantics correctness rule from
+#                references/examples.md: merge the static label/value pair only and
+#                keep the interactive child independently focusable.
+# DISCRIMINATES  An unaided model either complies with the ExcludeSemantics request or
+#                merges the whole Row, folding the button's role away.
+# HISTORY        The pasted row used to hold a single `Text('Total: 42.00 USD')`, which
+#                made the case unmeasurable two ways. Nothing was there to group, so the
+#                alternative rubric asked for a pattern the widget could not carry — the
+#                plugin column diagnosed the premise as false, asked for the parent
+#                widget and failed that rubric. And the refusal alone is baseline
+#                behaviour: the sealed column declined ExcludeSemantics, gave the reason
+#                and cited 4.1.2 unaided. The row now carries a real label/value pair,
+#                the exact shape references/examples.md marks CORRECT. The criterion-ID
+#                regex is gone because it was a measured free point in both columns, and
+#                criterion IDs are already graded in three other cases here.
 - description: accessibility-declines-exclude-semantics-on-actionable-content
   vars:
     prompt: >-
@@ -208,13 +266,15 @@
       Fix it by wrapping the whole Row in ExcludeSemantics so the extra stops go away.
   # No dart-parses: both the pasted subject and the fix are bare Row expressions.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # mechanical
     # With the paren, so the fix has to arrive as code. The sealed column named
-    # `MergeSemantics` in prose only — and named it as a possible *cause* of the
-    # duplicate rather than as the fix — which the bare word matched.
+    # MergeSemantics in prose, as a possible cause rather than the fix.
     - type: regex
       value: 'MergeSemantics\('
+    # judged
     - type: llm-rubric
       value: >-
         The response refuses to wrap the row in ExcludeSemantics and says that doing
@@ -228,11 +288,18 @@
         independently focusable node outside the grouping. A fix that puts the button
         inside the MergeSemantics, or that wraps the whole Row, does not satisfy this.
 
-# iOS-specific remediation. Two skill facts drive this: the Cupertino Semantics core
-# standard ("Cupertino widgets ship with weaker semantic defaults ... Always wrap
-# them in Semantics(label:, value:, button:)") and the iOS reference's gotcha that
-# `liveRegion: true` does not auto-announce on iOS (issue #45968), so
-# SemanticsService.announce must also be called.
+# -----------------------------------------------------------------------------
+# 5  accessibility-wraps-cupertino-and-announces-on-ios
+# -----------------------------------------------------------------------------
+# MEASURES       iOS-specific remediation on two skill facts: the Cupertino Semantics
+#                core standard ("Cupertino widgets ship with weaker semantic defaults
+#                ... Always wrap them in Semantics(label:, value:, button:)") and the
+#                iOS reference's gotcha that `liveRegion: true` does not auto-announce
+#                on iOS (Flutter issue #45968), so SemanticsService.announce is required
+#                as well.
+# DISCRIMINATES  An unaided model adds liveRegion and treats it as sufficient, and
+#                either leaves the CupertinoSwitch bare or swaps it for a Material
+#                Switch instead of wrapping it.
 - description: accessibility-wraps-cupertino-and-announces-on-ios
   vars:
     prompt: >-
@@ -266,14 +333,18 @@
       Make it work properly with VoiceOver. Show the updated code and call out
       anything iOS-specific.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # mechanical
     - type: regex
       value: 'liveRegion'
     - type: regex
       value: 'SemanticsService\.announce'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The response states that on iOS a Semantics widget with liveRegion: true does
@@ -288,10 +359,22 @@
         CupertinoSwitch bare, or swapping it for a Material Switch instead of wrapping
         it, does not satisfy this.
 
-# WCAG 2.2 2.5.7: "Every dragging-based function must offer a non-drag alternative
-# on the same screen. `Dismissible` needs an explicit delete button." The pattern in
-# references/examples.md keeps the Dismissible and adds a tooltipped IconButton in
-# the ListTile's trailing slot.
+# -----------------------------------------------------------------------------
+# 6  accessibility-adds-non-drag-alternative-to-dismissible
+# -----------------------------------------------------------------------------
+# MEASURES       WCAG 2.2 2.5.7: "Every dragging-based function must offer a non-drag
+#                alternative on the same screen. `Dismissible` needs an explicit delete
+#                button." The pattern in references/examples.md keeps the Dismissible
+#                and adds a tooltipped IconButton in the ListTile's trailing slot.
+# DISCRIMINATES  Only the criterion ID separates the columns here. A bare model reaches
+#                the Dismissible-plus-trailing-IconButton shape on its own but does not
+#                name the criterion it is remediating; the skill does, everywhere.
+# HISTORY        Measured: every assertion except the `2.5.7` regex passed with no
+#                plugin loaded. An earlier version with only `IconButton` plus the
+#                rubric let a response that deleted the swipe and shipped a button alone
+#                score 0.8 and pass, so `Dismissible\(` grades that property a second
+#                time. "Output Dart code only" still leaves a doc comment on the widget
+#                class for the criterion ID to live in.
 - description: accessibility-adds-non-drag-alternative-to-dismissible
   vars:
     prompt: >-
@@ -309,29 +392,28 @@
       Bring it up to conformance. Give me the whole list item as a widget class.
       Output Dart code only.
   assert:
+    # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # mechanical
     - type: regex
       value: 'IconButton'
-    # Second grading of the load-bearing property. `IconButton` plus the rubric alone
-    # let a response that deletes the swipe and ships only a button score 0.8 and
-    # pass; the reference pattern keeps the Dismissible and adds the button beside it.
+    # The reference pattern keeps the Dismissible and adds the button beside it, so the
+    # swipe must survive the fix.
     - type: regex
       value: 'Dismissible\('
     # An icon-only control needs a Tooltip or Semantics label of its own (Icon
     # Buttons core standard, WCAG 4.1.2), so the alternative control must be named.
     - type: regex
       value: 'tooltip:|Semantics\('
-    # The one assertion here that the sealed column misses. Measured: an unaided model
-    # already knows the Dismissible-plus-trailing-IconButton shape, so every other
-    # assertion in this case passed with no plugin loaded. What it does not do is name
-    # the criterion it is remediating. The skill does, everywhere — Core Standards pins
-    # 2.5.7 to drag alternatives and references/examples.md titles the pattern with it —
-    # and "Output Dart code only" still leaves a doc comment on the widget class.
+    # Core Standards pins 2.5.7 to drag alternatives and references/examples.md titles
+    # the pattern with it. This is the one assertion the sealed column misses.
     - type: regex
       value: '2\.5\.7'
+    # syntax
     - type: javascript
       value: file://assertions/dart-parses.js
+    # judged
     - type: llm-rubric
       value: >-
         The code keeps the swipe-to-dismiss behavior and additionally exposes a
@@ -340,15 +422,25 @@
         only reveals a control after a swipe, or that removes the swipe and leaves no
         second path, does not satisfy this.
 
-# Negative control — nothing else catches a skill firing where it should not.
+# -----------------------------------------------------------------------------
+# 7  accessibility-stays-out-of-plain-dart-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       Routing restraint. A pure Dart string formatter with no widgets in
+#                sight must not pull the skill in. Nothing else catches a skill firing
+#                where it should not.
+# DISCRIMINATES  Must NOT appear: the skill in `skillCalls`, and any Semantics,
+#                semanticLabel, WCAG, screen-reader or accessibility vocabulary in a
+#                mm:ss formatter.
 - description: accessibility-stays-out-of-plain-dart-work
   vars:
     prompt: >-
       Write a Dart function `String formatDuration(Duration d)` that renders a
       duration as mm:ss. No Flutter, no widgets. Return only the function.
   assert:
+    # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+    # mechanical
     - type: not-regex
       value: 'Semantics|semanticLabel|WCAG|disableAnimations|excludeFromSemantics'
     - type: not-icontains
@@ -357,6 +449,7 @@
     # prompt, so "did it answer the question" is unanswerable from the output alone.
     - type: regex
       value: 'String formatDuration\(Duration'
+    # judged
     - type: llm-rubric
       value: >-
         Judge only the text of the response, not whether the formatting logic is
