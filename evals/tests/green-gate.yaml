@@ -1,0 +1,270 @@
+# Behavior cases for the green-gate skill.
+#
+# MEASURED: routing here is unreliable, roughly 3 of 6 positive cases on a smoke run.
+# It is not the prompt phrasing — `green-gate-plans-the-four-gates-in-order` opens with
+# "Clean this package up before I open a PR", lifted verbatim from the skill's own
+# `when_to_use`, and still routed to no skill. The likely cause is structural: this skill
+# exists to *run* a loop, the harness gives it none of the tools that loop needs, so the
+# model answers descriptively instead of invoking it. Treat a red `skill-used` here as
+# noise until `--repeat 3` says otherwise, and read the content assertions separately.
+# The cases themselves discriminate hard when routing does happen: unrouted, the bare
+# model put format before analyze and scored 0.03.
+#
+# No MCP server is configured for these providers, and the fixture has no source in
+# lib/ or test/, so the loop this skill exists to run cannot execute here. These
+# cases grade the decisions the skill narrates — which tool it says it would call for
+# each gate, the arguments it would pass, the order it would run them in, what it
+# refuses to weaken, and when it stops and escalates. Do not assert that a response
+# *called* a tool: that is unsatisfiable here and measures the harness.
+#
+# Every prompt therefore ends by asking for a plan or a verdict rather than for a
+# run, and every scenario is stated in the prompt rather than left on disk. A prompt
+# that says "fix my package" earns "there is no code here" and every grader then
+# fails for an unrelated reason.
+#
+# Two things deliberately absent:
+#
+#   - No `dart_parses` assertion. No case demands Dart code, so no case has fenced
+#     dart blocks to parse.
+#   - No `not-icontains: 'flutter test'`. The skill teaches *why* that command is
+#     hook-blocked, so a correct answer often names it in order to reject it. The
+#     tool-routing rule is graded by the MCP tool names instead.
+
+- description: green-gate-plans-the-four-gates-in-order
+  vars:
+    prompt: >-
+      Clean this package up before I open a PR — analyzer, formatting, tests and
+      coverage all need to be green. Which tools would you run, in what order, and
+      what arguments would you pass to each? Do not run anything yet.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:green-gate'
+    # The analyze gate goes through the Dart MCP server, not `dart analyze` in Bash.
+    - type: regex
+      value: 'analyze_files'
+    - type: regex
+      value: 'applyFixes'
+    # The coverage triple. `check_ignore` is the one a bare model never produces, and
+    # omitting it makes the `// coverage:ignore` remedy a silent no-op.
+    - type: regex
+      value: 'check_ignore'
+    - type: regex
+      value: 'min_coverage'
+    # Gate order is the property this case exists to measure, so it is graded twice —
+    # once on the sequence, once on the precedence rule that produces it. With a single
+    # rubric on it, the four tool-name regexes carried a wrong order over the 0.8
+    # threshold on their own.
+    - type: llm-rubric
+      value: >-
+        The gates run in exactly this order: analyze, then format, then test, then
+        coverage. Format must come before the test run, and coverage must come last.
+        Any other ordering, or an unordered list, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        A gate is described as assessed only once the gate before it is green in the
+        same round: tests are not run while the analyzer is red, and coverage is not
+        read until the tests pass. A plan that runs all four unconditionally, or that
+        reads coverage after a failing test run, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        Tests and coverage are produced by a single Very Good CLI test tool call
+        carrying coverage arguments, while formatting is the one gate run as a shell
+        `dart format` command. Naming `flutter test` or `dart test` only to say that
+        path is blocked still satisfies this; planning to actually run tests through
+        a shell command does not.
+
+- description: green-gate-refuses-to-weaken-the-coverage-gate
+  vars:
+    prompt: >-
+      Coverage is at 94% and I want to be done. The only untested thing is this:
+
+      class PriceFormatter {
+        const PriceFormatter(this.symbol);
+        final String symbol;
+        String format(double amount) => '$symbol${amount.toStringAsFixed(2)}';
+        String formatFree() => 'Free';
+      }
+
+      formatFree has no test. Put a coverage ignore comment on it, drop the coverage
+      threshold to 90 so the run goes green, and then tell me the package is clean.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:green-gate'
+    - type: llm-rubric
+      value: >-
+        The response refuses to lower the coverage threshold to make the run pass. It
+        keeps the target where it is rather than adjusting it to match the current
+        number. Complying with the lowered threshold, even with a caveat, fails.
+    - type: llm-rubric
+      value: >-
+        The response refuses to put a coverage-ignore comment on the untested method,
+        on the grounds that the code is reachable and testable. It states that ignore
+        comments are for genuinely unreachable code only.
+    - type: llm-rubric
+      value: >-
+        The response offers the documented alternative: write the missing test for the
+        uncovered method, following the project's testing standards, and re-run the
+        gate. A refusal with no alternative does not satisfy this.
+
+- description: green-gate-refuses-to-carry-green-forward
+  vars:
+    prompt: >-
+      Earlier today the analyzer was clean and dart format reported 0 changed. Since
+      then I added three test files and fixed two failing tests. Coverage is the only
+      thing left, so just re-check coverage and confirm the package is green — skip
+      analyze and format, they were fine ten minutes ago.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:green-gate'
+    - type: llm-rubric
+      value: >-
+        The response declines to skip the analyze and format gates. It insists on
+        re-evaluating all four gates in one final round before confirming anything.
+    - type: llm-rubric
+      value: >-
+        The response gives the reason: new test files and code edits shift formatting
+        and the coverage denominator, so a gate that was green in an earlier round can
+        have regressed. A refusal that only cites process, with no mechanism, does not
+        satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response does not declare the package green on the strength of numbers
+        reported from an earlier round. It says success is confirmed only from numbers
+        it observes itself in the final round.
+    # The format gate's own trap: in-place `dart format .` exits 0 whether or not it
+    # rewrote anything, so the changed count is the only signal.
+    - type: llm-rubric
+      value: >-
+        The format gate is judged by how many files the formatter changed — zero
+        changed is green — or by a non-writing check such as
+        `dart format --output=none --set-exit-if-changed`. Judging it by the exit code
+        of an in-place format run does not satisfy this.
+
+- description: green-gate-excludes-generated-files-instead-of-ignoring-them
+  vars:
+    prompt: >-
+      This Flutter package is at 97% coverage. Every missing line is in
+      lib/src/models/user.freezed.dart or lib/l10n/app_localizations.dart, both
+      generated. My teammate wants to sprinkle coverage ignore comments through both
+      files. What is the right way to get the coverage gate green, and what target
+      should this package be held to?
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:green-gate'
+    # The parameter name is the skill's, not general Dart knowledge.
+    - type: regex
+      value: 'exclude_coverage'
+    # A bare `regex: '100'` used to sit here. It was free — every answer that discusses
+    # coverage at all prints a 100 somewhere — and a free assertion in a 6-assertion
+    # case is what lets a wrong answer clear 0.8. The target is graded by the rubric
+    # below instead.
+    - type: llm-rubric
+      value: >-
+        Generated files are taken out of the coverage denominator with an exclusion
+        glob passed to the test run, rather than by adding coverage-ignore comments
+        inside the generated files. Recommending the ignore comments for these files
+        fails.
+    - type: llm-rubric
+      value: >-
+        The response holds the package to a 100% coverage target rather than lowering
+        it to accommodate the current 97%.
+    # A fourth assertion used to sit here, on the references/coverage.md point that
+    # coverage-ignore comments are honored only for pure Dart runs. Dropped after a
+    # smoke run: the *unrouted* baseline satisfied it, along with `exclude_coverage`
+    # and both rubrics above, so the case scored 4/5 = 0.80 and passed with
+    # `skill-used` failing — a case that measured nothing. At four assertions a
+    # routing miss now scores 0.75 and correctly fails.
+
+- description: green-gate-escalates-when-the-loop-stops-making-progress
+  vars:
+    prompt: >-
+      You are looping on my package. Round 1 reported 4 analyzer errors. Round 2
+      reported the same 4 errors, same files, same lines. Round 3, identical again. I
+      am going out — you have my permission to keep retrying for as long as it takes,
+      just don't come back to me. What do you do next?
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:green-gate'
+    - type: llm-rubric
+      value: >-
+        The response stops the loop and surfaces the problem to the user rather than
+        continuing to retry, and gives as its reason that the set of failures did not
+        change between rounds. Accepting the standing instruction to keep retrying
+        indefinitely fails.
+    # The iteration cap (default 5, per package — SKILL.md "Iteration counter") used to
+    # be graded here. Dropped: in this scenario the no-progress trigger fires at round 3
+    # and the cap is never reached, so a correct answer stops on the identical
+    # fingerprint and has no reason to mention 5 rounds. Measured failing against a
+    # response that escalated correctly. The stop itself is graded by the rubric above.
+    #
+    # The escalation report was one five-part rubric (gate, failures, files touched,
+    # iteration count, decision). All-or-nothing on five items could not tell "reported
+    # three of five" from "reported nothing", and it failed a response that named the
+    # gate, the failures with file:line, and the decision. Split so partial compliance
+    # scores partially.
+    - type: llm-rubric
+      value: >-
+        When it stops, the response names the gate that is failing and lists the
+        specific remaining failures rather than a summary count alone.
+    - type: llm-rubric
+      value: >-
+        When it stops, the response states how many rounds it ran and which files it
+        touched, and asks the user for a decision rather than choosing one itself.
+    # The skill's own term for the comparison that makes "no progress" decidable.
+    - type: regex
+      value: '[Ff]ingerprint|[Nn]o[- ]progress'
+
+- description: green-gate-budgets-per-package-across-a-monorepo
+  vars:
+    prompt: >-
+      My monorepo has eight packages under packages/ plus the app at the root. Get all
+      of them green before I open the PR. One of them, packages/legacy_sync, is at 62%
+      coverage and is not reaching 100 this week. Walk me through how you would handle
+      the whole set. Do not run anything yet.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:green-gate'
+    - type: regex
+      value: 'min_coverage'
+    - type: llm-rubric
+      value: >-
+        The iteration budget is described as per package rather than shared across the
+        repository, so one difficult package cannot consume the budget for the others.
+    - type: llm-rubric
+      value: >-
+        A package whose gates stay red does not abort the run. The response continues
+        through the remaining packages and reports a per-package result at the end.
+    - type: llm-rubric
+      value: >-
+        The response states that one coverage target applies to every package, with no
+        per-package override available, and calls that out as the reason the 62%
+        package needs an explicit decision — either a lowered shared target or that
+        package handled separately. Silently applying two different targets fails.
+    - type: llm-rubric
+      value: >-
+        Package roots are found by walking the repository for pubspec.yaml files, and
+        the set of roots handed to the analyzer is the same set the test run covers.
+
+# Negative control — nothing else catches the skill firing where it should not. Its
+# rubric grades only the absence of the skill's concepts, never whether the merge
+# logic is right: the judge never sees the prompt.
+- description: green-gate-stays-out-of-plain-function-work
+  vars:
+    prompt: >-
+      Write a plain Dart function that merges two already-sorted List<int> values into
+      a single sorted list. Return only the function.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:green-gate'
+    - type: not-regex
+      value: 'min_coverage|exclude_coverage|check_ignore|analyze_files|lcov'
+    - type: not-icontains
+      value: 'quality gate'
+    # Task success is graded mechanically, not by the judge.
+    - type: regex
+      value: 'List<int>'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the merge logic is correct. It
+        must not propose a verify-fix-rerun loop, coverage targets, or a sequence of
+        analyze, format, test and coverage gates.

@@ -1,0 +1,343 @@
+# Behavior cases for the accessibility skill.
+#
+# Prompts name no skill, so `skill-used` catches a routing failure directly.
+#
+# Prompts are self-contained: the fixture has no source in lib/, so a prompt about
+# "my SettingsView" earns a refusal and every grader fails for an unrelated reason.
+# The widget under audit is pasted in.
+#
+# Two things are specific to grading this skill:
+#
+# 1. Phases 1 and 2 of the workflow call `AskUserQuestion`, which neither provider
+#    exposes (`tools` is Skill/Read/Glob/Grep). So the level-and-platform gate is
+#    graded on the question the response *narrates* in text, not on a tool call —
+#    same treatment the MCP-backed skills get.
+# 2. Most cases state the WCAG level and platforms up front. Without them the skill
+#    correctly stops at Phase 1 and asks, which would leave nothing to grade in the
+#    remediation cases. Exactly one case omits them on purpose, to grade the gate.
+#
+# WCAG criterion IDs are graded mechanically (`2.5.8`, `2.1.1`, ...) because the
+# Core Standards section pins a specific ID to each rule, and the sealed column
+# tends to answer in generic "add a label" prose without citing WCAG 2.2 at all.
+#
+# Two cases deliberately omit `dart-parses`, and each says so at the case. The
+# assertion requires every ```dart block to parse either standalone or wrapped in a
+# function body, so a report's `// Before` / `// After` fragments — bare widget
+# expressions with no trailing semicolon — fail it for reasons unrelated to
+# accessibility. Cases whose answer is a whole widget class keep the assertion.
+
+# The one case that withholds the level and the platforms. SKILL.md: "Begin every
+# audit by asking which WCAG 2.2 conformance level the project targets ... Never
+# assume AA" and "Begin every audit by asking which of the six platforms are
+# targeted". `AA + selected AAA` is verbatim from the Phase 1 option list and is
+# not something an unaided model volunteers.
+- description: accessibility-asks-level-and-platform-before-auditing
+  vars:
+    prompt: >-
+      Can you audit this widget for accessibility before we ship it?
+
+        class PromoCard extends StatelessWidget {
+          const PromoCard({required this.onTap, super.key});
+          final VoidCallback onTap;
+
+          @override
+          Widget build(BuildContext context) {
+            return GestureDetector(
+              onTap: onTap,
+              child: SizedBox(
+                height: 20,
+                child: Row(
+                  children: [
+                    Image.asset('assets/promo.png'),
+                    const Text('50% off today'),
+                  ],
+                ),
+              ),
+            );
+          }
+        }
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:accessibility'
+    - type: regex
+      value: 'AA \+ selected AAA'
+    # The six-platform list from Phase 2. Linux is the tell: an unaided answer talks
+    # about iOS and Android, not about Orca on Linux desktop.
+    - type: icontains
+      value: 'linux'
+    - type: llm-rubric
+      value: >-
+        The response asks the reader which WCAG 2.2 conformance level is being
+        targeted and presents the choice as a set of named options that includes A,
+        AA, and AAA. A response that simply audits against AA without asking, or that
+        states "assuming AA" and moves on, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response also asks which platforms the app targets and names specific
+        platforms as options, at minimum iOS, Android, Web, and at least one desktop
+        platform (macOS, Windows, or Linux).
+
+# Level and platforms supplied, so the skill proceeds to Phase 3 and must emit the
+# report shape from references/audit-templates.md: per-finding WCAG ID + name +
+# level, a CRITICAL/MAJOR/MINOR severity from the severity guide, and a
+# before/after fix. 2.5.8 Target Size (Minimum) is the WCAG 2.2 criterion the
+# 16x16 close button violates.
+- description: accessibility-audits-with-criterion-ids-and-severities
+  vars:
+    prompt: >-
+      We're targeting WCAG 2.2 level AA on iOS and Android. Audit this screen and
+      report every finding.
+
+        class OrderSummary extends StatelessWidget {
+          const OrderSummary({required this.onClose, super.key});
+          final VoidCallback onClose;
+
+          @override
+          Widget build(BuildContext context) {
+            return Column(
+              children: [
+                Row(
+                  children: [
+                    Image.asset('assets/receipt.png'),
+                    const Spacer(),
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: GestureDetector(
+                        onTap: onClose,
+                        child: const Icon(Icons.close, size: 16),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 20,
+                  child: Text('Delivery estimate: 3 to 5 business days'),
+                ),
+              ],
+            );
+          }
+        }
+  # No dart-parses: the answer is a report whose fixes are before/after fragments.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:accessibility'
+    - type: regex
+      value: '2\.5\.8'
+    - type: regex
+      value: '2\.1\.1'
+    # Upper-case severity labels are the skill's vocabulary, from the severity guide
+    # in references/audit-templates.md. The unaided model reaches for High/Medium/Low
+    # or axe-style Serious/Moderate.
+    - type: regex
+      value: 'CRITICAL'
+    - type: llm-rubric
+      value: >-
+        Every finding in the report carries a severity that is one of exactly
+        CRITICAL, MAJOR, or MINOR, and cites a numeric WCAG criterion ID together
+        with that criterion's name, for example "1.1.1 Non-text Content".
+    - type: llm-rubric
+      value: >-
+        Each finding shows the fix as before-and-after Flutter code, not as prose
+        advice alone.
+
+# The skill's flagship prohibition: "Never use bare GestureDetector for tap targets
+# ... GestureDetector is pointer-only and unreachable via keyboard or switch
+# access." The prompt asks for it by name, so complying is the failure mode.
+- description: accessibility-declines-gesture-detector-tap-target
+  vars:
+    prompt: >-
+      WCAG 2.2 AA, Android and iOS. I need a tappable card that opens the product
+      details page. Use GestureDetector for the tap handling, since the card has
+      custom padding and I don't want an ink splash on it. Show me the widget and
+      say whether there's anything wrong with that approach.
+  # No dart-parses: the rubric below expects the rejected GestureDetector to appear
+  # as a "before" fragment, and a bare widget expression with no trailing semicolon
+  # does not parse even wrapped in a function body.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:accessibility'
+    # The documented replacement list from the Gesture Detector core standard.
+    - type: regex
+      value: 'InkWell|ElevatedButton|TextButton|IconButton'
+    - type: regex
+      value: '2\.1\.1'
+    - type: llm-rubric
+      value: >-
+        The response refuses to use a bare GestureDetector as the tap target and
+        gives the reason: GestureDetector is pointer-only, so the card is unreachable
+        by keyboard or switch access. A response that supplies the GestureDetector
+        version as its recommendation, with or without caveats, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The recommended widget uses InkWell or a Material button widget as the tap
+        target. If GestureDetector appears anywhere in the response, it appears only
+        as the rejected "before" or "wrong" version.
+
+# Second prohibition: "Never use ExcludeSemantics on non-decorative content", plus
+# the MergeSemantics correctness rule from references/examples.md — merge the static
+# label/value pair only, keep the interactive child independently focusable.
+- description: accessibility-declines-exclude-semantics-on-actionable-content
+  vars:
+    prompt: >-
+      WCAG 2.2 AA on Android. TalkBack reads this row twice. Here it is:
+
+        Row(
+          children: [
+            const Text('Total: 42.00 USD'),
+            ElevatedButton(
+              onPressed: _submit,
+              child: const Text('Pay now'),
+            ),
+          ],
+        )
+
+      Fix it by wrapping the whole Row in ExcludeSemantics so the duplicate
+      announcement goes away.
+  # No dart-parses: both the pasted subject and the fix are bare Row expressions.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:accessibility'
+    - type: regex
+      value: 'MergeSemantics'
+    - type: regex
+      value: '1\.1\.1|4\.1\.2'
+    - type: llm-rubric
+      value: >-
+        The response refuses to wrap the row in ExcludeSemantics and says that doing
+        so strips the button from the semantics tree, leaving the action unreachable
+        for screen reader users. Complying with the ExcludeSemantics request does not
+        satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response offers the alternative of grouping only the static text content,
+        for example with MergeSemantics around the non-interactive children, while the
+        button stays its own independently focusable node. Wrapping the button itself
+        in MergeSemantics or ExcludeSemantics does not satisfy this.
+
+# iOS-specific remediation. Two skill facts drive this: the Cupertino Semantics core
+# standard ("Cupertino widgets ship with weaker semantic defaults ... Always wrap
+# them in Semantics(label:, value:, button:)") and the iOS reference's gotcha that
+# `liveRegion: true` does not auto-announce on iOS (issue #45968), so
+# SemanticsService.announce must also be called.
+- description: accessibility-wraps-cupertino-and-announces-on-ios
+  vars:
+    prompt: >-
+      iOS-only app, WCAG 2.2 AA. This tile has a sync toggle plus a status line that
+      updates when the upload finishes:
+
+        class SyncTile extends StatelessWidget {
+          const SyncTile({
+            required this.enabled,
+            required this.onChanged,
+            required this.status,
+            super.key,
+          });
+
+          final bool enabled;
+          final ValueChanged<bool> onChanged;
+          final String status;
+
+          @override
+          Widget build(BuildContext context) {
+            return Row(
+              children: [
+                const Text('Sync photos'),
+                CupertinoSwitch(value: enabled, onChanged: onChanged),
+                Text(status),
+              ],
+            );
+          }
+        }
+
+      Make it work properly with VoiceOver. Show the updated code and call out
+      anything iOS-specific.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:accessibility'
+    - type: regex
+      value: 'liveRegion'
+    - type: regex
+      value: 'SemanticsService\.announce'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The response states that on iOS a Semantics widget with liveRegion: true does
+        not announce the change on its own, so SemanticsService.announce must also be
+        called for VoiceOver to read the update. A response that only adds liveRegion
+        and treats that as sufficient does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The CupertinoSwitch is wrapped in a Semantics widget that supplies a label and
+        the toggle's on/off state, and the response explains that Cupertino widgets
+        have weaker semantic defaults than their Material equivalents. Leaving the
+        CupertinoSwitch bare, or swapping it for a Material Switch instead of wrapping
+        it, does not satisfy this.
+
+# WCAG 2.2 2.5.7: "Every dragging-based function must offer a non-drag alternative
+# on the same screen. `Dismissible` needs an explicit delete button." The pattern in
+# references/examples.md keeps the Dismissible and adds a tooltipped IconButton in
+# the ListTile's trailing slot.
+- description: accessibility-adds-non-drag-alternative-to-dismissible
+  vars:
+    prompt: >-
+      WCAG 2.2 AA, Android and iOS. Swiping is currently the only way to remove an
+      item from this list:
+
+        Dismissible(
+          key: ValueKey(item.id),
+          direction: DismissDirection.endToStart,
+          background: Container(color: Colors.red),
+          onDismissed: (_) => _delete(item),
+          child: ListTile(title: Text(item.name)),
+        )
+
+      Bring it up to conformance. Give me the whole list item as a widget class.
+      Output Dart code only.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:accessibility'
+    - type: regex
+      value: 'IconButton'
+    # Second grading of the load-bearing property. `IconButton` plus the rubric alone
+    # let a response that deletes the swipe and ships only a button score 0.8 and
+    # pass; the reference pattern keeps the Dismissible and adds the button beside it.
+    - type: regex
+      value: 'Dismissible\('
+    # An icon-only control needs a Tooltip or Semantics label of its own (Icon
+    # Buttons core standard, WCAG 4.1.2), so the alternative control must be named.
+    - type: regex
+      value: 'tooltip:|Semantics\('
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    - type: llm-rubric
+      value: >-
+        The code keeps the swipe-to-dismiss behavior and additionally exposes a
+        delete control that is visible without any drag or swipe, on the same list
+        item — for example an IconButton in the ListTile's trailing slot. Code that
+        only reveals a control after a swipe, or that removes the swipe and leaves no
+        second path, does not satisfy this.
+
+# Negative control — nothing else catches a skill firing where it should not.
+- description: accessibility-stays-out-of-plain-dart-work
+  vars:
+    prompt: >-
+      Write a Dart function `String formatDuration(Duration d)` that renders a
+      duration as mm:ss. No Flutter, no widgets. Return only the function.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:accessibility'
+    - type: not-regex
+      value: 'Semantics|semanticLabel|WCAG|disableAnimations|excludeFromSemantics'
+    - type: not-icontains
+      value: 'accessibility'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it answer the question" is unanswerable from the output alone.
+    - type: regex
+      value: 'String formatDuration\(Duration'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the formatting logic is
+        correct. It must not introduce accessibility, semantics, screen reader, or
+        WCAG concepts.

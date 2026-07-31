@@ -107,9 +107,27 @@ defaultTest:
   # passing no matter what the function returns. Isolation is held by the provider
   # keys above; see the README section on it.
 
+# All 15 skills. Split by what the harness can actually observe, because it changes how
+# hard a red case should be taken.
 tests:
+  # Graded on the artifact: the response is the code, theme, or audit under test.
   - file://tests/bloc.yaml
   - file://tests/testing.yaml
   - file://tests/navigation.yaml
   - file://tests/layered-architecture.yaml
+  - file://tests/accessibility.yaml
+  - file://tests/animations.yaml
+  - file://tests/internationalization.yaml
+  - file://tests/material-theming.yaml
+  - file://tests/static-security.yaml
+
+  # Graded on narrated decisions only. These skills do their real work through MCP tools or
+  # by mutating files, and neither happens here — no MCP server is configured and the fixture
+  # has no source. So a case asserts which tool the response says it would call, with which
+  # arguments, in which order, and what it refuses. Never assert that a tool was called.
   - file://tests/create-project.yaml
+  - file://tests/green-gate.yaml
+  - file://tests/license-compliance.yaml
+  - file://tests/ui-package.yaml
+  - file://tests/dart-flutter-sdk-upgrade.yaml
+  - file://tests/very-good-analysis-upgrade.yaml

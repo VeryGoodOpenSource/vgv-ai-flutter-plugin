@@ -19,12 +19,22 @@ docs/
 evals/
   README.md            # Case format, assertion reference, how to add a case
   promptfooconfig.yaml # Claude Agent SDK provider + the two ablation columns
-  tests/               # Eval cases, one YAML file per skill
+  tests/               # Eval cases, one YAML file per skill — all 15 covered, 100 cases
+    accessibility.yaml
+    animations.yaml
     bloc.yaml
     create-project.yaml
+    dart-flutter-sdk-upgrade.yaml
+    green-gate.yaml
+    internationalization.yaml
     layered-architecture.yaml
+    license-compliance.yaml
+    material-theming.yaml
     navigation.yaml
+    static-security.yaml
     testing.yaml
+    ui-package.yaml
+    very-good-analysis-upgrade.yaml
   assertions/
     dart-parses.js     # The one custom promptfoo assertion we own
   fixture/

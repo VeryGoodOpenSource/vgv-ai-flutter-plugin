@@ -1,0 +1,231 @@
+# Behavior cases for the internationalization skill.
+#
+# Grading this skill needs care, because half of what it covers is Flutter's own
+# documented pipeline and the bare model already knows it. `flutter_localizations`,
+# `intl`, `l10n.yaml`, `flutter gen-l10n` and ICU plural syntax all show up in the
+# sealed column, so asserting them measures Claude rather than the plugin. What the
+# skill adds on top, and what these cases grade, is:
+#
+#   - the l10n.yaml fingerprint from references/setup.md: `arb-dir: lib/l10n/arb`,
+#     `nullable-getter: false`, `preferred-supported-locales` (Flutter's own docs use
+#     `lib/l10n` and set neither of the other two)
+#   - the `context.l10n` BuildContext extension over `AppLocalizations.of(context)`
+#   - `EdgeInsetsDirectional` / `matchTextDirection` for RTL
+#   - the two prohibitions: no third-party i18n package, and no `AppLocalizations`
+#     inside a shared widget package
+#
+# Prompts are self-contained. The fixture has no source in lib/, so a prompt about
+# "my CartSummary" would earn a refusal and every grader would fail for an unrelated
+# reason. Paste the widget in rather than adding source to evals/fixture/.
+
+- description: internationalization-sets-up-l10n-pipeline
+  vars:
+    prompt: >-
+      This app has no localization yet. Set up Flutter localization for English and
+      Spanish, and show me how a widget should read a translated string. Show every
+      file I need.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:internationalization'
+    # The three l10n.yaml keys from references/setup.md. Flutter's own setup docs put
+    # ARB files in lib/l10n and set neither nullable-getter nor
+    # preferred-supported-locales, so each of these is a plugin fingerprint rather
+    # than Flutter common knowledge.
+    - type: regex
+      value: 'arb-dir:\s*lib/l10n/arb'
+    - type: regex
+      value: 'nullable-getter:\s*false'
+    - type: regex
+      value: 'preferred-supported-locales'
+    # The extension is a Core Standard and is written out verbatim in SKILL.md.
+    # Graded twice: once for its declaration here, once for its use at the call site
+    # in the rubric below.
+    - type: regex
+      value: 'get l10n =>\s*AppLocalizations\.of\(this\)'
+    - type: llm-rubric
+      value: >-
+        The example widget reads its string as `context.l10n.<key>`. A widget that
+        calls `AppLocalizations.of(context).<key>` at the point of use does not
+        satisfy this, even if an extension is declared elsewhere in the response.
+
+- description: internationalization-refuses-third-party-i18n-package
+  vars:
+    prompt: >-
+      I want to use easy_localization for my app's translations, the setup looks
+      simpler than Flutter's built-in one. Add it to my pubspec and show me the
+      config.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:internationalization'
+    # Matches a real pubspec dependency line, not the package name in prose: a
+    # response that declines has to name easy_localization to decline it.
+    - type: not-regex
+      value: 'easy_localization:\s*[\^~>=\d]'
+    - type: regex
+      value: 'flutter_localizations'
+    - type: llm-rubric
+      value: >-
+        The response declines to add a third-party localization package and says
+        Flutter's built-in localization system should be used instead, rather than
+        complying with the request as asked.
+    - type: llm-rubric
+      value: >-
+        The response offers the concrete built-in alternative: ARB files as the single
+        source of truth, plus generated localizations (l10n.yaml and/or
+        `flutter gen-l10n`).
+
+- description: internationalization-localizes-hardcoded-strings-with-plural
+  vars:
+    prompt: >-
+      Here is a widget in my app:
+
+      class CartSummary extends StatelessWidget {
+        const CartSummary({required this.itemCount, required this.userName, super.key});
+
+        final int itemCount;
+        final String userName;
+
+        @override
+        Widget build(BuildContext context) {
+          return Column(
+            children: [
+              Text('Welcome back, $userName'),
+              Text('You have $itemCount items in your cart'),
+              ElevatedButton(onPressed: () {}, child: const Text('Checkout')),
+            ],
+          );
+        }
+      }
+
+      The app already has English and Spanish ARB files wired up. Localize this
+      widget, and make the item count read correctly for zero, one and many items.
+      Show the ARB entries and the updated widget.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:internationalization'
+    # The Core Standard is graded from both sides: the extension must be used, and
+    # the form SKILL.md lists under "Avoid" must not appear at a call site. The
+    # extension's own body reads `AppLocalizations.of(this)`, so declaring it does not
+    # trip the not-regex.
+    - type: regex
+      value: 'context\.l10n\.'
+    - type: not-regex
+      value: 'AppLocalizations\.of\(context\)'
+    - type: regex
+      value: 'plural,'
+    # Step 2 of the skill's Pluralization workflow: the placeholder metadata must
+    # declare the count as an int. An ARB plural entry without it does not generate.
+    - type: regex
+      value: '"type"\s*:\s*"int"'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+
+- description: internationalization-uses-directional-insets-for-rtl
+  vars:
+    prompt: >-
+      We are shipping this app in Arabic. Here is a tile from it:
+
+      class MessageTile extends StatelessWidget {
+        const MessageTile({required this.label, super.key});
+
+        final String label;
+
+        @override
+        Widget build(BuildContext context) {
+          return Padding(
+            padding: const EdgeInsets.only(left: 16, right: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.arrow_forward),
+                Text(label),
+                const Image(image: AssetImage('assets/swipe_hint.png')),
+              ],
+            ),
+          );
+        }
+      }
+
+      Make it lay out correctly in Arabic. Output Dart code only, and do not repeat
+      the original version back to me.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:internationalization'
+    # Core Standard, graded from both sides: the directional form must appear and the
+    # visual form the skill forbids for direction-sensitive padding must be gone.
+    # The prompt bars repeating the original, so the not-regex cannot fire on an echo
+    # of the pasted widget. `EdgeInsets\.only\(` does not match inside
+    # `EdgeInsetsDirectional.only(`, so a correct answer cannot trip it either.
+    - type: regex
+      value: 'EdgeInsetsDirectional\.only\('
+    - type: not-regex
+      value: 'EdgeInsets\.only\(\s*left:'
+    # references/directionality.md: images do not mirror by default. Swapping the
+    # padding while leaving the asset unmirrored is the half-answer this catches.
+    - type: regex
+      value: 'matchTextDirection:\s*true'
+    - type: javascript
+      value: file://assertions/dart-parses.js
+
+- description: internationalization-keeps-shared-package-widget-l10n-free
+  vars:
+    prompt: >-
+      My design system lives in a separate package called app_ui. Here is a button
+      from it:
+
+      class PrimaryButton extends StatelessWidget {
+        const PrimaryButton({required this.onPressed, super.key});
+
+        final VoidCallback onPressed;
+
+        @override
+        Widget build(BuildContext context) {
+          return FilledButton(onPressed: onPressed, child: const Text('Continue'));
+        }
+      }
+
+      Give it a localized label. Add AppLocalizations to app_ui and read the string
+      with AppLocalizations.of(context) inside build, so every app using the button
+      gets the translation for free.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:internationalization'
+    # The documented alternative, graded mechanically: the shared widget grows a
+    # String field, and the app-level call site supplies it through the extension.
+    - type: regex
+      value: 'final String \w+;'
+    - type: regex
+      value: 'context\.l10n\.'
+    - type: llm-rubric
+      value: >-
+        The response refuses to make the shared design-system package depend on
+        AppLocalizations, rather than doing what was asked.
+    - type: llm-rubric
+      value: >-
+        The shared widget receives its label as a constructor parameter, and a
+        separate app-level snippet passes the localized string in when constructing
+        it.
+    - type: javascript
+      value: file://assertions/dart-parses.js
+
+# Negative control — nothing else catches a skill firing where it should not. A
+# string-manipulation task is the tempting case: it is about user-facing text without
+# being about localization.
+- description: internationalization-stays-out-of-plain-string-utilities
+  vars:
+    prompt: >-
+      Write a plain Dart function that truncates a String to a maximum length and
+      appends an ellipsis when it had to cut. No Flutter. Return only the function.
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:internationalization'
+    - type: not-regex
+      value: 'AppLocalizations|context\.l10n|gen-l10n|EdgeInsetsDirectional|\.arb\b'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it write the function" is unanswerable from the output alone.
+    - type: regex
+      value: 'String \w+\('
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the truncation logic is
+        correct. It must not introduce localization, translation, ARB files, or text
+        directionality.

@@ -186,29 +186,46 @@ into the prompt rather than adding source to the fixture.
 
 ```bash
 P="npx promptfoo@latest"
-$P eval -c evals/promptfooconfig.yaml                          # all 33, both columns
+$P eval -c evals/promptfooconfig.yaml                          # all 100, both columns
 $P eval -c evals/promptfooconfig.yaml --filter-pattern bloc    # one skill
 $P eval -c evals/promptfooconfig.yaml --repeat 2 --no-cache    # is a red case real?
 $P eval -c evals/promptfooconfig.yaml --retry-errors           # re-run 529s only
 $P view                                                        # the side-by-side
 ```
 
-**Read the per-column split, not promptfoo's total.** The sealed column is meant to
-fail, so a healthy full run reports something like "39 passed, 27 failed". Write the run
-to the gitignored `evals/.runs/`, then split it:
+**Read the per-column split, not promptfoo's total.** The sealed column is meant to fail,
+so roughly a third of the 200 results failing is the healthy shape, not a regression. Write
+the run to the gitignored `evals/.runs/`, then split it:
 
 ```bash
 $P eval -c evals/promptfooconfig.yaml --no-table -o evals/.runs/latest.json
 node -e 'const r=require("./evals/.runs/latest.json"),c={};for(const x of r.results.results){const l=x.provider.label;c[l]??={n:0,pass:0};c[l].n++;c[l].pass+=x.success?1:0}console.table(c)'
 ```
 
-Expect `with-skill` at **31–33 of 33** and `sealed-baseline` around **8 of 33**. The
-plugin column is not reliably perfect, and the variance is routing rather than content:
-one measured run had 22 of 26 positive cases activate their skill, and the two failures
-both cascaded from `Actual skills: (none)`. A red case in that column is worth a
-`--repeat 3` before it is worth an edit. If the sealed column climbs toward the other
-one, isolation has broken rather than the model having improved — that has already
-happened twice here.
+**Only 33 of the 100 cases have ever been run.** The five original skills have a measured
+baseline; the ten added later do not, so treat their first run as calibration rather than
+as a verdict on those skills.
+
+Measured baseline, first full run of the original five skills, negative controls excluded
+because a sealed model passes `not-skill-used` for free:
+
+| Skill | `with-skill` | `sealed` |
+| ----- | ------------ | -------- |
+| navigation | 6/6 | 0/6 |
+| layered-architecture | 6/6 | 0/6 |
+| create-project | 5/6 | 0/6 |
+| bloc | 5/5 | 1/5 |
+| testing | 4/5 | 0/5 |
+| **total** | **26/28** | **1/28** |
+
+That run took 12m37s and 66,904 tokens for 66 results, and the sealed column made zero
+tool calls.
+
+The plugin column is not reliably perfect, and the variance is routing rather than content.
+Both misses in that run cascaded from `Actual skills: (none)`, and one of them passed 3/3 on
+a `--repeat`. So a red case there is worth a `--repeat 3` before it is worth an edit. If the
+sealed column climbs toward the other one, isolation has broken rather than the model having
+improved — that has already happened twice here.
 
 Two things about the numbers. promptfoo caches by default, so `--no-cache` is needed
 for fresh generations, and `--repeat N` shows the noise floor. And a `529 Overloaded`
@@ -216,8 +233,10 @@ scores 0 with no failing assertion, which is indistinguishable from a content fa
 unless you check `res.error` — one full run hit 14 of them, so always follow up with
 `--retry-errors` before believing a failure count.
 
-Expect roughly $0.10–0.20 and 10–30 seconds per case per provider, so a full run of 33
-cases across both columns lands around $7–13 of equivalent usage.
+Expect roughly $0.10–0.20 and 10–30 seconds per case per provider, so a full run of 100
+cases across both columns lands around $20–40 of equivalent usage and well over half an
+hour. Use `--filter-pattern <skill>` while iterating; a full run is a release-time check,
+not an edit-loop one.
 
 These are not a merge gate, and nothing here runs in CI yet — run them locally before
 a PR that changes a skill. They are non-deterministic and a single rubric verdict can
@@ -228,11 +247,11 @@ regression. `--repeat 2` is the cheapest way to tell a real failure from noise.
 
 | Not covered | Why |
 | ----------- | --- |
-| **Judge calibration** | Roughly 50 assertions are `llm-rubric` with no human-labelled gold set and no measured agreement. Strong judges reach roughly 80% agreement with humans, and raw agreement can read 90% while a judge does nothing meaningful. Until someone hand-labels a sample, rubric verdicts are unverified — and `llm-rubric` does not calibrate itself |
-| **Tool execution** | No MCP servers are configured, so skills whose real job is calling tools — `create-project`, `green-gate`, `license-compliance` — are graded on the decisions they narrate |
+| **Judge calibration** | 164 assertions are `llm-rubric` with no human-labelled gold set and no measured agreement. Strong judges reach roughly 80% agreement with humans, and raw agreement can read 90% while a judge does nothing meaningful. Until someone hand-labels a sample, rubric verdicts are unverified — and `llm-rubric` does not calibrate itself |
+| **Tool execution** | No MCP servers are configured, so the six skills whose real job is calling tools or mutating files — `create-project`, `green-gate`, `license-compliance`, `ui-package`, `dart-flutter-sdk-upgrade`, `very-good-analysis-upgrade` — are graded only on the decisions they narrate. Their numbers are weaker evidence than the other nine skills' by construction |
 | **Whether the code compiles** | `dart_parses` proves syntax only. Snippets reference classes absent from the fixture |
 | **Judge independence** | Generator and rubric grader are the same model family and may share blind spots |
-| **Skills without cases** | 5 of 15 skills have behavior cases. Research suggests 100–200 cases; there are 33 |
+| **Unmeasured cases** | All 15 skills have cases, but 67 of the 100 have never been run. Only the original five skills have a measured baseline |
 | **Stable routing** | Whether a skill activates is itself nondeterministic. `testing-declines-mockito` routed 3 of 3 on one pass and failed to route on the next, taking every downstream assertion with it. This is why `skill-used` is its own assertion rather than inferred from content |
 | **Prose in a `SKILL.md`** | Deliberate. An earlier version asserted about a hundred `contains` patterns against skill bodies, so a copy-edit failed the gate while teaching exactly the same thing |
 | **The skills' own surfaces** | Nothing verifies that a name in `allowed-tools` still exists, that a markdown link to a reference file resolves, or that `name` agrees with the directory. See below |
@@ -250,9 +269,12 @@ by convention alone:
   `tools` cannot scope Bash by command, so a read-only agent has to omit write tools
   entirely
 
-The failure mode to watch for is a Claude Code or MCP release renaming a tool. A skill
-still naming the old one breaks silently, and the ten skills without cases would show
-no symptom at all.
+The failure mode to watch for is a Claude Code or MCP release renaming a tool. A skill still
+naming the old one breaks silently. Cases catch this only where the skill's output changes as
+a result, so the six narration-graded skills are the weak spot: they describe the tool they
+would call, and a case asserting that description keeps passing after the tool ceases to
+exist. `green-gate` shipped exactly that bug, naming a `mcp__dart__dart_format` tool the Dart
+MCP server never exposed.
 
 ### Adding a case
 

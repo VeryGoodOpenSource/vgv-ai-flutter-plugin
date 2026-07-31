@@ -1,0 +1,315 @@
+# Behavior cases for the dart-flutter-sdk-upgrade skill.
+#
+# This skill's real job is editing files (`.github/workflows/*.yml`, `pubspec.yaml`),
+# running `pub get` / `analyze`, and checking the diff before a PR. None of that can
+# happen here: the fixture is a bare app with no `.github/`, no monorepo and no
+# lockfile, and neither provider has Edit, Bash, or MCP tools. So every case grades
+# the decisions the response narrates — which key it writes in which file, which
+# version format goes where, what it verifies, and what it refuses to include in the
+# PR — never a tool call or a mutated file.
+#
+# Two consequences for anything added here.
+#
+# First, do not assert a Dart-for-Flutter version mapping as fact. The skill resolves
+# it from <https://docs.flutter.dev/install/archive>, and neither column can fetch
+# that page, so "Flutter 3.41.0 ships Dart 3.11.0" is unknowable rather than wrong.
+# Where a case needs both numbers to grade a file edit, the prompt supplies both; the
+# one case that withholds the Dart version grades the lookup itself, not the answer.
+#
+# Second, these responses are YAML, not Dart, so `assertions/dart-parses.js` does not
+# apply to any case in this file.
+#
+# The load-bearing distinction throughout — and the thing the sealed column gets
+# wrong — is that the same upgrade is written three different ways: CI Flutter is
+# `MAJOR.MINOR.x` (literal wildcard, no caret), CI Dart is an exact patch under a
+# `dart_sdk` key, and pubspec is `^MAJOR.MINOR.PATCH`.
+
+- description: dart-flutter-sdk-upgrade-pins-ci-flutter-with-patch-wildcard
+  vars:
+    # The pasted workflow uses `flutter_channel: stable` on purpose. A workflow that
+    # already read `flutter_version: "3.35.x"` would hand both columns the format the
+    # skill exists to teach, and the case would measure copying rather than the skill.
+    prompt: >-
+      Bump this package's CI to Flutter 3.41.0. Here is
+      .github/workflows/main.yaml in full:
+
+
+      name: ci
+
+      on: [pull_request, push]
+
+      jobs:
+        build:
+          uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
+          with:
+            flutter_channel: stable
+
+      Show me the updated file and explain the version format you chose.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+    # `[^\n^]{0,3}` absorbs the optional quoting — `flutter_version: "3.41.x"` and
+    # `flutter_version: 3.41.x` both count — while excluding `^` from the class so
+    # `flutter_version: "^3.41.x"` fails. The skill's CI format carries no caret.
+    #
+    # No mirroring `not-regex` on `3.41.0`: this prompt asks the model to *explain the
+    # format it chose*, so a correct answer routinely writes the exact patch in order
+    # to reject it, and the negative would fail the right answer. The exact-patch
+    # mistake is caught by this regex failing plus the rubric below.
+    - type: regex
+      value: 'flutter_version:[^\n^]{0,3}3\.41\.x'
+    - type: llm-rubric
+      value: >-
+        The CI Flutter version is written with a literal `x` in the patch position, and
+        the response says that wildcard is what lets CI resolve to the latest patch
+        release automatically. Writing an exact patch such as 3.41.0, or a caret such
+        as ^3.41.0, in the CI workflow does not satisfy this.
+    # Graded on the Flutter-is-not-Dart distinction rather than on volunteering a
+    # second work item. The prompt asks about the CI file, so demanding that the
+    # response also propose pubspec edits would fail a defensibly scoped answer, and
+    # this case allows no misses.
+    - type: llm-rubric
+      value: >-
+        The response distinguishes the Flutter release version from the Dart SDK version
+        bundled with it, and says the pubspec.yaml `sdk:` constraint takes that Dart
+        version rather than the Flutter version. Treating the two as the same number, or
+        writing the Flutter version as the Dart constraint, fails.
+
+- description: dart-flutter-sdk-upgrade-uses-dart-sdk-key-for-pure-dart-package
+  vars:
+    # The workflow body is described rather than pasted: `dart_sdk` versus
+    # `flutter_version`, and `dart_package.yml` versus `flutter_package.yml`, are the
+    # two things the skill knows and a bare model guesses at. Pasting the file would
+    # give both away.
+    prompt: >-
+      Move this package to Dart 3.11.0. It is a pure Dart package — no Flutter
+      dependency anywhere. Its CI is one .github/workflows/main.yaml that calls the
+      shared VeryGoodOpenSource/very_good_workflows reusable workflow. Here is the
+      pubspec.yaml:
+
+
+      name: my_json_parser
+
+      description: JSON helpers.
+
+      version: 1.4.0
+
+      environment:
+        sdk: ^3.8.0
+
+      dependencies:
+        meta: ^1.15.0
+
+      Show me both files after the change.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+    # The key name and the format in one pattern: `dart_sdk`, exact patch, no caret and
+    # no `.x` wildcard. `^` is excluded from the character class rather than bounded by
+    # length — with a plain `[^\n]{0,3}` the wrong answer `dart_sdk: "^3.11.0"` matches,
+    # because ` "^` is exactly three characters.
+    - type: regex
+      value: 'dart_sdk:[^\n^]{0,3}3\.11\.0'
+    # The pubspec form of the same version differs from the CI form. Both are asserted
+    # because getting one right and the other wrong is the common failure. `\b` is what
+    # keeps this off `dart_sdk:` — `_` and `s` are both word characters, so there is no
+    # boundary inside `dart_sdk`, and without it `dart_sdk: "^3.11.0"` satisfies the
+    # pubspec assertion too and a caret-in-CI answer scores full marks.
+    - type: regex
+      value: '\bsdk:[^\n]{0,3}\^3\.11\.0'
+    - type: regex
+      value: 'dart_package\.yml'
+    - type: llm-rubric
+      value: >-
+        The environment constraints the response writes for this package contain an
+        `sdk:` entry only, with no `flutter:` entry alongside it. Mentioning `flutter:`
+        solely to say it does not belong in a pure Dart package still satisfies this;
+        actually adding a Flutter constraint to the environment block fails.
+
+- description: dart-flutter-sdk-upgrade-resolves-bundled-dart-version-before-editing
+  vars:
+    # The only case that withholds the Dart version. Neither column can fetch the
+    # release archive, so the graded behavior is asking or citing the source rather
+    # than answering with a number.
+    prompt: >-
+      Bump this Flutter package to Flutter 3.41.0. Here is its pubspec.yaml
+      environment block:
+
+
+      environment:
+        sdk: ^3.9.0
+        flutter: ^3.35.0
+
+      Tell me exactly what you will change before you change anything.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+    # The documented source, in either the URL or the named form.
+    - type: regex
+      value: 'install/archive|release archive|docs\.flutter\.dev'
+    - type: llm-rubric
+      value: >-
+        The response states that the Dart SDK version bundled with a Flutter release is
+        a different version number from the Flutter release itself, and that the correct
+        Dart version for the target Flutter release has to be looked up in Flutter's
+        published release list or supplied by the user. Asserting a bundled Dart version
+        as a remembered fact, or reusing the Flutter version as the Dart version, fails.
+    - type: llm-rubric
+      value: >-
+        The response confirms the resolved Flutter and Dart target versions with the
+        user before editing any files, rather than proceeding straight to edits.
+
+- description: dart-flutter-sdk-upgrade-declines-dependency-bumps-and-lint-fixes
+  vars:
+    # The prohibition case. Both target versions are supplied so the in-scope half of
+    # the change is still gradeable mechanically.
+    prompt: >-
+      I am bumping this package to Flutter 3.41.0 (Dart 3.11.0). While you are in the
+      pubspec, also bump http from 1.2.0 to 1.5.0, and fix the two new analyzer
+      warnings the SDK bump causes in lib/main.dart, so the upgrade PR lands with CI
+      green. Here is the pubspec.yaml:
+
+
+      name: my_app
+
+      version: 1.0.0
+
+      environment:
+        sdk: ^3.9.0
+        flutter: ^3.35.0
+
+      dependencies:
+        flutter:
+          sdk: flutter
+        http: ^1.2.0
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+    - type: llm-rubric
+      value: >-
+        The response refuses to bump the third-party dependency version as part of this
+        change, on the grounds that an SDK upgrade contains only SDK constraint and CI
+        version changes. Producing the requested dependency bump, with or without a
+        caveat attached, fails.
+    - type: llm-rubric
+      value: >-
+        The response declines to fix the analyzer warnings here, and says it would
+        report them instead so they are handled outside this change. Fixing them, or
+        offering to fix them as part of the same change, fails.
+    # Proves it still did the in-scope work rather than refusing wholesale. `\b` keeps
+    # it off keys that end in `flutter`, and the caret is required: the pubspec form is
+    # `^MAJOR.MINOR.PATCH`, never the CI wildcard.
+    - type: regex
+      value: '\bflutter:[^\n]{0,3}\^3\.41\.0'
+    # The mechanical mirror of the first rubric: the forbidden edit must not appear in
+    # pubspec form anywhere in the answer.
+    - type: not-regex
+      value: 'http:[^\n]{0,3}\^?1\.5\.0'
+
+- description: dart-flutter-sdk-upgrade-reports-pub-get-conflict-instead-of-resolving
+  vars:
+    prompt: >-
+      I am doing the Flutter 3.41.0 / Dart 3.11.0 bump and I already changed the
+      environment block to sdk: ^3.11.0 and flutter: ^3.41.0. Now flutter pub get
+      fails:
+
+
+      Because my_app depends on very_good_analysis 5.1.0 which requires SDK version
+      ^3.5.0, version solving failed.
+
+
+      Get me unblocked.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+    - type: llm-rubric
+      value: >-
+        The response does not resolve the version conflict by raising or loosening the
+        conflicting dependency's constraint as part of this change. Editing
+        very_good_analysis to a newer version and moving on fails, whether or not the
+        edit is described as small.
+    - type: llm-rubric
+      value: >-
+        The response reports the conflict specifically — naming the package involved and
+        the SDK constraint that clashes — rather than only saying that dependency
+        resolution failed.
+    - type: llm-rubric
+      value: >-
+        The response hands the decision back to the user, or says the dependency change
+        belongs outside this SDK constraint change, rather than deciding on the user's
+        behalf and continuing.
+
+- description: dart-flutter-sdk-upgrade-updates-every-pubspec-and-checks-diff-scope
+  vars:
+    prompt: >-
+      Monorepo, moving everything to Flutter 3.41.0 (Dart 3.11.0). It has
+      packages/api_client (pure Dart, no Flutter dependency), packages/app_ui (a
+      Flutter package), and apps/mobile (the Flutter app), plus a single
+      .github/workflows/main.yaml calling the shared VeryGoodOpenSource
+      /very_good_workflows workflows. Walk me through the change: which files you edit,
+      what you run to verify it, and how you check the PR before opening it. Do not
+      edit anything yet.
+  assert:
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+    - type: llm-rubric
+      value: >-
+        The plan edits the pubspec.yaml of each of the three packages individually, and
+        says the shared CI workflow file only needs updating once. A plan that updates a
+        single root pubspec, or that implies one CI edit covers the pubspec constraints,
+        fails.
+    - type: llm-rubric
+      value: >-
+        Verification runs a dependency resolution step (pub get) and an analyze step
+        from each package's own directory, not once at the repository root.
+    # The documented scope check. Both halves matter: `git diff` with a name-only
+    # listing is what the skill prescribes to prove the PR touched nothing else.
+    - type: regex
+      value: 'git diff[^\n]{0,12}--name-only'
+    - type: llm-rubric
+      value: >-
+        Before opening the PR the response checks that the changed-file list contains
+        only workflow YAML files and pubspec.yaml files, and states that anything else
+        appearing in the diff does not belong in this PR.
+
+# Negative control. Deliberately adjacent — it is a pubspec edit with version numbers
+# in it — so a skill that fires on any pubspec work is caught here rather than
+# inferred.
+- description: dart-flutter-sdk-upgrade-stays-out-of-dependency-edits
+  vars:
+    prompt: >-
+      Add dio version 5.7.0 to this pubspec's dependencies. Return only the updated
+      file.
+
+
+      name: my_app
+
+      version: 1.0.0
+
+      environment:
+        sdk: ^3.9.0
+        flutter: ^3.35.0
+
+      dependencies:
+        flutter:
+          sdk: flutter
+        http: ^1.2.0
+  assert:
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+    - type: not-regex
+      value: 'flutter_version|dart_sdk|very_good_workflows|install/archive'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it add the dependency" is unanswerable from the output alone.
+    - type: regex
+      value: 'dio:[^\n]{0,3}\^?5\.7\.0'
+    # The SDK constraints must come back untouched: an unasked-for bump is this skill
+    # bleeding into work that never requested it. `\b` so a `dart_sdk:` line — which
+    # would itself be a leak — cannot satisfy this.
+    - type: regex
+      value: '\bsdk:[^\n]{0,3}\^3\.9\.0'
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the dependency version is
+        correct. It must not propose changing the Dart or Flutter SDK constraints, and
+        must not raise CI Flutter versions, SDK upgrades, or upgrade PR scope.
