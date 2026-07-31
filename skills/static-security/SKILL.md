@@ -5,7 +5,10 @@ description: >
   not pen-testing or runtime analysis.
 when_to_use: >
   Use when reviewing or writing code that handles secrets, user data, network
-  communication, authentication, or cryptography.
+  communication, authentication, or cryptography. Also use when adding or reviewing
+  validation on user input — login, sign-up, payment, or any form whose values reach a
+  repository or an API — including prompts like "add validation to this form",
+  "nothing is checked before this hits the API", or "validate these fields".
 argument-hint: "[file-or-directory]"
 allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
 effort: high
@@ -28,6 +31,19 @@ Apply these standards to ALL Flutter security work:
 - **No sensitive data in logs** — `print()`, `log()`, and `debugPrint()` output is readable on-device and in crash reporting tools
 - **Keep dependencies free of known vulnerabilities** — never suppress security advisories without documented justification; scan `pubspec.lock` with `osv-scanner` before every release
 - **Set `android:allowBackup="false"`** — the Android default silently allows `adb backup` to extract app data, bypassing `package:flutter_secure_storage`
+- **Label every finding `Critical`, `Warning`, or `Note`** — these three are the only severity tiers; don't substitute a scheme of your own
+
+## Severity Triage
+
+Every finding reported by this skill carries one of three severity labels. Write the label on the finding itself so a reader can sort the report without re-reading it, and fix `Critical` findings before the build ships.
+
+| Severity | Examples                                                                                                                                                     |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Critical | Hardcoded API key or token; `badCertificateCallback` bypass; JWT in `SharedPreferences`; sensitive data in logs                                              |
+| Warning  | Missing certificate pinning on auth endpoints; `Random()` used for session IDs; no `package:formz` validation before API calls; `android:allowBackup="true"` |
+| Note     | Missing Dart obfuscation; `dart pub outdated` shows available patches; low-pub-point transitive dependency with broad permissions                            |
+
+Do not substitute another scheme. A report that grades findings High/Medium/Low or by CVSS score cannot be compared against a previous audit of the same codebase.
 
 ## Secrets & API Keys
 
@@ -159,6 +175,10 @@ ElevatedButton(
 
 ```dart
 // ✅ Validated FormzInput values — only valid data reaches the Bloc
+import 'package:formz/formz.dart';
+
+enum EmailValidationError { empty, invalid }
+
 class Email extends FormzInput<String, EmailValidationError> {
   const Email.pure() : super.pure('');
   const Email.dirty([super.value = '']) : super.dirty();
@@ -171,16 +191,25 @@ class Email extends FormzInput<String, EmailValidationError> {
     return null;
   }
 }
-
-// In the widget — only submit when the form is valid
-if (state.status.isValidated) {
-  context.read<AuthBloc>().add(
-    LoginRequested(email: state.email.value, password: state.password.value),
-  );
-}
 ```
 
-Use `package:formz` for all form validation. Define a `FormzInput` subclass per field with explicit validation rules and length limits.
+```dart
+// ✅ In the widget — the submit callback is gated on validity and reads the
+// validated values off state, never off a TextEditingController
+ElevatedButton(
+  onPressed: state.isValid
+      ? () => context.read<AuthBloc>().add(
+            LoginRequested(
+              email: state.email.value,
+              password: state.password.value,
+            ),
+          )
+      : null,
+  child: const Text('Login'),
+);
+```
+
+Use `package:formz` for all form validation. Define a `FormzInput` subclass per field with explicit validation rules and length limits. Feed each field into the Bloc from the `onChanged` callback so state holds the validated value, and read the submitted values from state — a `TextFormField` `validator` alone leaves the raw controller text as the value that reaches the API.
 
 ## Logging & Error Exposure
 
@@ -226,4 +255,4 @@ See [references/supply-chain.md](references/supply-chain.md) for advisory detect
 
 ## Additional Resources
 
-See [references/packages.md](references/packages.md) for the package quick reference and severity triage guide. See [references/crypto.md](references/crypto.md) for certificate pinning implementation, biometric authentication example, and password hashing with `package:dart_crypt`.
+See [references/packages.md](references/packages.md) for the package quick reference. See [references/crypto.md](references/crypto.md) for certificate pinning implementation, biometric authentication example, and password hashing with `package:dart_crypt`.
