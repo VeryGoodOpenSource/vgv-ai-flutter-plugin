@@ -22,7 +22,7 @@ when_to_use: >
   request spans multiple gates, asks to fix and re-verify until clean, or asks
   how one of the four gates is configured.
 argument-hint: "[directory]"
-allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__very-good-cli__test
+allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__dart__dart_format mcp__very-good-cli__test
 model: sonnet
 effort: medium
 ---
@@ -45,37 +45,17 @@ coverage-pattern guidance.
 
 Apply these to ALL green-gate work:
 
-- **MCP first, always** — a gate that has an MCP tool runs through it, never through
-  its Bash equivalent. Analyze via `mcp__dart__analyze_files`, test and coverage via
-  `mcp__very-good-cli__test`. The Bash test path (`very_good test`, `flutter test`,
-  `dart test`) is hook-blocked by `block-cli-workarounds.sh` and will be denied;
-  `dart analyze` via Bash is redundant with the MCP tool.
-- **Format is the one documented exception** — no MCP tool can format, so the format
-  gate runs `dart format` via Bash. This is permitted: `block-cli-workarounds.sh`
-  denies only `flutter`/`dart create`, `flutter`/`dart test`, and `very_good
-  create`/`test`/`packages`. **Bash is reserved for `dart format` and parsing
-  `coverage/lcov.info` — nothing else.**
-
-  Do not be misled by `dart mcp-server --help`. Its `--enable`/`--disable` flags name
-  `dart_format` and `run_tests` as features, but the server does not advertise either
-  as a tool. On Dart 3.12.1 it advertises 13 tools, none of them a formatter or a test
-  runner — which is also why the test gate goes through `mcp__very-good-cli__test`.
-
-  Verify rather than assume, by asking the server directly:
-
-  ```bash
-  { echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"p","version":"1"}}}'; sleep 2; \
-    echo '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}'; sleep 1; \
-    echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'; sleep 4; } \
-    | dart mcp-server 2>/dev/null | grep -o '"name":"[a-z_]*"' | sort -u
-  ```
-
-  If a future release does advertise a formatting tool, move this gate to it and
-  delete this exception.
+- **MCP tools only, never the Bash equivalent** — analyze via
+  `mcp__dart__analyze_files`, format via `mcp__dart__dart_format`, test and coverage
+  via `mcp__very-good-cli__test`. Every gate has an MCP tool; none of them runs
+  through a shell command. The Bash test path (`very_good test`, `flutter test`,
+  `dart test`) is hook-blocked by `block-cli-workarounds.sh` and will be denied, and
+  `dart analyze` / `dart format` via Bash are redundant with the MCP tools.
+  **Bash is reserved for parsing `coverage/lcov.info` — nothing else.**
 - **A plan-only request is still this skill's job** — when the user asks which
   tools, which arguments, or what order the gates run in and does not want a run
   yet, answer from this skill: the same tool calls (`mcp__dart__analyze_files`
-  with `applyFixes: true`, `dart format .` via Bash, `mcp__very-good-cli__test`
+  with `applyFixes: true`, `mcp__dart__dart_format`, `mcp__very-good-cli__test`
   with the coverage triple), in gate order, with the precedence rule that makes
   the order matter. Never substitute an improvised shell plan of `flutter
   analyze` / `flutter test --coverage` for the tools the loop actually runs.
@@ -111,7 +91,7 @@ For each package root (see **Recursive / Monorepo**), run this algorithm:
 2. **Analyze** — run `mcp__dart__analyze_files` with `applyFixes: true`. If any
    errors remain, this is the active gate. Fix, record the fingerprint, go to
    step 7.
-3. **Format** — run `dart format .` via Bash from the package root. It reformats
+3. **Format** — run `mcp__dart__dart_format` on the package root. It reformats
    the whole package in place. If it reports changed files, the gate is now
    green for the next round.
 4. **Test** — only if analyze is green this round. Run `mcp__very-good-cli__test`
@@ -150,7 +130,7 @@ Fingerprint keys per gate:
 | Gate         | Fingerprint                                                  |
 | ------------ | ------------------------------------------------------------ |
 | **Analyze**  | Sorted set of `diagnosticCode @ file:line`                   |
-| **Format**   | Set of files `dart format` would change (empty = green)      |
+| **Format**   | Set of files the format gate rewrote (empty = green)         |
 | **Test**     | Set of failing test IDs / names                              |
 | **Coverage** | Observed percentage + sorted set of under-covered `SF` files |
 
@@ -196,15 +176,17 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
 
 ## Format Gate
 
-- Run `dart format .` via Bash from the package root each round. It formats the
-  **whole package** in place, so the gate is observation-based (it catches manual
-  edits and pre-existing drift, not just files the loop edited) and self-fixing
-  (one call leaves the package green; a second call reports zero changes).
-- **Read the changed count, not the exit code** — in-place `dart format .` exits
-  `0` whether or not it rewrote anything, so the exit code proves nothing. It
-  prints `Formatted N files (M changed)`; the gate is green when `M` is `0`. Use
-  `dart format --output=none --set-exit-if-changed .` when a non-writing check is
-  wanted instead — it exits `1` on drift and mirrors what CI runs.
+- Run `mcp__dart__dart_format` each round. `roots` takes the same
+  `[{ root: "file:///abs/path" }]` shape as `analyze_files`; omit the optional
+  `paths` so it formats the **whole package** in place. That makes the gate
+  observation-based (it catches manual edits and pre-existing drift, not just
+  files the loop edited) and self-fixing (one call leaves the package green; a
+  second call reports zero changes).
+- **Read the changed count, not the status** — the tool succeeds whether or not it
+  rewrote anything, so a non-error result proves nothing. Its output ends in
+  `Formatted N files (M changed)`; the gate is green only when `M` is `0`. On a
+  round where `M` is non-zero the files are already fixed, so re-run the gate next
+  round to observe the `0` rather than declaring it green from the fix.
 - **Why format is a real gate, not just the hook** — the PostToolUse `format.sh`
   hook fires only on files the loop edits via Edit/Write. A hand-edited or
   pre-existing unformatted file the loop never touches would otherwise pass
@@ -322,6 +304,5 @@ report, and wait.
   tests (structure, `mocktail` mocking, naming).
 - `skills/testing/references/coverage.md` — coverage-driven test patterns
   (`copyWith`, branches, error paths) for closing per-file gaps.
-- `hooks/scripts/block-cli-workarounds.sh` — why the Bash test path is blocked
-  and the analyze and test gates use MCP tools, and why `dart format` is not
-  blocked.
+- `hooks/scripts/block-cli-workarounds.sh` — why the Bash test path is blocked and
+  every gate runs through its MCP tool.
