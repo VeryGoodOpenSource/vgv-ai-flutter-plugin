@@ -139,12 +139,14 @@ The Dart and Flutter MCP server ships with the Dart SDK and exposes core Dart/Fl
 | App introspection | Introspect and interact with a running Dart or Flutter application |
 | Package search | Search pub.dev for packages that fit a given use case |
 | Dependency management | Add, remove, and update dependencies in `pubspec.yaml` files |
-| Test execution | Run tests and analyze the results |
 | Code formatting (`dart_format`) | Format code using the same formatter and config as `dart format` |
 
-`dart_format` is not part of the server's default tool set, so `.mcp.json` starts the
-server as `dart mcp-server --enable dart_format`. The `green-gate` skill's format gate
-depends on that tool; dropping the flag leaves the gate with no tool to call.
+The server's `cli` feature category — `dart_format`, `dart_fix`, `create_project`,
+`run_tests`, and `list_devices` — is **off by default**, so a bare `dart mcp-server`
+advertises 13 tools with no formatter. `.mcp.json` therefore starts it as
+`dart mcp-server --enable dart_format`. The `green-gate` skill's format gate calls that
+tool; drop the flag and the gate has nothing to call. Test execution is deliberately
+left disabled — the `test` tool from the Very Good CLI MCP server is used instead.
 
 **Prerequisites:**
 
