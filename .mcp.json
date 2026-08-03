@@ -3,7 +3,9 @@
     "dart": {
       "command": "dart",
       "args": [
-        "mcp-server"
+        "mcp-server",
+        "--enable",
+        "dart_format"
       ]
     },
     "very-good-cli": {

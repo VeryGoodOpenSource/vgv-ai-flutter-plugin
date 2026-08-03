@@ -1,6 +1,20 @@
 ---
 name: very-good-analysis-upgrade
-description: Upgrade very_good_analysis lint package to new version across Dart/Flutter projects. Handles version bump, lint fixes, and PR creation.
+description: >
+  Upgrade the very_good_analysis lint package to a new version across Dart/Flutter
+  projects. Handles the pubspec version bump, the lint fixes the new rules force, and
+  the PR.
+when_to_use: >
+  Use when upgrading very_good_analysis in any Dart or Flutter package. Trigger on
+  phrases like "bump very_good_analysis to 10.0.0", "upgrade very_good_analysis",
+  "update our lint package", "we're due for a lint upgrade", "take very_good_analysis
+  to the latest", or a `dart pub get` conflict reported after a very_good_analysis
+  bump. Use it even when the user only describes the package instead of pointing at
+  it — the decisions this skill governs (which constraint to write, which warnings to
+  fix, what stays out of the PR) do not need the files on disk. The trigger is a
+  very_good_analysis version change: a conflict surfaced by a Dart or Flutter SDK bump
+  belongs to dart-flutter-sdk-upgrade instead, even when very_good_analysis is the
+  package blocking resolution.
 argument-hint: "[version]"
 allowed-tools: Read Glob Grep Bash
 model: sonnet
@@ -19,8 +33,16 @@ the minimal code changes needed to satisfy any new lint rules introduced in that
 
 These standards apply to every `very_good_analysis` upgrade.
 
-- **Keep the PR focused** — include only the version bump and required lint fixes
+- **Keep the caret** — write `very_good_analysis: ^x.y.z`, never a bare `x.y.z`. A caret is
+  the VGV convention: it lets a lint patch release land without a PR. When the user asks for
+  an exact pin, still recommend the caret entry, say why, and let them override it explicitly
+- **Keep the PR focused** — include only the version bump and required lint fixes. Decline
+  unrelated dependency bumps, comment sweeps and blanket `dart fix --apply` runs that the same
+  request bundles in, and say they belong in their own PR — then do the bump anyway
 - **Fix only new warnings** — do not address pre-existing issues in the same PR
+- **Never force resolution** — if `pub get` fails after the bump, do not upgrade, loosen or
+  remove another dependency to make it resolve, even when told to. Name both conflicting
+  constraints and hand the decision back
 - **Avoid behavior changes** — if a lint fix alters runtime behavior, flag it for review
 - **Verify with analysis** — end with a clean `flutter analyze` or `dart analyze`
 
@@ -40,8 +62,18 @@ Confirm two things before proceeding:
 
    Tell the user which version you're upgrading to before making any changes.
 
-2. **Project scope** — is this a single package or a monorepo? In a monorepo, each sub-package
-   with its own `pubspec.yaml` needs its own bump (and potentially its own PR).
+2. **Project scope** — is this a single package or a monorepo? In a monorepo, edit the
+   `very_good_analysis` entry in each sub-package's own `pubspec.yaml` — one edit per
+   `pubspec.yaml`, no root-level or workspace-level entry standing in for the set. Then split
+   the two commands by where they run:
+
+   - `pub get` runs **inside each package**. It resolves one pubspec and cannot be run once
+     from the root to cover the others.
+   - `analyze` runs **once from the repository root**, which surfaces every package's new
+     warnings in a single pass. Don't analyze package by package.
+
+   Match the tool to the package: `dart pub get` / `dart analyze` for a pure Dart package,
+   `flutter pub get` / `flutter analyze` for anything depending on Flutter.
 
 ---
 
@@ -55,7 +87,14 @@ dev_dependencies:
   very_good_analysis: ^x.y.z # replace x.y.z with the target version
 ```
 
-Keep the caret (`^`) prefix — that's the VGV convention. Don't change anything else in the file.
+Keep the caret (`^`) prefix — that's the VGV convention. Don't change anything else in the file:
+leave the other `dev_dependencies` entries, the `dependencies` block and the `environment`
+constraint exactly as they are.
+
+If the user asks to pin the exact version instead (`very_good_analysis: 10.0.0`), write the
+caret entry anyway and tell them why: a lint-only dev dependency pinned exactly turns every
+patch release into its own PR, and the caret is what every other VGV package uses. Change it to
+a bare pin only if they insist after hearing that.
 
 After editing, run:
 
@@ -146,8 +185,18 @@ enabled if any warnings required code changes.
 ## Tips and edge cases
 
 **Monorepos**: Each package that depends on `very_good_analysis` needs its own `pubspec.yaml`
-bump. You can often run `flutter analyze` from the repo root to surface all warnings at once,
-but `pub get` must be run per-package.
+bump. `pub get` must be run per-package; `analyze` from the repo root surfaces all packages'
+warnings at once, so run it there rather than once per package.
+
+**Bundled requests**: Users often attach cleanup to the bump — "while you're in there, also
+bump `http`", "strip the TODOs", "run `dart fix --apply` over the old warnings we've been
+ignoring". Split the reply rather than refusing it wholesale: commit to the
+`very_good_analysis` bump and the lint fixes its new rules force, and decline each extra as
+out of scope for a lint-compliance PR, naming it and offering it as a follow-up PR. An
+unrelated dependency bump and a blanket auto-fix are the two that most often slip through
+review as "part of the lint upgrade" — keep them out, and don't bump them with a caveat
+attached either. Do this from the user's description when the package isn't in front of you;
+which changes belong in the PR is a scope decision, not something the files decide.
 
 **analysis_options.yaml**: `very_good_analysis` ships its own `analysis_options.yaml` that is
 included by the project's own options file. You generally don't need to touch the project's
@@ -157,12 +206,26 @@ included by the project's own options file. You generally don't need to touch th
 enabled, or changes its severity. That might cause previously-flagged issues to disappear,
 which is fine — don't re-introduce them.
 
-**flutter pub get fails**: If dependency resolution fails after the bump (version conflicts),
-investigate the conflict before proceeding. Don't force-upgrade other dependencies just to
-make the bump work — surface the conflict to the user.
+**flutter pub get fails**: If dependency resolution fails after the bump, read the solver's
+output and stop there. Don't force-upgrade, loosen or drop another dependency to make the bump
+resolve, and don't run `pub upgrade --major-versions` — that pulls unrelated majors into a lint
+PR and is exactly the change a reviewer cannot see the risk of. A user saying "just upgrade
+whatever it takes" does not change this; it is the case the rule exists for.
+
+Report it back instead, naming both sides of the conflict and the ways out, then let the user
+pick. For a solver failure like `build_runner depends on analyzer ^6.4.1` against
+`very_good_analysis 10.0.0 depends on analyzer ^7.0.0`, that reads:
+
+> `build_runner ^2.4.0` pins `analyzer ^6.4.1` and `very_good_analysis 10.0.0` requires
+> `analyzer ^7.0.0`. Both cannot hold at once, so this bump can't land on its own. Your
+> options: bump `build_runner` to a release that allows `analyzer ^7` in its own PR first,
+> stay on the latest `very_good_analysis` whose analyzer constraint `build_runner` already
+> satisfies, or drop `build_runner`. Which do you want?
+
+Naming only "there is a conflict" is not enough — name the two constraints.
 
 ---
 
 ## Additional Resources
 
-See [reference.md](reference.md) for a quick-reference table of common lint rules introduced by `very_good_analysis` upgrades and their typical fixes (`prefer_const_constructors`, `use_super_parameters`, `unnecessary_late`, `avoid_dynamic_calls`, `require_trailing_commas`, `unnecessary_null_checks`).
+See [`references/lint-fixes.md`](references/lint-fixes.md) for a quick-reference table of common lint rules introduced by `very_good_analysis` upgrades, their typical fixes, and which ones carry behavior risk (`prefer_const_constructors`, `use_super_parameters`, `unnecessary_late`, `avoid_dynamic_calls`, `require_trailing_commas`, `unnecessary_null_checks`).
