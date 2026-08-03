@@ -149,7 +149,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           # promptfoo enforces ^20.20.0 || >=22.22.0 and refuses to start below it.
           node-version: '22.22.0'
