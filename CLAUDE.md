@@ -63,6 +63,8 @@ skills/
   bloc/references/
   create-project/SKILL.md
   dart-flutter-sdk-upgrade/SKILL.md
+  dart-flutter-sdk-upgrade/references/
+    version-conflicts.md
   green-gate/SKILL.md
   green-gate/references/
     coverage.md

@@ -169,6 +169,10 @@ clashes with the new one, then hand the decision back to the user: raising that
 dependency is its own PR, not part of this one. If `analyze` surfaces new errors
 introduced by the SDK bump, report them rather than fixing them in this PR.
 
+See [references/version-conflicts.md](references/version-conflicts.md) for reading version
+solving output, the three shapes a conflict takes, tracing a transitive blocker, and the
+report format to hand back.
+
 ---
 
 ## 4. Out-of-scope requests
