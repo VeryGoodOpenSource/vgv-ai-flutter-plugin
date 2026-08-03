@@ -1,7 +1,16 @@
 ---
 name: navigation
 description: Best practices for navigation and routing in Flutter using GoRouter.
-when_to_use: Use when creating, modifying, or reviewing routes, deep links, redirects, or navigation logic that uses package:go_router or package:go_router_builder.
+when_to_use: >
+  Use when creating, modifying, or reviewing routes, deep links, redirects, or navigation
+  logic that uses package:go_router or package:go_router_builder. Route *motion* is not
+  this skill: a custom page transition, a `CustomTransitionPage`, a `buildPage` override
+  that animates, or any question about timing and curves between screens belongs to the
+  animations skill, even when it lives inside a `GoRouteData` subclass. Route structure,
+  paths, guards, redirects, and navigation calls stay here. So do widget tests that
+  exercise navigation — mocking GoRouter, providing it through `InheritedGoRouter`,
+  asserting a tap reached a route — because the router-specific half of such a test is
+  this skill's, not the general testing conventions'.
 allowed-tools: Read Glob Grep
 model: sonnet
 ---
