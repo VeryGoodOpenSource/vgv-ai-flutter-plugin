@@ -1,0 +1,30 @@
+# Working directory for every behavior-eval case. Never built or pub-got.
+#
+# An empty directory is its own confound: with no project in sight the model asks
+# for the code instead of writing it, failing graders for reasons unrelated to the
+# skill. This is the plausible context a real working directory has.
+#
+# KEEP THIS NEUTRAL — context, not answers. An earlier version listed bloc,
+# flutter_bloc, equatable, mocktail and very_good_analysis, and the sealed column
+# inferred the conventions from the dependency list, collapsing bloc's measured
+# lift from +10 to +1. Keep it to what a bare Flutter app ships with.
+name: eval_fixture_app
+description: Scratch Flutter app used as working-directory context for behavior evals.
+publish_to: none
+version: 1.0.0
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  cupertino_icons: ^1.0.8
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

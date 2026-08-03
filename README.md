@@ -81,6 +81,18 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 - **Dart SDK** — must be available on your `PATH`
 - **jq** — used to parse the hook payload; hooks are skipped gracefully if `jq` is not installed
 
+## Evals
+
+Skill evals ask whether Claude routes to a skill and follows it. [promptfoo](https://www.promptfoo.dev) sends each case's prompt through the Claude Agent SDK twice — once with this plugin loaded, once sealed with nothing loaded — so a grader that passes in both columns is measuring the model rather than the skill. They authenticate through your local Claude Code session, so they need no API key.
+
+```bash
+npx promptfoo@latest eval -c evals/promptfooconfig.yaml
+```
+
+Run them locally before opening a PR that changes a skill. CI also runs them **after** a merge to `main`, scoped to the skills that changed, as an advisory signal rather than a gate — see [evals/README.md](evals/README.md#running-in-ci).
+
+See [evals/README.md](evals/README.md) for the case format, the assertion reference, prerequisites, and what these evals deliberately do not cover.
+
 ## Usage
 
 Skills activate automatically when Claude detects relevant context in your conversation. Simply ask Claude to help with a Flutter or Dart task, and the appropriate skill's guidance will be applied.
@@ -139,6 +151,7 @@ The Dart and Flutter MCP server ships with the Dart SDK and exposes core Dart/Fl
 | App introspection | Introspect and interact with a running Dart or Flutter application |
 | Package search | Search pub.dev for packages that fit a given use case |
 | Dependency management | Add, remove, and update dependencies in `pubspec.yaml` files |
+| Package source exploration | Resolve `package:` URIs and search dependency sources |
 | Code formatting (`dart_format`) | Format code using the same formatter and config as `dart format` |
 
 The server's `cli` feature category — `dart_format`, `dart_fix`, `create_project`,

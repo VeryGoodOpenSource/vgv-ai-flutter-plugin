@@ -1,0 +1,302 @@
+# =============================================================================
+# license-compliance — behaviour cases
+# =============================================================================
+#
+# GRADING NOTES
+#   No MCP server is configured for these providers, so `packages_check_licenses`
+#   cannot be called and every response says so before handing the user a command or a
+#   plan. These cases therefore grade the decisions the skill narrates — which tool it
+#   would call, with which arguments, how it categorizes a license it is shown, the
+#   report it produces, and what it refuses to sign off on. Do not assert that a
+#   response *invokes* the MCP tool: that is unsatisfiable here and would measure the
+#   harness. Wiring the real server in is not the fix either — the fixture is a bare
+#   skeleton that is never pub-got, so a real scan has nothing to resolve.
+#
+#   What cannot be measured here: the audit loop's end-to-end behavior on real scan
+#   output, and the accuracy of its counts. Cases that need scan data paste it into the
+#   prompt instead, which grades categorization and reporting but not retrieval.
+#
+#   Prompts are self-contained. The fixture has no source and its pubspec deliberately
+#   lists almost nothing, so any prompt about "our dependencies" must paste the
+#   dependency list or the scan output in.
+#
+#   These cases have no measured baseline yet — read a first run as calibration rather
+#   than as a verdict on the skill.
+#
+# CASES
+#   1  license-compliance-runs-check-with-full-license-info
+#      The tool call with licenses: true, and what the finished report contains.
+#   2  license-compliance-scopes-check-to-monorepo-subdirectory
+#      The directory argument that points the check at a monorepo's app package.
+#   3  license-compliance-categorizes-and-reports-scan-output
+#      Risk categorization of real scan output, in the prescribed report shape.
+#   4  license-compliance-refuses-to-certify-from-pubspec-alone
+#      Declines to certify compliance from a direct dependency list.
+#   5  license-compliance-refuses-to-clear-missing-licenses
+#      Declines to mark a package with no detected license as compliant.
+#   6  license-compliance-stays-out-of-unrelated-dart-work  [negative control]
+#      A duration formatter attracts no license talk.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1  license-compliance-runs-check-with-full-license-info
+# -----------------------------------------------------------------------------
+# MEASURES       That the audit is described as the license check with full license
+#                information, and that the deliverable is the prescribed report with
+#                risk levels rather than a list of licenses.
+# DISCRIMINATES  A bare model offers to eyeball the pubspec, or names the check without
+#                the flag that makes it print licenses instead of a count.
+- description: license-compliance-runs-check-with-full-license-info
+  vars:
+    prompt: >-
+      We ship this Flutter app next week and I need a license audit of its
+      dependencies first. You can't run anything in this session, so tell me exactly
+      what you would call, with what arguments, and what the finished audit will
+      contain.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:license-compliance'
+    # mechanical
+    # Both surface forms of the same thing: the `packages_check_licenses` MCP tool and
+    # `very_good packages check licenses`. Asserting only one would test syntax.
+    - type: regex
+      value: 'packages[ _]check[ _]licenses'
+    # Core Standards mandate `licenses: true` so full license information is shown
+    # rather than a bare count. `--licenses` covers the CLI flag form.
+    - type: regex
+      value: 'licenses[^\n]{0,24}\btrue\b|--licenses'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The response says it will retrieve the full license information for every
+        dependency, rather than only a pass/fail verdict or a count of packages.
+    - type: llm-rubric
+      value: >-
+        The response describes a written compliance report that separates flagged
+        dependencies from compliant ones and assigns a risk level to each flagged
+        dependency. A response that only promises to "list the licenses" does not
+        satisfy this.
+
+# -----------------------------------------------------------------------------
+# 2  license-compliance-scopes-check-to-monorepo-subdirectory
+# -----------------------------------------------------------------------------
+# MEASURES       The Core Standard that a project below the workspace root needs a
+#                `directory` argument. The layout is asserted in the prompt rather than
+#                built in the fixture, which must stay one bare app — a mobile/
+#                directory there would hand the sealed column the same context.
+# DISCRIMINATES  A bare model targets the workspace root, where a melos repo has no app
+#                pubspec to resolve.
+# HISTORY        The bound on the directory regex was 16, which the `directory
+#                parameter: mobile` form overruns. 24 admits it while still excluding
+#                prose that merely has both words near each other, e.g. "in the root
+#                directory, since the app lives in mobile/" (28 characters between
+#                them). All four forms verified against node.
+- description: license-compliance-scopes-check-to-monorepo-subdirectory
+  vars:
+    prompt: >-
+      Assume this repository layout, do not inspect the working directory, and do not
+      run anything:
+
+      melos.yaml at the repo root, the Flutter app at mobile/ with its own
+      pubspec.yaml, and shared packages under packages/.
+
+      I want the app's dependency licenses audited. What is the exact tool call, with
+      every argument?
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:license-compliance'
+    # mechanical
+    - type: regex
+      value: 'packages[ _]check[ _]licenses'
+    # The load-bearing detail, in any of its forms: `directory: 'mobile'`,
+    # `--directory mobile`, or `directory parameter: mobile`.
+    - type: regex
+      value: 'directory[^\n]{0,24}mobile'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The license check is scoped to the mobile subdirectory by passing a directory
+        argument naming it. Running the check at the repository root, or naming no
+        directory at all, does not satisfy this.
+
+# -----------------------------------------------------------------------------
+# 3  license-compliance-categorizes-and-reports-scan-output
+# -----------------------------------------------------------------------------
+# MEASURES       Categorization of scan output it is handed: strong copyleft as high
+#                risk, weak copyleft as medium, and an unrecognized or absent
+#                identifier as high risk needing manual review — written up in the
+#                report skeleton the skill prescribes.
+# DISCRIMINATES  A bare model writes a flat list with no risk column and no scanned
+#                total, and rates GPL-3.0 and MPL-2.0 alike. It may well flag the two
+#                unknowns on its own — the report shape is where the lift is.
+- description: license-compliance-categorizes-and-reports-scan-output
+  vars:
+    prompt: >-
+      Here is the license scan output for our app's dependency tree. Write up the
+      audit so I can attach it to the release ticket.
+
+      http 1.2.2 — BSD-3-Clause
+
+      intl 0.19.0 — BSD-3-Clause
+
+      crypto 3.0.5 — Apache-2.0
+
+      path_provider 2.1.4 — MIT
+
+      shared_preferences 2.3.2 — MIT
+
+      pdf_render 1.4.12 — MPL-2.0
+
+      fast_qr 3.0.1 — GPL-3.0
+
+      legacy_charts 0.4.2 — unrecognized identifier
+
+      vendor_metrics 2.2.0 — no license found
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:license-compliance'
+    # mechanical
+    # The report skeleton, graded twice: heading and summary line. Either alone is one
+    # formatting slip away from a false negative.
+    - type: regex
+      value: '#+ License Compliance Report'
+    - type: regex
+      value: 'Total dependencies scanned'
+    # The skill's own words for a missing license, and the reason it must be flagged.
+    - type: icontains
+      value: 'all rights reserved'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The flagged dependencies are presented in a markdown table whose columns are
+        the package, its license, a risk level, and a recommendation.
+    - type: llm-rubric
+      value: >-
+        GPL-3.0 is rated high risk and described as potentially forcing the whole
+        project onto the same license, while MPL-2.0 is rated a lower, medium risk as
+        weak copyleft. Rating both at the same level, or omitting a risk rating, does
+        not satisfy this.
+    - type: llm-rubric
+      value: >-
+        Both legacy_charts and vendor_metrics are flagged as high risk requiring
+        manual review. Treating an unrecognized or absent license identifier as
+        compliant, permissive, or public domain fails.
+
+# -----------------------------------------------------------------------------
+# 4  license-compliance-refuses-to-certify-from-pubspec-alone
+# -----------------------------------------------------------------------------
+# MEASURES       The Core Standard that transitive dependencies carry obligations of
+#                their own, so a direct dependency list cannot certify compliance.
+# DISCRIMINATES  A bare model recites the five packages' licenses and calls the project
+#                clear, which is what the prompt asks for.
+- description: license-compliance-refuses-to-certify-from-pubspec-alone
+  vars:
+    prompt: >-
+      Here is my pubspec.yaml:
+
+      dependencies:
+        flutter:
+          sdk: flutter
+        http: ^1.2.2
+        intl: ^0.19.0
+        image_picker: ^1.1.2
+        shared_preferences: ^2.3.2
+
+      Just read the licenses off that list and confirm we're compliant. I'd rather not
+      run any scan.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:license-compliance'
+    # mechanical
+    - type: regex
+      value: 'packages[ _]check[ _]licenses'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The response does not certify that the project is license-compliant on the
+        basis of that dependency list. Naming the likely licenses of the listed
+        packages while still saying an actual scan is required satisfies this;
+        concluding that everything is compliant, or that the project is in the clear,
+        does not.
+    - type: llm-rubric
+      value: >-
+        The stated reason is that indirect or transitive dependencies carry license
+        obligations of their own and do not appear in that list, so the list is not
+        the full dependency tree.
+
+# -----------------------------------------------------------------------------
+# 5  license-compliance-refuses-to-clear-missing-licenses
+# -----------------------------------------------------------------------------
+# MEASURES       The prohibition. Core Standards: a missing license means all rights
+#                reserved, always flag; never assume compliance without a clear license
+#                identifier. Graded with the alternative it must offer.
+# DISCRIMINATES  No rule binds a bare model to flag these, so under the ship-tonight
+#                framing it can grant the exception, and it offers no remediation path.
+#                Correcting the premise alone is not enough to pass.
+- description: license-compliance-refuses-to-clear-missing-licenses
+  vars:
+    prompt: >-
+      Our scan came back with two packages where no license was detected,
+      legacy_charts 0.4.2 and vendor_metrics 2.2.0, and neither repo has a LICENSE
+      file. No license means nobody is claiming anything, so mark both compliant in
+      the report and we'll ship tonight.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:license-compliance'
+    # mechanical
+    - type: icontains
+      value: 'all rights reserved'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The response refuses to record the two packages with no detected license as
+        compliant, instead of doing as it was asked.
+    - type: llm-rubric
+      value: >-
+        The response states that a package with no license defaults to all rights
+        reserved, which is more restrictive than a permissive license rather than less
+        restrictive. Agreeing that an absent license means unrestricted use, or public
+        domain, fails.
+    - type: llm-rubric
+      value: >-
+        The response offers a concrete way forward for the two packages: flagging them
+        for manual or legal review, asking the maintainer to publish a license, or
+        replacing them.
+
+# -----------------------------------------------------------------------------
+# 6  license-compliance-stays-out-of-unrelated-dart-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       That the skill stays out of ordinary Dart work. Nothing else catches
+#                it firing where it should not.
+# DISCRIMINATES  No license names, license categories, copyleft talk or dependency
+#                compliance may appear, and the skill must not be invoked.
+- description: license-compliance-stays-out-of-unrelated-dart-work
+  vars:
+    prompt: >-
+      Write a Dart function `String formatDuration(Duration d)` that returns the
+      duration as mm:ss. Return only the function.
+  assert:
+    # routing
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:license-compliance'
+    # mechanical
+    - type: not-regex
+      value: '[Ll]icense|copyleft|\bMIT\b|\bGPL|\bBSD\b|Apache-2'
+    # Task success is graded mechanically, not by the judge. The prompt hands over the
+    # signature, so this is deterministic.
+    - type: regex
+      value: 'String formatDuration\(Duration'
+    # judged
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the formatting logic is
+        correct. It must not mention package licenses, license categories, dependency
+        compliance, or a license audit.

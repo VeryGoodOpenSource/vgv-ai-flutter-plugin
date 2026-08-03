@@ -1,0 +1,347 @@
+# =============================================================================
+# material-theming — behaviour cases
+# =============================================================================
+#
+# GRADING NOTES
+#   Graded on the artifact. Five of the six cases ask for Dart and grade the code that
+#   comes back; the brightness case is graded on the refusal plus the ThemeData it
+#   builds instead. Prompts name no skill, so `skill-used` catches a routing failure
+#   directly rather than as unexplained content failures downstream.
+#
+#   The lift here is NOT "use Theme.of(context)" — an unaided model reaches for that on
+#   its own, so asserting it alone would pass in both columns. What only the skill
+#   supplies is the VGV structure: the named constant classes (`AppColors`,
+#   `AppTextStyle`, `AppSpacing`), a spacing scale derived from one base unit, styles
+#   built from a single private base `TextStyle` via `copyWith`, component styling that
+#   lives in `ThemeData` rather than on widget instances, and the two flat prohibitions
+#   (no `EdgeInsets.fromLTRB`, no brightness branching in widget code). Every assertion
+#   below traces to one of those.
+#
+#   Prompts are self-contained: the fixture has no source in lib/, so a prompt about
+#   "my PriceTag widget" earns a refusal and every grader then fails for an unrelated
+#   reason. Widgets are pasted in full rather than added to evals/fixture/, which would
+#   leak answers to the sealed column.
+#
+#   Two prompts deliberately avoid naming the fault ("review it", "cut the
+#   duplication") instead of "stop hardcoding colors". Naming the fault hands the
+#   baseline the fix and collapses the measured difference.
+#
+#   Not measurable here: whether the theme actually renders, and whether the code
+#   compiles — `dart-parses` proves syntax only. This skill has no measured baseline
+#   yet, so read its first run as calibration rather than as a verdict.
+#
+# CASES
+#   1  material-theming-builds-app-theme-from-scratch
+#      Greenfield theme setup lands the three constant classes and light/dark getters.
+#   2  material-theming-refactors-hardcoded-widget
+#      Colors and text styles both move out of the widget and into the theme.
+#   3  material-theming-defines-spacing-scale
+#      A spacing scale derived from one base unit replaces arbitrary pixel numbers.
+#   4  material-theming-centralizes-component-theme
+#      Repeated decoration moves into ThemeData, not into a helper or wrapper.
+#   5  material-theming-refuses-brightness-check-in-widget
+#      The skill refuses to tidy a brightness branch and rewrites it as two themes.
+#   6  material-theming-stays-out-of-non-visual-work  [negative control]
+#      Plain Dart string formatting draws no theming vocabulary.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1  material-theming-builds-app-theme-from-scratch
+# -----------------------------------------------------------------------------
+# MEASURES       Greenfield theme setup follows the skill's "Creating a Theme" steps
+#                1-6: AppColors, AppTextStyle, AppSpacing, then light/dark getters.
+# DISCRIMINATES  An unaided model emits one big ThemeData with inline Color(0x...)
+#                literals and independently declared TextStyle constructors.
+- description: material-theming-builds-app-theme-from-scratch
+  vars:
+    prompt: >-
+      Set up the theming for this Flutter app. The brand color is #4F46E5, secondary
+      is #9C27B0, error red is #DC2626. It needs a light and a dark mode, and body
+      text should be Inter at 16px with 1.5 line height. Output Dart code only.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:material-theming'
+    # mechanical
+    - type: regex
+      value: 'abstract class AppColors'
+    - type: regex
+      value: 'class AppTextStyle'
+    - type: regex
+      value: 'ThemeData get (light|dark)'
+    # syntax
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    # judged
+    - type: llm-rubric
+      value: >-
+        Every brand color value (the hex literals) is declared once as a static
+        constant in a dedicated colors class, and the ColorScheme entries reference
+        those constants by name. A ColorScheme that passes a Color(0x...) literal
+        directly to a color role does not satisfy this; Colors.white or Colors.black
+        used for an on-color role is acceptable.
+    - type: llm-rubric
+      value: >-
+        The text styles are derived from a single private base TextStyle via
+        copyWith, so fontFamily is declared once, and they are assigned to Material 3
+        TextTheme slot names such as bodyLarge or headlineMedium. Independently
+        declared full TextStyle constructors that each repeat fontFamily, or custom
+        slot names like heading1 or smallText, do not satisfy this.
+
+# -----------------------------------------------------------------------------
+# 2  material-theming-refactors-hardcoded-widget
+# -----------------------------------------------------------------------------
+# MEASURES       A "just review this" request pulls both the color and the TextStyle
+#                out of the widget, and drops EdgeInsets.fromLTRB.
+# DISCRIMINATES  Without the skill the fault is not named in the prompt, so the model
+#                tidies formatting or swaps only the color and leaves the TextStyle.
+- description: material-theming-refactors-hardcoded-widget
+  vars:
+    prompt: >-
+      Here is a widget from my app. Review it and give me the corrected version.
+      Output Dart code only, and do not repeat the original version back to me.
+
+      class PriceTag extends StatelessWidget {
+        const PriceTag({required this.label, super.key});
+
+        final String label;
+
+        @override
+        Widget build(BuildContext context) {
+          return Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            color: Colors.blue,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+            ),
+          );
+        }
+      }
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:material-theming'
+    # mechanical
+    # Colors and text styles are graded twice mechanically and once by rubric: a
+    # response that fixes the color and keeps the TextStyle literal would clear 0.8.
+    - type: regex
+      value: 'colorScheme'
+    - type: regex
+      value: 'textTheme'
+    - type: not-regex
+      value: 'Colors\.blue'
+    - type: not-regex
+      value: 'EdgeInsets\.fromLTRB'
+    # syntax
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    # judged
+    - type: llm-rubric
+      value: >-
+        In the corrected widget, the text style comes from the theme's textTheme (for
+        example textTheme.titleMedium, optionally with copyWith for the color). A
+        TextStyle constructor that still declares fontSize or fontWeight inside the
+        build method does not satisfy this.
+
+# -----------------------------------------------------------------------------
+# 3  material-theming-defines-spacing-scale
+# -----------------------------------------------------------------------------
+# MEASURES       An AppSpacing scale whose every step derives from one base unit, plus
+#                the rewrite that consumes it instead of raw numbers.
+# DISCRIMINATES  A bare model invents xs/s/m/l/xl or space4/space8 with independent
+#                literal values, and keeps EdgeInsets.fromLTRB.
+- description: material-theming-defines-spacing-scale
+  vars:
+    prompt: >-
+      My layouts use whatever numbers I typed at the time. Here is one of them:
+
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+        child: Column(
+          children: [
+            const Text('Title'),
+            const SizedBox(height: 13),
+            const Text('Body'),
+          ],
+        ),
+      )
+
+      Give me the padding and gap convention this app should use, and rewrite this
+      snippet inside a build method to follow it. Do not repeat the original snippet
+      back to me.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:material-theming'
+    # mechanical
+    - type: regex
+      value: 'class AppSpacing'
+    # `= 0.25 * spaceUnit;` matches, `= 8;` does not. Accepts any name for the unit,
+    # since the reference's `spaceUnit` is one plausible spelling of it.
+    - type: regex
+      value: '=\s*[\d.]+\s*\*\s*\w+;'
+    # xxs..xxlg is the skill's scale naming, so `xxlg` is close to a fingerprint for
+    # the reference file.
+    - type: regex
+      value: 'xxlg'
+    - type: not-regex
+      value: 'EdgeInsets\.fromLTRB'
+    # syntax
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    # judged
+    - type: llm-rubric
+      value: >-
+        Every spacing constant is expressed as a multiple of one shared base unit
+        constant, for example `static const double sm = 0.5 * spaceUnit;`. A scale
+        where each step is an independent literal number, such as `static const double
+        sm = 8;`, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The rewritten snippet passes named spacing constants rather than raw numbers,
+        and no arbitrary value such as 13 or 20 survives anywhere in it.
+
+# -----------------------------------------------------------------------------
+# 4  material-theming-centralizes-component-theme
+# -----------------------------------------------------------------------------
+# MEASURES       Duplicated InputDecoration moves into ThemeData as an
+#                InputDecorationTheme, and the call site keeps only its labelText.
+# DISCRIMINATES  The obvious unaided answer is a shared InputDecoration constant, a
+#                decoration-building helper, or a wrapper widget each field opts into.
+- description: material-theming-centralizes-component-theme
+  vars:
+    prompt: >-
+      Every text field in my app repeats this and I have twelve of them:
+
+      TextFormField(
+        decoration: InputDecoration(
+          labelText: 'Email',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        ),
+      )
+
+      Cut the duplication, and show me what one of these fields looks like
+      afterwards. Output Dart code only, and do not repeat the original version back
+      to me.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:material-theming'
+    # mechanical
+    - type: regex
+      value: 'inputDecorationTheme'
+    - type: not-regex
+      value: 'EdgeInsets\.fromLTRB'
+    # syntax
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    # judged
+    - type: llm-rubric
+      value: >-
+        The shared decoration is defined inside a ThemeData as an
+        InputDecorationTheme. Extracting it into a shared InputDecoration constant, a
+        helper function, a copyWith-style extension, or a custom wrapper widget that
+        each text field calls does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        After the change, the individual TextFormField keeps at most its own labelText
+        or hintText and no longer passes a border or contentPadding.
+
+# -----------------------------------------------------------------------------
+# 5  material-theming-refuses-brightness-check-in-widget
+# -----------------------------------------------------------------------------
+# MEASURES       The skill's flattest prohibition: "Never check Brightness in widget
+#                code". The prompt asks for it outright, so a compliant answer fails.
+# DISCRIMINATES  A model without the skill does as it is told and hands back a tidier
+#                branch — a ternary on Theme.of(context).brightness or a
+#                context.isDarkMode extension — instead of two ColorSchemes.
+- description: material-theming-refuses-brightness-check-in-widget
+  vars:
+    prompt: >-
+      I need this card to be white in light mode and #1E1E1E in dark mode. Here is
+      what I have:
+
+      class InfoCard extends StatelessWidget {
+        const InfoCard({required this.child, super.key});
+
+        final Widget child;
+
+        @override
+        Widget build(BuildContext context) {
+          final isDark =
+              MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+          return ColoredBox(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            child: child,
+          );
+        }
+      }
+
+      Keep the brightness check in build and just tidy it up for me.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:material-theming'
+    # mechanical
+    - type: regex
+      value: 'Theme\.of\(context\)\.colorScheme'
+    # Proves it actually built the second ColorScheme rather than only talking about
+    # it. `Brightness.dark` cannot be a not-regex: the dark scheme needs it.
+    - type: regex
+      value: 'brightness: Brightness\.dark'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The response refuses to keep a brightness check inside the widget's build
+        method and says widget code must not branch on brightness or theme mode. A
+        response that keeps a conditional on brightness in the widget, even a tidier
+        one such as a ternary on Theme.of(context).brightness or an extension getter
+        like context.isDarkMode, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response puts the two background colors into separate light and dark
+        ColorScheme configurations passed to MaterialApp as theme and darkTheme, and
+        the rewritten widget reads one color from the color scheme with no conditional
+        at all.
+
+# -----------------------------------------------------------------------------
+# 6  material-theming-stays-out-of-non-visual-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       That a plain Dart string-formatting request leaves the skill dormant.
+#                Nothing else catches it firing where it should not.
+# DISCRIMINATES  material-theming must not be invoked, and none of its vocabulary may
+#                appear: no ThemeData, ColorScheme, textTheme, Theme.of, AppColors,
+#                AppSpacing, AppTextStyle or EdgeInsets.
+- description: material-theming-stays-out-of-non-visual-work
+  vars:
+    prompt: >-
+      Write a plain Dart function named formatDuration that takes a Duration and
+      returns it as an mm:ss string. No Flutter, no widgets. Return only the function.
+  assert:
+    # routing
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:material-theming'
+    # mechanical
+    - type: not-regex
+      value: 'ThemeData|ColorScheme|colorScheme|textTheme|Theme\.of\('
+    - type: not-regex
+      value: 'AppColors|AppSpacing|AppTextStyle|EdgeInsets'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it format the duration" is unanswerable from the output alone.
+    - type: regex
+      value: 'String formatDuration\(\s*Duration'
+    # judged
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the formatting logic is
+        correct. It must not introduce theming, ThemeData, ColorScheme, TextTheme,
+        spacing scales, or any styling concept.

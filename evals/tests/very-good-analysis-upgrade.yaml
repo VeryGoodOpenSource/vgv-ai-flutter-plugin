@@ -1,0 +1,415 @@
+# =============================================================================
+# very-good-analysis-upgrade — behaviour cases
+# =============================================================================
+#
+# GRADING NOTES
+#   This skill's real job is mutating pubspec.yaml, running `pub get` / `analyze`, and
+#   opening a PR. None of that can happen here: the `with-skill` provider grants only
+#   Skill, Read, Glob and Grep, so there is no Bash to run curl, pub or git with, and
+#   no package to upgrade. Every case asks the model to narrate and grades the
+#   decisions — which command it would run, in which order, what it changes in the
+#   pubspec, what it leaves alone, what it refuses.
+#
+#   Do not add an assertion that the response *executes* anything. That is
+#   unsatisfiable here and measures the harness.
+#
+#   Prompts paste their own pubspec.yaml and analyzer output. The fixture's pubspec
+#   dev-depends on flutter_lints, not very_good_analysis, so a prompt saying "upgrade
+#   it in this package" earns "it isn't in your pubspec" and every grader below fails
+#   for an unrelated reason. Each prompt states that it is the source of truth.
+#
+#   Not covered: the PR step. With no Bash there is no git, and grading commit-message
+#   wording alone tests phrasing rather than judgment. The PR's load-bearing property —
+#   that it contains nothing but the bump and the lint fixes it forces — is graded in
+#   the scope-creep case instead.
+#
+#   This is one of the ten skills added after the measured baseline, so it has no
+#   baseline row and a first full run is calibration, not a verdict. The column
+#   comparisons in the HISTORY lines below come from ad-hoc runs during authoring.
+#
+# CASES
+#   1  very-good-analysis-upgrade-resolves-target-version-without-asking
+#      Looks the target version up on pub.dev instead of asking for it.
+#   2  very-good-analysis-upgrade-keeps-the-caret-and-changes-nothing-else
+#      Refuses an exact pin, keeps the caret, leaves the rest of the pubspec alone.
+#   3  very-good-analysis-upgrade-fixes-only-the-new-lints
+#      Fixes the new style lints, skips pre-existing ones, escalates the risky one.
+#   4  very-good-analysis-upgrade-bumps-each-monorepo-package
+#      Per-package pubspec edit and per-package pub get, one analyze from the root.
+#   5  very-good-analysis-upgrade-refuses-scope-creep
+#      Declines the bundled cleanup, still commits to the bump.
+#   6  very-good-analysis-upgrade-surfaces-resolution-conflict
+#      Hands a solver failure back with both constraints named, never forces it.
+#   7  very-good-analysis-upgrade-stays-out-of-plain-dart-work  [negative control]
+#      A plain Dart utility must not pull in the upgrade skill or its vocabulary.
+#
+# ASSERTION ORDER
+#   Every case lists assertions in this order: routing, mechanical, syntax, judged.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1  very-good-analysis-upgrade-resolves-target-version-without-asking
+# -----------------------------------------------------------------------------
+# MEASURES       Resolves the target version itself via the pub.dev API and lays out the
+#                bump → pub get → analyze → fix → analyze sequence in order.
+# DISCRIMINATES  No version is supplied on purpose. SKILL.md's "Before You Start" says
+#                fetch the latest and proceed; a bare model asks which version to target
+#                or reaches for `pub outdated`, and skips the final verifying analyze.
+- description: very-good-analysis-upgrade-resolves-target-version-without-asking
+  vars:
+    prompt: >-
+      We're due for a very_good_analysis upgrade on our Dart packages. Before you touch
+      anything: which version will you target and how exactly will you determine it,
+      and what is the full sequence of steps you'll take afterwards? Don't change
+      anything yet.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+    # mechanical
+    # The version-resolution recipe is verbatim in SKILL.md. Graded three ways because it
+    # is this case's whole point: the endpoint, the field it reads, the choice not to ask.
+    - type: regex
+      value: 'pub\.dev/api/packages/very_good_analysis'
+    - type: regex
+      value: 'latest\.version'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The response determines the target version itself by querying pub.dev for the
+        latest release. Asking the user which version to target, or telling the user to
+        go look the version up, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The plan is ordered and includes all of: editing the very_good_analysis entry in
+        pubspec.yaml, running pub get, running analyze, fixing the warnings the new
+        version introduced, and running analyze once more to confirm it is clean before
+        committing. A plan that bumps and fixes without a final verifying analyze pass
+        does not satisfy this.
+
+# -----------------------------------------------------------------------------
+# 2  very-good-analysis-upgrade-keeps-the-caret-and-changes-nothing-else
+# -----------------------------------------------------------------------------
+# MEASURES       Writes `^10.0.0` against an explicit request to pin exactly, says the
+#                caret is the VGV convention, and touches nothing else in the pubspec.
+# DISCRIMINATES  "pin it exactly" is the discriminator. SKILL.md Step 1: keep the caret,
+#                don't change anything else in the file. A bare model complies with the
+#                pin and often tidies the neighbouring dev deps while it is in there.
+- description: very-good-analysis-upgrade-keeps-the-caret-and-changes-nothing-else
+  vars:
+    prompt: |
+      Here is my package's pubspec.yaml. It is the source of truth for this task — work
+      from this text, not from anything on disk.
+
+      name: cart_repository
+      description: Cart data access for the storefront app.
+      version: 0.1.0
+
+      environment:
+        sdk: ^3.5.0
+
+      dependencies:
+        http: ^1.1.0
+
+      dev_dependencies:
+        mocktail: ^1.0.0
+        test: ^1.24.0
+        very_good_analysis: ^6.0.0
+
+      Upgrade very_good_analysis to 10.0.0, and pin it exactly — we don't want caret
+      ranges. Print the full updated dev_dependencies block, then list every command
+      you would run, in order. Don't run anything.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+    # mechanical
+    # Fails if the model honored "pin it exactly" and wrote `very_good_analysis: 10.0.0`.
+    - type: regex
+      value: 'very_good_analysis: \^10\.0\.0'
+    # Proves the other dev dependencies came through untouched. The prompt asks for the
+    # full block, so a correct answer must reprint this line verbatim.
+    - type: regex
+      value: 'mocktail: \^1\.0\.0'
+    # Pure Dart package — no flutter dependency — so SKILL.md Step 1's parenthetical
+    # applies: `dart pub get`, not `flutter pub get`.
+    - type: regex
+      value: 'dart pub get'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The version constraint the response recommends for very_good_analysis keeps a
+        caret (^10.0.0), and the response says the caret is the convention rather than
+        silently pinning an exact version. Printing the exact pin 10.0.0 as the
+        recommended entry fails, even if a caret is mentioned in passing.
+
+# -----------------------------------------------------------------------------
+# 3  very-good-analysis-upgrade-fixes-only-the-new-lints
+# -----------------------------------------------------------------------------
+# MEASURES       Fixes the two new style lints, leaves the two pre-existing ones for
+#                their own PR, and escalates the one whose fix changes runtime behavior.
+# DISCRIMINATES  `avoid_dynamic_calls` is what separates the columns. The obvious fix —
+#                casting the receiver — throws a TypeError on a JSON int where the
+#                dynamic call returned a value, so Core Standards says flag it for
+#                review. An unaided model casts it and moves on. No other case in this
+#                file grades that standard.
+# HISTORY        The pre-existing-versus-new split alone measured nothing: with the prompt
+#                stating outright which two predate the bump, the sealed column made the
+#                same call, in the same words, and passed every content assertion here.
+#                The third new lint is what gives this case lift.
+- description: very-good-analysis-upgrade-fixes-only-the-new-lints
+  vars:
+    prompt: |
+      I bumped very_good_analysis from ^6.0.0 to ^10.0.0 in a Flutter package and
+      `flutter analyze` now reports this. The two unused_element infos in
+      lib/legacy/csv.dart were already reported before the bump; the other three are
+      new.
+
+        info - Method invocation or property access on a 'dynamic' target - lib/cart/cart_total.dart:14:28 - avoid_dynamic_calls
+        info - Use 'const' with the constructor to improve performance - lib/cart/cart_total.dart:15:9 - prefer_const_constructors
+        info - Missing a required trailing comma - lib/cart/cart_total.dart:15:9 - require_trailing_commas
+        info - The declaration '_legacyParse' isn't referenced - lib/legacy/csv.dart:31:8 - unused_element
+        info - The declaration '_legacyHeader' isn't referenced - lib/legacy/csv.dart:44:8 - unused_element
+
+      Here is cart_total.dart:
+
+      ```dart
+      import 'package:flutter/material.dart';
+
+      class CartTotal extends StatelessWidget {
+        const CartTotal({super.key, required this.label, required this.cart});
+
+        final String label;
+        final Map<String, dynamic> cart;
+
+        @override
+        Widget build(BuildContext context) {
+          return Row(
+            children: [
+              Text(label),
+              Text(cart['total'].toStringAsFixed(2)),
+              Text('Checkout')
+            ],
+          );
+        }
+      }
+      ```
+
+      Tell me which of the five you are fixing in this PR and which you are leaving,
+      then give me the updated cart_total.dart.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+    # mechanical
+    # One regex covers both style lints: prefer_const_constructors wants the `const`,
+    # require_trailing_commas wants the comma, and both land on the same line.
+    - type: regex
+      value: 'const Text\(''Checkout''\),'
+    # syntax
+    - type: javascript
+      value: file://assertions/dart-parses.js
+    # judged
+    # "Fix only new warnings" graded twice: once on the stated decision, once on the
+    # list of what it will change.
+    - type: llm-rubric
+      value: >-
+        The response leaves the two unreferenced-declaration issues in the legacy file
+        out of this change, and gives the reason that they existed before the version
+        bump and belong in a separate PR. Fixing or deleting those declarations, or
+        leaving them out with no reason given, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response singles out the dynamic-call lint as the one whose fix would change
+        runtime behavior — casting the value can throw where the dynamic call did not —
+        and hands it to a human to review rather than silently inserting a cast.
+        Treating it as an equivalent style fix, or fixing it with no mention of the
+        behavior risk, does not satisfy this.
+    # Phrased as "what the response says it changed" rather than "what it changed": the
+    # judge never sees the original file, so a rename or reorder is invisible to it.
+    - type: llm-rubric
+      value: >-
+        The response enumerates the edits it made to the file, and that list is exactly
+        two: adding a const keyword and adding a trailing comma. A response that also
+        claims a cast, a rename, an extraction, a reordering, a reformat, or any other
+        cleanup of the file does not satisfy this.
+
+# -----------------------------------------------------------------------------
+# 4  very-good-analysis-upgrade-bumps-each-monorepo-package
+# -----------------------------------------------------------------------------
+# MEASURES       One pubspec edit per package, `pub get` inside each package, a single
+#                analyze from the repo root.
+# DISCRIMINATES  A bare model writes one root-level change and one root-level pub get,
+#                or analyzes package by package. SKILL.md splits the two commands by
+#                where they run.
+- description: very-good-analysis-upgrade-bumps-each-monorepo-package
+  vars:
+    prompt: |
+      Monorepo. Three packages, each with its own pubspec.yaml, each dev-depending on
+      very_good_analysis ^6.0.0:
+
+        apps/storefront            (Flutter app)
+        packages/cart_repository   (pure Dart)
+        packages/storefront_ui     (Flutter package)
+
+      Take all of them to 10.0.0. Walk me through exactly what you would change and
+      what you would run, and where you would run it from. Don't run anything.
+
+      This layout is what you are working from — the packages are not in your working
+      directory, so answer from the description rather than looking for them on disk.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+    # mechanical
+    # At least two separate pub get invocations. SKILL.md, Tips: "`pub get` must be run
+    # per-package." A single root-level pub get fails this.
+    - type: regex
+      value: 'pub get[\s\S]*pub get'
+    # judged
+    # Phrased as what the response prescribes, not what it executed: the prompt ends
+    # "Don't run anything", so a judge reading "edits" literally fails a correct plan.
+    - type: llm-rubric
+      value: >-
+        The response prescribes a separate edit to the very_good_analysis entry in each of
+        the three packages' own pubspec.yaml files, one per package. A single root-level or
+        workspace-level change standing in for all three does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response draws the distinction that pub get has to be run inside each
+        package, while analyze can be run once from the repository root to surface every
+        warning at once.
+
+# -----------------------------------------------------------------------------
+# 5  very-good-analysis-upgrade-refuses-scope-creep
+# -----------------------------------------------------------------------------
+# MEASURES       Splits the reply: declines the http bump, the TODO sweep and the blanket
+#                `dart fix --apply`, then still commits to the bump and its forced fixes.
+# DISCRIMINATES  A bare model does the whole bundle in one PR, or bumps http with a
+#                caveat attached. The other failure mode is refusing everything, which
+#                the third rubric catches.
+# HISTORY        The first prompt said "I am describing my package from memory" while
+#                describing nothing, so the model refused outright and all three rubrics
+#                failed on the refusal rather than on scope judgment. The pubspec gives it
+#                something concrete and the close asks for PR contents, not edits.
+#                Four assertions and no cheap regex on "10.0.0" is deliberate: the prompt
+#                states the version, so echoing it proves nothing, and a free assertion
+#                would let one failed rubric still clear the 0.8 threshold. At four, any
+#                single miss fails the case.
+- description: very-good-analysis-upgrade-refuses-scope-creep
+  vars:
+    prompt: |
+      Here is my Dart package's pubspec.yaml — it is the source of truth for this task,
+      the package is not in your working directory:
+
+      name: cart_repository
+      version: 0.1.0
+
+      environment:
+        sdk: ^3.5.0
+
+      dependencies:
+        http: ^1.1.0
+
+      dev_dependencies:
+        test: ^1.24.0
+        very_good_analysis: ^6.0.0
+
+      Bump very_good_analysis to 10.0.0 for me. While you're in there, also strip every
+      `// TODO(dev)` comment out of lib/, run `dart fix --apply` across the whole
+      package to clean up the older warnings we've been ignoring, and take `http` to its
+      latest version too. One PR please. Tell me exactly what will and will not be in
+      that PR.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The response declines to change the http dependency's version as part of this
+        change, and says why: the PR is a lint-compliance bump and unrelated dependency
+        upgrades belong elsewhere. Bumping http anyway, or bumping it with a caveat
+        attached, does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response declines to strip the TODO comments and declines to apply a blanket
+        automated fix across the package, on the grounds that pre-existing warnings and
+        unrelated cleanup belong in a separate PR from the version bump.
+    - type: llm-rubric
+      value: >-
+        The response still commits to doing the very_good_analysis bump itself, plus
+        whatever lint fixes the new version's rules force. A blanket refusal of the whole
+        request does not satisfy this.
+
+# -----------------------------------------------------------------------------
+# 6  very-good-analysis-upgrade-surfaces-resolution-conflict
+# -----------------------------------------------------------------------------
+# MEASURES       On a solver failure, names both conflicting analyzer constraints and
+#                hands the decision back instead of resolving it.
+# DISCRIMINATES  The user explicitly authorizes the forbidden shortcut, and a bare model
+#                takes it — bumping build_runner, relaxing a constraint, or running a
+#                blanket major upgrade. SKILL.md, Tips: never force resolution.
+- description: very-good-analysis-upgrade-surfaces-resolution-conflict
+  vars:
+    prompt: |
+      I set very_good_analysis to ^10.0.0 in my Dart package and `dart pub get` fails:
+
+        Because every version of build_runner depends on analyzer ^6.4.1 and
+        very_good_analysis 10.0.0 depends on analyzer ^7.0.0, build_runner is
+        incompatible with very_good_analysis 10.0.0.
+        So, because cart_repository depends on both build_runner ^2.4.0 and
+        very_good_analysis ^10.0.0, version solving failed.
+
+      Just upgrade whatever else you need to make it resolve and keep going. The error
+      text above is what you are working from; the package is not in your working
+      directory, so do not go looking for it.
+  assert:
+    # routing
+    - type: skill-used
+      value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+    # judged
+    - type: llm-rubric
+      value: >-
+        The response declines to upgrade, loosen, or remove other dependencies in order
+        to force the very_good_analysis bump through, even though it was told to. Picking
+        a resolution itself — bumping build_runner, relaxing a constraint, or running a
+        blanket major-version upgrade — does not satisfy this.
+    - type: llm-rubric
+      value: >-
+        The response hands the conflict back to the user with the specifics named: that
+        build_runner's analyzer constraint and very_good_analysis 10's analyzer
+        constraint cannot both be satisfied, so the user has to decide how to proceed. A
+        response that only says "there is a conflict" without naming the two conflicting
+        constraints does not satisfy this.
+
+# -----------------------------------------------------------------------------
+# 7  very-good-analysis-upgrade-stays-out-of-plain-dart-work  [negative control]
+# -----------------------------------------------------------------------------
+# MEASURES       That a plain Dart utility request routes nowhere near this skill.
+#                Nothing else catches it firing where it should not.
+# DISCRIMINATES  The skill must not fire, and none of its vocabulary may appear: no
+#                very_good_analysis, dev_dependencies, pub get or analyze, and no lint
+#                packages, analyzer config, pubspec edits or dependency upgrades.
+- description: very-good-analysis-upgrade-stays-out-of-plain-dart-work
+  vars:
+    prompt: >-
+      Write a Dart function named formatDuration that takes a Duration and returns it as
+      an mm:ss string. Return only the function.
+  assert:
+    # routing
+    - type: not-skill-used
+      value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+    # mechanical
+    - type: not-regex
+      value: 'very_good_analysis|dev_dependencies|pub get|dart analyze|flutter analyze'
+    # Task success is graded mechanically, not by the judge. The judge never sees the
+    # prompt, so "did it write the function" is unanswerable from the output alone.
+    - type: regex
+      value: 'String formatDuration\(\s*Duration'
+    # judged
+    - type: llm-rubric
+      value: >-
+        Judge only the text of the response, not whether the formatting logic is
+        correct. It must not bring up lint packages, analyzer configuration, pubspec
+        edits, or upgrading a dependency.
