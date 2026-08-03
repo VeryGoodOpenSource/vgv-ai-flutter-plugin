@@ -89,7 +89,7 @@ Skill evals ask whether Claude routes to a skill and follows it. [promptfoo](htt
 npx promptfoo@latest eval -c evals/promptfooconfig.yaml
 ```
 
-They run locally and are not wired into CI. Run them before opening a PR that changes a skill.
+Run them locally before opening a PR that changes a skill. CI also runs them **after** a merge to `main`, scoped to the skills that changed, as an advisory signal rather than a gate — see [evals/README.md](evals/README.md#running-in-ci).
 
 See [evals/README.md](evals/README.md) for the case format, the assertion reference, prerequisites, and what these evals deliberately do not cover.
 

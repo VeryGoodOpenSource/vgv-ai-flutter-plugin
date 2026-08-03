@@ -202,8 +202,17 @@ Every pull request runs the following checks automatically:
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
 | Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
 
-Evals do not run in CI. Run them locally before opening a PR that touches a skill —
-see [Eval Cases](#eval-cases).
+Evals do **not** run on a pull request. They call real models, so they run after a merge
+to `main` instead, scoped to the skills that changed:
+
+| Check | What it does | Config |
+| ----- | ------------ | ------ |
+| Evals (post-merge) | Runs the eval cases for the changed skills, `with-skill` column only. Advisory, never blocking | `.github/workflows/evals.yaml` |
+
+That means a regression is reported after the merge rather than before it, which is a
+deliberate trade: a single eval run is too noisy to gate on, and running the full suite on
+every push to a PR would cost more than it saves. Run the cases for the skill you touched
+locally before opening the PR — see [Eval Cases](#eval-cases).
 
 If the spelling check flags a legitimate word, add it to `config/cspell.json` in the `words` array.
 

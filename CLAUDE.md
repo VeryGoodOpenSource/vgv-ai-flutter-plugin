@@ -37,6 +37,7 @@ evals/
     very-good-analysis-upgrade.yaml
   assertions/
     dart-parses.js     # The one custom promptfoo assertion we own
+  ci-summary.js        # Renders a promptfoo export into a GitHub step summary
   fixture/
     pubspec.yaml       # Neutral Flutter skeleton used as working-directory context
 hooks/
@@ -174,10 +175,14 @@ documentation there rather than here.
 Code session, so no API key. Read the per-column split, not the total: the
 `sealed-baseline` column is supposed to fail.
 
-Evals are **local only** — nothing eval-related runs in CI. Run them by hand before
-opening a PR. Isolation between the two columns is held by the provider keys in
-`promptfooconfig.yaml` and nothing checks it automatically, so treat any change to
-`tools`, `working_dir`, `setting_sources` or `plugins` as invalidating earlier numbers.
+Run them by hand before opening a PR. They do **not** run on a pull request, because they
+call real models; `.github/workflows/evals.yaml` runs them after a merge to `main`, scoped
+to the changed skills, `with-skill` column only, and always non-blocking. A full run is
+manual (`workflow_dispatch`) and is the expensive one.
+
+Isolation between the two columns is held by the provider keys in `promptfooconfig.yaml`
+and nothing checks it automatically, so treat any change to `tools`, `working_dir`,
+`setting_sources` or `plugins` as invalidating earlier numbers.
 
 ## Hooks
 

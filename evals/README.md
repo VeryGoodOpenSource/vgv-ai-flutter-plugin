@@ -8,8 +8,9 @@ npx promptfoo@latest eval -c evals/promptfooconfig.yaml
 
 Cases live in `evals/tests/*.yaml` and run through
 [promptfoo](https://www.promptfoo.dev). They call real models, so they take minutes
-and consume usage. Nothing here runs in CI. Run them locally before a PR that
-changes a skill.
+and consume usage. Run them locally before a PR that changes a skill; CI runs them
+after a merge, scoped to the changed skills, as an advisory signal — see
+[Running in CI](#running-in-ci).
 
 This file is the single source of truth. `README.md`, `CLAUDE.md` and
 `CONTRIBUTING.md` carry a few lines and a link here, so eval documentation belongs in
@@ -249,10 +250,42 @@ cases across both columns lands around $20–40 of equivalent usage and well ove
 hour. Use `--filter-pattern <skill>` while iterating; a full run is a release-time check,
 not an edit-loop one.
 
-These are not a merge gate, and nothing here runs in CI yet — run them locally before
-a PR that changes a skill. They are non-deterministic and a single rubric verdict can
+These are not a merge gate. They are non-deterministic and a single rubric verdict can
 move a case, so treat one red case as a prompt to look rather than proof of a
 regression. `--repeat 2` is the cheapest way to tell a real failure from noise.
+
+### Running in CI
+
+`.github/workflows/evals.yaml` runs them **after a merge to `main`**, never on a pull
+request. Three choices keep the bill down, and each one costs something:
+
+| Choice | Saves | Costs |
+| ------ | ----- | ----- |
+| Post-merge, not per-PR | A PR is pushed to many times; `main` is merged into once | A regression is reported after it lands |
+| Only the changed skills | One skill is 6–7 cases out of 100 | A change that affects routing globally can be missed |
+| `with-skill` column only | Half of every run | No ablation, so it cannot tell you a case has stopped discriminating |
+
+Dropping the sealed column is the safe half of that. The baseline exists to prove a *case
+discriminates*, which you answer once when writing the case. Regression detection does not
+need it. Re-check it deliberately with the `include_baseline` input, not on every run.
+
+Cost is bounded rather than estimated. `max_budget_usd` is enforced per case, so the
+ceiling is `cases × columns × max_budget_usd`: about **$3.50** for a one-skill merge at the
+current `0.5`, and **$100** for a full two-column run. Typical spend is far below the
+ceiling — a full run measured 274k tokens — but the ceiling is the number to put in a
+budget alarm, and a case that hits it errors rather than overspending.
+
+Two things about the CI path that the local path does not have:
+
+- **It needs `ANTHROPIC_API_KEY`.** Locally both providers set `apiKeyRequired: false` and
+  authenticate through the Claude Code session; CI has no session. The workflow runs a
+  one-case smoke test first so an auth problem fails in seconds instead of after a full
+  matrix.
+- **It is `continue-on-error`.** Deliberate. Two unedited cases have been measured moving
+  between runs, one across the pass/fail line, so a red result is a signal to look rather
+  than a verdict. Confirm locally with `--repeat 3`.
+
+For a full run before a release, use the manual trigger with `scope: all-skills`.
 
 ### What these evals do not cover
 
