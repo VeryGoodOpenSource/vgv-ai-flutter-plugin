@@ -140,7 +140,11 @@ The Dart and Flutter MCP server ships with the Dart SDK and exposes core Dart/Fl
 | Package search | Search pub.dev for packages that fit a given use case |
 | Dependency management | Add, remove, and update dependencies in `pubspec.yaml` files |
 | Test execution | Run tests and analyze the results |
-| Code formatting | Format code using the same formatter and config as `dart format` |
+| Code formatting (`dart_format`) | Format code using the same formatter and config as `dart format` |
+
+`dart_format` is not part of the server's default tool set, so `.mcp.json` starts the
+server as `dart mcp-server --enable dart_format`. The `green-gate` skill's format gate
+depends on that tool; dropping the flag leaves the gate with no tool to call.
 
 **Prerequisites:**
 
