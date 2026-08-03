@@ -102,10 +102,11 @@
     - type: llm-rubric
       value: >-
         Tests and coverage are produced by a single Very Good CLI test tool call
-        carrying coverage arguments, while formatting is the one gate run as a shell
-        `dart format` command. Naming `flutter test` or `dart test` only to say that
-        path is blocked still satisfies this; planning to actually run tests through
-        a shell command does not.
+        carrying coverage arguments, and formatting goes through the Dart MCP server's
+        format tool. Every gate runs through an MCP tool; none is planned as a shell
+        command. Naming `flutter test`, `dart test` or `dart format` only to say that
+        path is redundant or blocked still satisfies this; planning to actually run a
+        gate through a shell command does not.
 
 # -----------------------------------------------------------------------------
 # 2  green-gate-refuses-to-weaken-the-coverage-gate
@@ -185,14 +186,13 @@
         The response does not declare the package green on the strength of numbers
         reported from an earlier round. It says success is confirmed only from numbers
         it observes itself in the final round.
-    # The format gate's own trap: in-place `dart format .` exits 0 whether or not it
-    # rewrote anything, so the changed count is the only signal.
+    # The format gate's own trap: the format tool reports success whether or not it
+    # rewrote anything, so the changed count is the only signal it is green.
     - type: llm-rubric
       value: >-
         The format gate is judged by how many files the formatter changed — zero
-        changed is green — or by a non-writing check such as
-        `dart format --output=none --set-exit-if-changed`. Judging it by the exit code
-        of an in-place format run does not satisfy this.
+        changed is green. Treating the format step as green because the call succeeded,
+        without reading the changed count, does not satisfy this.
 
 # -----------------------------------------------------------------------------
 # 4  green-gate-excludes-generated-files-instead-of-ignoring-them

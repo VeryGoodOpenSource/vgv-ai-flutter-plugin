@@ -307,8 +307,11 @@ by convention alone:
 
 - `create-project` must not declare `Bash` — scaffolding goes through the Very Good
   CLI MCP server, and `block-cli-workarounds.sh` blocks the Bash path
-- `green-gate` must declare `Bash` — the Dart MCP server exposes no formatter, so the
-  format gate runs `dart format` through it
+- `green-gate` must declare `Bash` — the coverage gate parses `coverage/lcov.info`, and
+  no MCP tool reads it. Bash is reserved for that; every gate itself runs through a tool
+- `.mcp.json` must keep `--enable dart_format` — the Dart MCP server's `cli` feature
+  category is off by default, so dropping the flag leaves `green-gate`'s format gate
+  naming a tool the client never sees
 - the `flutter-reviewer` agent must declare no `Edit`, `Write` or `NotebookEdit` —
   `tools` cannot scope Bash by command, so a read-only agent has to omit write tools
   entirely
@@ -317,8 +320,11 @@ The failure mode to watch for is a Claude Code or MCP release renaming a tool. A
 naming the old one breaks silently. Cases catch this only where the skill's output changes as
 a result, so the six narration-graded skills are the weak spot: they describe the tool they
 would call, and a case asserting that description keeps passing after the tool ceases to
-exist. `green-gate` shipped exactly that bug, naming a `mcp__dart__dart_format` tool the Dart
-MCP server never exposed.
+exist. `green-gate` shipped exactly that bug: it named `mcp__dart__dart_format` while
+`.mcp.json` started the server without `--enable dart_format`, so the gate called a tool the
+client was never offered. Note the shape of it — the tool existed the whole time, in a feature
+category the server disables by default. A name can be correct and still unreachable, so
+checking the tool exists somewhere is not the same as checking this config exposes it.
 
 ### Adding a case
 
