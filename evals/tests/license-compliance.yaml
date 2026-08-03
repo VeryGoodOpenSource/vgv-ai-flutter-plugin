@@ -60,6 +60,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:license-compliance'
+      weight: 3
     # mechanical
     # Both surface forms of the same thing: the `packages_check_licenses` MCP tool and
     # `very_good packages check licenses`. Asserting only one would test syntax.
@@ -110,6 +111,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:license-compliance'
+      weight: 3
     # mechanical
     - type: regex
       value: 'packages[ _]check[ _]licenses'
@@ -161,6 +163,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:license-compliance'
+      weight: 3
     # mechanical
     # The report skeleton, graded twice: heading and summary line. Either alone is one
     # formatting slip away from a false negative.
@@ -214,6 +217,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:license-compliance'
+      weight: 3
     # mechanical
     - type: regex
       value: 'packages[ _]check[ _]licenses'
@@ -251,6 +255,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:license-compliance'
+      weight: 3
     # mechanical
     - type: icontains
       value: 'all rights reserved'
@@ -287,6 +292,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:license-compliance'
+      weight: 3
     # mechanical
     - type: not-regex
       value: '[Ll]icense|copyleft|\bMIT\b|\bGPL|\bBSD\b|Apache-2'

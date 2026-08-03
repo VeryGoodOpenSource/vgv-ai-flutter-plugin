@@ -75,6 +75,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     # The analyze gate goes through the Dart MCP server, not `dart analyze` in Bash.
     - type: regex
@@ -133,6 +134,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -170,6 +172,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -222,6 +225,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     # The parameter name is the skill's, not general Dart knowledge.
     - type: regex
@@ -278,6 +282,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     # The skill's own term for the comparison that makes "no progress" decidable.
     - type: regex
@@ -325,6 +330,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     - type: regex
       value: 'min_coverage'
@@ -366,6 +372,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'min_coverage|exclude_coverage|check_ignore|analyze_files|lcov'

@@ -91,6 +91,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+      weight: 3
     # mechanical
     - type: regex
       value: 'AA \+ selected AAA'
@@ -163,6 +164,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+      weight: 3
     # mechanical
     - type: regex
       value: '2\.5\.8'
@@ -207,6 +209,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+      weight: 3
     # mechanical
     # The documented replacement list from the Gesture Detector core standard.
     - type: regex
@@ -269,6 +272,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+      weight: 3
     # mechanical
     # With the paren, so the fix has to arrive as code. The sealed column named
     # MergeSemantics in prose, as a possible cause rather than the fix.
@@ -336,6 +340,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+      weight: 3
     # mechanical
     - type: regex
       value: 'liveRegion'
@@ -395,6 +400,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+      weight: 3
     # mechanical
     - type: regex
       value: 'IconButton'
@@ -440,6 +446,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:accessibility'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'Semantics|semanticLabel|WCAG|disableAnimations|excludeFromSemantics'

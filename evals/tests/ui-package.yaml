@@ -69,6 +69,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
+      weight: 3
     # mechanical
     # The template name is the whole point of this case: it appears only in this
     # SKILL.md, and create-project's template list does not contain it either.
@@ -111,6 +112,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
+      weight: 3
     # mechanical
     # One widget per file, named after the widget in snake_case, under src/. `\w`
     # covers underscores, so app_badge.dart and app_unread_badge.dart both match.
@@ -164,6 +166,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
+      weight: 3
     # mechanical
     # The documented alternative, graded mechanically alongside the first rubric.
     - type: regex
@@ -211,6 +214,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
+      weight: 3
     # mechanical
     - type: regex
       value: 'ThemeExtension<'
@@ -267,6 +271,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
+      weight: 3
     # mechanical
     - type: regex
       value: 'pumpApp'
@@ -305,6 +310,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
+      weight: 3
     # mechanical
     # The barrel path, without a `package:` prefix: promptfoo reads any assertion value
     # starting with `package:` as an npm-hosted assertion and errors the whole case.
@@ -343,6 +349,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:ui-package'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'ThemeExtension|app_ui_package|[Ww]idgetbook|pumpApp|barrel file'

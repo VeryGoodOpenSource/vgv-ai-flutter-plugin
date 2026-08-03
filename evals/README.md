@@ -112,11 +112,20 @@ is the number to read. Use `npx promptfoo@latest view` for the side-by-side.
 assertions average that or better. The threshold is per-case, so a weak case cannot
 hide behind strong siblings.
 
+**Routing carries `weight: 3`.** Every `skill-used` and `not-skill-used` assertion is
+weighted so a routing miss cannot clear the threshold on its own. Unweighted it could:
+a six-assertion case whose only failure was `skill-used` averaged `0.83` and reported
+green, which is how a measured bloc routing failure went unnoticed for a whole run. At
+weight 3 a routing miss with every content assertion passing scores `n / (n + 3)` — at
+most `0.75` for the case sizes here — while a single content miss with routing intact
+still clears, so the deliberate one-soft-miss tolerance survives. Keep the weight on
+routing assertions in new cases; nothing enforces it automatically.
+
 ### Assertions
 
 | `type` | Measures | Notes |
 | ------ | -------- | ----- |
-| `skill-used` / `not-skill-used` | process | Reads `metadata.skillCalls`, which promptfoo derives from `Skill` tool calls. Errored skill attempts do not satisfy it |
+| `skill-used` / `not-skill-used` | process | Reads `metadata.skillCalls`, which promptfoo derives from `Skill` tool calls. Errored skill attempts do not satisfy it. Always `weight: 3` — see the threshold note above |
 | `regex` / `not-regex` | style | Any assertion negates with a `not-` prefix |
 | `contains` / `icontains` / `not-icontains` | outcome | Case-insensitive variants for one-word answers |
 | `llm-rubric` | style | Model-graded against a criterion |

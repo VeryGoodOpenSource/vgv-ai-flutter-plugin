@@ -61,6 +61,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+      weight: 3
     # mechanical
     - type: regex
       value: '@TypedGoRoute<'
@@ -95,6 +96,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -133,6 +135,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+      weight: 3
     # mechanical
     # "Use @TypedGoRoute annotations for type-safe routes — never raw string paths in
     # route definitions."
@@ -169,6 +172,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+      weight: 3
     # mechanical
     - type: regex
       value: 'redirect'
@@ -201,6 +205,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+      weight: 3
     # mechanical
     # The whole go family counts, and so does the whole push family: the skill emits
     # context.goNamed(...) here, which `\.go\(` alone does not match.
@@ -229,6 +234,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+      weight: 3
     # mechanical
     - type: regex
       value: 'Mock.*GoRouter|GoRouter.*Mock'
@@ -255,6 +261,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:navigation'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'GoRoute|go_router|context\.go|ShellRoute'

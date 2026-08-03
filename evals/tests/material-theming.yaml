@@ -65,6 +65,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:material-theming'
+      weight: 3
     # mechanical
     - type: regex
       value: 'abstract class AppColors'
@@ -129,6 +130,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:material-theming'
+      weight: 3
     # mechanical
     # Colors and text styles are graded twice mechanically and once by rubric: a
     # response that fixes the color and keeps the TextStyle literal would clear 0.8.
@@ -181,6 +183,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:material-theming'
+      weight: 3
     # mechanical
     - type: regex
       value: 'class AppSpacing'
@@ -236,6 +239,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:material-theming'
+      weight: 3
     # mechanical
     - type: regex
       value: 'inputDecorationTheme'
@@ -291,6 +295,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:material-theming'
+      weight: 3
     # mechanical
     - type: regex
       value: 'Theme\.of\(context\)\.colorScheme'
@@ -330,6 +335,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:material-theming'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'ThemeData|ColorScheme|colorScheme|textTheme|Theme\.of\('
