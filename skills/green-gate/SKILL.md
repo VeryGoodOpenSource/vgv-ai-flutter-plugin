@@ -50,14 +50,28 @@ Apply these to ALL green-gate work:
   `mcp__very-good-cli__test`. The Bash test path (`very_good test`, `flutter test`,
   `dart test`) is hook-blocked by `block-cli-workarounds.sh` and will be denied;
   `dart analyze` via Bash is redundant with the MCP tool.
-- **Format is the one documented exception** — no MCP tool can format. The Dart MCP
-  server exposes no formatter, and its `mcp__dart__lsp` tool offers only `hover`,
-  `signatureHelp` and `resolveWorkspaceSymbol`, so there is no LSP formatting path
-  either. The format gate therefore runs `dart format` via Bash. This is permitted:
-  `block-cli-workarounds.sh` denies only `flutter`/`dart create`, `flutter`/`dart
-  test`, and `very_good create`/`test`/`packages`. **Bash is reserved for
-  `dart format` and parsing `coverage/lcov.info` — nothing else.** If a future Dart
-  MCP release adds a formatting tool, move this gate to it and delete this exception.
+- **Format is the one documented exception** — no MCP tool can format, so the format
+  gate runs `dart format` via Bash. This is permitted: `block-cli-workarounds.sh`
+  denies only `flutter`/`dart create`, `flutter`/`dart test`, and `very_good
+  create`/`test`/`packages`. **Bash is reserved for `dart format` and parsing
+  `coverage/lcov.info` — nothing else.**
+
+  Do not be misled by `dart mcp-server --help`. Its `--enable`/`--disable` flags name
+  `dart_format` and `run_tests` as features, but the server does not advertise either
+  as a tool. On Dart 3.12.1 it advertises 13 tools, none of them a formatter or a test
+  runner — which is also why the test gate goes through `mcp__very-good-cli__test`.
+
+  Verify rather than assume, by asking the server directly:
+
+  ```bash
+  { echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"p","version":"1"}}}'; sleep 2; \
+    echo '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}'; sleep 1; \
+    echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'; sleep 4; } \
+    | dart mcp-server 2>/dev/null | grep -o '"name":"[a-z_]*"' | sort -u
+  ```
+
+  If a future release does advertise a formatting tool, move this gate to it and
+  delete this exception.
 - **A plan-only request is still this skill's job** — when the user asks which
   tools, which arguments, or what order the gates run in and does not want a run
   yet, answer from this skill: the same tool calls (`mcp__dart__analyze_files`

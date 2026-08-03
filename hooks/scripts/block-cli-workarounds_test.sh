@@ -76,6 +76,14 @@ echo ""
 echo "--- Should be ALLOWED ---"
 assert_allowed "dart analyze lib/foo.dart"
 assert_allowed "dart format lib/foo.dart"
+
+# The green-gate format gate. No MCP tool can format, so these three are the only
+# way that gate can run. If one of them starts being denied, the gate breaks
+# silently — the skill keeps prescribing it and every call is refused. See the
+# header comment in block-cli-workarounds.sh.
+assert_allowed "dart format ."
+assert_allowed "dart format --output=none --set-exit-if-changed ."
+assert_allowed "cd packages/api_client && dart format ."
 assert_allowed "dart pub get"
 assert_allowed "dart fix --apply"
 assert_allowed "flutter pub get"

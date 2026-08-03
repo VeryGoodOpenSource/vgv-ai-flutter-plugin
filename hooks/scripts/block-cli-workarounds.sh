@@ -2,6 +2,17 @@
 # PreToolUse hook: block Bash commands that bypass MCP tools.
 # Denies flutter create, dart create, very_good create, very_good test,
 # very_good packages, flutter test, dart test.
+#
+# This is a blocklist, so anything not named above is allowed by omission. One of
+# those omissions is load-bearing:
+#
+#   `dart format` MUST stay allowed. The Dart MCP server advertises no formatter, so
+#   the green-gate skill's format gate runs `dart format` through Bash. Adding it here,
+#   or widening a rule to all `dart` subcommands, breaks that gate silently: the skill
+#   would keep telling the model to run it and every call would be denied.
+#
+# block-cli-workarounds_test.sh pins the exact commands that gate runs. Keep them
+# passing, or update the skill in the same change.
 
 if ! command -v jq &>/dev/null; then
   echo "jq is required for block-cli-workarounds hook but not found" >&2
