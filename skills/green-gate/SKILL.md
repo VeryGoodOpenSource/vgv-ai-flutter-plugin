@@ -45,16 +45,19 @@ coverage-pattern guidance.
 
 Apply these to ALL green-gate work:
 
-- **Use the MCP tools for analyze, test, and coverage** — analyze via
-  `mcp__dart__analyze_files`, test and coverage via `mcp__very-good-cli__test`.
-  The Bash test path (`very_good test`, `flutter test`, `dart test`) is
-  hook-blocked by `block-cli-workarounds.sh`; `dart analyze` via Bash is
-  redundant with the MCP tool.
-- **Format is the one gate that runs through Bash** — the Dart MCP server
-  exposes no formatting tool, so the format gate runs `dart format` via Bash.
-  `block-cli-workarounds.sh` blocks only `flutter`/`dart create`, `flutter`/`dart
-  test`, and `very_good create`/`test`/`packages`, so `dart format` is permitted.
-  **Bash is reserved for `dart format` and parsing `coverage/lcov.info`.**
+- **MCP first, always** — a gate that has an MCP tool runs through it, never through
+  its Bash equivalent. Analyze via `mcp__dart__analyze_files`, test and coverage via
+  `mcp__very-good-cli__test`. The Bash test path (`very_good test`, `flutter test`,
+  `dart test`) is hook-blocked by `block-cli-workarounds.sh` and will be denied;
+  `dart analyze` via Bash is redundant with the MCP tool.
+- **Format is the one documented exception** — no MCP tool can format. The Dart MCP
+  server exposes no formatter, and its `mcp__dart__lsp` tool offers only `hover`,
+  `signatureHelp` and `resolveWorkspaceSymbol`, so there is no LSP formatting path
+  either. The format gate therefore runs `dart format` via Bash. This is permitted:
+  `block-cli-workarounds.sh` denies only `flutter`/`dart create`, `flutter`/`dart
+  test`, and `very_good create`/`test`/`packages`. **Bash is reserved for
+  `dart format` and parsing `coverage/lcov.info` — nothing else.** If a future Dart
+  MCP release adds a formatting tool, move this gate to it and delete this exception.
 - **A plan-only request is still this skill's job** — when the user asks which
   tools, which arguments, or what order the gates run in and does not want a run
   yet, answer from this skill: the same tool calls (`mcp__dart__analyze_files`
