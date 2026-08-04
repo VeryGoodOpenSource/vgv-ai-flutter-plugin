@@ -100,7 +100,10 @@ defaultTest:
   # per-case, so a weak case cannot hide behind strong siblings. Routing assertions
   # carry `weight: 3` in the case files so a `skill-used` miss always lands below this
   # line — unweighted, a six-assertion case failing only on routing averaged 0.83 and
-  # reported green. See the threshold note in README.md.
+  # reported green. 3 is the smallest weight that holds for every case size here, and
+  # it buys that strictness by letting two content misses pass on the five cases with
+  # 7+ content assertions. Read the threshold note in README.md before changing either
+  # number; raising the weight loosens content further rather than tightening it.
   threshold: 0.8
   # Do not add a harness self-check as an assertion here. Isolation is a *validity*
   # question, not a graded one, and an assertion that returns true on every clean run

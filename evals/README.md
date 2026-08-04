@@ -113,13 +113,27 @@ assertions average that or better. The threshold is per-case, so a weak case can
 hide behind strong siblings.
 
 **Routing carries `weight: 3`.** Every `skill-used` and `not-skill-used` assertion is
-weighted so a routing miss cannot clear the threshold on its own. Unweighted it could:
-a six-assertion case whose only failure was `skill-used` averaged `0.83` and reported
-green, which is how a measured bloc routing failure went unnoticed for a whole run. At
-weight 3 a routing miss with every content assertion passing scores `n / (n + 3)` — at
-most `0.75` for the case sizes here — while a single content miss with routing intact
-still clears, so the deliberate one-soft-miss tolerance survives. Keep the weight on
-routing assertions in new cases; nothing enforces it automatically.
+weighted so a routing miss cannot clear the threshold on its own. Unweighted it could: a
+six-assertion case whose only failure was `skill-used` averaged `0.83` and reported
+green, which is how a measured bloc routing failure went unnoticed for a whole run.
+
+Writing `n` for a case's non-routing assertions, which range from 1 to 8 across this
+suite, a routing miss scores `n / (n + 3)`, at most `0.727`. Three is the smallest
+weight that holds for every case size: a routing miss clears `0.8` whenever the weight
+is below `n / 4`, so `1` and `2` both leave the largest cases masked.
+
+**Weight 3 has a cost, and it is not symmetric.** On the five cases with 7 or more
+content assertions, two content failures now score `0.818` or `0.900` and pass, where
+unweighted they scored `0.75` to `0.778` and failed. Routing got stricter and the
+content bar on the largest cases got looser. Raising the weight makes that worse rather
+than better, because routing then dominates the average and each content assertion
+carries less. It is a property of averaging, not of the number. If a large case needs
+its two-miss strictness back, that is a per-case fix.
+
+The one-soft-miss tolerance holds for `n >= 2`. The two `n = 1` cases fail on their
+single content miss, as they did unweighted.
+
+Keep the weight on routing assertions in new cases. Nothing enforces it automatically.
 
 ### Assertions
 
