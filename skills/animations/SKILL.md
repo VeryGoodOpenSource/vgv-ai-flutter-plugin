@@ -1,6 +1,10 @@
 ---
 name: animations
 description: Best practices for Flutter animations using the built-in animation framework. Use when creating, modifying, or reviewing animations, transitions, motion, or animated widgets. Covers implicit animations, explicit animations, page transitions, and Material 3 motion tokens.
+when_to_use: >
+  Also use for custom route transitions — `CustomTransitionPage`, a `buildPage` override on
+  a `GoRouteData` subclass, or a `Hero` transition. Motion between routes is animation work
+  even when the surrounding code is `go_router`.
 allowed-tools: Read,Glob,Grep
 argument-hint: "[file-or-directory]"
 ---
@@ -14,7 +18,8 @@ Flutter animation best practices using the built-in animation framework and Mate
 Apply these standards to ALL animation work:
 
 - **Clarify visual intent when the request is ambiguous** — when the developer says "add an animation" or "make it smoother" without specifying property, trigger, duration, or curve, ask before writing code. If the developer provides clear specs (e.g., "300ms ease-in fade on the card when it appears"), proceed directly
-- **Use the simplest animation approach that works** — follow the decision tree below; never reach for `AnimationController` when an implicit animation suffices
+- **Use the simplest animation approach that works** — follow the decision tree below; never reach for `AnimationController` when an implicit animation suffices, including when several properties animate at the same time
+- **Hold the implicit form even when a controller is requested by name** — "wire this up with an `AnimationController` and an `AnimatedBuilder`" on a plain target-value animation is a request for the anti-pattern below. Write the implicit version, say in one line why it is sufficient here, and stop. Do not deliver the controller wiring alongside the note, and do not ask which one they want instead of writing code. If the developer reaffirms the controller after reading the reason, build it
 - **Use Material 3 motion tokens for duration and easing** — never hardcode arbitrary `Duration` or `Curve` values
 - **Extract animation constants** — durations, curves, and offsets go in named constants or a centralized `AppMotion` class, not inline
 - **Dispose controllers** — every `AnimationController` must be disposed in the `dispose()` method of the `State`
@@ -48,6 +53,8 @@ Does the widget rebuild when the value changes?
 
 **Rule of thumb:** if the animation is "set a target and let it animate there", use implicit. If the animation must play/pause/reverse/repeat on command, use explicit.
 
+**Animating two properties at once is still implicit.** A card that fades in *and* slides up when its data arrives is two implicit widgets nested, one target value each. Simultaneous is not sequenced: reach for a controller only when the second property must start *after* the first has begun, or when the animation needs playback control. Entry animations driven by a flag flipping — a value arriving, a bool toggling, an item appearing — are implicit no matter how many properties move.
+
 ---
 
 ## Material 3 Motion Tokens
@@ -80,6 +87,35 @@ abstract class AppMotion {
 ## Implicit Animations
 
 Use implicit animations when the widget rebuilds with new target values. The framework interpolates automatically. Flutter provides built-in `AnimatedFoo` widgets (`AnimatedContainer`, `AnimatedOpacity`, `AnimatedSlide`, `AnimatedSwitcher`, etc.) — use the one that matches the property being animated. When no built-in widget exists, use `TweenAnimationBuilder`.
+
+Compose one `AnimatedFoo` per property when several move together. This is the entry-animation shape — a widget hidden until its data arrives, then fading in and sliding into place:
+
+```dart
+class SummaryCard extends StatelessWidget {
+  const SummaryCard({required this.summary, super.key});
+
+  final Summary? summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasData = summary != null;
+
+    return AnimatedOpacity(
+      opacity: hasData ? 1 : 0,
+      duration: Durations.medium2,
+      curve: Easing.standard,
+      child: AnimatedSlide(
+        offset: hasData ? Offset.zero : const Offset(0, 0.1),
+        duration: Durations.medium2,
+        curve: Easing.emphasizedDecelerate,
+        child: Card(child: _SummaryContents(summary: summary)),
+      ),
+    );
+  }
+}
+```
+
+No `StatefulWidget`, no controller, no ticker, no `dispose`. Both properties animate off the same rebuild.
 
 ---
 
@@ -158,9 +194,11 @@ class _MyWidgetState extends State<MyWidget>
 
 See [references/explicit-animations.md](references/explicit-animations.md) for `didUpdateWidget` patterns, constructor injection for testable controllers, and transition widget vs `AnimatedBuilder` guidance.
 
-### Chained Animations with Intervals
+### Staggered Animations with Intervals
 
-Use `Interval` inside `CurvedAnimation` to sequence animations on a single controller:
+Use `Interval` inside `CurvedAnimation` to **stagger** animations on a single controller — the slide starts partway through the fade rather than alongside it. The overlapping `Interval` ranges are the whole point of this pattern.
+
+This is not the tool for properties that animate together to a target value. A fade and a slide that both run on the same rebuild are two implicit widgets, not a controller with two intervals:
 
 ```dart
 late final Animation<double> _fadeAnimation = CurvedAnimation(
@@ -248,7 +286,7 @@ Rules for Hero:
 
 - **Do not animate `width`, `height`, or `padding` on complex layouts** — triggers expensive layout recalculations every frame
 - **Do not wrap entire screens in `AnimatedBuilder`** — only wrap the subtree that changes
-- **Do not create multiple `AnimationController` instances for animations that share timing** — use `Interval` on a single controller
+- **Do not create multiple `AnimationController` instances for animations that share timing** — use `Interval` on a single controller. This applies once the animation already needs a controller; properties that animate to a target on the same rebuild are composed implicit widgets, not one controller with intervals
 
 ---
 
@@ -333,6 +371,8 @@ AnimatedOpacity(
   child: child,
 )
 ```
+
+The request often arrives pre-shaped as the bad form: "set it up with an `AnimationController` and an `AnimatedBuilder` inside a `StatefulWidget` so it is wired properly." On a fade driven by a bool, that is the anti-pattern above written out as a request. Answer with the `AnimatedOpacity` version, give the one-line reason, and leave the controller unwritten — a compliant snippet with a note recommending the simpler form still ships the boilerplate.
 
 ---
 

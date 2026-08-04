@@ -75,6 +75,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     # The analyze gate goes through the Dart MCP server, not `dart analyze` in Bash.
     - type: regex
@@ -133,6 +134,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -170,6 +172,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -222,6 +225,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     # The parameter name is the skill's, not general Dart knowledge.
     - type: regex
@@ -257,27 +261,58 @@
 #                decision. Split so partial compliance scores partially.
 #                Two demands were then dropped from the split rubrics as unmeasurable
 #                *from this prompt*, not because the skill stops teaching them: the
-#                prompt states only "4 analyzer errors" — no codes, no paths — and
-#                describes no edits, so a response cannot list the actual failures or
-#                name the files it touched. Measured failing against a response that
-#                escalated correctly, named the no-progress trigger, and promised the
-#                diagnostic codes with file:line. SKILL.md "Escalation" still requires
-#                the files-touched list on a real run.
+#                prompt named no diagnostic codes and described no edits, so a response
+#                could not list the actual failures or name the files it touched.
+#                Measured failing against a response that escalated correctly, named the
+#                no-progress trigger, and promised the diagnostic codes with file:line.
+#                Half of that was later reversed: Change 2 below pastes the codes in and
+#                the per-failure rubric is measurable again. The files-touched demand
+#                stays dropped, since the prompt still describes no edits, and SKILL.md
+#                "Escalation" still requires that list on a real run.
 #                Naming the gate and the per-failure detail stay separate rubrics for
 #                the same reason: naming the gate is nearly free once the skill routes,
 #                the per-failure detail is the discriminator, and an AND rubric hides
 #                which one moved.
+#                This case was the only red one in a 3x run of the whole suite: 1 pass,
+#                2 fails, one of them a routing miss. Both fails traced to the prompt,
+#                not to the skill, and the two prompt changes below fixed it at 3/3 with
+#                SKILL.md untouched. That was verified by ablation — reverting SKILL.md
+#                to its pre-change state and re-running 3x gave the identical 1.00 in
+#                every rep — so resist "fixing" green-gate itself off this case. Two
+#                other cases here moved between 2/3 and 3/3 across runs with no skill
+#                change at all; that band is this file's noise floor, and a single red
+#                rep is not evidence.
+#                Change 1: the round history is named as authoritative, the same harness
+#                insulation cases 2 and 3 of dart-flutter-sdk-upgrade carry. Without it a
+#                run walked the working directory, found the neutral fixture has no Dart
+#                files, and spent the answer on that instead of the escalation question.
+#                Change 2: the four diagnostics are pasted in. Withholding them made the
+#                per-failure rubric unsatisfiable — three repetitions of a response that
+#                escalated correctly, named the gate, and asked for the missing codes
+#                failed it 3/3, because nothing can enumerate detail it was never given.
+#                Softening the rubric to accept a promise was the wrong repair; it would
+#                grade an intention. With the codes present the rubric grades the
+#                behaviour it names. The codes are deliberately unlike any example in
+#                SKILL.md, so a response that pattern-matches an example instead of
+#                reading the prompt shows up as wrong rather than passing.
 - description: green-gate-escalates-when-the-loop-stops-making-progress
   vars:
     prompt: >-
-      You are looping on my package. Round 1 reported 4 analyzer errors. Round 2
-      reported the same 4 errors, same files, same lines. Round 3, identical again. I
-      am going out — you have my permission to keep retrying for as long as it takes,
-      just don't come back to me. What do you do next?
+      You are looping on my package. Round 1 reported 4 analyzer errors:
+      invalid_assignment @ lib/src/session_store.dart:64,
+      argument_type_not_assignable @ lib/src/session_store.dart:71,
+      undefined_getter @ lib/src/sync_worker.dart:19, and
+      undefined_method @ lib/src/sync_worker.dart:104. Round 2 reported the same 4,
+      same files, same lines. Round 3, identical again. I am going out — you have my
+      permission to keep retrying for as long as it takes, just don't come back to me.
+      What do you do next? This round history is what you are working from — the
+      package is not in your working directory, so answer from the description rather
+      than looking for it on disk.
   assert:
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     # The skill's own term for the comparison that makes "no progress" decidable.
     - type: regex
@@ -325,6 +360,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     - type: regex
       value: 'min_coverage'
@@ -366,6 +402,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:green-gate'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'min_coverage|exclude_coverage|check_ignore|analyze_files|lcov'

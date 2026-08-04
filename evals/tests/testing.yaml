@@ -69,6 +69,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+      weight: 3
     # mechanical
     - type: regex
       value: 'class _Mock[A-Za-z]+ extends Mock implements'
@@ -126,6 +127,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+      weight: 3
     # mechanical
     - type: icontains
       value: 'mocktail'
@@ -160,6 +162,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+      weight: 3
     # mechanical
     - type: regex
       value: 'testWidgets'
@@ -198,6 +201,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -224,6 +228,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+      weight: 3
     # mechanical
     - type: regex
       value: 'TestTag'
@@ -249,6 +254,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:testing'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'testWidgets|pumpApp|mocktail|setUp\('

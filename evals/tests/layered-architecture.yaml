@@ -61,6 +61,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
+      weight: 3
     # mechanical
     - type: regex
       value: 'packages/'
@@ -117,6 +118,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -158,6 +160,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
+      weight: 3
     # mechanical
     - type: regex
       value: 'class WeatherRepository'
@@ -201,6 +204,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -226,6 +230,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -253,6 +258,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
+      weight: 3
     # mechanical
     - type: regex
       value: 'MultiRepositoryProvider|RepositoryProvider'
@@ -287,6 +293,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:layered-architecture'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'packages/|_api_client|_repository|RepositoryProvider'

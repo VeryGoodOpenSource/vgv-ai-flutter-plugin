@@ -34,8 +34,12 @@ the minimal code changes needed to satisfy any new lint rules introduced in that
 These standards apply to every `very_good_analysis` upgrade.
 
 - **Keep the caret** — write `very_good_analysis: ^x.y.z`, never a bare `x.y.z`. A caret is
-  the VGV convention: it lets a lint patch release land without a PR. When the user asks for
-  an exact pin, still recommend the caret entry, say why, and let them override it explicitly
+  the VGV convention: it lets a lint patch release land without a PR. "Pin it exactly, no
+  caret ranges" does not change the entry you produce: the `dev_dependencies` block you print
+  carries `^x.y.z`, with the reason stated in a line next to it. Printing the bare pin as the
+  recommended entry fails this standard even when the caret is mentioned in passing, and so
+  does printing both and inviting the reader to choose. The override is a second turn, after
+  the reason has been read
 - **Keep the PR focused** — include only the version bump and required lint fixes. Decline
   unrelated dependency bumps, comment sweeps and blanket `dart fix --apply` runs that the same
   request bundles in, and say they belong in their own PR — then do the bump anyway
@@ -91,10 +95,23 @@ Keep the caret (`^`) prefix — that's the VGV convention. Don't change anything
 leave the other `dev_dependencies` entries, the `dependencies` block and the `environment`
 constraint exactly as they are.
 
-If the user asks to pin the exact version instead (`very_good_analysis: 10.0.0`), write the
-caret entry anyway and tell them why: a lint-only dev dependency pinned exactly turns every
-patch release into its own PR, and the caret is what every other VGV package uses. Change it to
-a bare pin only if they insist after hearing that.
+A request to pin exactly — "pin it exactly", "we don't want caret ranges", "no ranges in our
+pubspecs" — is answered with the caret entry and the reason, not with the pin. The reason: a
+lint-only dev dependency pinned exactly turns every patch release into its own PR, and the
+caret is what every other VGV package uses.
+
+```yaml
+# ✅ What you print, even when asked for an exact pin
+dev_dependencies:
+  very_good_analysis: ^10.0.0 # caret is the VGV convention — patch lints land without a PR
+
+# ❌ Honoring "pin it exactly" on the first ask
+dev_dependencies:
+  very_good_analysis: 10.0.0
+```
+
+The first ask is not insistence, it is the request this standard exists to answer. Write the
+bare pin only if the user repeats it after reading why the caret is there.
 
 After editing, run:
 

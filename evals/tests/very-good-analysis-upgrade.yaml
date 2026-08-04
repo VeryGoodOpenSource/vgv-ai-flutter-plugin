@@ -66,6 +66,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+      weight: 3
     # mechanical
     # The version-resolution recipe is verbatim in SKILL.md. Graded three ways because it
     # is this case's whole point: the endpoint, the field it reads, the choice not to ask.
@@ -123,6 +124,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+      weight: 3
     # mechanical
     # Fails if the model honored "pin it exactly" and wrote `very_good_analysis: 10.0.0`.
     - type: regex
@@ -201,6 +203,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+      weight: 3
     # mechanical
     # One regex covers both style lints: prefer_const_constructors wants the `const`,
     # require_trailing_commas wants the comma, and both land on the same line.
@@ -261,6 +264,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+      weight: 3
     # mechanical
     # At least two separate pub get invocations. SKILL.md, Tips: "`pub get` must be run
     # per-package." A single root-level pub get fails this.
@@ -324,6 +328,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -368,6 +373,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -400,6 +406,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:very-good-analysis-upgrade'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'very_good_analysis|dev_dependencies|pub get|dart analyze|flutter analyze'

@@ -57,6 +57,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+      weight: 3
     # mechanical
     # Each of the next three is a plugin fingerprint, not Flutter common knowledge:
     # Flutter's setup docs use lib/l10n and set neither of the other two keys.
@@ -93,6 +94,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+      weight: 3
     # mechanical
     # Matches a real pubspec dependency line, not the package name in prose: a
     # response that declines has to name easy_localization to decline it.
@@ -149,6 +151,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+      weight: 3
     # mechanical
     # The Core Standard from both sides. The extension's own body reads
     # `AppLocalizations.of(this)`, so declaring it does not trip the not-regex.
@@ -207,6 +210,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+      weight: 3
     # mechanical
     # Core Standard from both sides. The prompt bars repeating the original, so the
     # not-regex cannot fire on an echo of the pasted widget.
@@ -263,6 +267,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+      weight: 3
     # mechanical
     # The documented alternative, graded mechanically: the shared widget grows a
     # String field, and the app-level call site supplies it through the extension.
@@ -301,6 +306,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:internationalization'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'AppLocalizations|context\.l10n|gen-l10n|EdgeInsetsDirectional|\.arb\b'

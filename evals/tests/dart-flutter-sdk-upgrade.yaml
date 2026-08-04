@@ -78,6 +78,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+      weight: 3
     # mechanical
     # `[^\n^]{0,3}` absorbs the optional quoting, and excluding `^` from the class makes
     # `flutter_version: "^3.41.x"` fail. No mirroring `not-regex` on `3.41.0`: a correct
@@ -135,6 +136,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+      weight: 3
     # mechanical
     # `^` is excluded from the class rather than bounded by length: with a plain
     # `[^\n]{0,3}` the wrong answer `dart_sdk: "^3.11.0"` matches, since ` "^` is three
@@ -185,6 +187,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+      weight: 3
     # mechanical
     # The documented source, in either the URL or the named form.
     - type: regex
@@ -240,6 +243,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+      weight: 3
     # mechanical
     # Proves it still did the in-scope work rather than refusing wholesale. `\b` keeps it
     # off keys that end in `flutter`; the caret is required because pubspec form is never
@@ -290,6 +294,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -330,6 +335,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+      weight: 3
     # mechanical
     # The documented scope check. Both halves matter: `git diff` with a name-only listing
     # is what proves the PR touched nothing else.
@@ -384,6 +390,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:dart-flutter-sdk-upgrade'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'flutter_version|dart_sdk|very_good_workflows|install/archive'

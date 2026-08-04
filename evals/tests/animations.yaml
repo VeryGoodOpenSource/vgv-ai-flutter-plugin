@@ -59,6 +59,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+      weight: 3
     # mechanical
     - type: regex
       value: 'Durations\.'
@@ -99,6 +100,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+      weight: 3
     # mechanical
     # SKILL.md, Anti-Patterns, "Using explicit when implicit suffices": the good
     # form for this exact request is AnimatedOpacity.
@@ -141,6 +143,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+      weight: 3
     # mechanical
     # Performance, Do Not: "Do not create multiple AnimationController instances for
     # animations that share timing — use Interval on a single controller."
@@ -193,6 +196,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+      weight: 3
     # mechanical
     - type: regex
       value: 'CustomTransitionPage'
@@ -265,6 +269,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+      weight: 3
     # mechanical
     - type: regex
       value: 'Durations\.'
@@ -305,6 +310,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+      weight: 3
     # mechanical
     # Core Standards: "durations, curves, and offsets go in named constants or a
     # centralized AppMotion class, not inline."
@@ -339,6 +345,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:animations'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'AnimationController|AnimatedBuilder|TweenAnimationBuilder|CustomTransitionPage'

@@ -84,6 +84,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:create-project'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -118,6 +119,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:create-project'
+      weight: 3
     # mechanical
     # Both surface forms count: the MCP tool is `packages_get`, the shell equivalent is
     # `very_good packages get`. An earlier `icontains: packages_get` failed a correct
@@ -160,6 +162,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:create-project'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -184,6 +187,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:create-project'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -210,6 +214,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:create-project'
+      weight: 3
     # judged
     - type: llm-rubric
       value: >-
@@ -245,6 +250,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:create-project'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'very_good create|dart_package|flutter_app|--org'

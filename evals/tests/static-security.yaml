@@ -71,6 +71,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+      weight: 3
     # judged
     # The prohibition itself. SKILL.md: --dart-define / String.fromEnvironment "are
     # not a safe alternative to backend-served secrets."
@@ -141,6 +142,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+      weight: 3
     # mechanical
     # The middle tier is the tell. No trailing `\b` on Warning so a "Warnings"
     # heading counts; `\bMedium\b` will not fire on `Durations.medium2`-style text.
@@ -195,6 +197,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+      weight: 3
     # mechanical
     - type: regex
       value: 'dart_crypt'
@@ -241,6 +244,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+      weight: 3
     # mechanical
     # SKILL.md: "Use package:formz for all form validation. Define a FormzInput
     # subclass per field."
@@ -276,6 +280,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+      weight: 3
     # mechanical
     # references/crypto.md: "Use package:local_auth ... Do not invoke platform
     # channels directly."
@@ -324,6 +329,7 @@
     # routing
     - type: skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+      weight: 3
     # mechanical
     # SKILL.md: "Scan pubspec.lock with osv-scanner before every release". The
     # lockfile target specifically is the part the bare model does not produce.
@@ -331,8 +337,12 @@
       value: 'osv-scanner'
     - type: regex
       value: 'pubspec\.lock'
+    # Either prefix. The pasted pubspec depends on Flutter, and SKILL.md's own verify
+    # guidance says to match the tool to the package, so `flutter pub outdated` is the
+    # correct spelling here even though the checklist writes the `dart` form. Pinning
+    # this to `dart` graded the prefix rather than the step.
     - type: regex
-      value: 'dart pub outdated'
+      value: '(dart|flutter) pub outdated'
     # judged
     - type: llm-rubric
       value: >-
@@ -357,6 +367,7 @@
     # routing
     - type: not-skill-used
       value: 'vgv-ai-flutter-plugin:static-security'
+      weight: 3
     # mechanical
     - type: not-regex
       value: 'flutter_secure_storage|FormzInput|Random\.secure|osv-scanner|local_auth'

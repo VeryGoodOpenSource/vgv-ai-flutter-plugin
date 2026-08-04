@@ -63,6 +63,8 @@ skills/
   bloc/references/
   create-project/SKILL.md
   dart-flutter-sdk-upgrade/SKILL.md
+  dart-flutter-sdk-upgrade/references/
+    version-conflicts.md
   green-gate/SKILL.md
   green-gate/references/
     coverage.md
@@ -110,7 +112,8 @@ Every `SKILL.md` follows this structure:
 1. Create `skills/<skill_name>/SKILL.md` following the format above
 2. Create `evals/tests/<skill_name>.yaml` — eval cases with one prompt per major
    workflow the skill covers, a `skill-used` assertion on each, and one
-   `not-skill-used` negative control. Register the file under `tests:` in
+   `not-skill-used` negative control. Routing assertions carry `weight: 3` so a routing
+   miss cannot clear the per-case threshold. Register the file under `tests:` in
    `evals/promptfooconfig.yaml`. See `evals/README.md` for the format
 3. Update `keywords` **and** the `description` (marketplace text) in `.claude-plugin/plugin.json`
 4. Update the skills table in `README.md` (skill name must link to the `SKILL.md` file)
