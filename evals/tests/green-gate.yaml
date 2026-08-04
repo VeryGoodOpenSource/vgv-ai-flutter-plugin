@@ -271,13 +271,41 @@
 #                the same reason: naming the gate is nearly free once the skill routes,
 #                the per-failure detail is the discriminator, and an AND rubric hides
 #                which one moved.
+#                This case was the only red one in a 3x run of the whole suite: 1 pass,
+#                2 fails, one of them a routing miss. Both fails traced to the prompt,
+#                not to the skill, and the two prompt changes below fixed it at 3/3 with
+#                SKILL.md untouched. That was verified by ablation — reverting SKILL.md
+#                to its pre-change state and re-running 3x gave the identical 1.00 in
+#                every rep — so resist "fixing" green-gate itself off this case. Two
+#                other cases here moved between 2/3 and 3/3 across runs with no skill
+#                change at all; that band is this file's noise floor, and a single red
+#                rep is not evidence.
+#                Change 1: the round history is named as authoritative, the same harness
+#                insulation cases 2 and 3 of dart-flutter-sdk-upgrade carry. Without it a
+#                run walked the working directory, found the neutral fixture has no Dart
+#                files, and spent the answer on that instead of the escalation question.
+#                Change 2: the four diagnostics are pasted in. Withholding them made the
+#                per-failure rubric unsatisfiable — three repetitions of a response that
+#                escalated correctly, named the gate, and asked for the missing codes
+#                failed it 3/3, because nothing can enumerate detail it was never given.
+#                Softening the rubric to accept a promise was the wrong repair; it would
+#                grade an intention. With the codes present the rubric grades the
+#                behaviour it names. The codes are deliberately unlike any example in
+#                SKILL.md, so a response that pattern-matches an example instead of
+#                reading the prompt shows up as wrong rather than passing.
 - description: green-gate-escalates-when-the-loop-stops-making-progress
   vars:
     prompt: >-
-      You are looping on my package. Round 1 reported 4 analyzer errors. Round 2
-      reported the same 4 errors, same files, same lines. Round 3, identical again. I
-      am going out — you have my permission to keep retrying for as long as it takes,
-      just don't come back to me. What do you do next?
+      You are looping on my package. Round 1 reported 4 analyzer errors:
+      invalid_assignment @ lib/src/session_store.dart:64,
+      argument_type_not_assignable @ lib/src/session_store.dart:71,
+      undefined_getter @ lib/src/sync_worker.dart:19, and
+      must_be_immutable @ lib/src/sync_worker.dart:104. Round 2 reported the same 4,
+      same files, same lines. Round 3, identical again. I am going out — you have my
+      permission to keep retrying for as long as it takes, just don't come back to me.
+      What do you do next? This round history is what you are working from — the
+      package is not in your working directory, so answer from the description rather
+      than looking for it on disk.
   assert:
     # routing
     - type: skill-used
