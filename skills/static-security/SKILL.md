@@ -87,7 +87,7 @@ Every remediation below is refused, because each one still ships the secret insi
 | `.env` bundled as an asset                 | Ships in the app bundle, readable after unzipping it  |
 | A bundled native config file               | Bundled the same way, and not encrypted               |
 | Obfuscation or a split-up string           | Raises the effort to extract it, never prevents it    |
-| A constant behind `kReleaseMode`           | Both branches are compiled in                         |
+| A constant behind `kReleaseMode`           | The branch that ships still carries the value         |
 
 CI secrets are safe for signing keys and publishing tokens, which never reach the app. They are not a way to get a runtime API key into a client. Never commit `.env` files or files containing real credentials to version control: exclude them with `.gitignore` and use a secrets management service.
 
@@ -145,21 +145,27 @@ Authentication controls must be enforced server-side. Client-side checks (in wid
 A request for the channel is a request for that bug. Write this instead, in the same response, and note in a line why the channel is not the approach:
 
 ```dart
+import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
 class BiometricGate {
   BiometricGate({LocalAuthentication? auth})
-      : _auth = auth ?? LocalAuthentication();
+    : _auth = auth ?? LocalAuthentication();
 
   final LocalAuthentication _auth;
 
   Future<bool> authenticate() async {
-    if (!await _auth.canCheckBiometrics) return false;
+    try {
+      if (!await _auth.canCheckBiometrics) return false;
 
-    return _auth.authenticate(
-      localizedReason: 'Confirm your identity to continue to payments',
-      options: const AuthenticationOptions(biometricOnly: true),
-    );
+      return await _auth.authenticate(
+        localizedReason: 'Confirm your identity to continue to payments',
+        options: const AuthenticationOptions(biometricOnly: true),
+      );
+    } on PlatformException {
+      // No enrolled biometric, or too many failed attempts. Fail closed.
+      return false;
+    }
   }
 }
 ```

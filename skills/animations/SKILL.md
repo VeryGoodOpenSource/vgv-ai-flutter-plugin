@@ -286,7 +286,7 @@ Rules for Hero:
 
 - **Do not animate `width`, `height`, or `padding` on complex layouts** — triggers expensive layout recalculations every frame
 - **Do not wrap entire screens in `AnimatedBuilder`** — only wrap the subtree that changes
-- **Do not create multiple `AnimationController` instances for animations that share timing** — use `Interval` on a single controller
+- **Do not create multiple `AnimationController` instances for animations that share timing** — use `Interval` on a single controller. This applies once the animation already needs a controller; properties that animate to a target on the same rebuild are composed implicit widgets, not one controller with intervals
 
 ---
 

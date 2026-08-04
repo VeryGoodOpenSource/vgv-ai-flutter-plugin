@@ -132,8 +132,8 @@ patch version — the one the user specifies or the current stable at the time o
 
 ```yaml
 environment:
-  sdk: ^DART_VERSION # ← the Dart version the target Flutter release ships
-  flutter: ^FLUTTER_VERSION # ← the target Flutter release itself
+  sdk: ^<dart-version> # ← the Dart version the target Flutter release ships
+  flutter: ^<flutter-version> # ← the target Flutter release itself
 ```
 
 The two placeholders are deliberate. Filling them in requires the archive lookup from step 0,
@@ -188,8 +188,8 @@ analyzer warnings", the pubspec you return changes the environment block and not
 
 ```yaml
 environment:
-  sdk: ^DART_VERSION # ← changed, Dart version from the archive
-  flutter: ^FLUTTER_VERSION # ← changed, the target Flutter release
+  sdk: ^<dart-version> # ← changed, Dart version from the archive
+  flutter: ^<flutter-version> # ← changed, the target Flutter release
 
 dependencies:
   flutter:
@@ -222,7 +222,7 @@ git diff HEAD --name-only
 Suggested commit/PR message:
 
 ```text
-chore: bump Flutter to FLUTTER_VERSION / Dart to DART_VERSION
+chore: bump Flutter to <flutter-version> / Dart to <dart-version>
 
 - Update flutter_version in .github/workflows/ to MAJOR.MINOR.x (CI resolves latest patch)
 - Update dart_sdk in .github/workflows/ to the exact Dart patch
