@@ -50,13 +50,9 @@ invoked. Every case runs against both providers:
 | `sealed-baseline` | no `plugins`, `tools: []`                                | What the bare model produces |
 
 **A grader that passes in both columns is measuring the model, not the skill.** That is
-the number to read. `npx promptfoo@latest view` gives the side-by-side.
-
-Measured once as a full two-column run: 79/85 in the plugin column against 3/85 sealed,
-an 89-point lift, negative controls excluded because a sealed model passes
-`not-skill-used` for free. The sealed column made zero tool calls on that run, so
-isolation held. Two of those skills had no case changes at all and still moved, which is
-what separates skill work from case work in the totals.
+the number to read, and `npx promptfoo@latest view` gives the side-by-side. Exclude the
+negative controls when comparing columns, because a sealed model passes `not-skill-used`
+for free and counting those flatters the baseline.
 
 ### Sealing the baseline takes three keys
 
@@ -86,6 +82,9 @@ or `plugins` as invalidating every number measured before it, and re-baseline ra
 comparing across the change. **The symptom to watch for is the sealed column climbing
 toward the plugin column.** That reads like the model improving and is almost always
 contamination.
+
+The direct check is that column's tool calls. A sealed run should make none, so any
+`Read` or `Grep` in it means the run had the answers and its score measures nothing.
 
 ---
 
