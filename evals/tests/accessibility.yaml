@@ -1,5 +1,5 @@
 # =============================================================================
-# accessibility — behaviour cases
+# accessibility — behavior cases
 # =============================================================================
 #
 # GRADING NOTES
@@ -243,7 +243,7 @@
 #                alternative rubric asked for a pattern the widget could not carry — the
 #                plugin column diagnosed the premise as false, asked for the parent
 #                widget and failed that rubric. And the refusal alone is baseline
-#                behaviour: the sealed column declined ExcludeSemantics, gave the reason
+#                behavior: the sealed column declined ExcludeSemantics, gave the reason
 #                and cited 4.1.2 unaided. The row now carries a real label/value pair,
 #                the exact shape references/examples.md marks CORRECT. The criterion-ID
 #                regex is gone because it was a measured free point in both columns, and

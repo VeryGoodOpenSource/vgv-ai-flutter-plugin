@@ -1,5 +1,6 @@
+# cspell:ignore ingerprint
 # =============================================================================
-# green-gate — behaviour cases
+# green-gate — behavior cases
 # =============================================================================
 #
 # GRADING NOTES
@@ -292,7 +293,7 @@
 #                failed it 3/3, because nothing can enumerate detail it was never given.
 #                Softening the rubric to accept a promise was the wrong repair; it would
 #                grade an intention. With the codes present the rubric grades the
-#                behaviour it names. The codes are deliberately unlike any example in
+#                behavior it names. The codes are deliberately unlike any example in
 #                SKILL.md, so a response that pattern-matches an example instead of
 #                reading the prompt shows up as wrong rather than passing.
 - description: green-gate-escalates-when-the-loop-stops-making-progress

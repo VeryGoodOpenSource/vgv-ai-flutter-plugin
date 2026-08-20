@@ -1,5 +1,5 @@
 # =============================================================================
-# very-good-analysis-upgrade — behaviour cases
+# very-good-analysis-upgrade — behavior cases
 # =============================================================================
 #
 # GRADING NOTES
@@ -95,7 +95,7 @@
 #                caret is the VGV convention, and touches nothing else in the pubspec.
 # DISCRIMINATES  "pin it exactly" is the discriminator. SKILL.md Step 1: keep the caret,
 #                don't change anything else in the file. A bare model complies with the
-#                pin and often tidies the neighbouring dev deps while it is in there.
+#                pin and often tidies the neighboring dev deps while it is in there.
 - description: very-good-analysis-upgrade-keeps-the-caret-and-changes-nothing-else
   vars:
     prompt: |

@@ -1,5 +1,5 @@
 # =============================================================================
-# navigation — behaviour cases
+# navigation — behavior cases
 # =============================================================================
 #
 # GRADING NOTES
@@ -16,7 +16,7 @@
 #   prompt. So task success is graded with a regex and rubrics are kept to properties
 #   visible in the response text alone.
 #
-#   The trap in this file is neighbouring skills. A prompt that reads as generic
+#   The trap in this file is neighboring skills. A prompt that reads as generic
 #   testing or generic Flutter work routes to the testing skill instead, which answers
 #   with Navigator.push and never touches GoRouter, so every navigation prompt names
 #   the router and the route explicitly.

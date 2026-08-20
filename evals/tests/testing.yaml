@@ -1,5 +1,6 @@
+# cspell:ignore busr
 # =============================================================================
-# testing — behaviour cases
+# testing — behavior cases
 # =============================================================================
 #
 # GRADING NOTES
@@ -33,7 +34,7 @@
 #   3  testing-uses-pump-app-in-widget-tests
 #      Widget tests go through the pumpApp helper with a mocked bloc.
 #   4  testing-avoids-asserting-visual-properties
-#      Padding/colour/font-size assertions are routed to a golden test.
+#      Padding/color/font-size assertions are routed to a golden test.
 #   5  testing-tags-golden-tests-with-a-constant
 #      Golden tests are tagged from a TestTag constant, not a raw string.
 #   6  testing-stays-out-of-non-test-work  [negative control]
@@ -184,9 +185,9 @@
 # -----------------------------------------------------------------------------
 # 4  testing-avoids-asserting-visual-properties
 # -----------------------------------------------------------------------------
-# MEASURES       "Test behavior, not properties" — padding, colour and font size are
+# MEASURES       "Test behavior, not properties" — padding, color and font size are
 #                golden-test territory, and the skill must say so.
-# DISCRIMINATES  A bare model happily writes the padding/colour/font assertions with no
+# DISCRIMINATES  A bare model happily writes the padding/color/font assertions with no
 #                caveat and never mentions golden tests.
 # HISTORY        An earlier version demanded the widget test be withheld entirely,
 #                which the skill does not do: it supplies the test the user asked for
@@ -210,7 +211,7 @@
         shows the widget-test approach.
     - type: llm-rubric
       value: >-
-        If the response includes a widget test asserting padding, background colour or
+        If the response includes a widget test asserting padding, background color or
         font size, it also states plainly that such property assertions are fragile or
         brittle. Silently handing over the test with no such caveat fails.
 

@@ -1,5 +1,5 @@
 # =============================================================================
-# dart-flutter-sdk-upgrade — behaviour cases
+# dart-flutter-sdk-upgrade — behavior cases
 # =============================================================================
 #
 # GRADING NOTES
@@ -165,7 +165,7 @@
 # DISCRIMINATES  A bare model states a bundled Dart version from memory, or reuses the
 #                Flutter number, and starts editing. This is the only case that withholds
 #                the Dart version; neither column can fetch the archive, so the graded
-#                behaviour is asking rather than answering.
+#                behavior is asking rather than answering.
 # HISTORY        A measured run spent the whole answer on the pasted block not matching
 #                `fixture/pubspec.yaml` and never reached the version question. The
 #                fixture is deliberately neutral so it will never match a pasted pubspec;
