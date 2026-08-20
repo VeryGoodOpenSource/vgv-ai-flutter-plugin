@@ -51,7 +51,11 @@ Apply these to ALL green-gate work:
   through a shell command. The Bash test path (`very_good test`, `flutter test`,
   `dart test`) is hook-blocked by `block-cli-workarounds.sh` and will be denied, and
   `dart analyze` / `dart format` via Bash are redundant with the MCP tools.
-  **Bash is reserved for parsing `coverage/lcov.info` — nothing else.**
+  **Bash is reserved for parsing `coverage/lcov.info` — nothing else.** This MCP-only
+  rule is a Claude Code constraint enforced by that hook; the hook does not run on
+  other hosts. **Cross-harness fallback:** on a host without the hook and without the
+  MCP servers connected, run the equivalent `dart analyze`, `dart format`, and
+  `very_good test` CLI commands instead — never block on a missing MCP server.
 - **A plan-only request is still this skill's job** — when the user asks which
   tools, which arguments, or what order the gates run in and does not want a run
   yet, answer from this skill: the same tool calls (`mcp__dart__analyze_files`
