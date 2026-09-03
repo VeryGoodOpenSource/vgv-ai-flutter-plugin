@@ -157,7 +157,7 @@ jobs:
       - name: Set up Dart
         # Only the `dart-parses` assertion needs this, but a missing `dart` makes that
         # assertion fail rather than skip, which would read as a content regression.
-        uses: dart-lang/setup-dart@v1.8.0
+        uses: dart-lang/setup-dart@v1.8.1
 
       - name: Install the Claude Agent SDK
         # promptfoo resolves the SDK from the working directory. A -g install does not work
