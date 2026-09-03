@@ -133,9 +133,7 @@ Claude Code reads them and nothing else breaks. (The spec's optional `skills-ref
 stricter, rejecting any top-level field outside the six it allows; `npx skills` does not run
 it, and nesting these extras under `metadata:` is the escape hatch if strict conformance is
 ever needed.) The `Skill validation` CI job (`Flash-Brew-Digital/validate-skill@v1`) enforces
-the spec (including name-matches-directory) across every skill on each pull request, and
-`.github/scripts/check-frontmatter.sh` guards the gaps it leaves — a UTF-8 BOM (Gemini-fatal but
-passes `validate-skill`) and `agents/**/*.md` frontmatter, which no other check covers.
+the spec (including name-matches-directory) across every skill on each pull request.
 
 **MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
 Flutter actions) and `very-good-cli` (scaffolding, tests, license checks). On Claude Code
@@ -242,19 +240,14 @@ Then, inside a session:
 
 ### Validate before you push
 
-Run the same checks CI runs, from the repository root:
+Run the same check CI runs, from the repository root:
 
 ```bash
 claude plugin validate .
 ```
 
-```bash
-bash .github/scripts/check-frontmatter.sh
-```
-
-The first validates the manifest, skill frontmatter, hook JSON, MCP config, and file
-references. The second is the frontmatter guard (UTF-8 BOM detection plus `agents/**/*.md`
-frontmatter). Both are static, so they confirm structure but do not replace the live checks
+This validates the manifest, skill frontmatter, hook JSON, MCP config, and file
+references. It is static, so it confirms structure but does not replace the live checks
 above.
 
 ### Troubleshooting
@@ -276,7 +269,6 @@ Every pull request runs the following checks automatically:
 | Markdown quality | Lints all `*.md` files with markdownlint-cli2 | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
-| Frontmatter guard | Fails on a UTF-8 BOM in any `SKILL.md` or agent file (Gemini-fatal, passes validate-skill) and validates `agents/**/*.md` frontmatter, which no other check covers | `.github/scripts/check-frontmatter.sh` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
 | Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
 

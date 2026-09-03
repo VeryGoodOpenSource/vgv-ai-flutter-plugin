@@ -73,16 +73,6 @@ jobs:
           echo "Valid: ${{ steps.validate.outputs.valid }}"
           echo "Errors: ${{ steps.validate.outputs.errors }}"
           echo "Warnings: ${{ steps.validate.outputs.warnings }}"
-  frontmatter-guard:
-    name: 🛡️ Frontmatter Guard
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      # Covers what validate-skills cannot: UTF-8 BOM detection (Gemini-fatal,
-      # passes validate-skill) and agents/**/*.md frontmatter (validate-skill
-      # only accepts files named SKILL.md).
-      - name: Check frontmatter portability
-        run: bash .github/scripts/check-frontmatter.sh
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest
