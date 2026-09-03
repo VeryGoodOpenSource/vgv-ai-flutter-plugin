@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.6](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.0.5...v0.0.6) (2026-09-03)
+
+
+### Features
+
+* adopt the AGENTS.md standard ([#129](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/129)) ([7b09f0e](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/7b09f0e9662084413dcde976f1c83bb927fd144d))
+* **evals:** add local promptfoo skill-eval harness covering all 15 skills ([#133](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/133)) ([4c19eea](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/4c19eeac0b0c33b216bc3684d45dae54a5c543d1))
+
+
+### Bug Fixes
+
+* close the nine eval failures on main and unmask routing misses ([#136](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/136)) ([d9907b8](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/d9907b80efbf951147e9732b42b7a9685b3be14a))
+* correct typos in issue templates ([#144](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/144)) ([0ff3681](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/0ff3681cfeb01060f05b42e7f1f90ff91e01492d))
+* **skills:** repair the green-gate format gate and make buried guidance reachable ([#132](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/132)) ([cc1550e](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/cc1550e8e2639f8bce47162b0c2d1c9ae979afc1))
+
 ## [0.0.5](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.0.4...v0.0.5) (2026-07-07)
 
 
