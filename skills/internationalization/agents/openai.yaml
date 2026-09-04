@@ -1,0 +1,3 @@
+interface:
+  display_name: "Internationalization"
+  short_description: "Flutter internationalization and localization patterns"

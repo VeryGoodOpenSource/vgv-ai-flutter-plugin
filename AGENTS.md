@@ -48,7 +48,7 @@ hooks/
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
-skills/
+skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (Codex sidecar)
   accessibility/SKILL.md
   accessibility/references/
   animations/SKILL.md
@@ -96,6 +96,8 @@ Every `SKILL.md` follows this structure:
 3. **Core Standards** — enforced constraints, always first
 4. **Content sections** — architecture, code examples, workflows, anti-patterns
 
+Every skill also ships a Codex sidecar at `agents/openai.yaml` beside its `SKILL.md`, holding the skill-picker metadata `interface.display_name` and `interface.short_description`. Every skill in this plugin is **model-invoked** (the model may auto-activate it), so no skill sets `disable-model-invocation` or a Codex `policy` block; a user-invoked-only skill would set both, kept in sync. See `CONTRIBUTING.md` → Cross-harness portability.
+
 ## Writing Conventions
 
 - Frame standards as clear directives — no soft language ("consider", "prefer")
@@ -107,7 +109,8 @@ Every `SKILL.md` follows this structure:
 
 ## Adding a New Skill
 
-1. Create `skills/<skill_name>/SKILL.md` following the format above
+1. Create `skills/<skill_name>/SKILL.md` following the format above, plus the Codex sidecar
+   `skills/<skill_name>/agents/openai.yaml` (`interface.display_name` + `interface.short_description`)
 2. Create `evals/tests/<skill_name>.yaml` — eval cases with one prompt per major
    workflow the skill covers, a `skill-used` assertion on each, and one
    `not-skill-used` negative control. Routing assertions carry `weight: 3` so a routing
@@ -146,7 +149,9 @@ docs that describe them. When you touch any of the following, update the matchin
 documentation in the same change:
 
 - **Updating a skill's scope or description** — update the matching row in the
-  `README.md` skills table so the description stays in sync.
+  `README.md` skills table and the `interface.short_description` in the skill's
+  `agents/openai.yaml`, so all three stay in sync. Nothing checks them against
+  each other.
 - **Changing what a skill teaches** — run the skill's eval cases to confirm the new
   guidance actually lands in the model's output, and update any case that asserted
   the old behavior. A failing case after a deliberate change means the case needs

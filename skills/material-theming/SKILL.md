@@ -168,7 +168,23 @@ TextFormField(
 
 ## Spacing System
 
-Define an `AppSpacing` class with a base unit (e.g., 16px) and named constants (xxs through xxlg). Use `EdgeInsets.only` or `EdgeInsets.symmetric` — never `EdgeInsets.fromLTRB`.
+Define an `AppSpacing` class with a base unit and named constants (xxs through xxlg). Every step is a multiple of the base unit, never an independent literal — that is what makes the scale a scale:
+
+```dart
+abstract class AppSpacing {
+  static const double spaceUnit = 16;
+
+  static const double xxs = 0.25 * spaceUnit; // 4
+  static const double sm = 0.5 * spaceUnit; // 8
+  static const double md = 0.75 * spaceUnit; // 12
+  static const double lg = spaceUnit; // 16
+  static const double xxlg = 2 * spaceUnit; // 32
+}
+```
+
+Whenever you introduce the scale or hand someone the convention, write the class out. Listing the step names and their pixel values in prose is not the convention — the class is, because it is what stops the next arbitrary number from being typed.
+
+Use `EdgeInsets.only` or `EdgeInsets.symmetric` — never `EdgeInsets.fromLTRB`.
 
 See [references/spacing.md](references/spacing.md) for the full `AppSpacing` class, usage examples, and `EdgeInsets` preferences.
 

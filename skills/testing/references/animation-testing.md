@@ -1,6 +1,6 @@
 # Animation Testing
 
-Testing patterns specific to Flutter animations. See the [Animations skill](../../animations/SKILL.md) for core animation standards and the decision tree.
+Testing patterns specific to Flutter animations. See the `animations` skill for core animation standards and the decision tree.
 
 ## Testing Implicit Animations
 

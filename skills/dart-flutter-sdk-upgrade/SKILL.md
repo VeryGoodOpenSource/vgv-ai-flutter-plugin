@@ -59,8 +59,9 @@ versions, not one: the Flutter release being targeted, and the Dart release it s
 3. Note the Dart version listed alongside it
 
 The Flutter target comes from `$ARGUMENTS` when the user supplied one. If `$ARGUMENTS` is
-empty, take the latest Flutter stable from that same page. For pure Dart packages, no mapping
-is involved: the Dart version is whatever `$ARGUMENTS` specifies or the latest Dart stable.
+empty or still shows the literal text `$ARGUMENTS` (the host did not substitute it), take the
+latest Flutter stable from that same page. For pure Dart packages, no mapping is involved: the
+Dart version is whatever `$ARGUMENTS` specifies or the latest Dart stable.
 
 **When the archive is out of reach**, which is the common case in a session with no network
 access, do not fill the gap from memory. A recalled pairing is wrong often enough to break

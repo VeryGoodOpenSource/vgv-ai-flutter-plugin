@@ -1,0 +1,3 @@
+interface:
+  display_name: "Bloc"
+  short_description: "Bloc state management conventions for Flutter"

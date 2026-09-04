@@ -28,16 +28,16 @@ Create `skills/<skill-name>/SKILL.md`. The file must begin with YAML frontmatter
 ---
 name: <skill-name>
 description: When this skill should be triggered — be specific.
-allowed-tools: Read,Glob,Grep
+allowed-tools: Read Glob Grep
 argument-hint: "[file-or-directory]"   # optional
 ---
 ```
 
 | Field | Required | Rules |
 | ----- | -------- | ----- |
-| `name` | Yes | Must match the skill's folder name exactly; lowercase letters, numbers, and hyphens only |
+| `name` | Yes | Lowercase letters, numbers, and hyphens only; no leading, trailing, or consecutive hyphen; 1-64 chars; **must match the skill's directory name** (enforced in CI by `validate-skill`) |
 | `description` | Yes | Describes when the skill should be triggered |
-| `allowed-tools` | Yes | Comma-separated list of tools the skill may use |
+| `allowed-tools` | No | Space-separated list of tools the skill may use; a Claude Code permission hint, not a hard cap |
 | `argument-hint` | No | Placeholder hint shown to the user |
 
 After the frontmatter, structure the file as:
@@ -45,6 +45,15 @@ After the frontmatter, structure the file as:
 1. **H1 title** — human-readable skill name
 2. **Core Standards** — enforced constraints, always first
 3. **Content sections** — architecture, code examples, workflows, anti-patterns
+
+Also create the Codex sidecar `skills/<skill-name>/agents/openai.yaml` with the skill-picker
+metadata (see [Cross-harness portability](#cross-harness-portability) → Codex sidecar):
+
+```yaml
+interface:
+  display_name: "Skill Name"
+  short_description: "One short line for the picker"
+```
 
 ### 2. Add eval cases
 
@@ -94,6 +103,91 @@ eval documentation there rather than here.
 - **Provide complete, copy-pasteable snippets** — not fragments.
 - **Reference packages by full name** (e.g., `package:mocktail`, not just "mocktail").
 - **Show anti-patterns alongside correct patterns** when helpful, so readers understand both what to do and what to avoid.
+
+## Cross-harness portability
+
+Skills are authored for Claude Code but target the [Agent Skills open
+standard](https://agentskills.io/specification) (the `npx skills` format, supported by
+many agents), so they should degrade gracefully on non-Claude harnesses such as Codex,
+Gemini CLI, and OpenCode without changing Claude Code behavior. Under that standard a skill
+is a **static instruction set**: the agent loads it by matching its `description`, then reads
+the body — there is no argument or template substitution. `$ARGUMENTS` and
+`${CLAUDE_SKILL_DIR}` are Claude Code conveniences, not spec features, so a body that uses
+them must still work when they arrive unsubstituted.
+
+**`$ARGUMENTS`** — not a spec concept; on a plain Agent Skill it is never substituted and
+stays literal. Always pair it with a fallback that fires when it is empty *or still shows
+the literal text* `$ARGUMENTS`:
+
+```markdown
+<feature_description>$ARGUMENTS</feature_description>
+
+**If the feature description above is empty or still shows the literal text
+`$ARGUMENTS` (the host did not substitute it), ask the user** for it (or read it
+from the conversation).
+```
+
+**`${CLAUDE_SKILL_DIR}`** — no skill here uses it today (the hooks use
+`${CLAUDE_PLUGIN_ROOT}`, resolved by Claude Code, not by skill bodies). If a future skill
+references a bundled file, prefer the spec form — a **relative path from the skill root**
+(`scripts/x.sh`) — and add a fallback for hosts that do not substitute the absolute form.
+
+**Frontmatter** — an agent silently skips a skill whose frontmatter is malformed. Keep the
+opening `---` on line 1, close the block with `---`, and include a non-empty `name:`
+(kebab-case, **matching the directory name**) and `description:`. The spec also allows
+`license`, `compatibility`, `metadata`, and `allowed-tools`. This plugin's Claude Code
+extras (`when_to_use`, `argument-hint`, `effort`, `model`) are not spec fields, but
+`npx skills` and other agents ignore unknown frontmatter keys — keep them top-level so
+Claude Code reads them and nothing else breaks. (The spec's optional `skills-ref` linter is
+stricter, rejecting any top-level field outside the six it allows; `npx skills` does not run
+it, and nesting these extras under `metadata:` is the escape hatch if strict conformance is
+ever needed.) The `Skill validation` CI job (`Flash-Brew-Digital/validate-skill@v1`) enforces
+the spec (including name-matches-directory) across every skill on each pull request.
+
+**MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
+Flutter actions) and `very-good-cli` (scaffolding, tests, license checks). On Claude Code
+they are the primary execution path, and the `check-vgv-cli.sh` / `block-cli-workarounds.sh`
+hooks deliberately steer the quality gates through the MCP tools instead of the raw CLI — do
+not weaken that on Claude Code. Those hooks do not run on other hosts and the MCP servers may
+not be connected there, so every skill that drives an MCP tool must name the equivalent
+`very_good` / `dart` / `flutter` CLI command as a fallback and never block when the server is
+absent. The `dart-flutter-sdk-upgrade` and `very-good-analysis-upgrade` skills already phrase
+this as "use the MCP tool if available; otherwise Bash" — match that.
+
+**Subagents** — subagents are not part of the Agent Skills standard, and no skill in this
+plugin dispatches one. The `flutter-reviewer` agent (`agents/flutter-reviewer.md`) is a
+Claude Code construct; on a host without a subagent mechanism its four preloaded standards
+(`bloc`, `testing`, `static-security`, `accessibility`) still apply — run the review inline
+against those skills instead of dispatching the agent.
+
+**`AskUserQuestion` and `allowed-tools`** — both are Claude Code conveniences. A skill that
+asks the user a structured question carries its own inline fallback: invoke whatever
+equivalent user-question tool the host provides, and drop to plain numbered text only where
+the host has none (see `accessibility` and `create-project`). Treat a narrow `allowed-tools`
+list as a permission hint for Claude Code, not a hard cap — a skill uses whatever tools its
+task needs.
+
+**Own your references** — a skill's reference files live inside that skill's own
+`references/` directory. Do not share a reference across skills by symlink or a cross-folder
+`../other-skill/…` link: those do not survive every install path, and skills.sh copies each
+skill on its own. Keep shared prose short enough to inline, or lift author-facing guidance
+into this file rather than shipping it as a runtime reference in two places.
+
+**Codex sidecar (`agents/openai.yaml`)** — every skill ships an `agents/openai.yaml` beside
+its `SKILL.md`, carrying the Codex skill-picker metadata: `interface.display_name`, which has no
+frontmatter equivalent, and `interface.short_description`, which takes precedence over the
+spec-legal `metadata: short-description` key. The `SKILL.md` body stays the one
+source of truth; the sidecar is thin, with no build step. Add one for every new skill.
+
+**Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
+autonomously when the context fits (that is the point of a best-practice skill), so neither
+`disable-model-invocation` (Claude Code) nor a `policy` block (Codex) is set. Most skills here
+keep their trigger phrasing in `when_to_use`, which only Claude Code reads: every other host
+parses `name` and `description` only. Trigger wording that has to survive off Claude Code
+belongs in `description`. If you add a skill only a human should fire, make
+it **user-invoked**: set `disable-model-invocation: true` in the frontmatter and
+`policy.allow_implicit_invocation: false` in its `agents/openai.yaml`, and keep the two in
+sync — a skill is user-invoked in both harnesses or neither.
 
 ## Testing Locally
 
@@ -177,8 +271,8 @@ claude plugin validate .
 ```
 
 This validates the manifest, skill frontmatter, hook JSON, MCP config, and file
-references. It is static, so it confirms structure but does not replace the live
-checks above.
+references. It is static, so it confirms structure but does not replace the live checks
+above.
 
 ### Troubleshooting
 
@@ -198,7 +292,7 @@ Every pull request runs the following checks automatically:
 | ----- | ------------ | ------ |
 | Markdown quality | Lints all `*.md` files with markdownlint-cli2 | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
-| Skill validation | Validates `SKILL.md` frontmatter and structure for changed skills | `Flash-Brew-Digital/validate-skill@v1` |
+| Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
 | Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
 
