@@ -63,7 +63,7 @@ Apply these standards to all accessibility work:
 
 Every accessibility engagement follows four phases in sequence. Do not skip Phase 1 or Phase 2.
 
-> **Cross-harness note.** Phases 1, 2, and 4 below use `AskUserQuestion`. On a host without it, ask the same question as plain numbered text and wait for the reply before proceeding. See [interaction fallbacks](references/interaction-fallbacks.md).
+> **Cross-harness note.** Phases 1, 2, and 4 below use `AskUserQuestion`. On a host without it, ask the same question as plain numbered text and wait for the reply before proceeding.
 
 ### Phase 1: Conformance Level Selection
 

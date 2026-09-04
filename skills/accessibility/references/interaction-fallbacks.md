@@ -1,1 +1,0 @@
-../../shared/references/interaction-fallbacks.md

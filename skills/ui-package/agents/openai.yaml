@@ -1,0 +1,3 @@
+interface:
+  display_name: "UI Package"
+  short_description: "Build a Flutter UI package"

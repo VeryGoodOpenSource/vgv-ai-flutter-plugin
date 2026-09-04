@@ -50,6 +50,7 @@ hooks/
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
 skills/
   accessibility/SKILL.md
+  accessibility/agents/openai.yaml  # Codex sidecar (display_name + short_description); every skill has one
   accessibility/references/
   animations/SKILL.md
   animations/references/
@@ -60,7 +61,6 @@ skills/
   bloc/SKILL.md
   bloc/references/
   create-project/SKILL.md
-  create-project/references/interaction-fallbacks.md  # symlink → skills/shared/references/
   dart-flutter-sdk-upgrade/SKILL.md
   dart-flutter-sdk-upgrade/references/
     version-conflicts.md
@@ -73,9 +73,6 @@ skills/
   license-compliance/SKILL.md
   material-theming/SKILL.md
   navigation/SKILL.md
-  shared/
-    references/
-      interaction-fallbacks.md  # AskUserQuestion + allowed-tools fallbacks; symlinked into consuming skills
   static-security/SKILL.md
   static-security/references/
   testing/SKILL.md
@@ -100,6 +97,8 @@ Every `SKILL.md` follows this structure:
 3. **Core Standards** — enforced constraints, always first
 4. **Content sections** — architecture, code examples, workflows, anti-patterns
 
+Every skill also ships a Codex sidecar at `agents/openai.yaml` beside its `SKILL.md`, holding the skill-picker metadata `interface.display_name` and `interface.short_description`. Every skill in this plugin is **model-invoked** (the model may auto-activate it), so no skill sets `disable-model-invocation` or a Codex `policy` block; a user-invoked-only skill would set both, kept in sync. See `CONTRIBUTING.md` → Cross-harness portability.
+
 ## Writing Conventions
 
 - Frame standards as clear directives — no soft language ("consider", "prefer")
@@ -111,7 +110,8 @@ Every `SKILL.md` follows this structure:
 
 ## Adding a New Skill
 
-1. Create `skills/<skill_name>/SKILL.md` following the format above
+1. Create `skills/<skill_name>/SKILL.md` following the format above, plus the Codex sidecar
+   `skills/<skill_name>/agents/openai.yaml` (`interface.display_name` + `interface.short_description`)
 2. Create `evals/tests/<skill_name>.yaml` — eval cases with one prompt per major
    workflow the skill covers, a `skill-used` assertion on each, and one
    `not-skill-used` negative control. Routing assertions carry `weight: 3` so a routing

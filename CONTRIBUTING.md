@@ -46,6 +46,15 @@ After the frontmatter, structure the file as:
 2. **Core Standards** — enforced constraints, always first
 3. **Content sections** — architecture, code examples, workflows, anti-patterns
 
+Also create the Codex sidecar `skills/<skill-name>/agents/openai.yaml` with the skill-picker
+metadata (see [Cross-harness portability](#cross-harness-portability) → Codex sidecar):
+
+```yaml
+interface:
+  display_name: "Skill Name"
+  short_description: "One short line for the picker"
+```
+
 ### 2. Add eval cases
 
 Create `evals/tests/<skill-name>.yaml` — prompts that prove the skill actually
@@ -152,18 +161,29 @@ Claude Code construct; on a host without a subagent mechanism its four preloaded
 against those skills instead of dispatching the agent.
 
 **`AskUserQuestion` and `allowed-tools`** — both are Claude Code conveniences. A skill that
-asks the user a structured question or declares a narrow `allowed-tools` list carries the
-cross-harness fallbacks in [`skills/shared/references/interaction-fallbacks.md`](skills/shared/references/interaction-fallbacks.md):
-ask the same question as plain numbered text where `AskUserQuestion` is absent, and treat
-`allowed-tools` as a permission hint rather than a hard cap.
+asks the user a structured question carries its own inline fallback: ask the same question as
+plain numbered text where `AskUserQuestion` is absent (see `accessibility` and
+`create-project`). Treat a narrow `allowed-tools` list as a permission hint for Claude Code,
+not a hard cap — a skill uses whatever tools its task needs.
 
-**Shared content via symlinks** — references shared across skills live once under
-`skills/shared/references/` and are symlinked into each consuming skill's `references/`
-directory (for example `interaction-fallbacks.md`). `npx skills` dereferences symlinks when
-it copies a cloned or local skill, so those install paths work as-is. Before relying on a
-server-side snapshot install, verify with a real `npx skills add` that the shared files
-arrive intact; if they do not, materialize them (dereference the symlinks into real files at
-publish time, or vendor real copies).
+**Own your references** — a skill's reference files live inside that skill's own
+`references/` directory. Do not share a reference across skills by symlink or a cross-folder
+`../other-skill/…` link: those do not survive every install path, and skills.sh copies each
+skill on its own. Keep shared prose short enough to inline, or lift author-facing guidance
+into this file rather than shipping it as a runtime reference in two places.
+
+**Codex sidecar (`agents/openai.yaml`)** — every skill ships an `agents/openai.yaml` beside
+its `SKILL.md`, carrying the Codex skill-picker metadata that `SKILL.md` frontmatter cannot:
+`interface.display_name` and `interface.short_description`. The `SKILL.md` body stays the one
+source of truth; the sidecar is thin, with no build step. Add one for every new skill.
+
+**Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
+autonomously when the context fits (that is the point of a best-practice skill), so the
+`description` keeps its rich trigger phrasing and neither `disable-model-invocation` (Claude
+Code) nor a `policy` block (Codex) is set. If you add a skill only a human should fire, make
+it **user-invoked**: set `disable-model-invocation: true` in the frontmatter and
+`policy.allow_implicit_invocation: false` in its `agents/openai.yaml`, and keep the two in
+sync — a skill is user-invoked in both harnesses or neither.
 
 ## Testing Locally
 
