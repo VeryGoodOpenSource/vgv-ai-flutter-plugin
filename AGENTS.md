@@ -48,9 +48,8 @@ hooks/
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
-skills/
+skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (Codex sidecar)
   accessibility/SKILL.md
-  accessibility/agents/openai.yaml  # Codex sidecar (display_name + short_description); every skill has one
   accessibility/references/
   animations/SKILL.md
   animations/references/
@@ -150,7 +149,9 @@ docs that describe them. When you touch any of the following, update the matchin
 documentation in the same change:
 
 - **Updating a skill's scope or description** — update the matching row in the
-  `README.md` skills table so the description stays in sync.
+  `README.md` skills table and the `interface.short_description` in the skill's
+  `agents/openai.yaml`, so all three stay in sync. Nothing checks them against
+  each other.
 - **Changing what a skill teaches** — run the skill's eval cases to confirm the new
   guidance actually lands in the model's output, and update any case that asserted
   the old behavior. A failing case after a deliberate change means the case needs
