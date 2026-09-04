@@ -161,11 +161,11 @@ Claude Code construct; on a host without a subagent mechanism its four preloaded
 against those skills instead of dispatching the agent.
 
 **`AskUserQuestion` and `allowed-tools`** — both are Claude Code conveniences. A skill that
-asks the user a structured question carries its own inline fallback: use the host's own
-user-question tool where it has one (Codex exposes `request_user_input`, currently gated to
-certain modes), and ask the same question as plain numbered text where neither exists (see
-`accessibility` and `create-project`). Treat a narrow `allowed-tools` list as a permission
-hint for Claude Code, not a hard cap — a skill uses whatever tools its task needs.
+asks the user a structured question carries its own inline fallback: invoke whatever
+equivalent user-question tool the host provides, and drop to plain numbered text only where
+the host has none (see `accessibility` and `create-project`). Treat a narrow `allowed-tools`
+list as a permission hint for Claude Code, not a hard cap — a skill uses whatever tools its
+task needs.
 
 **Own your references** — a skill's reference files live inside that skill's own
 `references/` directory. Do not share a reference across skills by symlink or a cross-folder
