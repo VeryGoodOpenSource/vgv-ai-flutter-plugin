@@ -98,6 +98,6 @@ file, the `pumpApp` helper, and the Widgetbook catalog. Do not substitute
 `flutter_package` on the grounds that it takes no organization name — neither template
 does, and `flutter_package` gives you an empty package you then rebuild by hand.
 
-> **Cross-harness fallback.** On a host without the Very Good CLI MCP server connected, run the equivalent `very_good create app_ui_package` command directly.
+> **Cross-harness fallback.** On a host without this plugin's Bash hooks and without the Very Good CLI MCP server connected, run the equivalent `very_good create app_ui_package <package_name> --output-directory <dir>` command directly.
 
 See [reference.md](reference.md) for the `ThemeExtension` class table (`AppColors`, `AppSpacing`, `AppTheme`, the `BuildContext` extension), the `pumpApp` test helper, a barrel file example, the Widgetbook catalog concepts and `build_runner` commands, and step-by-step workflows for adding a widget or a custom token.

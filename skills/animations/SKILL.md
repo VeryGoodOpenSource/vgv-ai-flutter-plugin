@@ -5,7 +5,7 @@ when_to_use: >
   Also use for custom route transitions — `CustomTransitionPage`, a `buildPage` override on
   a `GoRouteData` subclass, or a `Hero` transition. Motion between routes is animation work
   even when the surrounding code is `go_router`.
-allowed-tools: Read,Glob,Grep
+allowed-tools: Read Glob Grep
 argument-hint: "[file-or-directory]"
 ---
 

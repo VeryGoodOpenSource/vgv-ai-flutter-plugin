@@ -28,7 +28,7 @@ Create `skills/<skill-name>/SKILL.md`. The file must begin with YAML frontmatter
 ---
 name: <skill-name>
 description: When this skill should be triggered — be specific.
-allowed-tools: Read,Glob,Grep
+allowed-tools: Read Glob Grep
 argument-hint: "[file-or-directory]"   # optional
 ---
 ```
@@ -37,7 +37,7 @@ argument-hint: "[file-or-directory]"   # optional
 | ----- | -------- | ----- |
 | `name` | Yes | Lowercase letters, numbers, and hyphens only; no leading, trailing, or consecutive hyphen; 1-64 chars; **must match the skill's directory name** (enforced in CI by `validate-skill`) |
 | `description` | Yes | Describes when the skill should be triggered |
-| `allowed-tools` | Yes | Comma-separated list of tools the skill may use |
+| `allowed-tools` | No | Space-separated list of tools the skill may use; a Claude Code permission hint, not a hard cap |
 | `argument-hint` | No | Placeholder hint shown to the user |
 
 After the frontmatter, structure the file as:
@@ -174,14 +174,17 @@ skill on its own. Keep shared prose short enough to inline, or lift author-facin
 into this file rather than shipping it as a runtime reference in two places.
 
 **Codex sidecar (`agents/openai.yaml`)** — every skill ships an `agents/openai.yaml` beside
-its `SKILL.md`, carrying the Codex skill-picker metadata that `SKILL.md` frontmatter cannot:
-`interface.display_name` and `interface.short_description`. The `SKILL.md` body stays the one
+its `SKILL.md`, carrying the Codex skill-picker metadata: `interface.display_name`, which has no
+frontmatter equivalent, and `interface.short_description`, which takes precedence over the
+spec-legal `metadata: short-description` key. The `SKILL.md` body stays the one
 source of truth; the sidecar is thin, with no build step. Add one for every new skill.
 
 **Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
-autonomously when the context fits (that is the point of a best-practice skill), so the
-`description` keeps its rich trigger phrasing and neither `disable-model-invocation` (Claude
-Code) nor a `policy` block (Codex) is set. If you add a skill only a human should fire, make
+autonomously when the context fits (that is the point of a best-practice skill), so neither
+`disable-model-invocation` (Claude Code) nor a `policy` block (Codex) is set. Most skills here
+keep their trigger phrasing in `when_to_use`, which only Claude Code reads: every other host
+parses `name` and `description` only. Trigger wording that has to survive off Claude Code
+belongs in `description`. If you add a skill only a human should fire, make
 it **user-invoked**: set `disable-model-invocation: true` in the frontmatter and
 `policy.allow_implicit_invocation: false` in its `agents/openai.yaml`, and keep the two in
 sync — a skill is user-invoked in both harnesses or neither.

@@ -11,7 +11,7 @@ model: haiku
 
 Scaffold a new Dart or Flutter project using Very Good CLI templates.
 
-> **Cross-harness fallbacks.** This skill drives the Very Good CLI MCP server and asks the user structured questions. On a host without that MCP server connected, run the equivalent `very_good create …` and `very_good packages get` commands directly. On a host without `AskUserQuestion`, invoke whatever equivalent user-question tool the host provides; if it has none, ask the same questions as plain numbered text.
+> **Cross-harness fallbacks.** This skill drives the Very Good CLI MCP server and asks the user structured questions. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create …` and `very_good packages get` commands directly. On a host without `AskUserQuestion`, invoke whatever equivalent user-question tool the host provides; if it has none, ask the same questions as plain numbered text.
 
 ---
 
