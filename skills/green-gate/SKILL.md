@@ -6,7 +6,9 @@ description: >
   coverage. Exits only when a single final iteration proves all four pass with
   observed numbers. Also owns how those gates are configured — which tool runs
   each one, the arguments it takes, the order they run in, the coverage target,
-  and what leaves the coverage denominator.
+  and what leaves the coverage denominator. Also owns what to do when the loop
+  stalls: when the same failures repeat round after round, it stops, escalates
+  and reports rather than retrying forever.
 when_to_use: >
   Use when the user wants a Dart or Flutter package driven to a fully passing
   state, or says things like "green gate", "make it green", "get this package
@@ -17,7 +19,11 @@ when_to_use: >
   through the plan before you touch anything", "confirm the package is green",
   "just re-check coverage", "should I add a coverage ignore comment", "what
   should be excluded from coverage", or "can we drop the coverage threshold to
-  90". Answer those from this skill instead of improvising a shell-command plan.
+  90". Use it too when a run has stopped making progress — "the same errors came
+  back three rounds running", "it keeps reporting the same failures", "what do you
+  do next", "keep retrying for as long as it takes" — because deciding when to stop
+  and escalate is part of this loop. Answer those from this skill instead of
+  improvising a shell-command plan.
   Prefer this over the single-gate testing or analysis skills whenever the
   request spans multiple gates, asks to fix and re-verify until clean, or asks
   how one of the four gates is configured.

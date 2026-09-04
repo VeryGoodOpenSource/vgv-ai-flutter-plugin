@@ -61,6 +61,8 @@ Text(AppLocalizations.of(context).helloWorld);
 
 Shared widgets that live in separate packages should not depend on `AppLocalizations` directly. Instead, pass localized strings as constructor parameters:
 
+When someone asks to add `AppLocalizations` to a shared package, decline and say why — the package would carry its own translations and every consuming app would be locked to them — then rewrite their widget with the label as a `final String` constructor parameter and show the call site supplying `context.l10n`. Give both as Dart code; describing the change in prose leaves the caller to guess the signature.
+
 ```dart
 // Shared widget — no l10n dependency
 class ConfirmDialog extends StatelessWidget {
