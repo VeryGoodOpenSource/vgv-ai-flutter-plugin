@@ -1,7 +1,14 @@
 ---
 name: material-theming
-description: Best practices for Flutter theming using Material 3.
-when_to_use: Use when creating, modifying, or reviewing ThemeData, ColorScheme, TextTheme, component themes, spacing systems, or light/dark mode support. Also use whenever widget code carries its own styling — a hardcoded Color, an inline TextStyle, raw padding or gap numbers, the same decoration repeated across widget instances, or a brightness/dark-mode conditional inside build — even when the request only says "review this widget", "cut the duplication", "stop repeating this", or "tidy this up".
+description: >
+  Best practices for Flutter theming with Material 3, treating ThemeData as the single source
+  of truth for colors, typography, component styles, and spacing. Use when creating,
+  modifying, or reviewing ThemeData, ColorScheme, TextTheme, component themes, spacing
+  systems, or light/dark mode support, and whenever widget code carries its own styling: a
+  hardcoded Color, an inline TextStyle, raw padding or gap numbers, the same decoration
+  repeated across widget instances, or a brightness/dark-mode conditional inside build, even
+  when the request only says "review this widget", "cut the duplication", "stop repeating
+  this", or "tidy this up".
 allowed-tools: Read Glob Grep
 model: sonnet
 ---

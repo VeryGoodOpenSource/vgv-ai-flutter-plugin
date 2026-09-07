@@ -1,32 +1,17 @@
 ---
 name: green-gate
 description: >
-  Drives a Dart or Flutter package to a fully green state through an autonomous
-  verify-fix-rerun loop across four quality gates — analyze, format, test, and
-  coverage. Exits only when a single final iteration proves all four pass with
-  observed numbers. Also owns how those gates are configured — which tool runs
-  each one, the arguments it takes, the order they run in, the coverage target,
-  and what leaves the coverage denominator. Also owns what to do when the loop
-  stalls: when the same failures repeat round after round, it stops, escalates
-  and reports rather than retrying forever.
-when_to_use: >
-  Use when the user wants a Dart or Flutter package driven to a fully passing
-  state, or says things like "green gate", "make it green", "get this package
-  passing", "get CI green", "fix all the analyze and test failures", "clean this
-  package up before I open a PR", "bring coverage to 100", or "loop until
-  everything passes". Use it for questions *about* the gates as well as for a
-  run: "which tools would you run, in what order, and what arguments", "walk me
-  through the plan before you touch anything", "confirm the package is green",
-  "just re-check coverage", "should I add a coverage ignore comment", "what
-  should be excluded from coverage", or "can we drop the coverage threshold to
-  90". Use it too when a run has stopped making progress — "the same errors came
-  back three rounds running", "it keeps reporting the same failures", "what do you
-  do next", "keep retrying for as long as it takes" — because deciding when to stop
-  and escalate is part of this loop. Answer those from this skill instead of
-  improvising a shell-command plan.
-  Prefer this over the single-gate testing or analysis skills whenever the
-  request spans multiple gates, asks to fix and re-verify until clean, or asks
-  how one of the four gates is configured.
+  Drives a Dart or Flutter package fully green through an autonomous verify-fix-rerun loop
+  across four quality gates: analyze, format, test, and coverage, exiting only when one final
+  iteration proves all four pass with observed numbers. It also owns gate configuration, so
+  plan-only questions belong here: which tool and arguments run each gate, in what order, the
+  coverage target, what leaves the coverage denominator, coverage ignore comments, "just re-
+  check coverage", and "confirm the package is green". Use it when the user says "green gate",
+  "make it green", "get CI green", "fix all the analyze and test failures", "clean this
+  package up before I open a PR", "bring coverage to 100", or "loop until everything passes",
+  and when a run stalls with the same failures repeating round after round, since when to stop
+  and escalate is part of this loop. Prefer it over the single-gate testing or analysis skills
+  when a request spans multiple gates or asks to fix and re-verify until clean.
 argument-hint: "[directory]"
 allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__dart__dart_format mcp__very-good-cli__test
 model: sonnet

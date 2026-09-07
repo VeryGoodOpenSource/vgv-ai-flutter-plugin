@@ -1,10 +1,13 @@
 ---
 name: animations
-description: Best practices for Flutter animations using the built-in animation framework. Use when creating, modifying, or reviewing animations, transitions, motion, or animated widgets. Covers implicit animations, explicit animations, page transitions, and Material 3 motion tokens.
-when_to_use: >
-  Also use for custom route transitions — `CustomTransitionPage`, a `buildPage` override on
-  a `GoRouteData` subclass, or a `Hero` transition. Motion between routes is animation work
-  even when the surrounding code is `go_router`.
+description: >
+  Best practices for Flutter animations using the built-in animation framework, covering
+  implicit animations, explicit `AnimationController` animations, page transitions, and
+  Material 3 motion tokens. Use when creating, modifying, or reviewing animations,
+  transitions, motion, or animated widgets, and also for custom route transitions built with
+  `CustomTransitionPage`, a `buildPage` override on a `GoRouteData` subclass, or a `Hero`
+  transition, since motion between routes is animation work even when the surrounding code is
+  `go_router`.
 allowed-tools: Read Glob Grep
 argument-hint: "[file-or-directory]"
 ---

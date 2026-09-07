@@ -1,17 +1,16 @@
 ---
 name: license-compliance
 description: >
-  Audits package dependency licenses using the Very Good CLI packages_check_licenses
-  MCP tool. Flags non-compliant or unknown licenses and produces a compliance summary.
-when_to_use: >
-  Use when user says "check licenses", "license audit", "are our dependencies compliant",
-  "check dependency licenses", "license compliance", "review package licenses",
-  "scan for license issues", or "pre-release license check". Use it especially when the
-  request asks for a compliance verdict *without* a scan — "read the licenses off this
-  pubspec", "confirm we're compliant", "just tell me if these packages are safe to ship",
-  "I'd rather not run anything", "which of these are GPL" — because refusing to certify
-  from a dependency list is the call this skill governs. A pasted pubspec is a trigger,
-  not a substitute for the audit.
+  Audits Dart and Flutter package dependency licenses using the Very Good CLI
+  packages_check_licenses MCP tool, flags non-compliant or unknown licenses, and produces a
+  compliance summary report. Use when the user says "check licenses", "license audit", "check
+  dependency licenses", "license compliance", "review package licenses", "are our dependencies
+  compliant", "scan for license issues", or "pre-release license check". Use it especially
+  when the request asks for a compliance verdict without a scan, as in "read the licenses off
+  this pubspec", "confirm we're compliant", "just tell me if these packages are safe to ship",
+  "I'd rather not run anything", or "which of these are GPL", because refusing to certify
+  compliance from a dependency list is the call this skill governs. A pasted pubspec is a
+  trigger, not a substitute for the audit.
 argument-hint: "[project-directory]"
 allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
 model: sonnet

@@ -1,7 +1,13 @@
 ---
 name: internationalization
-description: Best practices for internationalization (i18n) and localization (l10n) in Flutter.
-when_to_use: Use when adding, modifying, or reviewing ARB translations, locale setup, BuildContext l10n extensions, or RTL/directional layout support.
+description: >
+  Best practices for internationalization (i18n) and localization (l10n) in Flutter, using the
+  built-in `flutter_localizations` and `intl` setup with ARB files as the single source of
+  truth. Use when adding, modifying, or reviewing ARB translations, locale setup (`l10n.yaml`,
+  `generate: true` in `pubspec.yaml`, `flutter gen-l10n`, `localizationsDelegates`,
+  `supportedLocales`), BuildContext l10n extensions such as `context.l10n`, hardcoded user-
+  facing strings that should be localized, localized strings passed into shared or reusable
+  widgets, or RTL/directional layout support with `EdgeInsetsDirectional`.
 allowed-tools: Read Glob Grep
 model: sonnet
 ---

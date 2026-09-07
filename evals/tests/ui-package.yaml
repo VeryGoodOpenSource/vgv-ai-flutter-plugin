@@ -17,7 +17,7 @@
 #
 #   Every prompt names the UI package explicitly. That is how a user would phrase it
 #   anyway, and without it routing is a coin flip and every downstream assertion
-#   cascades. The skill's `when_to_use` originally covered only "create a ui package",
+#   cascades. The skill's `description` originally covered only "create a ui package",
 #   which sent the widget-test case to the testing skill instead; it now covers work
 #   inside an existing UI package too.
 #

@@ -136,13 +136,23 @@ references a bundled file, prefer the spec form — a **relative path from the s
 opening `---` on line 1, close the block with `---`, and include a non-empty `name:`
 (kebab-case, **matching the directory name**) and `description:`. The spec also allows
 `license`, `compatibility`, `metadata`, and `allowed-tools`. This plugin's Claude Code
-extras (`when_to_use`, `argument-hint`, `effort`, `model`) are not spec fields, but
+extras (`argument-hint`, `effort`, `model`) are not spec fields, but
 `npx skills` and other agents ignore unknown frontmatter keys — keep them top-level so
 Claude Code reads them and nothing else breaks. (The spec's optional `skills-ref` linter is
 stricter, rejecting any top-level field outside the six it allows; `npx skills` does not run
 it, and nesting these extras under `metadata:` is the escape hatch if strict conformance is
 ever needed.) The `Skill validation` CI job (`Flash-Brew-Digital/validate-skill@v1`) enforces
 the spec (including name-matches-directory) across every skill on each pull request.
+
+**Description length** — `description` carries the whole trigger surface, so it is the field
+that grows. The spec caps it at **1024 characters and `validate-skill` treats an overrun as an
+error**, not a warning, so `ignore-rules` and `fail-on-warning` will not save a long one: it
+hard-fails CI. Claude Code separately truncates the listing at 1536 characters, and Codex
+truncates at 1024 with no warning. Under 50 characters trips a `description-quality` warning,
+which does fail the build here. `static-security`, `dart-flutter-sdk-upgrade` and `green-gate`
+sit within ~40 characters of the ceiling, so adding a trigger to those three means trading one
+out, not appending. Every description is also concatenated into the Codex prompt on every
+request, so length is a per-turn cost paid across all 15.
 
 **MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
 Flutter actions) and `very-good-cli` (scaffolding, tests, license checks). On Claude Code
@@ -181,10 +191,10 @@ source of truth; the sidecar is thin, with no build step. Add one for every new 
 
 **Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
 autonomously when the context fits (that is the point of a best-practice skill), so neither
-`disable-model-invocation` (Claude Code) nor a `policy` block (Codex) is set. Most skills here
-keep their trigger phrasing in `when_to_use`, which only Claude Code reads: every other host
-parses `name` and `description` only. Trigger wording that has to survive off Claude Code
-belongs in `description`. If you add a skill only a human should fire, make
+`disable-model-invocation` (Claude Code) nor a `policy` block (Codex) is set. All trigger
+phrasing lives in `description`, and there is no `when_to_use` field: only Claude Code ever
+read it, so every other host silently dropped those triggers. If you add a skill only a
+human should fire, make
 it **user-invoked**: set `disable-model-invocation: true` in the frontmatter and
 `policy.allow_implicit_invocation: false` in its `agents/openai.yaml`, and keep the two in
 sync — a skill is user-invoked in both harnesses or neither.

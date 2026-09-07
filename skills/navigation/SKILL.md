@@ -1,11 +1,12 @@
 ---
 name: navigation
-description: Best practices for navigation and routing in Flutter using GoRouter.
-when_to_use: >
-  Use when creating, modifying, or reviewing routes, deep links, redirects, or navigation
-  logic that uses package:go_router or package:go_router_builder, including widget tests
-  that mock GoRouter or provide it through `InheritedGoRouter`. Route motion belongs to the
-  animations skill, even inside a `GoRouteData` subclass.
+description: >
+  Best practices for navigation and routing in Flutter using GoRouter, covering hierarchical
+  route trees, type-safe `@TypedGoRoute` definitions, named navigation, redirects, and deep
+  linking setup. Use when creating, modifying, or reviewing routes, deep links, redirects, or
+  navigation logic that uses package:go_router or package:go_router_builder, including widget
+  tests that mock GoRouter or provide it through `InheritedGoRouter`. Route motion belongs to
+  the animations skill, even inside a `GoRouteData` subclass.
 allowed-tools: Read Glob Grep
 model: sonnet
 ---

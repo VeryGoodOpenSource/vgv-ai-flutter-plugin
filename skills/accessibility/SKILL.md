@@ -1,7 +1,13 @@
 ---
 name: accessibility
-description: Audit or remediate Flutter widgets against WCAG 2.2 accessibility conformance levels A, AA, or AAA across iOS, Android, Web, macOS, Windows, and Linux.
-when_to_use: Building, auditing, or reviewing Flutter widgets for WCAG 2.2 accessibility across multiple platforms
+description: >
+  Audits or remediates Flutter widgets against WCAG 2.2 conformance levels A, AA, or AAA
+  across iOS, Android, Web, macOS, Windows, and Linux, covering Semantics labels and screen
+  reader output under VoiceOver and TalkBack, touch target sizes, dragging alternatives, focus
+  order and keyboard navigation, color contrast, text scaling, animation gating on
+  disableAnimations, and form autofillHints, including the test suite that locks every fix in.
+  Use when building, auditing, or reviewing Flutter widgets for accessibility on one or
+  several of those platforms.
 effort: medium
 argument-hint: "[wcag-level] [platform...]"
 allowed-tools: Read Glob Grep
