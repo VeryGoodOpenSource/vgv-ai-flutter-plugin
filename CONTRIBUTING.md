@@ -253,8 +253,10 @@ session and exercise it before you commit.
 - **Dart SDK** and **jq** on your `PATH` — the hooks need both.
 - **Very Good CLI** ≥ 1.3.0 (`dart pub global activate very_good_cli`) for the
   Very Good CLI MCP server tools.
-- **Codex CLI** (`npm install -g @openai/codex`) only if you touch `codex/` —
-  `codex/loader_test.sh` needs it. Everything else runs without it.
+- **Codex CLI** (`npm install -g @openai/codex`) and **Python 3.11+** only if you
+  touch `codex/` — `codex/loader_test.sh` needs both (Python parses the agent
+  TOML; on 3.10 or older, `python3 -m pip install tomli`). Everything else runs
+  without them.
 
 See the README [Hooks](README.md#hooks) and [MCP Integration](README.md#mcp-integration)
 sections for the full prerequisite details.

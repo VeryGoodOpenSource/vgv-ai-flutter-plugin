@@ -33,6 +33,21 @@ for tool in codex jq python3; do
   fi
 done
 
+# The agent files are TOML and Codex ships no validator for them, so they are
+# parsed here. tomllib is standard from Python 3.11; older versions need tomli.
+TOML_MODULE=""
+for candidate in tomllib tomli; do
+  if python3 -c "import $candidate" 2>/dev/null; then
+    TOML_MODULE="$candidate"
+    break
+  fi
+done
+if [ -z "$TOML_MODULE" ]; then
+  printf "\033[31merror\033[0m  no TOML parser available for %s\n" "$(python3 -V 2>&1)" >&2
+  printf "        use Python 3.11+ (stdlib tomllib), or: python3 -m pip install tomli\n" >&2
+  exit 1
+fi
+
 SANDBOX=$(mktemp -d)
 trap 'rm -rf "$SANDBOX"' EXIT
 FAKE_HOME="$SANDBOX/home"
@@ -100,22 +115,56 @@ DOCTOR_JSON="$SANDBOX/doctor.json"
 codex_in_sandbox doctor --json >"$DOCTOR_JSON" 2>/dev/null
 # `codex doctor` exits non-zero when it cannot find credentials, which is the
 # normal state here, so assert on the individual checks instead of the exit code.
-for check in config.load mcp.config; do
-  status=$(jq -r --arg id "$check" '.checks[] | select(.id == $id) | .status' "$DOCTOR_JSON" 2>/dev/null)
-  if [ "$status" = "ok" ]; then
-    pass "codex doctor: $check is ok"
-  else
-    fail "codex doctor: $check is ok" "got [${status:-no such check}]"
-  fi
-done
+doctor_status() {
+  jq -r --arg id "$1" '.checks[] | select(.id == $id) | .status' "$DOCTOR_JSON" 2>/dev/null
+}
 
-for server in dart very-good-cli; do
-  if codex_in_sandbox mcp get "$server" >/dev/null 2>&1; then
-    pass "MCP server '$server' is registered"
-  else
+# config.load proves the TOML the installer wrote actually parses.
+status=$(doctor_status config.load)
+if [ "$status" = "ok" ]; then
+  pass "codex doctor: config.load is ok"
+else
+  fail "codex doctor: config.load is ok" "got [${status:-no such check}]"
+fi
+
+# mcp.config downgrades to a warning when the server executables are missing,
+# which is the normal state anywhere without the Dart SDK and Very Good CLI
+# installed — CI runners included. Only a hard failure means the config is
+# wrong; what the servers were registered *as* is asserted below instead.
+status=$(doctor_status mcp.config)
+case "$status" in
+  ok)
+    pass "codex doctor: mcp.config is ok"
+    ;;
+  warning)
+    pass "codex doctor: mcp.config has no errors (warning, likely no dart/very_good on PATH)"
+    ;;
+  *)
+    fail "codex doctor: mcp.config has no errors" "got [${status:-no such check}]"
+    ;;
+esac
+
+# Assert what each server was registered as, so a warning above can never hide a
+# server pointing at the wrong command.
+assert_mcp_server() {
+  local server="$1" want_command="$2" want_args="$3" out
+  out=$(codex_in_sandbox mcp get "$server" 2>/dev/null)
+  if [ -z "$out" ]; then
     fail "MCP server '$server' is registered"
+    return
   fi
-done
+  pass "MCP server '$server' is registered"
+  for field in "enabled: true" "transport: stdio" "command: $want_command" "args: $want_args"; do
+    if printf '%s\n' "$out" | grep -qF "$field"; then
+      pass "  $server $field"
+    else
+      fail "  $server $field" "$(printf '%s' "$out" | tr '\n' ' ')"
+    fi
+  done
+}
+
+assert_mcp_server dart dart "mcp-server --enable dart_format"
+assert_mcp_server very-good-cli very_good "mcp"
 
 echo ""
 echo "=== Hooks are well-formed ==="
@@ -168,19 +217,28 @@ fi
 
 echo ""
 echo "=== Agents are well-formed ==="
-# Codex ships no validator for custom agent files either.
+
+# Print one top-level key from an agent file, or nothing if it is absent.
+agent_field() {
+  python3 -c "
+import sys, $TOML_MODULE as toml
+with open(sys.argv[1], 'rb') as fh:
+    print(toml.load(fh).get(sys.argv[2], ''))
+" "$1" "$2" 2>/dev/null
+}
+
 for agent in "$PLUGIN_ROOT"/codex/agents/*.toml; do
   [ -f "$agent" ] || continue
   name="$(basename "$agent")"
-  if python3 - "$agent" <<'PY'
-import sys, tomllib
-with open(sys.argv[1], "rb") as fh:
-    data = tomllib.load(fh)
-missing = [k for k in ("name", "description", "developer_instructions") if not data.get(k)]
+  if python3 -c "
+import sys, $TOML_MODULE as toml
+with open(sys.argv[1], 'rb') as fh:
+    data = toml.load(fh)
+missing = [k for k in ('name', 'description', 'developer_instructions') if not data.get(k)]
 if missing:
-    print("missing required fields: " + ", ".join(missing), file=sys.stderr)
+    print('missing required fields: ' + ', '.join(missing), file=sys.stderr)
     sys.exit(1)
-PY
+" "$agent"
   then
     pass "$name parses and has the required fields"
   else
@@ -198,7 +256,7 @@ done
 # allowlist, so the sandbox is the only thing enforcing it.
 reviewer="$PLUGIN_ROOT/codex/agents/flutter-reviewer.toml"
 if [ -f "$reviewer" ]; then
-  mode=$(python3 -c 'import sys,tomllib;print(tomllib.load(open(sys.argv[1],"rb")).get("sandbox_mode",""))' "$reviewer")
+  mode=$(agent_field "$reviewer" sandbox_mode)
   if [ "$mode" = "read-only" ]; then
     pass "flutter-reviewer is sandboxed read-only"
   else
