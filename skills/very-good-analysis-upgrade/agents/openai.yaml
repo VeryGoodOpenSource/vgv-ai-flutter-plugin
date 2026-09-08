@@ -1,0 +1,3 @@
+interface:
+  display_name: "Very Good Analysis Upgrade"
+  short_description: "Upgrade the very_good_analysis lint package"

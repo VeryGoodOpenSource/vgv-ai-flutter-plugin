@@ -24,7 +24,7 @@
 #   its own answer ("this is what the green-gate skill automates end to end. Want me to
 #   invoke it?") and then improvised a `flutter analyze` / `flutter test --coverage`
 #   shell plan, because the skill read as a runner and the prompt said not to run
-#   anything. The skill's `description`/`when_to_use` now claim gate *configuration*
+#   anything. The skill's `description` now claims gate *configuration*
 #   questions too, and Core Standards carries a plan-only directive.
 #
 #   Two things deliberately absent:

@@ -1,7 +1,13 @@
 ---
 name: internationalization
-description: Best practices for internationalization (i18n) and localization (l10n) in Flutter.
-when_to_use: Use when adding, modifying, or reviewing ARB translations, locale setup, BuildContext l10n extensions, or RTL/directional layout support.
+description: >
+  Best practices for internationalization (i18n) and localization (l10n) in Flutter, using the
+  built-in `flutter_localizations` and `intl` setup with ARB files as the single source of
+  truth. Use when adding, modifying, or reviewing ARB translations, locale setup (`l10n.yaml`,
+  `generate: true` in `pubspec.yaml`, `flutter gen-l10n`, `localizationsDelegates`,
+  `supportedLocales`), BuildContext l10n extensions such as `context.l10n`, hardcoded user-
+  facing strings that should be localized, localized strings passed into shared or reusable
+  widgets, or RTL/directional layout support with `EdgeInsetsDirectional`.
 allowed-tools: Read Glob Grep
 model: sonnet
 ---
@@ -60,6 +66,8 @@ Text(AppLocalizations.of(context).helloWorld);
 ## Reusable Widget Strategy
 
 Shared widgets that live in separate packages should not depend on `AppLocalizations` directly. Instead, pass localized strings as constructor parameters:
+
+When someone asks to add `AppLocalizations` to a shared package, decline and say why — the package would carry its own translations and every consuming app would be locked to them — then rewrite their widget with the label as a `final String` constructor parameter and show the call site supplying `context.l10n`. Give both as Dart code; describing the change in prose leaves the caller to guess the signature.
 
 ```dart
 // Shared widget — no l10n dependency

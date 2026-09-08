@@ -1,20 +1,16 @@
 ---
 name: very-good-analysis-upgrade
 description: >
-  Upgrade the very_good_analysis lint package to a new version across Dart/Flutter
-  projects. Handles the pubspec version bump, the lint fixes the new rules force, and
-  the PR.
-when_to_use: >
-  Use when upgrading very_good_analysis in any Dart or Flutter package. Trigger on
-  phrases like "bump very_good_analysis to 10.0.0", "upgrade very_good_analysis",
-  "update our lint package", "we're due for a lint upgrade", "take very_good_analysis
-  to the latest", or a `dart pub get` conflict reported after a very_good_analysis
-  bump. Use it even when the user only describes the package instead of pointing at
-  it — the decisions this skill governs (which constraint to write, which warnings to
-  fix, what stays out of the PR) do not need the files on disk. The trigger is a
-  very_good_analysis version change: a conflict surfaced by a Dart or Flutter SDK bump
-  belongs to dart-flutter-sdk-upgrade instead, even when very_good_analysis is the
-  package blocking resolution.
+  Upgrade the very_good_analysis lint package to a new version in any Dart or Flutter package,
+  handling the pubspec.yaml version bump, the lint fixes the new rules force, and the PR.
+  Trigger on phrases like "bump very_good_analysis to 10.0.0", "upgrade very_good_analysis",
+  "update our lint package", "we're due for a lint upgrade", "take very_good_analysis to the
+  latest", or a `dart pub get` conflict reported after a very_good_analysis bump. Use it even
+  when the user only describes the package instead of pointing at it, because the decisions it
+  governs are scope calls that do not need the files on disk: which constraint to write, which
+  warnings to fix, and what stays out of the PR. The trigger is a very_good_analysis version
+  change. A conflict surfaced by a Dart or Flutter SDK bump belongs to dart-flutter-sdk-
+  upgrade instead, even when very_good_analysis is the package blocking resolution.
 argument-hint: "[version]"
 allowed-tools: Read Glob Grep Bash
 model: sonnet
@@ -57,7 +53,8 @@ These standards apply to every `very_good_analysis` upgrade.
 Confirm two things before proceeding:
 
 1. **Target version** — use `$ARGUMENTS` as the target version when the user supplied one
-   (e.g. `10.0.0`). If `$ARGUMENTS` is empty, fetch the latest from the pub.dev API and use
+   (e.g. `10.0.0`). If `$ARGUMENTS` is empty or still shows the literal text `$ARGUMENTS`
+   (the host did not substitute it), fetch the latest from the pub.dev API and use
    that. Don't ask — just look it up and proceed:
 
     ```bash

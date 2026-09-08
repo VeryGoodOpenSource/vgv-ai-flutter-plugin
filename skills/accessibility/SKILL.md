@@ -1,7 +1,13 @@
 ---
 name: accessibility
-description: Audit or remediate Flutter widgets against WCAG 2.2 accessibility conformance levels A, AA, or AAA across iOS, Android, Web, macOS, Windows, and Linux.
-when_to_use: Building, auditing, or reviewing Flutter widgets for WCAG 2.2 accessibility across multiple platforms
+description: >
+  Audits or remediates Flutter widgets against WCAG 2.2 conformance levels A, AA, or AAA
+  across iOS, Android, Web, macOS, Windows, and Linux, covering Semantics labels and screen
+  reader output under VoiceOver and TalkBack, touch target sizes, dragging alternatives, focus
+  order and keyboard navigation, color contrast, text scaling, animation gating on
+  disableAnimations, and form autofillHints, including the test suite that locks every fix in.
+  Use when building, auditing, or reviewing Flutter widgets for accessibility on one or
+  several of those platforms.
 effort: medium
 argument-hint: "[wcag-level] [platform...]"
 allowed-tools: Read Glob Grep
@@ -62,6 +68,8 @@ Apply these standards to all accessibility work:
 ## Workflow
 
 Every accessibility engagement follows four phases in sequence. Do not skip Phase 1 or Phase 2.
+
+> **Cross-harness note.** Phases 1, 2, and 4 below use `AskUserQuestion`. On a host without it, invoke whatever equivalent user-question tool the host provides; if it has none, ask the same question as plain numbered text. Either way, wait for the reply before proceeding.
 
 ### Phase 1: Conformance Level Selection
 

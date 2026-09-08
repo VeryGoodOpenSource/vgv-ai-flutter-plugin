@@ -1,7 +1,14 @@
 ---
 name: material-theming
-description: Best practices for Flutter theming using Material 3.
-when_to_use: Use when creating, modifying, or reviewing ThemeData, ColorScheme, TextTheme, component themes, spacing systems, or light/dark mode support. Also use whenever widget code carries its own styling — a hardcoded Color, an inline TextStyle, raw padding or gap numbers, the same decoration repeated across widget instances, or a brightness/dark-mode conditional inside build — even when the request only says "review this widget", "cut the duplication", "stop repeating this", or "tidy this up".
+description: >
+  Best practices for Flutter theming with Material 3, treating ThemeData as the single source
+  of truth for colors, typography, component styles, and spacing. Use when creating,
+  modifying, or reviewing ThemeData, ColorScheme, TextTheme, component themes, spacing
+  systems, or light/dark mode support, and whenever widget code carries its own styling: a
+  hardcoded Color, an inline TextStyle, raw padding or gap numbers, the same decoration
+  repeated across widget instances, or a brightness/dark-mode conditional inside build, even
+  when the request only says "review this widget", "cut the duplication", "stop repeating
+  this", or "tidy this up".
 allowed-tools: Read Glob Grep
 model: sonnet
 ---
@@ -168,7 +175,23 @@ TextFormField(
 
 ## Spacing System
 
-Define an `AppSpacing` class with a base unit (e.g., 16px) and named constants (xxs through xxlg). Use `EdgeInsets.only` or `EdgeInsets.symmetric` — never `EdgeInsets.fromLTRB`.
+Define an `AppSpacing` class with a base unit and named constants (xxs through xxlg). Every step is a multiple of the base unit, never an independent literal — that is what makes the scale a scale:
+
+```dart
+abstract class AppSpacing {
+  static const double spaceUnit = 16;
+
+  static const double xxs = 0.25 * spaceUnit; // 4
+  static const double sm = 0.5 * spaceUnit; // 8
+  static const double md = 0.75 * spaceUnit; // 12
+  static const double lg = spaceUnit; // 16
+  static const double xxlg = 2 * spaceUnit; // 32
+}
+```
+
+Whenever you introduce the scale or hand someone the convention, write the class out. Listing the step names and their pixel values in prose is not the convention — the class is, because it is what stops the next arbitrary number from being typed.
+
+Use `EdgeInsets.only` or `EdgeInsets.symmetric` — never `EdgeInsets.fromLTRB`.
 
 See [references/spacing.md](references/spacing.md) for the full `AppSpacing` class, usage examples, and `EdgeInsets` preferences.
 

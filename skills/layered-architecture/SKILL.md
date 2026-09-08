@@ -1,7 +1,12 @@
 ---
 name: layered-architecture
-description: Best practices for VGV layered monorepo architecture in Flutter.
-when_to_use: Use when structuring a multi-package Flutter app, creating data or repository packages, defining layer boundaries, or wiring dependencies between packages.
+description: >
+  Best practices for VGV layered monorepo architecture in Flutter, covering the four layers
+  Data, Repository, Business Logic, and Presentation, their unidirectional dependency rules,
+  model transformation across layer boundaries, and app bootstrap wiring. Use when structuring
+  a multi-package Flutter app, creating data or repository packages, defining layer
+  boundaries, or wiring dependencies between packages through path dependencies in
+  pubspec.yaml, barrel exports, and RepositoryProvider.
 allowed-tools: Read Glob Grep mcp__very-good-cli__create mcp__very-good-cli__packages_get mcp__very-good-cli__test
 effort: high
 ---
@@ -28,6 +33,8 @@ Apply these standards to ALL layered architecture work:
 - **Barrel exports at every package boundary** — `src/` is never imported directly by consumers
 - **Repositories accept data layer dependencies via constructor injection** — never instantiate clients internally
 - **App bootstrap wires all layers** — `main_<flavor>.dart` creates clients and repositories, provides them via `RepositoryProvider`
+
+> **Cross-harness fallback.** This skill scaffolds and tests packages via the Very Good CLI MCP server. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create dart_package …`, `very_good packages get`, and `very_good test` commands directly.
 
 ## Architecture Overview
 

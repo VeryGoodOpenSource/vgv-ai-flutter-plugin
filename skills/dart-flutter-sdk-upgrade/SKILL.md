@@ -1,19 +1,16 @@
 ---
 name: dart-flutter-sdk-upgrade
 description: >
-  VGV-specific reference for bumping Dart and Flutter SDK constraints across packages.
-  Covers pubspec.yaml environment constraints, CI workflow Flutter versions, and SDK
-  upgrade PR preparation. Flutter CI uses MAJOR.MINOR.x with no caret to resolve to
-  the latest patch; pubspec pins the exact patch with a caret (e.g., ^3.50.1).
-when_to_use: >
-  Use when upgrading the Flutter or Dart SDK version in any VGV repository. Trigger on
-  phrases like "bump Flutter to 3.x", "update SDK constraints", "upgrade Dart SDK",
-  "update CI Flutter version", "bump SDK version", or "prep the SDK upgrade PR". Also
-  use when an SDK bump is already underway and something breaks — "pub get fails after
-  I changed the environment block", "version solving failed after bumping the SDK",
-  "a dependency requires an older SDK", "get me unblocked on the Flutter upgrade", or
-  "which Dart version ships with Flutter 3.x". Own the whole bump, including the
-  conflicts it surfaces, even when the blocking package has a skill of its own.
+  VGV-specific reference for bumping Dart and Flutter SDK constraints across packages,
+  covering pubspec.yaml environment constraints, CI workflow Flutter versions, and SDK
+  upgrade PR preparation. Use it when upgrading the Flutter or Dart SDK version in any VGV
+  repository, on phrases like "bump Flutter to 3.x", "update SDK constraints", "upgrade Dart
+  SDK", "update CI Flutter version", "bump SDK version", or "prep the SDK upgrade PR", and
+  also when a bump is already underway and something breaks: "pub get fails after I changed
+  the environment block", "version solving failed after bumping the SDK", "a dependency
+  requires an older SDK", "get me unblocked on the Flutter upgrade", or "which Dart version
+  ships with Flutter 3.x". It owns the whole bump, including the conflicts it surfaces, even
+  when the blocking package has a skill of its own.
 argument-hint: "[flutter-version]"
 allowed-tools: Read Glob Grep Edit Write Bash
 model: sonnet
@@ -59,8 +56,9 @@ versions, not one: the Flutter release being targeted, and the Dart release it s
 3. Note the Dart version listed alongside it
 
 The Flutter target comes from `$ARGUMENTS` when the user supplied one. If `$ARGUMENTS` is
-empty, take the latest Flutter stable from that same page. For pure Dart packages, no mapping
-is involved: the Dart version is whatever `$ARGUMENTS` specifies or the latest Dart stable.
+empty or still shows the literal text `$ARGUMENTS` (the host did not substitute it), take the
+latest Flutter stable from that same page. For pure Dart packages, no mapping is involved: the
+Dart version is whatever `$ARGUMENTS` specifies or the latest Dart stable.
 
 **When the archive is out of reach**, which is the common case in a session with no network
 access, do not fill the gap from memory. A recalled pairing is wrong often enough to break

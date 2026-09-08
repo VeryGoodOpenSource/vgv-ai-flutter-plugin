@@ -1,7 +1,12 @@
 ---
 name: create-project
-description: Scaffold a new Dart or Flutter project from a Very Good CLI template. Supports flutter_app, dart_package, flutter_package, flutter_plugin, dart_cli, flame_game, and docs_site templates.
-when_to_use: Use when user says "create a new project", "start a new flutter app", "scaffold a package", "initialize a dart cli", "new flame game", or "generate a plugin".
+description: >
+  Scaffold a new Dart or Flutter project from a Very Good CLI template, covering the
+  flutter_app, dart_package, flutter_package, flutter_plugin, dart_cli, flame_game, and
+  docs_site templates, inferring the right one from what the user wants to build and then
+  installing dependencies. Use when the user says "create a new project", "start a new flutter
+  app", "scaffold a package", "initialize a dart cli", "new flame game", or "generate a
+  plugin".
 allowed-tools: mcp__very-good-cli__create mcp__very-good-cli__packages_get
 argument-hint: "[template] [project-name]"
 model: haiku
@@ -10,6 +15,8 @@ model: haiku
 # Create Project
 
 Scaffold a new Dart or Flutter project using Very Good CLI templates.
+
+> **Cross-harness fallbacks.** This skill drives the Very Good CLI MCP server and asks the user structured questions. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create …` and `very_good packages get` commands directly. On a host without `AskUserQuestion`, invoke whatever equivalent user-question tool the host provides; if it has none, ask the same questions as plain numbered text.
 
 ---
 

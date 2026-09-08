@@ -1,0 +1,3 @@
+interface:
+  display_name: "Testing"
+  short_description: "Dart and Flutter test conventions"

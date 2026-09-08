@@ -1,7 +1,10 @@
 ---
 name: bloc
-description: Best practices for Bloc state management in Flutter/Dart.
-when_to_use: Use when writing, modifying, or reviewing code that uses package:bloc, package:flutter_bloc, or package:bloc_test.
+description: >
+  Best practices for Bloc state management in Flutter/Dart, covering Cubit versus Bloc, event
+  and state naming, sealed classes with Equatable, the Page/View split with BlocProvider,
+  BlocBuilder, BlocListener, and BlocSelector. Use when writing, modifying, or reviewing code
+  that uses package:bloc, package:flutter_bloc, or package:bloc_test.
 allowed-tools: Read Glob Grep
 ---
 

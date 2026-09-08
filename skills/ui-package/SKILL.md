@@ -1,7 +1,14 @@
 ---
 name: ui-package
-description: Best practices for building a Flutter UI package on top of Material — custom components, ThemeExtension-based theming, consistent APIs, and widget tests. Supports app_ui_package template.
-when_to_use: Use when creating a UI package, and whenever working inside one — adding or reviewing a widget, wiring design tokens, exporting through the barrel file, or writing tests for a widget that lives in a UI package. Trigger on "create a ui package", "add a widget to our ui package", "add a design token", "export it from the barrel", "write tests for this widget in my ui package", and on any request naming a package whose job is shared widgets and design tokens.
+description: >
+  Best practices for building a Flutter UI package on top of Material, covering custom
+  components, ThemeExtension-based theming, consistent APIs, widget tests, and scaffolding
+  from the app_ui_package template. Use when creating a UI package and whenever working inside
+  one: adding or reviewing a widget, wiring design tokens, exporting through the barrel file,
+  or writing tests for a widget that lives in a UI package. Triggers on "create a ui package",
+  "add a widget to our ui package", "add a design token", "export it from the barrel", "write
+  tests for this widget in my ui package", and on any request naming a package whose job is
+  shared widgets and design tokens.
 allowed-tools: Read Glob Grep Edit Write mcp__very-good-cli__create
 model: sonnet
 ---
@@ -97,5 +104,7 @@ Scaffold with the Very Good CLI MCP `create` tool:
 file, the `pumpApp` helper, and the Widgetbook catalog. Do not substitute
 `flutter_package` on the grounds that it takes no organization name — neither template
 does, and `flutter_package` gives you an empty package you then rebuild by hand.
+
+> **Cross-harness fallback.** On a host without this plugin's Bash hooks and without the Very Good CLI MCP server connected, run the equivalent `very_good create app_ui_package <package_name> --output-directory <dir>` command directly.
 
 See [reference.md](reference.md) for the `ThemeExtension` class table (`AppColors`, `AppSpacing`, `AppTheme`, the `BuildContext` extension), the `pumpApp` test helper, a barrel file example, the Widgetbook catalog concepts and `build_runner` commands, and step-by-step workflows for adding a widget or a custom token.

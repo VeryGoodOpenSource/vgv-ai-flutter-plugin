@@ -1,17 +1,16 @@
 ---
 name: license-compliance
 description: >
-  Audits package dependency licenses using the Very Good CLI packages_check_licenses
-  MCP tool. Flags non-compliant or unknown licenses and produces a compliance summary.
-when_to_use: >
-  Use when user says "check licenses", "license audit", "are our dependencies compliant",
-  "check dependency licenses", "license compliance", "review package licenses",
-  "scan for license issues", or "pre-release license check". Use it especially when the
-  request asks for a compliance verdict *without* a scan — "read the licenses off this
-  pubspec", "confirm we're compliant", "just tell me if these packages are safe to ship",
-  "I'd rather not run anything", "which of these are GPL" — because refusing to certify
-  from a dependency list is the call this skill governs. A pasted pubspec is a trigger,
-  not a substitute for the audit.
+  Audits Dart and Flutter package dependency licenses using the Very Good CLI
+  packages_check_licenses MCP tool, flags non-compliant or unknown licenses, and produces a
+  compliance summary report. Use when the user says "check licenses", "license audit", "check
+  dependency licenses", "license compliance", "review package licenses", "are our dependencies
+  compliant", "scan for license issues", or "pre-release license check". Use it especially
+  when the request asks for a compliance verdict without a scan, as in "read the licenses off
+  this pubspec", "confirm we're compliant", "just tell me if these packages are safe to ship",
+  "I'd rather not run anything", or "which of these are GPL", because refusing to certify
+  compliance from a dependency list is the call this skill governs. A pasted pubspec is a
+  trigger, not a substitute for the audit.
 argument-hint: "[project-directory]"
 allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
 model: sonnet
@@ -21,6 +20,8 @@ effort: medium
 # License Compliance
 
 Dependency license auditor for Dart and Flutter projects — verifies that all package dependencies use licenses compatible with the project's requirements using the Very Good CLI MCP tools.
+
+> **Cross-harness fallback.** On Claude Code the `packages_check_licenses` MCP tool is the execution path. On a host without this plugin's Bash hooks and without the Very Good CLI MCP server connected, run `very_good packages check licenses <project-directory>` directly (the target path is positional and defaults to `.`; add `--dependency-type direct-main,transitive` so transitive obligations are covered) and read its output the same way — never block on a missing MCP server.
 
 ---
 
@@ -104,7 +105,7 @@ So a pasted dependency list cannot produce a verdict, no matter how well known t
 
 1. **Say the list is not the dependency tree.** Indirect dependencies carry license obligations of their own and are absent from it, so no compliance conclusion can be drawn from what was pasted.
 2. **Name the likely licenses if it helps.** Saying `http` and `intl` are BSD-3-Clause is useful orientation and costs nothing, as long as it is framed as what the scan is expected to confirm rather than as the finding.
-3. **Give the exact command that produces a real answer.** `packages_check_licenses` with `licenses: true`, or `very_good packages check licenses --licenses` from the project directory, and offer to run it.
+3. **Give the exact command that produces a real answer.** `packages_check_licenses` with `licenses: true`, or `very_good packages check licenses <project-directory> --dependency-type direct-main,transitive`, and offer to run it.
 
 Two phrasings to avoid, because both read as certification: "your dependency list looks compliant" and "these are all permissive, so you're clear." Withhold the verdict entirely until the scan output exists.
 
