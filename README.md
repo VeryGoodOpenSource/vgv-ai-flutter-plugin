@@ -63,6 +63,8 @@ This plugin ships subagents that Claude Code can dispatch as isolated, specializ
 | ----- | ----------- |
 | [**Flutter Reviewer**](agents/flutter-reviewer.md) | Read-only reviewer of changed Dart code against the preloaded `bloc`, `testing`, `static-security`, and `accessibility` standards — emits a `location \| problem \| fix \| standard` findings table. Never edits files; Bash is hook-restricted to `git diff`/`git status` |
 
+A Gemini CLI port of the same reviewer ships at [`.gemini/agents/flutter-reviewer.md`](.gemini/agents/flutter-reviewer.md) — see [Gemini CLI](#gemini-cli).
+
 ## Hooks
 
 This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that validate the Very Good CLI, guard against CLI bypass, and automatically run Dart analysis and formatting on `.dart` files.
@@ -75,6 +77,8 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 | **Allow Read-only Git** (`allow-readonly-git.sh`) | PreToolUse (`Bash`, `flutter-reviewer` agent only) | Restricts the `flutter-reviewer` agent's Bash to `git diff`/`git status`; exits 2 on anything else (blocking). Scoped via the agent's frontmatter, not `hooks.json` |
 | **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
 | **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
+
+The same scripts run on Gemini CLI under its own event names, wired by [`.gemini/settings.json`](.gemini/settings.json) — see [Gemini CLI](#gemini-cli).
 
 ### Prerequisites
 
@@ -187,6 +191,55 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
+[`.gemini/settings.json`](.gemini/settings.json) registers the same two servers for Gemini CLI — see [Gemini CLI](#gemini-cli).
+
+## Gemini CLI
+
+The skills follow the [Agent Skills open standard][agent_skills_link], so they run on [Gemini CLI][gemini_cli_link] as well as Claude Code. The enforcement layer — hooks, MCP servers, and the read-only reviewer — is ported alongside them in [`.gemini/`](.gemini).
+
+Verified against Gemini CLI **0.52.0**.
+
+### Install the skills
+
+```bash
+gemini skills install https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin --path skills
+```
+
+That installs all 15 skills into `~/.gemini/skills`; add `--scope workspace` to install into `.gemini/skills` in the current project instead. Gemini CLI also reads `.agents/skills/` (and `~/.agents/skills/`), the standard path other Agent Skills installers write to, so a skills-standard install is picked up with no extra wiring. Confirm with `gemini skills list`.
+
+### Wire the MCP servers and hooks
+
+Copy [`.gemini/settings.json`](.gemini/settings.json) into your project's `.gemini/settings.json`, or merge its `mcpServers` and `hooks` blocks into the one you already have. It registers the same `dart` and `very-good-cli` servers as `.mcp.json` and runs the same hook scripts:
+
+| Claude Code | Gemini CLI | Script |
+| ----------- | ---------- | ------ |
+| `SessionStart` | `SessionStart` | `warn-missing-mcp.sh` |
+| `PreToolUse` (`mcp__.*very-good-cli__.*`) | `BeforeTool` (`mcp_very-good-cli_.*`) | `check-vgv-cli.sh` |
+| `PreToolUse` (`Bash`) | `BeforeTool` (`run_shell_command`) | `block-cli-workarounds.sh` |
+| `PostToolUse` (`Edit`/`Write`) | `AfterTool` (`replace`/`write_file`) | `analyze.sh`, `format.sh` |
+
+The hook commands resolve their scripts through `${VGV_PLUGIN_ROOT:-$PWD}`. Set `VGV_PLUGIN_ROOT` to wherever you cloned this repository; leave it unset and the scripts are read from the workspace root, which is what makes the committed settings work in this repository as-is.
+
+Two Claude Code behaviors have no Gemini CLI equivalent and degrade rather than break:
+
+- **Auto-approving Very Good CLI MCP calls.** A Gemini `BeforeTool` hook can block a call but cannot pre-approve one, so `check-vgv-cli.sh` only enforces the version gate there. `"trust": true` on the server in `.gemini/settings.json` covers the approval side.
+- **Agent-scoped hooks.** Gemini CLI has none, so the reviewer's read-only contract is enforced by its tool allowlist instead — see below.
+
+### The reviewer subagent
+
+Copy [`.gemini/agents/flutter-reviewer.md`](.gemini/agents/flutter-reviewer.md) into your project's `.gemini/agents/`. Gemini CLI validates local agent frontmatter with a strict schema that rejects Claude Code's `skills:` and `hooks:` keys, so the two agent files are separate ports of one contract rather than one shared file. They emit the identical findings table; what differs is:
+
+- **Standards loading.** Claude Code preloads `bloc`, `testing`, `static-security`, and `accessibility` through the agent's `skills:` frontmatter. The Gemini agent activates the same four with `activate_skill` at the start of a review.
+- **Read-only enforcement.** Claude Code restricts the agent's Bash to `git diff`/`git status` with a PreToolUse hook. The Gemini agent is granted no shell at all, which makes the contract structural — it cannot write a file, `git checkout`, or redirect output.
+- **Diff scoping.** With no shell the Gemini agent cannot run `git diff` itself, so the caller passes the changed `.dart` files in the task description.
+
+**Prerequisites:**
+
+- **Gemini CLI** 0.36 or newer for subagents; 0.52.0 is what this is verified against
+- The Claude Code [hook prerequisites](#prerequisites) — **Dart SDK** and **jq** — apply unchanged
+
+[agent_skills_link]: https://agentskills.io/specification
+[gemini_cli_link]: https://github.com/google-gemini/gemini-cli
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures

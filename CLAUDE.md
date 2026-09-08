@@ -35,3 +35,16 @@ These run **after** a tool call completes:
 - `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
+
+### Gemini CLI
+
+`.gemini/settings.json` runs the same scripts under Gemini CLI's event names: `SessionStart` stays
+`SessionStart`, `PreToolUse` becomes `BeforeTool`, and `PostToolUse` becomes `AfterTool`, with
+matchers rewritten to Gemini's tool names (`run_shell_command`, `replace|write_file`,
+`mcp_very-good-cli_.*`) and timeouts in milliseconds rather than seconds. The scripts read
+`hook_event_name` off the payload and emit whichever response shape the firing harness reads —
+`hookSpecificOutput.permissionDecision` for Claude Code, top-level `decision`/`reason` for Gemini
+CLI. Two things do not carry over: Gemini has no auto-approve for a `BeforeTool` hook (so
+`check-vgv-cli.sh` only enforces the version gate there, and `"trust": true` on the MCP server
+covers approval), and it has no agent-scoped hooks (so `allow-readonly-git.sh` is Claude-only and
+the Gemini reviewer holds its read-only contract by granting no shell tool at all).
