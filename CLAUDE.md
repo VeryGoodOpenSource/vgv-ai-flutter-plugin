@@ -42,8 +42,9 @@ All hook scripts require **jq** to parse the hook payload (they skip gracefully 
 
 ### Codex
 
-This repo is a Codex plugin too. `.codex-plugin/plugin.json` plus the marketplace entry in
-`.agents/plugins/marketplace.json` let `codex plugin add` install it, and Codex then reads
+This repo is a Codex plugin too. `.codex-plugin/plugin.json` makes it installable, with the
+marketplace entry living in `very-good-claude-code-marketplace` alongside the Claude Code one.
+Codex then reads
 `skills/`, `.mcp.json`, and this same `hooks/hooks.json` — resolving `${CLAUDE_PLUGIN_ROOT}` as a
 compatibility alias. That is why the `PostToolUse` matcher says `apply_patch|Edit|Write`: Codex
 names its file-editing tool `apply_patch`, and the extra alternative is inert on Claude Code.

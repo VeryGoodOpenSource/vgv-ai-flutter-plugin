@@ -8,13 +8,11 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
 
 ```text
 .mcp.json                # MCP server configuration (Dart and Very Good CLI); read by both harnesses
-.agents/
-  plugins/
-    marketplace.json   # Codex marketplace entry, so `codex plugin add` can install this repo
 .claude-plugin/
   plugin.json          # Claude Code plugin manifest (name, version, keywords)
 .codex-plugin/
-  plugin.json          # Codex plugin manifest (interface metadata + mcpServers -> ./.mcp.json)
+  plugin.json          # Codex plugin manifest (interface metadata + mcpServers -> ./.mcp.json);
+                       # the marketplace entry pointing here lives in very-good-claude-code-marketplace
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 codex/                 # The only Codex-specific assets; skills, MCP and hooks are shared

@@ -86,11 +86,10 @@ tool, which is why that matcher covers it. See [Codex](#codex) for the differenc
 
 ## Codex
 
-Codex has its own plugin system, so installation mirrors the Claude Code flow — two commands, no
-scripts:
+Codex installs from the same marketplace as Claude Code:
 
 ```bash
-codex plugin marketplace add VeryGoodOpenSource/vgv-ai-flutter-plugin && codex plugin add vgv-ai-flutter-plugin@very-good-ventures
+codex plugin marketplace add VeryGoodOpenSource/very-good-claude-code-marketplace && codex plugin add vgv-ai-flutter-plugin@very-good-claude-code-marketplace
 ```
 
 That one install gives you the skills, both MCP servers, and the hooks. Codex reads them from the

@@ -19,7 +19,6 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MARKETPLACE="$PLUGIN_ROOT/.agents/plugins/marketplace.json"
 MANIFEST="$PLUGIN_ROOT/.codex-plugin/plugin.json"
 
 PASSED=0
@@ -74,23 +73,28 @@ codex_in_sandbox() {
 printf '\033[1mCodex %s\033[0m\n' "$(codex --version 2>/dev/null | head -1)"
 
 echo ""
-echo "=== Manifests ==="
-MARKETPLACE_NAME=$(jq -r '.name // empty' "$MARKETPLACE" 2>/dev/null)
+echo "=== Plugin manifest ==="
 PLUGIN_NAME=$(jq -r '.name // empty' "$MANIFEST" 2>/dev/null)
-if [ -n "$MARKETPLACE_NAME" ]; then
-  pass "marketplace.json is valid JSON (name: $MARKETPLACE_NAME)"
-else
-  fail "marketplace.json is valid JSON"
-  exit 1
-fi
 if [ -n "$PLUGIN_NAME" ]; then
   pass "plugin.json is valid JSON (name: $PLUGIN_NAME)"
 else
   fail "plugin.json is valid JSON"
   exit 1
 fi
-assert_eq "the marketplace entry names this plugin" "$PLUGIN_NAME" \
-  "$(jq -r --arg n "$PLUGIN_NAME" '.plugins[] | select(.name == $n) | .name' "$MARKETPLACE")"
+
+# Codex ingestion requires all of these; a missing one makes the plugin
+# uninstallable, and nothing else in this repo checks them.
+for field in .version .description .author.name \
+             .interface.displayName .interface.shortDescription \
+             .interface.longDescription .interface.developerName \
+             .interface.category .interface.capabilities .interface.defaultPrompt; do
+  if [ -n "$(jq -r "$field // empty" "$MANIFEST")" ]; then
+    pass "plugin.json has $field"
+  else
+    fail "plugin.json has $field"
+  fi
+done
+
 # release-please bumps both manifests; drift means one of them is stale.
 assert_eq "plugin.json version matches .claude-plugin/plugin.json" \
   "$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")" \
@@ -101,11 +105,39 @@ assert_eq "plugin.json points mcpServers at .mcp.json" "./.mcp.json" \
 
 echo ""
 echo "=== Native install ==="
-if codex_in_sandbox plugin marketplace add "$PLUGIN_ROOT" >"$SANDBOX/mp.log" 2>&1; then
-  pass "codex plugin marketplace add accepts this repo"
+# The published marketplace entry lives in very-good-claude-code-marketplace and
+# points here with a remote `url` source, so it always resolves the default
+# branch. To test *this* working tree instead, synthesize a throwaway marketplace
+# whose single entry is a local path — a symlink back to the checkout.
+MARKETPLACE_NAME="loader-test"
+MARKETPLACE_ROOT="$SANDBOX/marketplace"
+mkdir -p "$MARKETPLACE_ROOT/.agents/plugins" "$MARKETPLACE_ROOT/plugins"
+ln -s "$PLUGIN_ROOT" "$MARKETPLACE_ROOT/plugins/$PLUGIN_NAME"
+jq -n --arg mp "$MARKETPLACE_NAME" --arg n "$PLUGIN_NAME" '{
+  name: $mp,
+  interface: { displayName: "Loader Test" },
+  plugins: [ {
+    name: $n,
+    source: { source: "local", path: ("./plugins/" + $n) },
+    policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+    category: "Productivity"
+  } ]
+}' > "$MARKETPLACE_ROOT/.agents/plugins/marketplace.json"
+
+if codex_in_sandbox plugin marketplace add "$MARKETPLACE_ROOT" >"$SANDBOX/mp.log" 2>&1; then
+  pass "codex plugin marketplace add accepts the marketplace"
 else
-  fail "codex plugin marketplace add accepts this repo" "$(tail -3 "$SANDBOX/mp.log")"
+  fail "codex plugin marketplace add accepts the marketplace" "$(tail -3 "$SANDBOX/mp.log")"
   cat "$SANDBOX/mp.log" >&2
+  exit 1
+fi
+# A marketplace entry Codex cannot resolve is dropped silently, so confirm the
+# plugin is actually listed before trying to install it.
+if codex_in_sandbox plugin list 2>/dev/null | grep -q "$PLUGIN_NAME@$MARKETPLACE_NAME"; then
+  pass "the plugin resolves from the marketplace entry"
+else
+  fail "the plugin resolves from the marketplace entry" \
+    "$(codex_in_sandbox plugin list 2>&1 | tail -2)"
   exit 1
 fi
 if codex_in_sandbox plugin add "$PLUGIN_NAME@$MARKETPLACE_NAME" >"$SANDBOX/add.log" 2>&1; then

@@ -224,17 +224,33 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   is inert on Claude Code), and the payload hands over the raw patch with no `file_path` and no
   changed-file list, so `hook-payload-common.sh` parses the envelope. Keep that difference in that
   one file.
-- **The marketplace entry has to live here.** `codex plugin add` only accepts
-  `PLUGIN@MARKETPLACE` — there is no direct-path or `owner/repo` install — and
-  `codex plugin marketplace add` refuses a root with no marketplace manifest. Codex will
-  read a Claude Code `.claude-plugin/marketplace.json`, but it silently drops any entry
-  whose source is not `local` with a path resolving **inside** the marketplace root: a
-  `github` or `git` source, or a `../sibling` path, yields "No marketplace plugins found"
-  with no error. That is why `.agents/plugins/marketplace.json` sits in this repo with
-  `"path": "."`, and why the existing `very-good-claude-code-marketplace` (whose entries
-  all use `source: github`) cannot serve Codex as-is. Repo-level marketplaces are not
-  discovered implicitly — only `~/.agents/plugins/marketplace.json` is — so the file is
-  inert until someone runs `codex plugin marketplace add`.
+- **One marketplace serves both harnesses.** `codex plugin add` only accepts
+  `PLUGIN@MARKETPLACE`, so a marketplace is mandatory — but it is
+  `very-good-claude-code-marketplace`, the same repo Claude Code uses, not this one. That
+  repo carries a Codex manifest at `.agents/plugins/marketplace.json` beside its existing
+  `.claude-plugin/marketplace.json`, and the Codex entry points back here with a remote
+  `url` source:
+
+  ```json
+  {
+    "name": "vgv-ai-flutter-plugin",
+    "source": {
+      "source": "url",
+      "url": "https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin.git"
+    },
+    "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+    "category": "Productivity"
+  }
+  ```
+
+  The source type matters and fails quietly when wrong. Codex resolves `url` and `local`
+  (with a path inside the marketplace root); it **silently drops** an entry using `github`,
+  `git`, `git-subdir`, or a `../sibling` path — the marketplace adds fine and
+  `codex plugin list` just reports "No marketplace plugins found", with no error anywhere.
+  That is why Codex cannot read the existing `.claude-plugin/marketplace.json`, whose
+  entries all use `source: github`, and why the two manifests coexist in that repo.
+  Because the `url` source always resolves the default branch, `codex/loader_test.sh`
+  synthesizes its own throwaway marketplace pointing at the working tree instead.
 - **A plugin cannot ship a Codex subagent.** Codex loads custom agents only from `~/.codex/agents/`
   or a project's `.codex/agents/`, and `agents` is not a plugin manifest field or a discovery path.
   `codex/agents/flutter-reviewer.toml` is therefore a file users copy, and it is the only thing left
