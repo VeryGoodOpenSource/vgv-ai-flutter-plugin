@@ -150,10 +150,13 @@ error**, not a warning, so `ignore-rules` and `fail-on-warning` will not save a 
 hard-fails CI. Claude Code separately truncates the listing at 1536 characters, and Codex
 truncates at 1024 with no warning. Under 50 characters trips a `description-quality` warning,
 which does fail the build here. Keep the field to trigger phrases and scope, and
-leave explanation to the body, which has no cap. A rule or convention stated in `description`
-and again in the body is spending the scarce field on the duplicate. Every description is also
-concatenated into the Codex prompt on every request, so length is a per-turn cost paid across
-all 15.
+leave pure teaching material to the body, which has no cap. Do **not** assume a sentence is
+redundant because the body repeats it: routing happens before the body is ever read, so a
+clause that reads like explanation may be the only thing that makes the skill findable.
+`green-gate` lost its "exit only on observed numbers" clause on exactly that reasoning and
+fell from 3/3 to 1/3 on the case measuring it. Re-run a skill's eval cases after trimming its
+description. Every description is also concatenated into the Codex prompt on every request, so
+length is a per-turn cost paid across all 15.
 
 **MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
 Flutter actions) and `very-good-cli` (scaffolding, tests, license checks). On Claude Code

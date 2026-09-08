@@ -153,7 +153,9 @@ documentation in the same change:
   `agents/openai.yaml`, so all three stay in sync. Nothing checks them against
   each other. `description` also carries every trigger phrase and is capped at
   1024 characters, which `validate-skill` enforces as an error. Keep it to
-  triggers and scope; explanation belongs in the body, which has no cap.
+  triggers and scope, leaving pure teaching material to the body. Do not cut a
+  sentence just because the body repeats it — routing happens before the body
+  loads — and re-run the skill's eval cases after any trim.
 - **Changing what a skill teaches** — run the skill's eval cases to confirm the new
   guidance actually lands in the model's output, and update any case that asserted
   the old behavior. A failing case after a deliberate change means the case needs

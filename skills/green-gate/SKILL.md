@@ -2,8 +2,9 @@
 name: green-gate
 description: >
   Drives a Dart or Flutter package fully green through an autonomous verify-fix-rerun loop
-  across four quality gates: analyze, format, test, and coverage. It also owns gate
-  configuration, so plan-only questions belong here: which tool and arguments run each gate,
+  across four quality gates: analyze, format, test, and coverage, exiting only when one final
+  iteration proves all four pass with observed numbers. It also owns gate configuration, so
+  plan-only questions belong here: which tool and arguments run each gate,
   in what order, the coverage target, what leaves the coverage denominator, coverage ignore
   comments, "just re-check coverage", and "confirm the package is green". Use it when the
   user says "green gate", "make it green", "get CI green", "fix all the analyze and test
