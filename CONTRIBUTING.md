@@ -224,6 +224,17 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   is inert on Claude Code), and the payload hands over the raw patch with no `file_path` and no
   changed-file list, so `hook-payload-common.sh` parses the envelope. Keep that difference in that
   one file.
+- **The marketplace entry has to live here.** `codex plugin add` only accepts
+  `PLUGIN@MARKETPLACE` — there is no direct-path or `owner/repo` install — and
+  `codex plugin marketplace add` refuses a root with no marketplace manifest. Codex will
+  read a Claude Code `.claude-plugin/marketplace.json`, but it silently drops any entry
+  whose source is not `local` with a path resolving **inside** the marketplace root: a
+  `github` or `git` source, or a `../sibling` path, yields "No marketplace plugins found"
+  with no error. That is why `.agents/plugins/marketplace.json` sits in this repo with
+  `"path": "."`, and why the existing `very-good-claude-code-marketplace` (whose entries
+  all use `source: github`) cannot serve Codex as-is. Repo-level marketplaces are not
+  discovered implicitly — only `~/.agents/plugins/marketplace.json` is — so the file is
+  inert until someone runs `codex plugin marketplace add`.
 - **A plugin cannot ship a Codex subagent.** Codex loads custom agents only from `~/.codex/agents/`
   or a project's `.codex/agents/`, and `agents` is not a plugin manifest field or a discovery path.
   `codex/agents/flutter-reviewer.toml` is therefore a file users copy, and it is the only thing left
