@@ -31,7 +31,20 @@ from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is decla
 
 These run **after** a tool call completes:
 
-- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue)
-- `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
+- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file(s); exits 2 on failure (blocking — Claude must fix the issue)
+- `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file(s); always exits 0 (non-blocking)
+
+Both read the changed files through `hook-payload-common.sh`, which handles Claude Code's
+`tool_input.file_path` and Codex's `tool_input.command` (an `apply_patch` envelope, which can
+name several files at once). That is the only harness-specific branch in the hook scripts.
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
+
+### Codex
+
+`codex/` holds the Codex-side wiring: `codex/hooks.json` mirrors `hooks/hooks.json` with
+`${CLAUDE_PLUGIN_ROOT}` replaced at install time and `Edit|Write` widened to
+`apply_patch|Edit|Write`, and `codex/agents/flutter-reviewer.toml` ports the reviewer agent.
+`codex/install.sh` installs skills, MCP servers, hooks, and agents; `codex/loader_test.sh` proves
+Codex loads them. Change a hook or the reviewer agent and you have to change both harnesses — see
+`AGENTS.md` → Maintaining Existing Skills, Hooks, and MCP Tools.

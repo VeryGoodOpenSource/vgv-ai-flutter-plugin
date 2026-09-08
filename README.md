@@ -76,10 +76,54 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 | **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
 | **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
 
+The triggers above are the Claude Code ones. The same scripts run on Codex — see [Codex](#codex)
+for the wiring and the two behavioral differences.
+
 ### Prerequisites
 
 - **Dart SDK** — must be available on your `PATH`
 - **jq** — used to parse the hook payload; hooks are skipped gracefully if `jq` is not installed
+
+## Codex
+
+The skills follow the [Agent Skills open standard][agent_skills_link], so Codex loads them from
+`~/.agents/skills/` with no adapter. The MCP servers, hooks, and reviewer agent need wiring up
+once:
+
+```bash
+git clone https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin.git && bash vgv-ai-flutter-plugin/codex/install.sh
+```
+
+| Component | Where it lands | Notes |
+| --------- | -------------- | ----- |
+| Skills | `~/.agents/skills/<skill>` | Symlinked to the checkout, so `git pull` updates them. Use `--copy` for real copies |
+| MCP servers | `~/.codex/config.toml` | `dart` and `very-good-cli`, registered with `codex mcp add` |
+| Hooks | `~/.codex/hooks.json` | Merged into whatever is already there, never overwritten |
+| Reviewer agent | `~/.codex/agents/flutter-reviewer.toml` | Ask Codex to spawn `flutter-reviewer` |
+
+Restart Codex afterwards, then approve the new hooks with `/hooks` — Codex requires a review before
+a hook runs for the first time. Re-running the installer replaces what it installed before instead
+of adding a second copy. `--dry-run` prints the changes without making them, and `--uninstall`
+reverses all four steps.
+
+### How Codex differs from Claude Code
+
+- **The hooks are the same scripts.** Only the wiring differs. Codex calls its file-editing tool
+  `apply_patch` and hands the hook a raw patch rather than a file path, so `analyze.sh` and
+  `format.sh` read both shapes; `${CLAUDE_PLUGIN_ROOT}` means nothing to Codex, so the installer
+  bakes the checkout path into `hooks.json`.
+- **The reviewer agent is sandboxed instead of tool-restricted.** On Claude Code `flutter-reviewer`
+  has no write tools and an agent-scoped hook limits its Bash to `git diff`/`git status`. Codex has
+  no per-agent tool allowlist, so the agent declares `sandbox_mode = "read-only"` — the OS refuses
+  every write, which covers the same "never edits files" guarantee.
+- **Hooks are on by default.** They are a stable Codex feature; `codex features list` shows
+  `hooks` enabled. The installer pins `[features] hooks = true` only in case something in your
+  config had turned it off.
+- **Windows needs a POSIX shell.** Codex itself runs hooks on Windows, but every script here is
+  `bash` and needs `jq`, so run Codex under WSL or Git Bash.
+
+Codex truncates a skill `description` at 1024 characters and concatenates all of them into every
+request, which is why descriptions in this repo are kept to triggers and scope.
 
 ## Evals
 
@@ -187,6 +231,11 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
+On Codex the same two servers are registered in `~/.codex/config.toml` instead — see
+[Codex](#codex). Skills that drive an MCP tool always name the equivalent `very_good`, `dart`, or
+`flutter` command as a fallback, so they keep working on a host where neither server is connected.
+
+[agent_skills_link]: https://agentskills.io/specification
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures

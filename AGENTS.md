@@ -12,6 +12,14 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
   plugin.json          # Plugin manifest (name, version, keywords)
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
+codex/                 # Codex wiring — the harness reads skills directly, the rest is installed
+  config.toml          # ~/.codex/config.toml reference: dart + very-good-cli MCP, hooks feature
+  hooks.json           # Codex hook definitions (__VGV_PLUGIN_ROOT__ substituted at install time)
+  install.sh           # Installs skills, MCP, hooks, and agents into $CODEX_HOME
+  install_test.sh      # Tests install.sh, including the non-destructive hooks.json merge
+  loader_test.sh       # Asserts Codex actually loads all of it (run by the codex-loader CI job)
+  agents/
+    flutter-reviewer.toml  # Codex port of agents/flutter-reviewer.md
 docs/
   plan/                # Planning and design documents
 evals/
@@ -46,6 +54,7 @@ hooks/
     block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
     check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.3.0
     format.sh          # Runs dart format on modified .dart files
+    hook-payload-common.sh  # Reads Claude Code file_path and Codex apply_patch payloads
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
 skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (Codex sidecar)
@@ -167,10 +176,23 @@ documentation in the same change:
   automatically, so verify each one by hand.
 - **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
   section in `README.md` (and the `## Hooks` section in `CLAUDE.md` if behavior
-  changes).
+  changes), and mirror the change in `codex/hooks.json`. The two files wire up the
+  same scripts and nothing keeps them in sync; `codex/loader_test.sh` only checks
+  that whatever `codex/hooks.json` names actually exists on disk.
 - **Adding or changing an MCP tool** — update the **MCP Integration** tools table
   in `README.md`, and check whether any skill's `allowed-tools` names a tool that
-  was renamed or removed. Nothing validates those names.
+  was renamed or removed. Nothing validates those names. A new **server** also has
+  to be registered for Codex, in both `codex/config.toml` and `codex/install.sh`.
+- **Changing what a hook script reads from its payload** — the two harnesses
+  describe an edit differently (Claude Code `tool_input.file_path`, Codex
+  `tool_input.command` holding an apply_patch envelope). `hook-payload-common.sh`
+  is the only place that difference is handled; extend it there rather than
+  branching per harness in `analyze.sh` or `format.sh`, and add a case to
+  `hook-payload-common_test.sh`.
+- **Changing `agents/flutter-reviewer.md`** — port the same change to
+  `codex/agents/flutter-reviewer.toml`. Its output contract (the four-column
+  findings table) is consumed verbatim by callers on both harnesses, so the two
+  must not drift.
 
 ## Evals
 

@@ -1,0 +1,60 @@
+{
+  "description": "VGV AI Flutter Plugin hooks for Dart and Flutter development (Codex)",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"__VGV_PLUGIN_ROOT__/hooks/scripts/warn-missing-mcp.sh\"",
+            "statusMessage": "Checking Very Good CLI",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__.*very-good-cli__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"__VGV_PLUGIN_ROOT__/hooks/scripts/check-vgv-cli.sh\"",
+            "statusMessage": "Verifying Very Good CLI version",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"__VGV_PLUGIN_ROOT__/hooks/scripts/block-cli-workarounds.sh\"",
+            "statusMessage": "Checking for CLI bypass",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"__VGV_PLUGIN_ROOT__/hooks/scripts/analyze.sh\"",
+            "statusMessage": "dart analyze",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "bash \"__VGV_PLUGIN_ROOT__/hooks/scripts/format.sh\"",
+            "statusMessage": "dart format",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

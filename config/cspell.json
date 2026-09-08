@@ -52,6 +52,7 @@
     "pubspecs",
     "redirections",
     "rubric",
+    "sandboxed",
     "serialization",
     "snackbars",
     "stdio",

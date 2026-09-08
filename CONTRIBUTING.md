@@ -193,6 +193,44 @@ frontmatter equivalent, and `interface.short_description`, which takes precedenc
 spec-legal `metadata: short-description` key. The `SKILL.md` body stays the one
 source of truth; the sidecar is thin, with no build step. Add one for every new skill.
 
+**Codex runtime (`codex/`)** — skills reach Codex through the standard, but hooks, MCP, and
+subagents do not, so `codex/` carries that wiring and `codex/install.sh` applies it. Verified
+against Codex CLI 0.153.4:
+
+- **Hooks are a stable, default-on feature**, not experimental. The flag is `[features] hooks`
+  (`codex features list` shows it enabled); there is no `codex_hooks` flag. Codex also runs hooks
+  on Windows and offers a `commandWindows` override — but these scripts are `bash` and need `jq`,
+  so Windows means WSL or Git Bash. Codex **silently ignores a malformed `hooks.json`**, which
+  disables the whole enforcement layer with no error, so `codex/loader_test.sh` validates the
+  installed file directly.
+- **Four of the six scripts port unchanged.** Codex passes `tool_name: "Bash"` with
+  `tool_input.command` as a plain string, and accepts the same `permissionDecision` allow/deny
+  JSON, so `check-vgv-cli.sh`, `block-cli-workarounds.sh`, and `allow-readonly-git.sh` need no
+  edits; plain stdout from a `SessionStart` hook is injected as a developer message exactly as on
+  Claude Code, so `warn-missing-mcp.sh` ports as-is too. Only the edit hooks differ: Codex's
+  file-editing tool is `apply_patch` and it hands the hook the raw patch, with no `file_path` and
+  no changed-file list, so `hook-payload-common.sh` parses the envelope. Keep that difference in
+  that one file.
+- **`${CLAUDE_PLUGIN_ROOT}` is not available** to hooks in `~/.codex/hooks.json` (Codex resolves it
+  only for hooks that come from an installed Codex *plugin*, which this repo is not). The installer
+  substitutes the checkout path for `__VGV_PLUGIN_ROOT__` instead.
+- **MCP goes through `codex mcp add`**, not a hand-written TOML block, so it merges rather than
+  replacing a user's config. `codex/config.toml` documents the same thing for anyone doing it by
+  hand.
+- **The subagent trades a tool allowlist for a sandbox.** Codex custom agents are standalone TOML
+  in `~/.codex/agents/` (or project-scoped `.codex/agents/`) needing `name`, `description`, and
+  `developer_instructions`, plus any `config.toml` key. There is no per-agent tool allowlist and no
+  agent-scoped `PreToolUse` hook, so `flutter-reviewer` sets `sandbox_mode = "read-only"` to hold
+  the read-only contract that `allow-readonly-git.sh` holds on Claude Code. Codex ships no
+  validator for agent files, so `codex/loader_test.sh` parses them and asserts that
+  `sandbox_mode` is still `read-only`.
+- **Do not weaken the Claude Code path** to make Codex simpler. `hooks/hooks.json` and
+  `agents/flutter-reviewer.md` stay authoritative; `codex/` mirrors them.
+
+Run `bash codex/loader_test.sh` before pushing a change to any of it. It needs the `codex` CLI but
+no credentials — it asserts through `codex debug prompt-input`, which renders the model-visible
+prompt without calling a model.
+
 **Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
 autonomously when the context fits (that is the point of a best-practice skill), so neither
 `disable-model-invocation` (Claude Code) nor a `policy` block (Codex) is set. All trigger
@@ -215,6 +253,8 @@ session and exercise it before you commit.
 - **Dart SDK** and **jq** on your `PATH` — the hooks need both.
 - **Very Good CLI** ≥ 1.3.0 (`dart pub global activate very_good_cli`) for the
   Very Good CLI MCP server tools.
+- **Codex CLI** (`npm install -g @openai/codex`) only if you touch `codex/` —
+  `codex/loader_test.sh` needs it. Everything else runs without it.
 
 See the README [Hooks](README.md#hooks) and [MCP Integration](README.md#mcp-integration)
 sections for the full prerequisite details.
@@ -308,7 +348,8 @@ Every pull request runs the following checks automatically:
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
-| Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
+| Script tests | Runs every hook script test suite, plus the Codex installer's | `hooks/scripts/*_test.sh`, `codex/install_test.sh` |
+| Codex loader | Installs the plugin into a throwaway Codex home and asserts all 15 skills, both MCP servers, the hooks, and the reviewer agent load | `codex/loader_test.sh` |
 
 Evals do **not** run on a pull request. They call real models, so they run after a merge
 to `main` instead, scoped to the skills that changed:
