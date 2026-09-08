@@ -152,9 +152,8 @@ documentation in the same change:
   `README.md` skills table and the `interface.short_description` in the skill's
   `agents/openai.yaml`, so all three stay in sync. Nothing checks them against
   each other. `description` also carries every trigger phrase and is capped at
-  1024 characters, which `validate-skill` enforces as an error, so on the skills
-  near the ceiling (`static-security`, `dart-flutter-sdk-upgrade`, `green-gate`)
-  adding a trigger means trading one out.
+  1024 characters, which `validate-skill` enforces as an error. Keep it to
+  triggers and scope; explanation belongs in the body, which has no cap.
 - **Changing what a skill teaches** — run the skill's eval cases to confirm the new
   guidance actually lands in the model's output, and update any case that asserted
   the old behavior. A failing case after a deliberate change means the case needs

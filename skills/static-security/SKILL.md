@@ -1,18 +1,16 @@
 ---
 name: static-security
 description: >
-  Static security review for Flutter mobile apps and Dart code, covering static concerns only,
-  not pen-testing or runtime analysis, and flagging hardcoded secrets, insecure storage,
-  unsafe network calls, leaky logs, and vulnerable dependencies. Use when reviewing or writing
-  code that handles secrets, user data, network communication, authentication, or
-  cryptography, or when adding validation to user input such as login, sign-up, or payment
-  forms whose values reach a repository or an API, with prompts like "add validation to this
-  form", "nothing is checked before this hits the API", or "validate these fields". Also use
-  for dependency vulnerability review, a security audit even when the request never says
-  "security": "we cut a release tomorrow, is this pubspec safe", "check our dependencies for
-  known vulnerabilities", "scan for CVEs", "we have an ignored_advisories entry, is that
-  fine", "these versions are pinned, what are we exposed to", or a pubspec pasted for a pre-
-  release check.
+  Static security review for Flutter mobile apps and Dart code, flagging hardcoded secrets,
+  insecure storage, unsafe network calls, leaky logs, and vulnerable dependencies. Use when
+  reviewing or writing code that handles secrets, user data, network communication,
+  authentication, or cryptography, or when adding validation to user input such as login,
+  sign-up, or payment forms whose values reach a repository or an API, with prompts like "add
+  validation to this form", "nothing is checked before this hits the API", or "validate these
+  fields". Also use for dependency vulnerability review, a security audit even when the
+  request never says "security": "we cut a release tomorrow, is this pubspec safe", "check our
+  dependencies for known vulnerabilities", "scan for CVEs", "we have an ignored_advisories
+  entry, is that fine", or "these versions are pinned, what are we exposed to".
 argument-hint: "[file-or-directory]"
 allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
 effort: high

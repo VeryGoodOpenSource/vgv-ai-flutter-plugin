@@ -149,10 +149,11 @@ that grows. The spec caps it at **1024 characters and `validate-skill` treats an
 error**, not a warning, so `ignore-rules` and `fail-on-warning` will not save a long one: it
 hard-fails CI. Claude Code separately truncates the listing at 1536 characters, and Codex
 truncates at 1024 with no warning. Under 50 characters trips a `description-quality` warning,
-which does fail the build here. `static-security`, `dart-flutter-sdk-upgrade` and `green-gate`
-sit within ~40 characters of the ceiling, so adding a trigger to those three means trading one
-out, not appending. Every description is also concatenated into the Codex prompt on every
-request, so length is a per-turn cost paid across all 15.
+which does fail the build here. Keep the field to trigger phrases and scope, and
+leave explanation to the body, which has no cap. A rule or convention stated in `description`
+and again in the body is spending the scarce field on the duplicate. Every description is also
+concatenated into the Codex prompt on every request, so length is a per-turn cost paid across
+all 15.
 
 **MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
 Flutter actions) and `very-good-cli` (scaffolding, tests, license checks). On Claude Code

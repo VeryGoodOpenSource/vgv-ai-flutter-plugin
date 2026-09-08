@@ -2,16 +2,15 @@
 name: green-gate
 description: >
   Drives a Dart or Flutter package fully green through an autonomous verify-fix-rerun loop
-  across four quality gates: analyze, format, test, and coverage, exiting only when one final
-  iteration proves all four pass with observed numbers. It also owns gate configuration, so
-  plan-only questions belong here: which tool and arguments run each gate, in what order, the
-  coverage target, what leaves the coverage denominator, coverage ignore comments, "just re-
-  check coverage", and "confirm the package is green". Use it when the user says "green gate",
-  "make it green", "get CI green", "fix all the analyze and test failures", "clean this
-  package up before I open a PR", "bring coverage to 100", or "loop until everything passes",
-  and when a run stalls with the same failures repeating round after round, since when to stop
-  and escalate is part of this loop. Prefer it over the single-gate testing or analysis skills
-  when a request spans multiple gates or asks to fix and re-verify until clean.
+  across four quality gates: analyze, format, test, and coverage. It also owns gate
+  configuration, so plan-only questions belong here: which tool and arguments run each gate,
+  in what order, the coverage target, what leaves the coverage denominator, coverage ignore
+  comments, "just re-check coverage", and "confirm the package is green". Use it when the
+  user says "green gate", "make it green", "get CI green", "fix all the analyze and test
+  failures", "clean this package up before I open a PR", "bring coverage to 100", or "loop
+  until everything passes", and when a run stalls with the same failures repeating round
+  after round. Prefer it over the single-gate testing or analysis skills when a request spans
+  multiple gates or asks to fix and re-verify until clean.
 argument-hint: "[directory]"
 allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__dart__dart_format mcp__very-good-cli__test
 model: sonnet
