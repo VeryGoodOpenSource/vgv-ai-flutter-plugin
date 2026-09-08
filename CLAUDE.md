@@ -31,8 +31,8 @@ from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is decla
 
 These run **after** a tool call completes:
 
-- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file(s); exits 2 on failure (blocking — Claude must fix the issue)
-- `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file(s); always exits 0 (non-blocking)
+- `apply_patch|Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file(s); exits 2 on failure (blocking — Claude must fix the issue)
+- `apply_patch|Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file(s); always exits 0 (non-blocking)
 
 Both read the changed files through `hook-payload-common.sh`, which handles Claude Code's
 `tool_input.file_path` and Codex's `tool_input.command` (an `apply_patch` envelope, which can
@@ -42,9 +42,13 @@ All hook scripts require **jq** to parse the hook payload (they skip gracefully 
 
 ### Codex
 
-`codex/` holds the Codex-side wiring: `codex/hooks.json` mirrors `hooks/hooks.json` with
-`${CLAUDE_PLUGIN_ROOT}` replaced at install time and `Edit|Write` widened to
-`apply_patch|Edit|Write`, and `codex/agents/flutter-reviewer.toml` ports the reviewer agent.
-`codex/install.sh` installs skills, MCP servers, hooks, and agents; `codex/loader_test.sh` proves
-Codex loads them. Change a hook or the reviewer agent and you have to change both harnesses — see
+This repo is a Codex plugin too. `.codex-plugin/plugin.json` plus the marketplace entry in
+`.agents/plugins/marketplace.json` let `codex plugin add` install it, and Codex then reads
+`skills/`, `.mcp.json`, and this same `hooks/hooks.json` — resolving `${CLAUDE_PLUGIN_ROOT}` as a
+compatibility alias. That is why the `PostToolUse` matcher says `apply_patch|Edit|Write`: Codex
+names its file-editing tool `apply_patch`, and the extra alternative is inert on Claude Code.
+
+The only Codex-specific asset is `codex/agents/flutter-reviewer.toml`, because a plugin cannot ship
+a Codex subagent. `codex/loader_test.sh` installs the repo the way a user would and asserts Codex
+picks it all up. Change a hook or the reviewer agent and both harnesses are affected — see
 `AGENTS.md` → Maintaining Existing Skills, Hooks, and MCP Tools.

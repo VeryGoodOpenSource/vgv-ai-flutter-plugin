@@ -1,13 +1,28 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "changelog-sections": [
-    { "type": "feat", "section": "Features" },
-    { "type": "fix", "section": "Bug Fixes" },
-    { "type": "refactor", "section": "Refactors" },
-    { "type": "chore", "section": "Miscellaneous Chores" },
-    { "type": "docs", "section": "Docs" }
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "refactor",
+      "section": "Refactors"
+    },
+    {
+      "type": "chore",
+      "section": "Miscellaneous Chores"
+    },
+    {
+      "type": "docs",
+      "section": "Docs"
+    }
   ],
-  "pull-request-header": ":rotating_light: There are changes ready for release :rocket:\n\nℹ Merge this PR once the team confirms the release is ready.\n",
+  "pull-request-header": ":rotating_light: There are changes ready for release :rocket:\n\n\u2139 Merge this PR once the team confirms the release is ready.\n",
   "pull-request-title-pattern": "chore: ${version}",
   "extra-label": "no-auto-update",
   "include-component-in-tag": false,
@@ -21,6 +36,11 @@
         {
           "type": "json",
           "path": ".claude-plugin/plugin.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": ".codex-plugin/plugin.json",
           "jsonpath": "$.version"
         }
       ]

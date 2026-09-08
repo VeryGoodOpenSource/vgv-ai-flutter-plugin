@@ -73,11 +73,11 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 | **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__.*very-good-cli__.*`) | Auto-approves Very Good CLI MCP tool calls in every run mode via a PreToolUse `allow` decision, so they never dead-end when the tool isn't on `permissions.allow` (including under `skipAutoPermissionPrompt`); denies with an install/upgrade message if the CLI is missing or < 1.3.0 |
 | **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking) |
 | **Allow Read-only Git** (`allow-readonly-git.sh`) | PreToolUse (`Bash`, `flutter-reviewer` agent only) | Restricts the `flutter-reviewer` agent's Bash to `git diff`/`git status`; exits 2 on anything else (blocking). Scoped via the agent's frontmatter, not `hooks.json` |
-| **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
-| **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
+| **Analyze** (`analyze.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
+| **Format** (`format.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
 
-The triggers above are the Claude Code ones. The same scripts run on Codex — see [Codex](#codex)
-for the wiring and the two behavioral differences.
+Codex runs this same `hooks/hooks.json` and these same scripts — `apply_patch` is its file-editing
+tool, which is why that matcher covers it. See [Codex](#codex) for the differences.
 
 ### Prerequisites
 
@@ -86,39 +86,41 @@ for the wiring and the two behavioral differences.
 
 ## Codex
 
-The skills follow the [Agent Skills open standard][agent_skills_link], so Codex loads them from
-`~/.agents/skills/` with no adapter. The MCP servers, hooks, and reviewer agent need wiring up
-once:
+Codex has its own plugin system, so installation mirrors the Claude Code flow — two commands, no
+scripts:
 
 ```bash
-git clone https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin.git && bash vgv-ai-flutter-plugin/codex/install.sh
+codex plugin marketplace add VeryGoodOpenSource/vgv-ai-flutter-plugin && codex plugin add vgv-ai-flutter-plugin@very-good-ventures
 ```
 
-| Component | Where it lands | Notes |
-| --------- | -------------- | ----- |
-| Skills | `~/.agents/skills/<skill>` | Symlinked to the checkout, so `git pull` updates them. Use `--copy` for real copies |
-| MCP servers | `~/.codex/config.toml` | `dart` and `very-good-cli`, registered with `codex mcp add` |
-| Hooks | `~/.codex/hooks.json` | Merged into whatever is already there, never overwritten |
-| Reviewer agent | `~/.codex/agents/flutter-reviewer.toml` | Ask Codex to spawn `flutter-reviewer` |
+That one install gives you the skills, both MCP servers, and the hooks. Codex reads them from the
+same files Claude Code does — `skills/`, `.mcp.json`, and `hooks/hooks.json` — via
+`.codex-plugin/plugin.json`. Restart Codex afterwards, then approve the hooks with `/hooks`, since
+Codex requires a review before a hook runs for the first time.
 
-Restart Codex afterwards, then approve the new hooks with `/hooks` — Codex requires a review before
-a hook runs for the first time. Re-running the installer replaces what it installed before instead
-of adding a second copy. `--dry-run` prints the changes without making them, and `--uninstall`
-reverses all four steps.
+The reviewer agent is the one piece a plugin cannot carry, because Codex only loads custom agents
+from `~/.codex/agents/` or a project's `.codex/agents/`. Copy it in once:
+
+```bash
+mkdir -p ~/.codex/agents && cp codex/agents/flutter-reviewer.toml ~/.codex/agents/
+```
+
+Then ask Codex to spawn `flutter-reviewer`.
 
 ### How Codex differs from Claude Code
 
-- **The hooks are the same scripts.** Only the wiring differs. Codex calls its file-editing tool
-  `apply_patch` and hands the hook a raw patch rather than a file path, so `analyze.sh` and
-  `format.sh` read both shapes; `${CLAUDE_PLUGIN_ROOT}` means nothing to Codex, so the installer
-  bakes the checkout path into `hooks.json`.
-- **The reviewer agent is sandboxed instead of tool-restricted.** On Claude Code `flutter-reviewer`
-  has no write tools and an agent-scoped hook limits its Bash to `git diff`/`git status`. Codex has
-  no per-agent tool allowlist, so the agent declares `sandbox_mode = "read-only"` — the OS refuses
-  every write, which covers the same "never edits files" guarantee.
+- **The hooks are the same files.** `hooks/hooks.json` and every script under `hooks/scripts/` are
+  shared. Codex resolves `${CLAUDE_PLUGIN_ROOT}` as a compatibility alias for the installed plugin
+  directory, and it calls its file-editing tool `apply_patch` and hands the hook a raw patch rather
+  than a file path — so the `PostToolUse` matcher covers `apply_patch` and `analyze.sh` /
+  `format.sh` read both payload shapes.
+- **The reviewer agent is sandboxed instead of tool-restricted.** On Claude Code
+  `flutter-reviewer` has no write tools and an agent-scoped hook limits its Bash to
+  `git diff`/`git status`. Codex has no per-agent tool allowlist, so the agent declares
+  `sandbox_mode = "read-only"` — the OS refuses every write, which covers the same "never edits
+  files" guarantee.
 - **Hooks are on by default.** They are a stable Codex feature; `codex features list` shows
-  `hooks` enabled. The installer pins `[features] hooks = true` only in case something in your
-  config had turned it off.
+  `hooks` enabled.
 - **Windows needs a POSIX shell.** Codex itself runs hooks on Windows, but every script here is
   `bash` and needs `jq`, so run Codex under WSL or Git Bash.
 
@@ -235,7 +237,6 @@ On Codex the same two servers are registered in `~/.codex/config.toml` instead �
 [Codex](#codex). Skills that drive an MCP tool always name the equivalent `very_good`, `dart`, or
 `flutter` command as a fallback, so they keep working on a host where neither server is connected.
 
-[agent_skills_link]: https://agentskills.io/specification
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures

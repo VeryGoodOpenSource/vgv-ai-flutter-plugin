@@ -1,21 +1,26 @@
 #!/bin/bash
-# Asserts that Codex actually loads what codex/install.sh installs.
+# Asserts that Codex loads this plugin through its own native install path.
 #
 # Usage: bash codex/loader_test.sh
 #
-# Requires the `codex` CLI. Everything runs against a throwaway CODEX_HOME and a
-# throwaway HOME, so your real Codex configuration is never touched.
+# Installs the working tree as a Codex plugin into a throwaway CODEX_HOME —
+# `codex plugin marketplace add` then `codex plugin add`, the same two commands
+# a user runs — and then checks what Codex actually picked up. Your real Codex
+# configuration is never touched.
 #
-# The checks that need Codex use `codex debug prompt-input`, which renders the
-# model-visible prompt as JSON without contacting a model, so this needs no
-# credentials and costs nothing. Codex silently ignores a malformed hooks.json
-# and has no validator for agent files, so those two are checked here directly
-# rather than through the CLI.
+# Needs the `codex` CLI but no credentials: the assertions go through
+# `codex debug prompt-input` and `codex doctor --json`, which render local state
+# without contacting a model.
+#
+# Codex silently ignores a malformed hooks.json and ships no validator for agent
+# files, so those two are checked here directly rather than through the CLI.
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+MARKETPLACE="$PLUGIN_ROOT/.agents/plugins/marketplace.json"
+MANIFEST="$PLUGIN_ROOT/.codex-plugin/plugin.json"
 
 PASSED=0
 FAILED=0
@@ -24,6 +29,9 @@ fail() {
   printf "  \033[31mFAIL\033[0m  %s\n" "$1"
   if [ $# -gt 1 ]; then printf "        %s\n" "$2"; fi
   FAILED=$((FAILED + 1))
+}
+assert_eq() {
+  if [ "$2" = "$3" ]; then pass "$1"; else fail "$1" "expected [$2], got [$3]"; fi
 }
 
 for tool in codex jq python3; do
@@ -56,27 +64,65 @@ WORKDIR="$SANDBOX/project"
 mkdir -p "$FAKE_HOME" "$FAKE_CODEX_HOME" "$WORKDIR"
 
 # Codex scans for repo-scoped skills up to the repository root, so the scratch
-# project needs to be a git repository for discovery to behave as it would for a
-# real user.
+# project is a git repository, matching what a real user would have.
 git -C "$WORKDIR" init -q
+
+codex_in_sandbox() {
+  env HOME="$FAKE_HOME" CODEX_HOME="$FAKE_CODEX_HOME" codex "$@"
+}
 
 printf '\033[1mCodex %s\033[0m\n' "$(codex --version 2>/dev/null | head -1)"
 
 echo ""
-echo "=== Install ==="
-if CODEX_HOME="$FAKE_CODEX_HOME" bash "$SCRIPT_DIR/install.sh" \
-     --skills-dir "$FAKE_HOME/.agents/skills" >"$SANDBOX/install.log" 2>&1; then
-  pass "codex/install.sh completes"
+echo "=== Manifests ==="
+MARKETPLACE_NAME=$(jq -r '.name // empty' "$MARKETPLACE" 2>/dev/null)
+PLUGIN_NAME=$(jq -r '.name // empty' "$MANIFEST" 2>/dev/null)
+if [ -n "$MARKETPLACE_NAME" ]; then
+  pass "marketplace.json is valid JSON (name: $MARKETPLACE_NAME)"
 else
-  fail "codex/install.sh completes" "$(tail -5 "$SANDBOX/install.log")"
-  cat "$SANDBOX/install.log" >&2
+  fail "marketplace.json is valid JSON"
+  exit 1
+fi
+if [ -n "$PLUGIN_NAME" ]; then
+  pass "plugin.json is valid JSON (name: $PLUGIN_NAME)"
+else
+  fail "plugin.json is valid JSON"
+  exit 1
+fi
+assert_eq "the marketplace entry names this plugin" "$PLUGIN_NAME" \
+  "$(jq -r --arg n "$PLUGIN_NAME" '.plugins[] | select(.name == $n) | .name' "$MARKETPLACE")"
+# release-please bumps both manifests; drift means one of them is stale.
+assert_eq "plugin.json version matches .claude-plugin/plugin.json" \
+  "$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")" \
+  "$(jq -r .version "$MANIFEST")"
+# `mcpServers` is what carries .mcp.json into Codex; without it there is no MCP.
+assert_eq "plugin.json points mcpServers at .mcp.json" "./.mcp.json" \
+  "$(jq -r '.mcpServers // empty' "$MANIFEST")"
+
+echo ""
+echo "=== Native install ==="
+if codex_in_sandbox plugin marketplace add "$PLUGIN_ROOT" >"$SANDBOX/mp.log" 2>&1; then
+  pass "codex plugin marketplace add accepts this repo"
+else
+  fail "codex plugin marketplace add accepts this repo" "$(tail -3 "$SANDBOX/mp.log")"
+  cat "$SANDBOX/mp.log" >&2
+  exit 1
+fi
+if codex_in_sandbox plugin add "$PLUGIN_NAME@$MARKETPLACE_NAME" >"$SANDBOX/add.log" 2>&1; then
+  pass "codex plugin add installs the plugin"
+else
+  fail "codex plugin add installs the plugin" "$(tail -3 "$SANDBOX/add.log")"
+  cat "$SANDBOX/add.log" >&2
   exit 1
 fi
 
-# Everything below runs as if $FAKE_HOME were the user's home directory.
-codex_in_sandbox() {
-  env HOME="$FAKE_HOME" CODEX_HOME="$FAKE_CODEX_HOME" codex "$@"
-}
+INSTALLED_ROOT=$(sed -n 's/^Installed plugin root: //p' "$SANDBOX/add.log" | tail -1)
+if [ -n "$INSTALLED_ROOT" ] && [ -d "$INSTALLED_ROOT" ]; then
+  pass "the installed plugin root exists"
+else
+  fail "the installed plugin root exists" "reported [${INSTALLED_ROOT:-none}]"
+  exit 1
+fi
 
 echo ""
 echo "=== Skills load ==="
@@ -94,13 +140,11 @@ for dir in "$PLUGIN_ROOT"/skills/*/; do
   [ -f "$dir/SKILL.md" ] || continue
   name="$(basename "$dir")"
   expected=$((expected + 1))
-  # Codex namespaces a skill when it can resolve a plugin manifest above it, so
-  # accept both the bare and the namespaced listing.
-  if ! grep -qE -- "- (vgv-ai-flutter-plugin:)?$name: " "$PROMPT_JSON"; then
+  # Codex namespaces a plugin's skills as <plugin>:<skill>; accept either form.
+  if ! grep -qE -- "- ($PLUGIN_NAME:)?$name: " "$PROMPT_JSON"; then
     missing="$missing $name"
   fi
 done
-
 if [ "$expected" -eq 0 ]; then
   fail "found skills to check" "no SKILL.md files under $PLUGIN_ROOT/skills"
 elif [ -n "$missing" ]; then
@@ -108,50 +152,44 @@ elif [ -n "$missing" ]; then
 else
   pass "all $expected skills appear in the Codex prompt"
 fi
+# They must come from the installed plugin, not from some other skills root.
+if grep -qF "$INSTALLED_ROOT/skills" "$PROMPT_JSON"; then
+  pass "the skills root is the installed plugin"
+else
+  fail "the skills root is the installed plugin" "$INSTALLED_ROOT/skills not listed"
+fi
 
 echo ""
-echo "=== Config loads ==="
+echo "=== MCP servers load ==="
 DOCTOR_JSON="$SANDBOX/doctor.json"
 codex_in_sandbox doctor --json >"$DOCTOR_JSON" 2>/dev/null
-# `codex doctor` exits non-zero when it cannot find credentials, which is the
-# normal state here, so assert on the individual checks instead of the exit code.
 doctor_status() {
   jq -r --arg id "$1" '.checks[] | select(.id == $id) | .status' "$DOCTOR_JSON" 2>/dev/null
 }
 
-# config.load proves the TOML the installer wrote actually parses.
 status=$(doctor_status config.load)
-if [ "$status" = "ok" ]; then
-  pass "codex doctor: config.load is ok"
-else
-  fail "codex doctor: config.load is ok" "got [${status:-no such check}]"
-fi
+assert_eq "codex doctor: config.load is ok" "ok" "${status:-no such check}"
 
-# mcp.config downgrades to a warning when the server executables are missing,
-# which is the normal state anywhere without the Dart SDK and Very Good CLI
-# installed — CI runners included. Only a hard failure means the config is
-# wrong; what the servers were registered *as* is asserted below instead.
+# mcp.config degrades to a warning when the server executables are absent, which
+# is the normal state anywhere without the Dart SDK and Very Good CLI installed,
+# CI runners included. Only a hard failure means the config is wrong; what the
+# servers were registered as is asserted below.
 status=$(doctor_status mcp.config)
 case "$status" in
-  ok)
-    pass "codex doctor: mcp.config is ok"
-    ;;
-  warning)
-    pass "codex doctor: mcp.config has no errors (warning, likely no dart/very_good on PATH)"
-    ;;
-  *)
-    fail "codex doctor: mcp.config has no errors" "got [${status:-no such check}]"
-    ;;
+  ok) pass "codex doctor: mcp.config is ok" ;;
+  warning) pass "codex doctor: mcp.config has no errors (warning, likely no dart/very_good on PATH)" ;;
+  *) fail "codex doctor: mcp.config has no errors" "got [${status:-no such check}]" ;;
 esac
 
-# Assert what each server was registered as, so a warning above can never hide a
-# server pointing at the wrong command.
-assert_mcp_server() {
-  local server="$1" want_command="$2" want_args="$3" out
+# Assert what each server was registered as, straight from .mcp.json, so this
+# cannot drift from the file Claude Code reads.
+while IFS= read -r server; do
+  want_command=$(jq -r --arg s "$server" '.mcpServers[$s].command' "$PLUGIN_ROOT/.mcp.json")
+  want_args=$(jq -r --arg s "$server" '(.mcpServers[$s].args // []) | join(" ")' "$PLUGIN_ROOT/.mcp.json")
   out=$(codex_in_sandbox mcp get "$server" 2>/dev/null)
   if [ -z "$out" ]; then
     fail "MCP server '$server' is registered"
-    return
+    continue
   fi
   pass "MCP server '$server' is registered"
   for field in "enabled: true" "transport: stdio" "command: $want_command" "args: $want_args"; do
@@ -161,16 +199,19 @@ assert_mcp_server() {
       fail "  $server $field" "$(printf '%s' "$out" | tr '\n' ' ')"
     fi
   done
-}
-
-assert_mcp_server dart dart "mcp-server --enable dart_format"
-assert_mcp_server very-good-cli very_good "mcp"
+done < <(jq -r '.mcpServers | keys[]' "$PLUGIN_ROOT/.mcp.json")
 
 echo ""
-echo "=== Hooks are well-formed ==="
-# Codex ignores a malformed hooks.json without reporting anything, so a broken
-# file would disable the whole enforcement layer silently. Check it here.
-INSTALLED_HOOKS="$FAKE_CODEX_HOME/hooks.json"
+echo "=== Hooks ==="
+# Codex discovers a plugin's hooks at <plugin root>/hooks/hooks.json — the same
+# file Claude Code uses — and resolves ${CLAUDE_PLUGIN_ROOT} in it as a
+# compatibility alias for the installed plugin directory.
+INSTALLED_HOOKS="$INSTALLED_ROOT/hooks/hooks.json"
+if [ -f "$INSTALLED_HOOKS" ]; then
+  pass "hooks.json is installed at the plugin hook-discovery path"
+else
+  fail "hooks.json is installed at the plugin hook-discovery path" "$INSTALLED_HOOKS"
+fi
 if jq -e . "$INSTALLED_HOOKS" >/dev/null 2>&1; then
   pass "installed hooks.json is valid JSON"
 else
@@ -186,39 +227,46 @@ for event in SessionStart PreToolUse PostToolUse; do
 done
 
 bad_shape=$(jq '[.hooks[][] | .hooks[]? | select((.type != "command") or ((.command | type) != "string"))] | length' "$INSTALLED_HOOKS")
-if [ "$bad_shape" = "0" ]; then
-  pass "every handler is a command handler with a string command"
+assert_eq "every handler is a command handler with a string command" "0" "$bad_shape"
+
+# Codex names its file-editing tool apply_patch, so a matcher that only says
+# Edit|Write would never fire there. Claude Code ignores the extra alternative.
+if jq -e '[.hooks.PostToolUse[].matcher] | all(test("apply_patch"))' "$INSTALLED_HOOKS" >/dev/null 2>&1; then
+  pass "PostToolUse matchers cover Codex's apply_patch"
 else
-  fail "every handler is a command handler with a string command" "$bad_shape malformed"
+  fail "PostToolUse matchers cover Codex's apply_patch" \
+    "$(jq -c '[.hooks.PostToolUse[].matcher]' "$INSTALLED_HOOKS")"
 fi
 
-unresolved=$(grep -c '__VGV_PLUGIN_ROOT__' "$INSTALLED_HOOKS")
-if [ "$unresolved" = "0" ]; then
-  pass "no unresolved plugin-root placeholder"
-else
-  fail "no unresolved plugin-root placeholder" "$unresolved left"
-fi
-
-# Every script a hook points at must exist and be readable, or the hook is a
-# silent no-op at runtime.
+# Every referenced script has to exist inside the installed plugin, or the hook
+# is a silent no-op. This is also what proves ${CLAUDE_PLUGIN_ROOT} points at a
+# real tree once expanded.
 missing_scripts=""
-while IFS= read -r script; do
+checked=0
+while IFS= read -r command; do
+  [ -n "$command" ] || continue
+  script=$(printf '%s' "$command" \
+    | sed -n 's|.*\${CLAUDE_PLUGIN_ROOT}/\([^" ]*\).*|\1|p')
   [ -n "$script" ] || continue
-  if [ ! -f "$script" ]; then
+  checked=$((checked + 1))
+  if [ ! -f "$INSTALLED_ROOT/$script" ]; then
     missing_scripts="$missing_scripts $script"
   fi
-done < <(jq -r '[.hooks[][] | .hooks[]?.command] | .[]' "$INSTALLED_HOOKS" \
-          | sed -n 's/^bash "\(.*\)"$/\1/p')
-if [ -z "$missing_scripts" ]; then
-  pass "every hook script exists on disk"
+done < <(jq -r '[.hooks[][] | .hooks[]?.command] | .[]' "$INSTALLED_HOOKS")
+
+if [ "$checked" -eq 0 ]; then
+  fail "hook commands reference plugin-root scripts" "no \${CLAUDE_PLUGIN_ROOT} references found"
+elif [ -n "$missing_scripts" ]; then
+  fail "all $checked hook scripts exist in the installed plugin" "missing:$missing_scripts"
 else
-  fail "every hook script exists on disk" "missing:$missing_scripts"
+  pass "all $checked hook scripts exist in the installed plugin"
 fi
 
 echo ""
-echo "=== Agents are well-formed ==="
-
-# Print one top-level key from an agent file, or nothing if it is absent.
+echo "=== Agents ==="
+# Codex reads custom agents from ~/.codex/agents or a project's .codex/agents,
+# neither of which a plugin can populate, so the reviewer agent is a file users
+# copy. Validate it here since Codex will not.
 agent_field() {
   python3 -c "
 import sys, $TOML_MODULE as toml
@@ -244,24 +292,30 @@ if missing:
   else
     fail "$name parses and has the required fields"
   fi
-
-  if [ -f "$FAKE_CODEX_HOME/agents/$name" ]; then
-    pass "$name is installed into CODEX_HOME/agents"
-  else
-    fail "$name is installed into CODEX_HOME/agents"
-  fi
 done
+
+# Codex copies a custom agent verbatim, so the installed tree must carry it for
+# the documented `cp` to work.
+if [ -f "$INSTALLED_ROOT/codex/agents/flutter-reviewer.toml" ]; then
+  pass "the reviewer agent ships inside the installed plugin"
+else
+  fail "the reviewer agent ships inside the installed plugin"
+fi
 
 # The read-only reviewer must stay read-only: Codex has no per-agent tool
 # allowlist, so the sandbox is the only thing enforcing it.
 reviewer="$PLUGIN_ROOT/codex/agents/flutter-reviewer.toml"
 if [ -f "$reviewer" ]; then
   mode=$(agent_field "$reviewer" sandbox_mode)
-  if [ "$mode" = "read-only" ]; then
-    pass "flutter-reviewer is sandboxed read-only"
-  else
-    fail "flutter-reviewer is sandboxed read-only" "sandbox_mode is [${mode:-unset}]"
-  fi
+  assert_eq "flutter-reviewer is sandboxed read-only" "read-only" "${mode:-unset}"
+fi
+
+echo ""
+echo "=== Uninstall ==="
+if codex_in_sandbox plugin remove "$PLUGIN_NAME@$MARKETPLACE_NAME" >"$SANDBOX/rm.log" 2>&1; then
+  pass "codex plugin remove uninstalls it"
+else
+  fail "codex plugin remove uninstalls it" "$(tail -3 "$SANDBOX/rm.log")"
 fi
 
 echo ""

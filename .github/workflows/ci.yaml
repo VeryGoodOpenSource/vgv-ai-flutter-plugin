@@ -96,8 +96,6 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
-      - name: Codex installer tests
-        run: bash codex/install_test.sh
   codex-loader:
     name: 🤖 Codex Loader
     runs-on: ubuntu-latest
