@@ -197,7 +197,7 @@ source of truth; the sidecar is thin, with no build step. Add one for every new 
 **Gemini CLI runtime** — Gemini CLI reads the Agent Skills standard directly, so `skills/` needs
 nothing: `gemini skills install <repo-url> --path skills` lands all 15. The enforcement layer does
 not carry over as cleanly, and `gemini/` holds the ported pieces. Verified against Gemini CLI
-0.52.0:
+0.59.0:
 
 - **Skill discovery is the standard path.** Gemini scans `.agents/skills` and `~/.agents/skills`
   alongside its own `.gemini/skills`, so a spec-conformant skill is found with no Gemini-specific
@@ -241,7 +241,10 @@ not carry over as cleanly, and `gemini/` holds the ported pieces. Verified again
 Nothing in CI exercises Gemini CLI, so verify a change to any of it by hand. `gemini skills list`
 and a headless `gemini -p` both report what loaded — skills, agents, and hook registration — before
 any model call, so pointing `GEMINI_BASE_URL` at an unreachable address is enough to read the
-verdict without credentials.
+verdict without credentials. Do it in a throwaway `HOME` so your own Gemini config is untouched,
+and set `GEMINI_CLI_TRUST_WORKSPACE=true`: since 0.59.0 a headless run in an untrusted directory
+refuses to start rather than loading with workspace features disabled, which reads as "nothing
+loaded" if you do not expect it.
 
 **Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
 autonomously when the context fits (that is the point of a best-practice skill), so neither

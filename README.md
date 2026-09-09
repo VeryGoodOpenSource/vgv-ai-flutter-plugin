@@ -97,7 +97,9 @@ gemini skills install https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugi
 The MCP servers, the hooks, and the reviewer agent are the parts Gemini cannot take from the
 Claude Code files as they stand — it uses different hook event names, different tool names, and a
 stricter agent schema. `gemini/` holds those three, ported. Clone this repo somewhere and point
-`VGV_PLUGIN_ROOT` at it, since the hook scripts live here:
+`VGV_PLUGIN_ROOT` at it, since the hook scripts live here. Put it in your shell profile rather
+than one terminal — Gemini resolves it when it loads its settings, so it has to be set wherever
+you launch `gemini`:
 
 ```bash
 export VGV_PLUGIN_ROOT=/path/to/vgv-ai-flutter-plugin
@@ -108,11 +110,15 @@ yourself, or a project's `.gemini/settings.json` to give a whole team the same e
 per-developer setup. It registers both MCP servers and wires the same hook scripts under Gemini's
 event names.
 
-The reviewer agent is a separate copy for the same reason. Pick whichever scope fits:
+The reviewer agent is a separate copy for the same reason. Pick whichever scope fits.
+
+For yourself, across every project:
 
 ```bash
 mkdir -p ~/.gemini/agents && cp gemini/agents/flutter-reviewer.md ~/.gemini/agents/
 ```
+
+For a whole team, commit it into the Flutter project instead:
 
 ```bash
 mkdir -p .gemini/agents && cp gemini/agents/flutter-reviewer.md .gemini/agents/
