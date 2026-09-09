@@ -53,6 +53,7 @@ Use `AskUserQuestion` to collect only what you cannot infer. Batch questions int
 - Use `dart_package` (not `flutter_package`) for data layer and repository layer packages in the **layered-architecture** pattern — these must not depend on Flutter SDK
 - If a user provides a project name with dashes, convert to underscores — Dart package names only allow lowercase letters, numbers, and underscores
 - Templates that produce apps, plugins, or games require an organization name — do not skip this or it defaults to a placeholder value
+- If `packages_get` fails after creation, check that `directory` points at the new project and that the Dart SDK is on `PATH`
 
 ---
 
@@ -84,25 +85,11 @@ Use `AskUserQuestion` to collect only what you cannot infer. Batch questions int
 
 ---
 
-## Troubleshooting
-
-### Invalid project name error
-
-- Names must be valid Dart package names: lowercase letters, numbers, underscores only
-- Dashes are not allowed — convert `my-app` to `my_app`
-
-### Dependencies fail to install after creation
-
-- Verify the Dart SDK is installed and on PATH
-- Pass `directory: '<path-to-created-project>'` to `packages_get` so it targets the new project
-
----
-
 ## Anti-Patterns
 
-| Anti-Pattern | Problem | Correct Approach |
-| --- | --- | --- |
-| Asking user to pick a template name | Users think in terms of what they're building, not CLI subcommands | Infer the template from context |
-| Over-asking for optional parameters | Slows down the workflow | Only ask for what you cannot infer |
-| Using `flutter_package` for a data layer | Adds unnecessary Flutter SDK dependency | Use `dart_package` for data and repository layer packages |
-| Skipping organization name for apps/plugins | Defaults to a placeholder value | Ask when the template requires it |
+| Anti-Pattern                                | Problem                                                            | Correct Approach                                          |
+| ------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------- |
+| Asking user to pick a template name         | Users think in terms of what they're building, not CLI subcommands | Infer the template from context                           |
+| Over-asking for optional parameters         | Slows down the workflow                                            | Only ask for what you cannot infer                        |
+| Using `flutter_package` for a data layer    | Adds unnecessary Flutter SDK dependency                            | Use `dart_package` for data and repository layer packages |
+| Skipping organization name for apps/plugins | Defaults to a placeholder value                                    | Ask when the template requires it                         |

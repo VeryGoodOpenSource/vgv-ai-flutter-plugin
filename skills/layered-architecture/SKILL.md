@@ -69,6 +69,10 @@ Apply these standards to ALL layered architecture work:
 
 ## Monorepo Structure
 
+Features live in `lib/`, one directory each, split `bloc|cubit/` and `view/` with a barrel
+file. Layers live in `packages/`, one package per data source and one per repository. The
+second data package and the second repository follow the same shape as the first.
+
 ```text
 my_app/
 ├── lib/
@@ -85,14 +89,7 @@ my_app/
 │   │   └── view/
 │   │       ├── login_page.dart               # Page provides Bloc
 │   │       └── login_view.dart               # View consumes state
-│   ├── profile/                              # Feature: profile
-│   │   ├── profile.dart
-│   │   ├── cubit/
-│   │   │   ├── profile_cubit.dart
-│   │   │   └── profile_state.dart
-│   │   └── view/
-│   │       ├── profile_page.dart
-│   │       └── profile_view.dart
+│   ├── profile/                              # Feature: profile (cubit/ instead of bloc/)
 │   ├── main_development.dart                 # Flavor entrypoint
 │   ├── main_staging.dart
 │   └── main_production.dart
@@ -107,11 +104,6 @@ my_app/
 │   │   │           └── auth_response.dart
 │   │   └── pubspec.yaml
 │   ├── local_storage_client/                 # Data layer: local storage
-│   │   ├── lib/
-│   │   │   ├── local_storage_client.dart
-│   │   │   └── src/
-│   │   │       └── local_storage_client.dart
-│   │   └── pubspec.yaml
 │   ├── auth_repository/                      # Repository layer: auth
 │   │   ├── lib/
 │   │   │   ├── auth_repository.dart          # Barrel file
@@ -122,14 +114,6 @@ my_app/
 │   │   │           └── user.dart             # Domain model
 │   │   └── pubspec.yaml
 │   └── user_repository/                      # Repository layer: user
-│       ├── lib/
-│       │   ├── user_repository.dart
-│       │   └── src/
-│       │       ├── user_repository.dart
-│       │       └── models/
-│       │           ├── models.dart
-│       │           └── user_profile.dart
-│       └── pubspec.yaml
 ├── test/
 │   └── ...                                   # Mirrors lib/ structure
 └── pubspec.yaml                              # Root app pubspec
@@ -242,42 +226,31 @@ See [worked-example.md](references/worked-example.md) for the complete `user_rep
 
 ## Dependency Graph
 
-Each layer's `pubspec.yaml` enforces the architecture through path dependencies.
+Path dependencies in each `pubspec.yaml` are what enforce the architecture. A data package
+declares external packages only. A repository package declares a path dependency on its data
+package. The root app declares **repository packages only** — data packages arrive as
+transitive dependencies.
 
-### Data Package (`packages/user_api_client/pubspec.yaml`)
+**The app never depends on a data package directly.** That is the boundary: business logic
+and presentation cannot bypass the repository layer, because they cannot import past it.
 
 ```yaml
+# packages/user_api_client/pubspec.yaml — external packages only
 dependencies:
-  # External packages only — no local dependencies
   http: ^1.4.0
-  json_annotation: ^4.9.0
-```
 
-### Repository Package (`packages/user_repository/pubspec.yaml`)
-
-```yaml
+# packages/user_repository/pubspec.yaml — path dependency on its data package
 dependencies:
-  equatable: ^2.0.7
-  # Path dependency on data layer package
   user_api_client:
     path: ../user_api_client
-```
 
-### Root App (`pubspec.yaml`)
-
-```yaml
+# pubspec.yaml — repository packages only; data packages are transitive
 dependencies:
-  flutter:
-    sdk: flutter
-  flutter_bloc: ^9.1.0
-  # Repository packages only — data packages are transitive
-  auth_repository:
-    path: packages/auth_repository
   user_repository:
     path: packages/user_repository
 ```
 
-**The app never depends on data packages directly.** Data packages are transitive dependencies through repositories. This enforces the layer boundary — business logic and presentation cannot bypass the repository layer.
+See [references/pubspec.md](references/pubspec.md) for the three files in full.
 
 ## Data Flow
 
@@ -307,23 +280,14 @@ Future<void> _onLoadRequested(
 }
 ```
 
-See [data-flow.md](references/data-flow.md) for the full data flow walkthrough with code at each layer.
-
 ## App Bootstrap
 
-The app's `main_<flavor>.dart` creates all data clients and repositories, then passes them to the `App` widget. `MultiRepositoryProvider` makes repositories available to the entire widget tree.
-
-**`lib/main_development.dart`**
+`main_<flavor>.dart` constructs every data client and repository, then passes them to the
+`App` widget, which exposes them through `MultiRepositoryProvider`. Flavors change only
+configuration — base URLs, API keys — never the wiring shape.
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:my_app/app/app.dart';
-import 'package:auth_api_client/auth_api_client.dart';
-import 'package:local_storage_client/local_storage_client.dart';
-import 'package:auth_repository/auth_repository.dart';
-import 'package:user_api_client/user_api_client.dart';
-import 'package:user_repository/user_repository.dart';
-
+// lib/main_development.dart
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -332,16 +296,10 @@ void main() {
   // Data layer
   final authApiClient = AuthApiClient(baseUrl: baseUrl);
   final userApiClient = UserApiClient(baseUrl: baseUrl);
-  final localStorageClient = LocalStorageClient();
 
   // Repository layer
-  final authRepository = AuthRepository(
-    authApiClient: authApiClient,
-    localStorageClient: localStorageClient,
-  );
-  final userRepository = UserRepository(
-    userApiClient: userApiClient,
-  );
+  final authRepository = AuthRepository(authApiClient: authApiClient);
+  final userRepository = UserRepository(userApiClient: userApiClient);
 
   runApp(
     App(
@@ -352,7 +310,8 @@ void main() {
 }
 ```
 
-Flavors change only the configuration (base URLs, API keys) — the architecture stays identical across development, staging, and production. See [worked-example.md](references/worked-example.md) for the `App` widget with `MultiRepositoryProvider`.
+See [references/worked-example.md](references/worked-example.md) for the full `main()` and
+the `App` widget with `MultiRepositoryProvider`.
 
 ## Anti-Patterns
 
@@ -403,6 +362,7 @@ Flavors change only the configuration (base URLs, API keys) — the architecture
 ## Additional Resources
 
 - [Complete worked example](references/worked-example.md) and [pubspec reference](references/pubspec.md)
+- [Data flow walkthrough](references/data-flow.md) — the request path with code at each layer
 - [Model transformation patterns](references/model-transformation.md) — data model vs domain model conversion
 - [Package-level testing](references/testing.md) — testing data clients and repositories in isolation
 - For Bloc/Cubit patterns and Page/View separation — see the **bloc** skill

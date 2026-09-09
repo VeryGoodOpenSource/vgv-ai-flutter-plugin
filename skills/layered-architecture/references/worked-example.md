@@ -514,3 +514,46 @@ class App extends StatelessWidget {
   }
 }
 ```
+
+## App Bootstrap
+
+`main_<flavor>.dart` constructs every data client and repository, then hands them to `App`.
+Flavors change only configuration — base URLs, API keys — never the wiring shape.
+
+```dart
+// lib/main_development.dart
+import 'package:auth_api_client/auth_api_client.dart';
+import 'package:auth_repository/auth_repository.dart';
+import 'package:flutter/material.dart';
+import 'package:local_storage_client/local_storage_client.dart';
+import 'package:my_app/app/app.dart';
+import 'package:user_api_client/user_api_client.dart';
+import 'package:user_repository/user_repository.dart';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  const baseUrl = 'https://api.dev.example.com';
+
+  // Data layer
+  final authApiClient = AuthApiClient(baseUrl: baseUrl);
+  final userApiClient = UserApiClient(baseUrl: baseUrl);
+  final localStorageClient = LocalStorageClient();
+
+  // Repository layer
+  final authRepository = AuthRepository(
+    authApiClient: authApiClient,
+    localStorageClient: localStorageClient,
+  );
+  final userRepository = UserRepository(
+    userApiClient: userApiClient,
+  );
+
+  runApp(
+    App(
+      authRepository: authRepository,
+      userRepository: userRepository,
+    ),
+  );
+}
+```

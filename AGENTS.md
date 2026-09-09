@@ -51,14 +51,29 @@ hooks/
 skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (Codex sidecar)
   accessibility/SKILL.md
   accessibility/references/
+    audit-templates.md
+    examples.md
+    platforms/android.md
+    platforms/ios.md
+    platforms/linux.md
+    platforms/macos.md
+    platforms/web.md
+    platforms/windows.md
+    testing.md
+    widget-mapping.md
   animations/SKILL.md
   animations/references/
     explicit-animations.md
+    implicit-animations.md
     looping-animations.md
     page-transitions.md
     staggered-animations.md
   bloc/SKILL.md
   bloc/references/
+    architecture.md
+    patterns.md
+    testing.md
+    widgets.md
   create-project/SKILL.md
   dart-flutter-sdk-upgrade/SKILL.md
   dart-flutter-sdk-upgrade/references/
@@ -67,15 +82,46 @@ skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (C
   green-gate/references/
     coverage.md
   internationalization/SKILL.md
+  internationalization/references/
+    backend.md
+    directionality.md
+    setup.md
   layered-architecture/SKILL.md
   layered-architecture/references/
+    data-flow.md
+    model-transformation.md
+    pubspec.md
+    testing.md
+    worked-example.md
   license-compliance/SKILL.md
   material-theming/SKILL.md
+  material-theming/references/
+    color-scheme.md
+    components.md
+    spacing.md
+    typography.md
   navigation/SKILL.md
+  navigation/references/
+    parameters.md
+    redirects.md
+    testing.md
+    typed-routes.md
   static-security/SKILL.md
   static-security/references/
+    binary-protection.md
+    crypto.md
+    packages.md
+    supply-chain.md
   testing/SKILL.md
   testing/references/
+    animation-testing.md
+    configuration.md
+    coverage.md
+    golden-tests.md
+    matchers.md
+    mocktail.md
+    test-patterns.md
+    widget-tests.md
   ui-package/SKILL.md
   ui-package/reference.md
   very-good-analysis-upgrade/SKILL.md
@@ -156,9 +202,11 @@ documentation in the same change:
   triggers and scope, leaving pure teaching material to the body. Do not cut a
   sentence just because the body repeats it — routing happens before the body
   loads — and re-run the skill's eval cases after any trim.
-- **Changing what a skill teaches** — run the skill's eval cases to confirm the new
-  guidance actually lands in the model's output, and update any case that asserted
-  the old behavior. A failing case after a deliberate change means the case needs
+- **Changing what a skill teaches** — apply the KEEP / DEMOTE / DELETE rubric in
+  `CONTRIBUTING.md` → _What Belongs in a `SKILL.md`_. A `SKILL.md` carries VGV
+  opinions; framework reference that Claude already knows belongs in `references/`
+  or nowhere. Then run the skill's eval cases to confirm the new guidance actually
+  lands in the model's output, and update any case that asserted the old behavior. A failing case after a deliberate change means the case needs
   updating; a failing case after a Claude Code or MCP server change means the skill
   does.
 - **Restructuring a skill's reference files** (`reference.md` ↔ `references/`) —

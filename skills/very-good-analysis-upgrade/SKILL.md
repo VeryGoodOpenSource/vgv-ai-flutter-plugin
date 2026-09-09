@@ -57,9 +57,9 @@ Confirm two things before proceeding:
    (the host did not substitute it), fetch the latest from the pub.dev API and use
    that. Don't ask — just look it up and proceed:
 
-    ```bash
-    curl -s https://pub.dev/api/packages/very_good_analysis | jq -r '.latest.version'
-    ```
+   ```bash
+   curl -s https://pub.dev/api/packages/very_good_analysis | jq -r '.latest.version'
+   ```
 
    Tell the user which version you're upgrading to before making any changes.
 

@@ -13,7 +13,7 @@ allowed-tools: Read Glob Grep
 model: sonnet
 ---
 
-# Theming
+# Material Theming
 
 Material 3 theming best practices for Flutter applications using `ThemeData` as the single source of truth for colors, typography, component styles, and spacing.
 
@@ -48,51 +48,23 @@ abstract class AppColors {
 
 ### `ColorScheme` Configuration
 
-The `ColorScheme` class includes 45 colors based on Material 3 specifications. Configure it within `ThemeData`:
-
-```dart
-ThemeData(
-  colorScheme: ColorScheme(
-    brightness: Brightness.light,
-    primary: AppColors.primaryColor,
-    secondary: AppColors.secondaryColor,
-    error: AppColors.errorColor,
-    surface: AppColors.surfaceColor,
-    onPrimary: Colors.white,
-    onSecondary: Colors.white,
-    onError: Colors.white,
-    onSurface: Colors.black,
-  ),
-)
-```
-
-For quick prototyping, use `ColorScheme.fromSeed()`:
-
-```dart
-ThemeData(
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: AppColors.primaryColor,
-  ),
-)
-```
-
-### Light and Dark Theme Variants
+Every color reaches widgets through a `ColorScheme` role. Define two schemes — one light,
+one dark — inside a single `AppTheme` class, and pass both to `MaterialApp` as `theme` and
+`darkTheme`. That pair is what makes brightness branching in widget code unnecessary:
 
 ```dart
 class AppTheme {
   static ThemeData get light => ThemeData(
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme.light(
       brightness: Brightness.light,
-      primary: AppColors.primaryColor,
       surface: AppColors.surfaceColor,
       // ... remaining color roles
     ),
   );
 
   static ThemeData get dark => ThemeData(
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme.dark(
       brightness: Brightness.dark,
-      primary: AppColors.primaryColorDark,
       surface: AppColors.surfaceColorDark,
       // ... remaining color roles
     ),
@@ -100,22 +72,8 @@ class AppTheme {
 }
 ```
 
-### Accessing Colors
-
-```dart
-@override
-Widget build(BuildContext context) {
-  final colorScheme = Theme.of(context).colorScheme;
-
-  return ColoredBox(
-    color: colorScheme.surface,
-    child: Text(
-      'Hello',
-      style: TextStyle(color: colorScheme.onSurface),
-    ),
-  );
-}
-```
+See [references/color-scheme.md](references/color-scheme.md) for the full 45-role
+`ColorScheme` configuration, `ColorScheme.fromSeed`, and how widgets read colors.
 
 ## Typography
 
@@ -206,22 +164,9 @@ See [references/spacing.md](references/spacing.md) for the full `AppSpacing` cla
 5. Configure `ColorScheme`, `TextTheme`, and component themes in each `ThemeData`
 6. Pass `AppTheme.light` and `AppTheme.dark` to `MaterialApp`
 
-### Adding a New Color Token
-
-1. Add the color constant to `AppColors`
-2. Map it to the appropriate `ColorScheme` role (or create a theme extension for custom tokens)
-3. Reference it via `Theme.of(context).colorScheme.<role>` in widgets
-
-### Dark Mode Support
-
-1. Create separate `ColorScheme` instances for light and dark
-2. Use the same `TextTheme` and component themes (they adapt automatically via `colorScheme`)
-3. Pass both themes to `MaterialApp` via `theme` and `darkTheme`
-4. Never check `Brightness` in widget code — let `ThemeData` handle the switch
-
 ### Removing a Brightness Check From a Widget
 
-A widget that branches on brightness has taken over a decision that belongs to `ThemeData`: every new dark-aware widget repeats the branch, and neither color is reachable from the theme. Delete the branch instead of tidying it. The light value and the dark value become the same `ColorScheme` role in two themes — declare both in `AppColors`, assign each to that role exactly as **Light and Dark Theme Variants** above shows, and pass `AppTheme.light` and `AppTheme.dark` to `MaterialApp` as `theme` and `darkTheme`. The widget then drops to a single unconditional read:
+A widget that branches on brightness has taken over a decision that belongs to `ThemeData`: every new dark-aware widget repeats the branch, and neither color is reachable from the theme. Delete the branch instead of tidying it. The light value and the dark value become the same `ColorScheme` role in two themes — declare both in `AppColors`, assign each to that role as [references/color-scheme.md](references/color-scheme.md) shows, and pass `AppTheme.light` and `AppTheme.dark` to `MaterialApp` as `theme` and `darkTheme`. The widget then drops to a single unconditional read:
 
 ```dart
 @override
@@ -233,24 +178,9 @@ Widget build(BuildContext context) {
 }
 ```
 
-## Quick Reference
+## Additional Resources
 
-| ThemeData Property        | Purpose                                      |
-| ------------------------- | -------------------------------------------- |
-| `colorScheme`             | Material 3 color system (45 color roles)     |
-| `textTheme`               | Typography scale (display, headline, body…)  |
-| `filledButtonTheme`       | FilledButton default style                   |
-| `inputDecorationTheme`    | TextField/TextFormField decoration defaults  |
-| `appBarTheme`             | AppBar default styling                       |
-| `cardTheme`               | Card default styling                         |
-| `dialogTheme`             | Dialog default styling                       |
-
-| Material 3 Color Role | Typical Use                           |
-| --------------------- | ------------------------------------- |
-| `primary`             | Key UI elements, FAB, active states   |
-| `onPrimary`           | Text/icons on primary color           |
-| `secondary`           | Less prominent UI elements            |
-| `surface`             | Card, sheet, dialog backgrounds       |
-| `onSurface`           | Text/icons on surface color           |
-| `error`               | Error indicators, destructive actions |
-| `outline`             | Borders, dividers                     |
+- [references/color-scheme.md](references/color-scheme.md) — `ColorScheme` configuration, light/dark `AppTheme`, reading colors in widgets
+- [references/typography.md](references/typography.md) — font asset setup, the full `AppTextStyle` class, `TextTheme` integration
+- [references/components.md](references/components.md) — FilledButton, InputDecoration, and AppBar themes, and complete theme assembly
+- [references/spacing.md](references/spacing.md) — the full `AppSpacing` class, usage examples, and `EdgeInsets` preferences

@@ -104,6 +104,52 @@ eval documentation there rather than here.
 - **Reference packages by full name** (e.g., `package:mocktail`, not just "mocktail").
 - **Show anti-patterns alongside correct patterns** when helpful, so readers understand both what to do and what to avoid.
 
+## What Belongs in a `SKILL.md`
+
+Claude 5 generation models already know the Flutter and Dart framework. A skill earns its
+tokens by carrying what the model *cannot* infer: the opinions this team holds. Reference
+material that merely restates the framework displaces those opinions and slows routing.
+
+Every section you write gets one of three verdicts.
+
+**KEEP in `SKILL.md`** — a VGV opinion the model cannot infer:
+
+- Choices among valid alternatives (`mocktail` over `mockito`; `dart_package` over
+  `flutter_package` for data-layer packages; `go()` over `push()` by default)
+- VGV-invented conventions (`pumpApp`, `AppMotion`, `AppSpacing`, `TestTag`, the private
+  `_Mock` rule, the four-layer dependency direction)
+- Judgement calls the model would get wrong by default (the animations decision tree; holding
+  the implicit form when a controller is requested by name)
+- Harness facts (hook-enforced tool routing, MCP tool arguments, cross-harness fallbacks)
+- Safety and compliance rules
+
+**DEMOTE to `references/`** — correct and useful, but recallable or situational:
+
+- API glossaries and lookup tables for framework surface
+- Long code samples demonstrating framework mechanics rather than a VGV pattern
+- Deep-dive setup only one workflow in the skill needs
+
+**DELETE** — no new information at any load time:
+
+- A `## Quick Reference` table that restates `## Core Standards` in other words
+- Anti-pattern rows whose "Correct Approach" column is verbatim a Core Standard
+- Reference links repeated in more than one place in the same file
+
+Target shape: `SKILL.md` at or under **~150 lines** — frontmatter, H1, `## Core Standards`,
+the VGV-specific sections, `## Additional Resources`. One link per reference file, in one
+place. Procedural skills that drive a tool loop (`green-gate`, `dart-flutter-sdk-upgrade`)
+may run longer; the steps *are* the content.
+
+Two things this rubric does **not** apply to:
+
+- **The frontmatter `description`.** It is the router and loads before the body, so every
+  trigger phrase in it is load-bearing. Do not trim it for length. It is capped at 1024
+  characters, which `validate-skill` enforces as an error.
+- **Genuinely important areas.** Hard constraints stay hard in `static-security`,
+  `accessibility` WCAG criteria, `license-compliance`'s refuse-to-certify rule, and
+  `green-gate`'s MCP-only tool routing. Directive density is not the defect; generic
+  reference material is.
+
 ## Cross-harness portability
 
 Skills are authored for Claude Code but target the [Agent Skills open

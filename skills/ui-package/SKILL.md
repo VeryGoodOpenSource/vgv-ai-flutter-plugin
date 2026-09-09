@@ -81,14 +81,14 @@ my_ui/
 
 ## Anti-Patterns
 
-| Anti-Pattern | Correct Approach |
-| ------------ | ---------------- |
-| Rebuilding widgets Material already provides (e.g., custom button from `GestureDetector` + `DecoratedBox`) | Compose Material widgets (`FilledButton`, `OutlinedButton`) and style them |
-| Creating a parallel theme system with custom `InheritedWidget` | Use Material's `ThemeData` as the base and `ThemeExtension` for custom tokens |
-| Hardcoding `Color(0xFF...)` in widget code | Use `Theme.of(context).colorScheme` for standard colors and `context.appColors` for custom tokens |
-| Duplicating Material's `ColorScheme` roles in a custom class | Only create `ThemeExtension` tokens for values Material does not cover (e.g., success, warning, info) |
-| Using `dynamic` or `Object` for callback types | Use `VoidCallback`, `ValueChanged<T>`, or specific function typedefs |
-| Exposing internal implementation files directly | Use a barrel file; keep all files under `src/` private |
+| Anti-Pattern                                                                                               | Correct Approach                                                                                      |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Rebuilding widgets Material already provides (e.g., custom button from `GestureDetector` + `DecoratedBox`) | Compose Material widgets (`FilledButton`, `OutlinedButton`) and style them                            |
+| Creating a parallel theme system with custom `InheritedWidget`                                             | Use Material's `ThemeData` as the base and `ThemeExtension` for custom tokens                         |
+| Hardcoding `Color(0xFF...)` in widget code                                                                 | Use `Theme.of(context).colorScheme` for standard colors and `context.appColors` for custom tokens     |
+| Duplicating Material's `ColorScheme` roles in a custom class                                               | Only create `ThemeExtension` tokens for values Material does not cover (e.g., success, warning, info) |
+| Using `dynamic` or `Object` for callback types                                                             | Use `VoidCallback`, `ValueChanged<T>`, or specific function typedefs                                  |
+| Exposing internal implementation files directly                                                            | Use a barrel file; keep all files under `src/` private                                                |
 
 ## Creating the Package
 

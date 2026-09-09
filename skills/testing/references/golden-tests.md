@@ -4,13 +4,13 @@ Golden tests capture a rendered widget as an image and compare it against a stor
 
 ## When to Use Goldens vs Behavioral Tests
 
-| Concern | Test type | Why |
-| --- | --- | --- |
-| Button triggers navigation | Widget test | Behavioral outcome |
-| Page shows correct text for state | Widget test | Content based on logic |
-| Widget matches design spec visually | Golden test | Pixel-level appearance |
+| Concern                                | Test type   | Why                         |
+| -------------------------------------- | ----------- | --------------------------- |
+| Button triggers navigation             | Widget test | Behavioral outcome          |
+| Page shows correct text for state      | Widget test | Content based on logic      |
+| Widget matches design spec visually    | Golden test | Pixel-level appearance      |
 | Layout does not regress after refactor | Golden test | Visual regression detection |
-| Icon/color changes with theme | Golden test | Visual property |
+| Icon/color changes with theme          | Golden test | Visual property             |
 
 ## Setup and Configuration
 
@@ -78,20 +78,20 @@ testWidgets('matches golden', tags: TestTag.golden, (tester) async {
 
 Run goldens through the `very_good_cli` MCP `test` tool — never `flutter test` via the shell (the `block-cli-workarounds` hook denies it).
 
-| Goal | MCP `test` tool parameters |
-| ---- | -------------------------- |
-| Run only golden tests | `tags: 'golden'` |
+| Goal                              | MCP `test` tool parameters             |
+| --------------------------------- | -------------------------------------- |
+| Run only golden tests             | `tags: 'golden'`                       |
 | Regenerate golden reference files | `tags: 'golden', update_goldens: true` |
-| Run all tests except goldens | `exclude_tags: 'golden'` |
-| Run all tests including goldens | _(no parameters)_ |
+| Run all tests except goldens      | `exclude_tags: 'golden'`               |
+| Run all tests including goldens   | _(no parameters)_                      |
 
 After updating goldens, review and commit the new `.png` files --- they are the source of truth.
 
 ## Golden Testing Anti-Patterns
 
-| Anti-Pattern | Problem | Correct Approach |
-| --- | --- | --- |
-| Untagged golden tests | Cannot run or update goldens independently | Always tag with `TestTag.golden` |
-| Testing behavior with goldens | Goldens verify appearance, not logic | Use widget tests for behavioral assertions |
-| Uncommitted golden files | CI fails because reference images are missing | Commit `.png` goldens alongside test code |
-| Raw string tags (`tags: 'golden'`) | Fragile; typos silently create new tags | Use `TestTag.golden` constant |
+| Anti-Pattern                       | Problem                                       | Correct Approach                           |
+| ---------------------------------- | --------------------------------------------- | ------------------------------------------ |
+| Untagged golden tests              | Cannot run or update goldens independently    | Always tag with `TestTag.golden`           |
+| Testing behavior with goldens      | Goldens verify appearance, not logic          | Use widget tests for behavioral assertions |
+| Uncommitted golden files           | CI fails because reference images are missing | Commit `.png` goldens alongside test code  |
+| Raw string tags (`tags: 'golden'`) | Fragile; typos silently create new tags       | Use `TestTag.golden` constant              |
