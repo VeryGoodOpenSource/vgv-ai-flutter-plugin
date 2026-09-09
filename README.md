@@ -98,14 +98,23 @@ Codex-specific configuration in this repo at all. Restart Codex afterwards, then
 with `/hooks`, since Codex requires a review before a hook runs for the first time.
 
 The reviewer agent is the one piece `codex plugin add` does **not** install: Codex has no way to
-bundle a subagent in a plugin, and loads custom agents only from `~/.codex/agents/` or a project's
-`.codex/agents/`. Copy it in once:
+bundle a subagent in a plugin ([openai/codex#18988][codex_agents_issue]), and loads custom agents
+only from `~/.codex/agents/` or a project's `.codex/agents/`. Pick whichever scope fits.
+
+For yourself, across every project:
 
 ```bash
 mkdir -p ~/.codex/agents && cp codex/agents/flutter-reviewer.toml ~/.codex/agents/
 ```
 
-Then ask Codex to spawn `flutter-reviewer`.
+For a whole team, commit it into the Flutter project instead â€” then everyone gets the reviewer with
+no per-developer setup:
+
+```bash
+mkdir -p .codex/agents && cp codex/agents/flutter-reviewer.toml .codex/agents/
+```
+
+Either way, ask Codex to spawn `flutter-reviewer`.
 
 ### How Codex differs from Claude Code
 
@@ -241,6 +250,7 @@ On Codex the same two servers are registered in `~/.codex/config.toml` instead â
 [Codex](#codex). Skills that drive an MCP tool always name the equivalent `very_good`, `dart`, or
 `flutter` command as a fallback, so they keep working on a host where neither server is connected.
 
+[codex_agents_issue]: https://github.com/openai/codex/issues/18988
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures

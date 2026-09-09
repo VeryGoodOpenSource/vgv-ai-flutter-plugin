@@ -258,8 +258,12 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   synthesizes its own throwaway marketplace pointing at the working tree instead.
 - **A plugin cannot ship a Codex subagent.** Codex loads custom agents only from `~/.codex/agents/`
   or a project's `.codex/agents/`, and `agents` is not a plugin manifest field or a discovery path.
-  `codex/agents/flutter-reviewer.toml` is therefore a file users copy, and it is the only thing left
-  in `codex/`. Codex custom agents are standalone TOML needing `name`, `description`, and
+  `codex/agents/flutter-reviewer.toml` is therefore a file users copy, either into
+  `~/.codex/agents/` for themselves or committed to a project's `.codex/agents/` for a whole team —
+  the latter is how most repos in the wild do it. Distributing agents any other way currently means
+  an install script, which this plugin deliberately does not ship. Upstream requests to bundle
+  agents in a plugin are open ([openai/codex#18988][codex_agents_issue],
+  [openai/codex#28491][codex_agents_issue_2]); if either lands, the copy step goes away. Codex custom agents are standalone TOML needing `name`, `description`, and
   `developer_instructions`, plus any `config.toml` key. There is no per-agent tool allowlist and no
   agent-scoped `PreToolUse` hook, so it sets `sandbox_mode = "read-only"` to hold the read-only
   contract that `allow-readonly-git.sh` holds on Claude Code. Codex ships no validator for agent
@@ -432,3 +436,6 @@ type(scope): description
 - Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md) completely.
 - Ensure all CI checks pass before requesting review.
 - Link any related issues in the PR description.
+
+[codex_agents_issue]: https://github.com/openai/codex/issues/18988
+[codex_agents_issue_2]: https://github.com/openai/codex/issues/28491
