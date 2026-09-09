@@ -220,10 +220,8 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   matcher containing only letters, digits, `_`, `-`, spaces, `,` and `|` as a list of exact tool
   names; anything else is an unanchored regex tested with `RegExp.test`. `apply_patch|Edit|Write`
   qualifies as exact, so it matches those three tool names and nothing else. Add a `.` or `*` and
-  it silently becomes a regex that also matches `MultiEdit` and `NotebookEdit`, whose payloads this
-  plugin does not read (`MultiEdit` nests `file_path` inside `edits[]` rather than at the top
-  level). Widen the matcher only together with the payload reading in `analyze.sh` and
-  `format.sh`.
+  it silently becomes a regex that also matches `NotebookEdit`, which this plugin has no reason to
+  act on. Widen the matcher only together with the payload reading in `analyze.sh` and `format.sh`.
 - **Hooks are a stable, default-on feature**, not experimental. The flag is `[features] hooks`
   (`codex features list` shows it enabled); there is no `codex_hooks` flag. Codex also runs hooks on
   Windows and offers a `commandWindows` override — but these scripts are `bash` and need `jq`, so
