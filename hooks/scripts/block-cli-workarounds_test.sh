@@ -89,6 +89,21 @@ assert_allowed "git log --grep='dart test'"
 assert_allowed "ls"
 assert_allowed "pwd"
 
+# Gemini CLI fires the same hook as "BeforeTool" against run_shell_command and
+# reads a top-level decision/reason pair instead of hookSpecificOutput. Same
+# verdict, different response shape.
+echo ""
+echo "--- Gemini CLI response shape ---"
+gemini_out=$(jq -n '{"hook_event_name":"BeforeTool","tool_input":{"command":"dart test"}}' |
+  bash "$HOOK" 2>/dev/null) || true
+if echo "$gemini_out" | jq -e '.decision == "deny" and (.reason | length > 0)' >/dev/null 2>&1; then
+  printf "  \033[32mPASS\033[0m  BeforeTool denies via top-level decision/reason\n"
+  PASSED=$((PASSED + 1))
+else
+  printf "  \033[31mFAIL\033[0m  BeforeTool did not deny via top-level decision/reason\n"
+  FAILED=$((FAILED + 1))
+fi
+
 echo ""
 echo "=== Results: $PASSED passed, $FAILED failed ==="
 

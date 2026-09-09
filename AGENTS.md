@@ -12,6 +12,10 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
   plugin.json          # Plugin manifest (name, version, keywords)
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
+gemini/                # The only Gemini CLI-specific assets; skills are shared
+  settings.json        # Gemini MCP servers + hooks — users merge it into their Gemini settings
+  agents/
+    flutter-reviewer.md  # Gemini port of agents/flutter-reviewer.md — users copy it to ~/.gemini/agents/
 docs/
   plan/                # Planning and design documents
 evals/
@@ -138,9 +142,12 @@ They live in `agents/<name>.md` at the plugin root and are **auto-discovered** �
    - `skills` _(optional)_ — bare skill names to preload at startup (full skill content is injected)
    - `model` _(optional)_ — `inherit` to use the session model
    - `hooks` _(optional)_ — agent-scoped hooks, e.g. a PreToolUse `Bash` hook
-2. Add an **Agents** table row in `README.md` (agent name links to the `agents/<name>.md` file)
-3. Add any new domain terms to the `words` list in `config/cspell.json`
-4. Update the repository structure in `AGENTS.md`
+2. Port it to `gemini/agents/<agent_name>.md` for Gemini CLI, whose frontmatter schema
+   is strict and different — see **Maintaining Existing Skills, Hooks, and MCP Tools**
+   above and `CONTRIBUTING.md` → Gemini CLI
+3. Add an **Agents** table row in `README.md` (agent name links to the `agents/<name>.md` file)
+4. Add any new domain terms to the `words` list in `config/cspell.json`
+5. Update the repository structure in `AGENTS.md`
 
 ## Maintaining Existing Skills, Hooks, and MCP Tools
 
@@ -167,10 +174,28 @@ documentation in the same change:
   automatically, so verify each one by hand.
 - **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
   section in `README.md` (and the `## Hooks` section in `CLAUDE.md` if behavior
-  changes).
+  changes), and mirror it in `gemini/settings.json` under Gemini CLI's event
+  names, tool matchers, and millisecond timeouts. Regenerate that block with
+  `gemini hooks migrate --from-claude` rather than hand-porting it, then fix the
+  three things that tool leaves behind — see `CONTRIBUTING.md` → Gemini CLI. A
+  hook that exists on only one harness is fine, but say which in the script's
+  header comment.
+- **Changing a hook script's response shape** — the `deny` and `allow` helpers in
+  `vgv-cli-common.sh` branch on `hook_event_name`, so a new response field has to
+  be written for both harnesses. Each `*_test.sh` suite asserts the Gemini shape
+  alongside the Claude Code one.
 - **Adding or changing an MCP tool** — update the **MCP Integration** tools table
   in `README.md`, and check whether any skill's `allowed-tools` names a tool that
-  was renamed or removed. Nothing validates those names.
+  was renamed or removed. Nothing validates those names. A new **server** goes in
+  both `.mcp.json` and `gemini/settings.json`.
+- **Changing `agents/flutter-reviewer.md`** — port the same change to
+  `gemini/agents/flutter-reviewer.md`. The two are separate ports of one
+  contract, not one shared file: Gemini validates local agent frontmatter with a
+  **strict** schema (`kind`, `name`, `description`, `display_name`, `tools`,
+  `mcp_servers`, `model`, `temperature`, `max_turns`, `timeout_mins`) and drops
+  any agent carrying a key outside it — `skills` and `hooks` included. Its output
+  contract (the four-column findings table) is consumed verbatim by callers on
+  both harnesses, so the two must not drift.
 
 ## Evals
 

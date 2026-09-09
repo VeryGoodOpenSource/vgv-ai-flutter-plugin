@@ -35,3 +35,20 @@ These run **after** a tool call completes:
 - `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
+
+### Gemini CLI
+
+`gemini/settings.json` is a copy-me config that runs these same scripts under Gemini's names:
+`SessionStart` stays put, `PreToolUse` becomes `BeforeTool`, `PostToolUse` becomes `AfterTool`,
+matchers become `run_shell_command`, `replace|write_file` and `mcp_very-good-cli_.*`, and timeouts
+are milliseconds rather than seconds. Scripts resolve through `${VGV_PLUGIN_ROOT}`, since Gemini
+has no plugin-root variable for settings-level hooks.
+
+The scripts read `hook_event_name` off the payload and emit whichever response shape the firing
+harness reads — `hookSpecificOutput.permissionDecision` for Claude Code, top-level
+`decision`/`reason` for Gemini. Two things do not carry over: Gemini has no auto-approve for a
+`BeforeTool` hook (so `check-vgv-cli.sh` only enforces the version gate there, and `"trust": true`
+on the MCP server covers approval), and it has no agent-scoped hooks (so `allow-readonly-git.sh` is
+Claude-only and `gemini/agents/flutter-reviewer.md` holds its read-only contract by granting no
+shell tool at all). Change a hook or the reviewer and both harnesses are affected — see `AGENTS.md`
+→ Maintaining Existing Skills, Hooks, and MCP Tools.

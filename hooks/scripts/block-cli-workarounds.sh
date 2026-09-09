@@ -12,6 +12,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/vgv-cli-common.sh"
 
 INPUT=$(cat)
+HOOK_EVENT_NAME=$(read_hook_event "$INPUT")
+# Claude Code's Bash tool and Gemini CLI's run_shell_command both carry the
+# command under tool_input.command.
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 if [ -z "$COMMAND" ]; then
