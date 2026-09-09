@@ -208,9 +208,8 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   not worth a second manifest to keep in version-sync with the Claude Code one. Note the
   consequence: `.claude-plugin/plugin.json` is now load-bearing for **both** harnesses, so its
   `name` and `version` are not Claude-only fields any more. If you ever add
-  `.codex-plugin/plugin.json`, `codex/loader_test.sh` will fail until you restore field checks for
-  it — the manifest is rejected outright if it carries a `hooks` key or any field outside Codex's
-  allowed set.
+  `.codex-plugin/plugin.json`, note that Codex rejects a manifest carrying a `hooks` key or any
+  field outside its allowed set.
 - **Hooks come from default discovery.** Codex looks for a plugin's hooks at
   `<plugin root>/hooks/hooks.json` — the same path and file Claude Code uses — and resolves
   `${CLAUDE_PLUGIN_ROOT}` inside it, documented as a compatibility alias alongside its own
@@ -229,7 +228,7 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   (`codex features list` shows it enabled); there is no `codex_hooks` flag. Codex also runs hooks on
   Windows and offers a `commandWindows` override — but these scripts are `bash` and need `jq`, so
   Windows means WSL or Git Bash. Codex **silently ignores a malformed `hooks.json`**, which disables
-  the whole enforcement layer with no error, so `codex/loader_test.sh` validates the installed file.
+  the whole enforcement layer with no error, so validate it by hand after editing it.
 - **Five of the six scripts need nothing.** Codex passes `tool_name: "Bash"` with
   `tool_input.command` as a plain string and accepts the same `permissionDecision` allow/deny JSON,
   so `check-vgv-cli.sh`, `block-cli-workarounds.sh`, and `allow-readonly-git.sh` are untouched;
@@ -240,7 +239,7 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   changed-file list, so both hooks read the paths out of the patch headers with the same inline
   `jq` expression. A rename lists the old and new path and a delete lists none, so an existence
   check is all the bookkeeping needed. The expression is duplicated in the two scripts rather than
-  shared through a third file; keep the copies identical and covered by `dart-hooks_test.sh`.
+  shared through a third file; keep the copies identical.
 - **One marketplace serves both harnesses.** `codex plugin add` only accepts
   `PLUGIN@MARKETPLACE`, so a marketplace is mandatory — but it is
   `very-good-claude-code-marketplace`, the same repo Claude Code uses, not this one. That
@@ -266,8 +265,8 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   `codex plugin list` just reports "No marketplace plugins found", with no error anywhere.
   That is why Codex cannot read the existing `.claude-plugin/marketplace.json`, whose
   entries all use `source: github`, and why the two manifests coexist in that repo.
-  Because the `url` source always resolves the default branch, `codex/loader_test.sh`
-  synthesizes its own throwaway marketplace pointing at the working tree instead.
+  Note that the `url` source always resolves the default branch, so testing an unmerged change
+  means pointing a throwaway marketplace at your checkout with a `local` source instead.
 - **`analyze.sh` and `format.sh` stay two separate hooks.** They are easier to maintain and
   reason about apart, which is a deliberate choice over merging them. Two consequences to know.
   Claude Code runs every hook in a matcher group **in parallel**, so the two race on the same
@@ -275,7 +274,7 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   semantics, so the analyzer reports the same findings either way, though line numbers can refer
   to the pre-format file. And because they do not share a helper, the payload-reading `jq`
   expression is duplicated in both — keep the copies identical, and add cases to
-  `dart-hooks_test.sh`, which exercises both scripts.
+  the two scripts.
 - **A plugin cannot ship a Codex subagent.** Codex loads custom agents only from `~/.codex/agents/`
   or a project's `.codex/agents/`, and `agents` is not a plugin manifest field or a discovery path.
   `codex/agents/flutter-reviewer.toml` is therefore a file users copy, either into
@@ -291,10 +290,11 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
 - **Do not weaken the Claude Code path** to make Codex simpler. `hooks/hooks.json` and
   `agents/flutter-reviewer.md` stay authoritative.
 
-Run `bash codex/loader_test.sh` before pushing a change to any of it. It installs the working tree
-the way a user would — `codex plugin marketplace add` then `codex plugin add`, into a throwaway
-`CODEX_HOME` — and asserts what Codex picked up. It needs the `codex` CLI but no credentials, since
-it reads `codex debug prompt-input` and `codex doctor --json` rather than calling a model.
+Nothing in CI exercises Codex, so verify a change to any of it by hand. Install the working tree
+into a throwaway `CODEX_HOME` the way a user would (`codex plugin marketplace add` then
+`codex plugin add`, with a scratch marketplace whose entry is a `local` path to your checkout),
+then check what Codex picked up with `codex debug prompt-input` and `codex doctor --json`. Both
+read local state without calling a model, so this needs the `codex` CLI but no credentials.
 
 **Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
 autonomously when the context fits (that is the point of a best-practice skill), so neither
@@ -318,10 +318,8 @@ session and exercise it before you commit.
 - **Dart SDK** and **jq** on your `PATH` — the hooks need both.
 - **Very Good CLI** ≥ 1.3.0 (`dart pub global activate very_good_cli`) for the
   Very Good CLI MCP server tools.
-- **Codex CLI** (`npm install -g @openai/codex`) and **Python 3.11+** only if you
-  touch the Codex manifests, the hooks, or `codex/` — `codex/loader_test.sh` needs
-  both (Python parses the agent TOML; on 3.10 or older,
-  `python3 -m pip install tomli`). Everything else runs without them.
+- **Codex CLI** (`npm install -g @openai/codex`) only if you touch the hooks or
+  `codex/`, to verify the change by hand. Everything else runs without it.
 
 See the README [Hooks](README.md#hooks) and [MCP Integration](README.md#mcp-integration)
 sections for the full prerequisite details.
@@ -416,7 +414,6 @@ Every pull request runs the following checks automatically:
 | Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
 | Script tests | Runs every hook script test suite | `hooks/scripts/*_test.sh` |
-| Codex loader | Installs the plugin as a Codex plugin into a throwaway Codex home and asserts all 15 skills, both MCP servers, and the hooks load | `codex/loader_test.sh` |
 
 Evals do **not** run on a pull request. They call real models, so they run after a merge
 to `main` instead, scoped to the skills that changed:

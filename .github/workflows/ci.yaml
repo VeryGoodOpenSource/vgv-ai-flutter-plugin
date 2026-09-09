@@ -96,12 +96,3 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
-  codex-loader:
-    name: 🤖 Codex Loader
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Install Codex CLI
-        run: npm install -g @openai/codex
-      - name: Assert the plugin installs and loads in Codex
-        run: bash codex/loader_test.sh

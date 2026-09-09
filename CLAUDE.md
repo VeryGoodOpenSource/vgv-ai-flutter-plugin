@@ -37,7 +37,7 @@ These run **after** a tool call completes:
 Both resolve the changed files with the same inline `jq` expression, handling Claude Code's
 `tool_input.file_path` and Codex's `tool_input.command` (an `apply_patch` envelope, which can name
 several files at once). That is the only harness-specific branch in the hook scripts, and the two
-copies must stay identical — `dart-hooks_test.sh` covers both.
+copies must stay identical.
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
 
@@ -51,6 +51,6 @@ compatibility alias. That is why the `PostToolUse` matcher says `apply_patch|Edi
 names its file-editing tool `apply_patch`, and the extra alternative is inert on Claude Code.
 
 The only Codex-specific asset is `codex/agents/flutter-reviewer.toml`, because Codex has no way to
-bundle a subagent in a plugin — users copy it to `~/.codex/agents/` themselves. `codex/loader_test.sh` installs the repo the way a user would and asserts Codex
-picks it all up. Change a hook or the reviewer agent and both harnesses are affected — see
-`AGENTS.md` → Maintaining Existing Skills, Hooks, and MCP Tools.
+bundle a subagent in a plugin — users copy it to `~/.codex/agents/` themselves. Change a hook or
+the reviewer agent and both harnesses are affected — see `AGENTS.md` → Maintaining Existing
+Skills, Hooks, and MCP Tools.

@@ -13,7 +13,6 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 codex/                 # The only Codex-specific assets; skills, MCP and hooks are shared
-  loader_test.sh       # Installs the repo as a Codex plugin and asserts it loads (codex-loader CI job)
   agents/
     flutter-reviewer.toml  # Codex port of agents/flutter-reviewer.md — users copy it to ~/.codex/agents/
 docs/
@@ -184,8 +183,7 @@ documentation in the same change:
   describe an edit differently (Claude Code `tool_input.file_path`, Codex
   `tool_input.command` holding an apply_patch envelope). `analyze.sh` and
   `format.sh` each read both shapes with the same inline `jq` expression — keep
-  the two copies identical, and add a case to `dart-hooks_test.sh`, which drives
-  both scripts through a stub `dart` so it needs no SDK.
+  the two copies identical.
 - **Changing `agents/flutter-reviewer.md`** — port the same change to
   `codex/agents/flutter-reviewer.toml`. A Codex plugin cannot ship a subagent, so
   that file is a separate copy users install by hand. Its output contract (the
