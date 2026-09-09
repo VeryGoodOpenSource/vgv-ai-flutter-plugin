@@ -211,10 +211,19 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   `.codex-plugin/plugin.json`, `codex/loader_test.sh` will fail until you restore field checks for
   it — the manifest is rejected outright if it carries a `hooks` key or any field outside Codex's
   allowed set.
-- **The plugin manifest rejects a `hooks` field.** Hooks arrive purely through default discovery at
-  `<plugin root>/hooks/hooks.json`, and Codex resolves `${CLAUDE_PLUGIN_ROOT}` inside it as a
-  compatibility alias for the installed plugin directory. That is why the Claude Code hooks file
-  works unchanged — do not add a `hooks` key to `.codex-plugin/plugin.json`, validation refuses it.
+- **Hooks come from default discovery.** Codex looks for a plugin's hooks at
+  `<plugin root>/hooks/hooks.json` — the same path and file Claude Code uses — and resolves
+  `${CLAUDE_PLUGIN_ROOT}` inside it, documented as a compatibility alias alongside its own
+  `PLUGIN_ROOT`. That is the whole reason one hooks file serves both harnesses. A plugin manifest
+  can override the path with a `hooks` entry, but this repo ships no Codex manifest, so the default
+  is what applies.
+- **Keep the `PostToolUse` matcher on Claude Code's exact-match path.** Claude Code treats a
+  matcher containing only letters, digits, `_`, `-`, spaces, `,` and `|` as a list of exact tool
+  names; anything else is an unanchored regex tested with `RegExp.test`. `apply_patch|Edit|Write`
+  qualifies as exact, so it matches those three tool names and nothing else. Add a `.` or `*` and
+  it silently becomes a regex that also matches `MultiEdit` and `NotebookEdit`, whose payloads this
+  plugin does not read (`MultiEdit` nests `file_path` inside `edits[]` rather than at the top
+  level). Widen the matcher only together with `hook-payload-common.sh`.
 - **Hooks are a stable, default-on feature**, not experimental. The flag is `[features] hooks`
   (`codex features list` shows it enabled); there is no `codex_hooks` flag. Codex also runs hooks on
   Windows and offers a `commandWindows` override — but these scripts are `bash` and need `jq`, so

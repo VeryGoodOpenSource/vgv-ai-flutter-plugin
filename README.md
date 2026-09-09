@@ -73,7 +73,7 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 | **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__.*very-good-cli__.*`) | Auto-approves Very Good CLI MCP tool calls in every run mode via a PreToolUse `allow` decision, so they never dead-end when the tool isn't on `permissions.allow` (including under `skipAutoPermissionPrompt`); denies with an install/upgrade message if the CLI is missing or < 1.3.0 |
 | **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking) |
 | **Allow Read-only Git** (`allow-readonly-git.sh`) | PreToolUse (`Bash`, `flutter-reviewer` agent only) | Restricts the `flutter-reviewer` agent's Bash to `git diff`/`git status`; exits 2 on anything else (blocking). Scoped via the agent's frontmatter, not `hooks.json` |
-| **Analyze** (`analyze.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
+| **Analyze** (`analyze.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file(s); on failure exits 2, which surfaces the analyzer output to the model as feedback so it fixes the issue. The edit itself already happened and is not reverted |
 | **Format** (`format.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
 
 Codex runs this same `hooks/hooks.json` and these same scripts — `apply_patch` is its file-editing

@@ -31,7 +31,7 @@ from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is decla
 
 These run **after** a tool call completes:
 
-- `apply_patch|Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file(s); exits 2 on failure (blocking — Claude must fix the issue)
+- `apply_patch|Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file(s); on failure exits 2, which feeds the analyzer output back to the model as a message. `PostToolUse` runs after the tool, so this does not block or revert the edit
 - `apply_patch|Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file(s); always exits 0 (non-blocking)
 
 Both read the changed files through `hook-payload-common.sh`, which handles Claude Code's
