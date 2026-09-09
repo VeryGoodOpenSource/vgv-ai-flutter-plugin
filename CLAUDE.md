@@ -34,9 +34,10 @@ These run **after** a tool call completes:
 - `apply_patch|Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file(s); on failure exits 2, which feeds the analyzer output back to the model as a message. `PostToolUse` runs after the tool, so this does not block or revert the edit
 - `apply_patch|Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file(s); always exits 0 (non-blocking)
 
-Both read the changed files through `hook-payload-common.sh`, which handles Claude Code's
-`tool_input.file_path` and Codex's `tool_input.command` (an `apply_patch` envelope, which can
-name several files at once). That is the only harness-specific branch in the hook scripts.
+Both resolve the changed files with the same inline `jq` expression, handling Claude Code's
+`tool_input.file_path` and Codex's `tool_input.command` (an `apply_patch` envelope, which can name
+several files at once). That is the only harness-specific branch in the hook scripts, and the two
+copies must stay identical — `dart-hooks_test.sh` covers both.
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
 

@@ -50,7 +50,6 @@ hooks/
     block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
     check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.3.0
     format.sh          # Runs dart format on modified .dart files
-    hook-payload-common.sh  # Reads Claude Code file_path and Codex apply_patch payloads
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
 skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (Codex sidecar)
@@ -183,10 +182,10 @@ documentation in the same change:
   plugin changes the skill namespace on both harnesses.
 - **Changing what a hook script reads from its payload** — the two harnesses
   describe an edit differently (Claude Code `tool_input.file_path`, Codex
-  `tool_input.command` holding an apply_patch envelope). `hook-payload-common.sh`
-  is the only place that difference is handled; extend it there rather than
-  branching per harness in `analyze.sh` or `format.sh`, and add a case to
-  `hook-payload-common_test.sh`.
+  `tool_input.command` holding an apply_patch envelope). `analyze.sh` and
+  `format.sh` each read both shapes with the same inline `jq` expression — keep
+  the two copies identical, and add a case to `dart-hooks_test.sh`, which drives
+  both scripts through a stub `dart` so it needs no SDK.
 - **Changing `agents/flutter-reviewer.md`** — port the same change to
   `codex/agents/flutter-reviewer.toml`. A Codex plugin cannot ship a subagent, so
   that file is a separate copy users install by hand. Its output contract (the

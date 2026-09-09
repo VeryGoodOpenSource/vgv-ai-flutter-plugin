@@ -223,7 +223,8 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   qualifies as exact, so it matches those three tool names and nothing else. Add a `.` or `*` and
   it silently becomes a regex that also matches `MultiEdit` and `NotebookEdit`, whose payloads this
   plugin does not read (`MultiEdit` nests `file_path` inside `edits[]` rather than at the top
-  level). Widen the matcher only together with `hook-payload-common.sh`.
+  level). Widen the matcher only together with the payload reading in `analyze.sh` and
+  `format.sh`.
 - **Hooks are a stable, default-on feature**, not experimental. The flag is `[features] hooks`
   (`codex features list` shows it enabled); there is no `codex_hooks` flag. Codex also runs hooks on
   Windows and offers a `commandWindows` override — but these scripts are `bash` and need `jq`, so
@@ -236,8 +237,10 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   Code, so `warn-missing-mcp.sh` is too. Only the edit hooks differ: Codex's file-editing tool is
   `apply_patch`, so the `PostToolUse` matcher reads `apply_patch|Edit|Write` (the extra alternative
   is inert on Claude Code), and the payload hands over the raw patch with no `file_path` and no
-  changed-file list, so `hook-payload-common.sh` parses the envelope. Keep that difference in that
-  one file.
+  changed-file list, so both hooks read the paths out of the patch headers with the same inline
+  `jq` expression. A rename lists the old and new path and a delete lists none, so an existence
+  check is all the bookkeeping needed. The expression is duplicated in the two scripts rather than
+  shared through a third file; keep the copies identical and covered by `dart-hooks_test.sh`.
 - **One marketplace serves both harnesses.** `codex plugin add` only accepts
   `PLUGIN@MARKETPLACE`, so a marketplace is mandatory — but it is
   `very-good-claude-code-marketplace`, the same repo Claude Code uses, not this one. That
