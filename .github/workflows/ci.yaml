@@ -87,12 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Hook script tests
-        run: |
-          status=0
-          for test in hooks/scripts/*_test.sh; do
-            echo "::group::$test"
-            bash "$test" || status=1
-            echo "::endgroup::"
-          done
-          exit $status
+      - name: Read-only git hook tests
+        run: bash hooks/scripts/allow-readonly-git_test.sh
+      - name: Block CLI workarounds hook tests
+        run: bash hooks/scripts/block-cli-workarounds_test.sh
