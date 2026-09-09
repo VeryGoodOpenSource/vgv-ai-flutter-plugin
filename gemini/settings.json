@@ -24,7 +24,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${VGV_PLUGIN_ROOT:-$PWD}/hooks/scripts/warn-missing-mcp.sh\"",
+            "command": "bash \"${VGV_PLUGIN_ROOT}/hooks/scripts/warn-missing-mcp.sh\"",
             "timeout": 10000
           }
         ]
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${VGV_PLUGIN_ROOT:-$PWD}/hooks/scripts/check-vgv-cli.sh\"",
+            "command": "bash \"${VGV_PLUGIN_ROOT}/hooks/scripts/check-vgv-cli.sh\"",
             "timeout": 10000
           }
         ]
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${VGV_PLUGIN_ROOT:-$PWD}/hooks/scripts/block-cli-workarounds.sh\"",
+            "command": "bash \"${VGV_PLUGIN_ROOT}/hooks/scripts/block-cli-workarounds.sh\"",
             "timeout": 10000
           }
         ]
@@ -58,12 +58,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${VGV_PLUGIN_ROOT:-$PWD}/hooks/scripts/analyze.sh\"",
+            "command": "bash \"${VGV_PLUGIN_ROOT}/hooks/scripts/analyze.sh\"",
             "timeout": 30000
           },
           {
             "type": "command",
-            "command": "bash \"${VGV_PLUGIN_ROOT:-$PWD}/hooks/scripts/format.sh\"",
+            "command": "bash \"${VGV_PLUGIN_ROOT}/hooks/scripts/format.sh\"",
             "timeout": 30000
           }
         ]

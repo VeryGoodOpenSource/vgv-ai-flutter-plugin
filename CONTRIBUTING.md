@@ -170,11 +170,10 @@ this as "use the MCP tool if available; otherwise Bash" — match that.
 
 **Subagents** — subagents are not part of the Agent Skills standard, and no skill in this
 plugin dispatches one. The `flutter-reviewer` agent (`agents/flutter-reviewer.md`) is a
-Claude Code construct; on a host without a subagent mechanism its four preloaded standards
+Claude Code construct, ported to Gemini CLI at `gemini/agents/flutter-reviewer.md`; on a host
+without a subagent mechanism its four preloaded standards
 (`bloc`, `testing`, `static-security`, `accessibility`) still apply — run the review inline
-against those skills instead of dispatching the agent. Gemini CLI does have a subagent
-mechanism, and the reviewer is ported to it at `.gemini/agents/flutter-reviewer.md` — see
-[Gemini CLI](#gemini-cli) for why that is a second file rather than a shared one.
+against those skills instead of dispatching the agent.
 
 **`AskUserQuestion` and `allowed-tools`** — both are Claude Code conveniences. A skill that
 asks the user a structured question carries its own inline fallback: invoke whatever
@@ -195,6 +194,55 @@ frontmatter equivalent, and `interface.short_description`, which takes precedenc
 spec-legal `metadata: short-description` key. The `SKILL.md` body stays the one
 source of truth; the sidecar is thin, with no build step. Add one for every new skill.
 
+**Gemini CLI runtime** — Gemini CLI reads the Agent Skills standard directly, so `skills/` needs
+nothing: `gemini skills install <repo-url> --path skills` lands all 15. The enforcement layer does
+not carry over as cleanly, and `gemini/` holds the ported pieces. Verified against Gemini CLI
+0.52.0:
+
+- **Skill discovery is the standard path.** Gemini scans `.agents/skills` and `~/.agents/skills`
+  alongside its own `.gemini/skills`, so a spec-conformant skill is found with no Gemini-specific
+  file. This is the whole reason `skills/` is untouched here.
+- **Hook events are renamed, not absent.** `PreToolUse` is `BeforeTool`, `PostToolUse` is
+  `AfterTool`, `UserPromptSubmit` is `BeforeAgent`, `Stop` is `AfterAgent`; `SessionStart` keeps its
+  name. `gemini hooks migrate --from-claude` does that mapping and rewrites tool matchers
+  (`Bash` → `run_shell_command`, `Edit|Write` → `replace|write_file`), which is why
+  `gemini/settings.json` is generated rather than hand-written. It leaves three things wrong, all
+  of which fail silently: `${CLAUDE_PLUGIN_ROOT}` is not rewritten and has no Gemini equivalent for
+  settings-level hooks (hence `${VGV_PLUGIN_ROOT}`); `timeout` is copied verbatim, but Gemini reads
+  **milliseconds** where Claude Code reads seconds, so a `10` becomes a 10ms budget; and MCP
+  matchers keep Claude's `mcp__<server>__<tool>` naming when Gemini names them
+  `mcp_<server>_<tool>`. An event name it does not recognize is skipped with a one-line warning.
+- **The response shape differs, so the scripts branch.** Gemini blocks a tool on a top-level
+  `{"decision": "deny", "reason": ...}` rather than
+  `hookSpecificOutput.permissionDecision`. `deny()` and `allow()` in `vgv-cli-common.sh` read
+  `hook_event_name` off the payload and emit whichever the firing harness reads, so one script
+  serves both. A payload with no `hook_event_name` gets the Claude Code shape. Everything else is
+  shared verbatim: both harnesses put the shell command in `tool_input.command` and the edited path
+  in `tool_input.file_path`, so `block-cli-workarounds.sh`, `analyze.sh` and `format.sh` need no
+  payload changes.
+- **There is no auto-approve.** A Gemini `BeforeTool` hook can block or stand aside; it has no
+  equivalent of Claude Code's `permissionDecision: "allow"`. `check-vgv-cli.sh` therefore only
+  enforces the version gate on Gemini, and `"trust": true` on the MCP server covers approval. Do
+  not weaken the Claude Code auto-approve to make the two match.
+- **A plugin cannot ship a Gemini subagent, and the schema is strict.** Gemini loads local agents
+  from `~/.gemini/agents/` or a project's `.gemini/agents/`, so
+  `gemini/agents/flutter-reviewer.md` is a file users copy. It cannot be the same file as
+  `agents/flutter-reviewer.md`: Gemini validates frontmatter against a strict allowlist and drops
+  any agent carrying a key outside it, so `skills:` and `hooks:` are both rejected, and `tools`
+  must be a YAML list of Gemini tool names (`read_file`, `glob`, `grep_search`,
+  `run_shell_command`, `mcp_<server>_<tool>`). Gemini has no agent-scoped hooks and no per-agent
+  argument narrowing, so the read-only contract that `allow-readonly-git.sh` holds on Claude Code
+  rests on the tool list instead: the Gemini reviewer is granted no shell tool at all, which is a
+  stronger guarantee, and the caller passes it the changed files in place of the `git diff` it can
+  no longer run.
+- **Do not weaken the Claude Code path** to make Gemini simpler. `hooks/hooks.json`,
+  `.mcp.json` and `agents/flutter-reviewer.md` stay authoritative.
+
+Nothing in CI exercises Gemini CLI, so verify a change to any of it by hand. `gemini skills list`
+and a headless `gemini -p` both report what loaded — skills, agents, and hook registration — before
+any model call, so pointing `GEMINI_BASE_URL` at an unreachable address is enough to read the
+verdict without credentials.
+
 **Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
 autonomously when the context fits (that is the point of a best-practice skill), so neither
 `disable-model-invocation` (Claude Code) nor a `policy` block (Codex) is set. All trigger
@@ -204,87 +252,6 @@ human should fire, make
 it **user-invoked**: set `disable-model-invocation: true` in the frontmatter and
 `policy.allow_implicit_invocation: false` in its `agents/openai.yaml`, and keep the two in
 sync — a skill is user-invoked in both harnesses or neither.
-
-### Gemini CLI
-
-Gemini CLI reads the skills as-is; the enforcement layer is ported alongside them in
-`.gemini/`. Everything below was checked against **0.52.0** — Gemini CLI moves fast, so
-re-check rather than trust this list if a behavior surprises you.
-
-**Skill discovery** — Gemini reads four directories, all with the same
-`<name>/SKILL.md` layout this repo already uses: `.agents/skills` and `~/.agents/skills`
-(the Agent Skills standard path, what `npx skills` writes) plus `.gemini/skills` and
-`~/.gemini/skills` (what `gemini skills install` writes). No sidecar and no manifest entry
-— a spec-valid skill is a Gemini skill. **Folder trust is on by default and silently
-disables every workspace-scoped skill, agent, and hook** in an untrusted directory, which
-is the first thing to check when nothing loads.
-
-**Hooks** — mirror `hooks/hooks.json` into `.gemini/settings.json`. Generate the block
-with the migration tool rather than by hand:
-
-```bash
-gemini hooks migrate --from-claude
-```
-
-It reads `.claude/settings.json` (or `.claude/settings.local.json`) in the current
-directory, so feed it this plugin's hooks first — `jq '{hooks: .hooks}' hooks/hooks.json >
-.claude/settings.json` in a scratch directory — and it writes the converted block to
-`.gemini/settings.json`. It maps the event names (`PreToolUse` → `BeforeTool`,
-`PostToolUse` → `AfterTool`, `UserPromptSubmit` → `BeforeAgent`, `Stop` → `AfterAgent`,
-`PreCompact` → `PreCompress`, `SessionStart` unchanged) and the tool matchers
-(`Bash` → `run_shell_command`, `Edit` → `replace`, `Write` → `write_file`,
-`Read` → `read_file`). Three things it leaves for you:
-
-- **Timeouts.** Copied verbatim, but Claude Code reads seconds and Gemini reads
-  **milliseconds** — a `10` becomes a 10 ms budget that times out before `bash` starts.
-- **`${CLAUDE_PLUGIN_ROOT}`.** Only `$CLAUDE_PROJECT_DIR` is rewritten. Gemini has no
-  plugin-root variable for settings-level hooks, so the committed hooks resolve scripts
-  through `${VGV_PLUGIN_ROOT:-$PWD}`. Keep that expansion **single-level**: Gemini
-  resolves `${VAR}` and `${VAR:-default}` in settings values at load time with a
-  non-recursive regex, so a nested `${A:-${B}}` silently leaves a stray `}` in the path.
-- **MCP matchers.** Gemini names MCP tools `mcp_<server>_<tool>`, so
-  `mcp__.*very-good-cli__.*` has to become `mcp_very-good-cli_.*`. Server names cannot
-  contain `_` — `dart` and `very-good-cli` are both fine.
-
-An unrecognized event name is not an error: Gemini logs `Invalid hook event name: … Skipping.`
-and carries on, which is why `hooks/scripts/gemini-config_test.sh` asserts the event names,
-the timeout units, and the matcher naming.
-
-**Hook responses** — Gemini reads a different response shape. Claude Code blocks with
-`hookSpecificOutput.permissionDecision`; Gemini blocks with a top-level
-`{"decision": "deny", "reason": "…"}` (or exit 2 with the reason on stderr). The `deny` and
-`allow` helpers in `hooks/scripts/vgv-cli-common.sh` branch on the payload's
-`hook_event_name`, so read it with `read_hook_event "$INPUT"` before calling either. Both
-harnesses carry the shell command at `tool_input.command` and the edited path at
-`tool_input.file_path`, so payload reads need no branching. A Gemini `BeforeTool` hook
-**cannot** pre-approve a call — it blocks or stays out of the way — so `allow` is a no-op
-there and `"trust": true` on the MCP server covers approval instead.
-
-**MCP** — `.gemini/settings.json` takes the same `mcpServers` object as `.mcp.json`, so
-both files must register the same servers; `gemini-config_test.sh` fails when they diverge.
-
-**Subagents** — Gemini validates a local agent's frontmatter with a **strict** schema and
-drops the whole agent on any key outside `kind`, `name`, `description`, `display_name`,
-`tools`, `mcp_servers`, `model`, `temperature`, `max_turns`, `timeout_mins`. Claude Code's
-`skills:` and `hooks:` are both rejected, and `tools` must be a YAML **list** of Gemini tool
-names, so the two agent files are separate ports of one contract. Gemini has no agent-scoped
-hooks and no argument scoping in `tools` (only exact built-in names, `mcp_<server>_<tool>`,
-or `*`), which means a read-only agent is held read-only by **omitting** `run_shell_command`,
-`write_file`, and `replace` rather than by restricting them. Preloaded skills have no
-frontmatter equivalent either — grant `activate_skill` and have the agent load its standards
-itself.
-
-**Verifying locally** — both checks run without credentials:
-
-```bash
-gemini skills list                 # every skill, from .agents/skills or .gemini/skills
-GEMINI_API_KEY=unused GEMINI_BASE_URL=http://127.0.0.1:1 gemini -p noop
-```
-
-The second reports agent and hook registration before it reaches the model, so an
-unreachable base URL is enough to read the verdict: `Agent loading error`,
-`Invalid hook event name`, and `Hook(s) [...] failed` are the three lines that matter. The
-`Gemini CLI Loader` CI job runs exactly these two commands.
 
 ## Testing Locally
 
@@ -298,6 +265,8 @@ session and exercise it before you commit.
 - **Dart SDK** and **jq** on your `PATH` — the hooks need both.
 - **Very Good CLI** ≥ 1.3.0 (`dart pub global activate very_good_cli`) for the
   Very Good CLI MCP server tools.
+- **Gemini CLI** (`npm install -g @google/gemini-cli`) only if you touch the hooks
+  or `gemini/`, to verify the change by hand. Everything else runs without it.
 
 See the README [Hooks](README.md#hooks) and [MCP Integration](README.md#mcp-integration)
 sections for the full prerequisite details.
@@ -391,8 +360,7 @@ Every pull request runs the following checks automatically:
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
-| Script tests | Runs the hook scripts' own test suites, each case once per harness, plus the static checks on the `.gemini/` port | `hooks/scripts/*_test.sh` |
-| Gemini CLI loader | Installs the skills into a probe workspace and asserts all 15 load in a real Gemini CLI, the `flutter-reviewer` subagent passes Gemini's strict agent schema, and every `.gemini/settings.json` hook registers and runs. No credentials, no model call | `.github/workflows/ci.yaml` |
+| Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
 
 Evals do **not** run on a pull request. They call real models, so they run after a merge
 to `main` instead, scoped to the skills that changed:

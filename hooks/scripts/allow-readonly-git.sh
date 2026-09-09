@@ -7,7 +7,7 @@
 # hook (block-cli-workarounds.sh).
 #
 # Claude Code only. Gemini CLI has no agent-scoped hooks, so the Gemini port of
-# the reviewer (.gemini/agents/flutter-reviewer.md) enforces the same read-only
+# the reviewer (gemini/agents/flutter-reviewer.md) enforces the same read-only
 # contract by leaving run_shell_command out of its tool allowlist entirely.
 
 # Skip gracefully if jq is unavailable, matching the repo convention.
