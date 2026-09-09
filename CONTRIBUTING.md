@@ -268,6 +268,14 @@ copy of the hooks. Verified against Codex CLI 0.153.4:
   entries all use `source: github`, and why the two manifests coexist in that repo.
   Because the `url` source always resolves the default branch, `codex/loader_test.sh`
   synthesizes its own throwaway marketplace pointing at the working tree instead.
+- **`analyze.sh` and `format.sh` stay two separate hooks.** They are easier to maintain and
+  reason about apart, which is a deliberate choice over merging them. Two consequences to know.
+  Claude Code runs every hook in a matcher group **in parallel**, so the two race on the same
+  file: `dart format` rewrites it while `dart analyze` reads it. Formatting does not change
+  semantics, so the analyzer reports the same findings either way, though line numbers can refer
+  to the pre-format file. And because they do not share a helper, the payload-reading `jq`
+  expression is duplicated in both — keep the copies identical, and add cases to
+  `dart-hooks_test.sh`, which exercises both scripts.
 - **A plugin cannot ship a Codex subagent.** Codex loads custom agents only from `~/.codex/agents/`
   or a project's `.codex/agents/`, and `agents` is not a plugin manifest field or a discovery path.
   `codex/agents/flutter-reviewer.toml` is therefore a file users copy, either into
