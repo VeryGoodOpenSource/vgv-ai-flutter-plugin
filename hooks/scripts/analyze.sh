@@ -10,16 +10,51 @@ if ! command -v jq &>/dev/null; then
   exit 0
 fi
 
-# Extract file path from the tool input
-file_path=$(jq -r '.tool_input.file_path // empty' <<< "$input")
+# Which files did this edit touch? The two harnesses answer differently:
+#
+#   Claude Code  Edit / Write  ->  .tool_input.file_path (one path)
+#   Codex        apply_patch   ->  .tool_input.command (a patch envelope, no path)
+#
+# Codex hook payloads carry no file path and no changed-file list, so the paths
+# are read out of the patch headers. A rename emits both the old and the new
+# path; the old one no longer exists, so the -f test below drops it. Deleted
+# files never match, since only Add/Update/Move headers are selected.
+paths=$(jq -r '
+  if .tool_input.file_path then .tool_input.file_path
+  else
+    (.tool_input.command // "")
+    | select(startswith("*** Begin Patch"))
+    | split("\n")[]
+    | select(test("^\\*\\*\\* (Add File|Update File|Move to): "))
+    | sub("^\\*\\*\\* (Add File|Update File|Move to): "; "")
+  end' <<< "$input")
 
-# Skip if no file path or not a Dart file
-if [[ -z "$file_path" || "$file_path" != *.dart ]]; then
+cwd=$(jq -r '.cwd // empty' <<< "$input")
+
+files=()
+while IFS= read -r file; do
+  [ -n "$file" ] || continue
+  case "$file" in
+    *.dart) ;;
+    *) continue ;;
+  esac
+  # apply_patch paths may be relative to the session working directory.
+  case "$file" in
+    /*) ;;
+    *) if [ -n "$cwd" ]; then file="$cwd/$file"; fi ;;
+  esac
+  if [ -f "$file" ]; then
+    files+=("$file")
+  fi
+done <<< "$paths"
+
+# Nothing Dart in this edit
+if [ ${#files[@]} -eq 0 ]; then
   exit 0
 fi
 
-# Run dart analyze on the single file
-output=$(dart analyze "$file_path" 2>&1) || {
+# Run dart analyze on the changed files
+output=$(dart analyze "${files[@]}" 2>&1) || {
   echo "$output" >&2
   exit 2
 }

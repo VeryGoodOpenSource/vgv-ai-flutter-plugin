@@ -31,7 +31,25 @@ from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is decla
 
 These run **after** a tool call completes:
 
-- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue)
-- `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
+- `apply_patch|Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file(s); on failure exits 2, which feeds the analyzer output back to the model as a message. `PostToolUse` runs after the tool, so this does not block or revert the edit
+- `apply_patch|Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file(s); always exits 0 (non-blocking)
+
+Both resolve the changed files with the same inline `jq` expression, handling Claude Code's
+`tool_input.file_path` and Codex's `tool_input.command` (an `apply_patch` envelope, which can name
+several files at once). That is the only harness-specific branch in the hook scripts, and the two
+copies must stay identical.
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
+
+### Codex
+
+This repo installs as a Codex plugin via `.codex-plugin/plugin.json`, with the marketplace entry
+living in `very-good-claude-code-marketplace` alongside the Claude Code one. Codex reads
+`skills/`, `.mcp.json`, and this same `hooks/hooks.json` — resolving `${CLAUDE_PLUGIN_ROOT}` as a
+compatibility alias. That is why the `PostToolUse` matcher says `apply_patch|Edit|Write`: Codex
+names its file-editing tool `apply_patch`, and the extra alternative is inert on Claude Code.
+
+The only Codex-specific asset is `codex/agents/flutter-reviewer.toml`, because Codex has no way to
+bundle a subagent in a plugin — users copy it to `~/.codex/agents/` themselves. Change a hook or
+the reviewer agent and both harnesses are affected — see `AGENTS.md` → Maintaining Existing
+Skills, Hooks, and MCP Tools.
