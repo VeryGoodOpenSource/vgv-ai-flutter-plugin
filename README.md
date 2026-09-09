@@ -77,7 +77,7 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 | **Format** (`format.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
 
 Codex runs this same `hooks/hooks.json` and these same scripts — `apply_patch` is its file-editing
-tool, which is why that matcher covers it. See [Codex](#codex) for the differences.
+tool, which is why that matcher covers it.
 
 ### Prerequisites
 
@@ -115,30 +115,6 @@ mkdir -p .codex/agents && cp codex/agents/flutter-reviewer.toml .codex/agents/
 ```
 
 Either way, ask Codex to spawn `flutter-reviewer`.
-
-### How Codex differs from Claude Code
-
-- **The hooks are the same files.** `hooks/hooks.json` and every script under `hooks/scripts/` are
-  shared. Codex resolves `${CLAUDE_PLUGIN_ROOT}` as a compatibility alias for the installed plugin
-  directory, and it calls its file-editing tool `apply_patch` and hands the hook a raw patch rather
-  than a file path — so the `PostToolUse` matcher covers `apply_patch` and `analyze.sh` /
-  `format.sh` read both payload shapes.
-- **Codex reuses the Claude Code plugin manifest.** It falls back to `.claude-plugin/plugin.json`
-  for the plugin's name and version, and finds `.mcp.json` on its own, so no second manifest is
-  needed. The trade is that Codex has no plugin-specific presentation metadata for this plugin —
-  icons, brand color, and starter prompts in the Codex app come from the fallback.
-- **The reviewer agent is sandboxed instead of tool-restricted.** On Claude Code
-  `flutter-reviewer` has no write tools and an agent-scoped hook limits its Bash to
-  `git diff`/`git status`. Codex has no per-agent tool allowlist, so the agent declares
-  `sandbox_mode = "read-only"` — the OS refuses every write, which covers the same "never edits
-  files" guarantee.
-- **Hooks are on by default.** They are a stable Codex feature; `codex features list` shows
-  `hooks` enabled.
-- **Windows needs a POSIX shell.** Codex itself runs hooks on Windows, but every script here is
-  `bash` and needs `jq`, so run Codex under WSL or Git Bash.
-
-Codex truncates a skill `description` at 1024 characters and concatenates all of them into every
-request, which is why descriptions in this repo are kept to triggers and scope.
 
 ## Evals
 
