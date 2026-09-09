@@ -92,13 +92,14 @@ Codex installs from the same marketplace as Claude Code:
 codex plugin marketplace add VeryGoodOpenSource/very-good-claude-code-marketplace && codex plugin add vgv-ai-flutter-plugin@very-good-claude-code-marketplace
 ```
 
-That one install gives you the skills, both MCP servers, and the hooks. Codex reads them from the
-same files Claude Code does — `skills/`, `.mcp.json`, and `hooks/hooks.json` — via
-`.codex-plugin/plugin.json`. Restart Codex afterwards, then approve the hooks with `/hooks`, since
-Codex requires a review before a hook runs for the first time.
+That one install gives you the skills, both MCP servers, and the hooks. Codex discovers them from
+the same files Claude Code uses — `skills/`, `.mcp.json`, and `hooks/hooks.json` — so there is no
+Codex-specific configuration in this repo at all. Restart Codex afterwards, then approve the hooks
+with `/hooks`, since Codex requires a review before a hook runs for the first time.
 
-The reviewer agent is the one piece a plugin cannot carry, because Codex only loads custom agents
-from `~/.codex/agents/` or a project's `.codex/agents/`. Copy it in once:
+The reviewer agent is the one piece `codex plugin add` does **not** install: Codex has no way to
+bundle a subagent in a plugin, and loads custom agents only from `~/.codex/agents/` or a project's
+`.codex/agents/`. Copy it in once:
 
 ```bash
 mkdir -p ~/.codex/agents && cp codex/agents/flutter-reviewer.toml ~/.codex/agents/
@@ -113,6 +114,10 @@ Then ask Codex to spawn `flutter-reviewer`.
   directory, and it calls its file-editing tool `apply_patch` and hands the hook a raw patch rather
   than a file path — so the `PostToolUse` matcher covers `apply_patch` and `analyze.sh` /
   `format.sh` read both payload shapes.
+- **Codex reuses the Claude Code plugin manifest.** It falls back to `.claude-plugin/plugin.json`
+  for the plugin's name and version, and finds `.mcp.json` on its own, so no second manifest is
+  needed. The trade is that Codex has no plugin-specific presentation metadata for this plugin —
+  icons, brand color, and starter prompts in the Codex app come from the fallback.
 - **The reviewer agent is sandboxed instead of tool-restricted.** On Claude Code
   `flutter-reviewer` has no write tools and an agent-scoped hook limits its Bash to
   `git diff`/`git status`. Codex has no per-agent tool allowlist, so the agent declares

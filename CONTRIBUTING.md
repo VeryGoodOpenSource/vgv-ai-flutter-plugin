@@ -199,13 +199,18 @@ Claude Code one. `.codex-plugin/plugin.json` plus the marketplace entry in
 `hooks/hooks.json` from the very files Claude Code uses. There is no install script and no second
 copy of the hooks. Verified against Codex CLI 0.153.4:
 
-- **Two manifests, one source of truth.** `.codex-plugin/plugin.json` carries only what Codex needs
-  that Claude Code's manifest cannot express — the `interface` block and `mcpServers: "./.mcp.json"`,
-  which is what pulls the MCP servers in. Its `version` is bumped by release-please alongside
-  `.claude-plugin/plugin.json` (both are listed under `extra-files`), and `codex/loader_test.sh`
-  fails if the two drift. Keep `interface.longDescription` in step with the `description` in
-  `.claude-plugin/plugin.json`. `keywords` is deliberately **not** duplicated: it only affects
-  plugin search, and a second copy of a 50-plus entry list would rot.
+- **No Codex manifest, deliberately.** A `.codex-plugin/plugin.json` is optional and this repo
+  ships none. Codex falls back to `.claude-plugin/plugin.json` for the plugin's name and version
+  and discovers `.mcp.json` by itself, so an install without it is indistinguishable from one with
+  it: same skills, same namespacing, same two MCP servers, same `codex plugin list` output. The one
+  thing it would add is Codex app presentation metadata (`interface.displayName`, `category`,
+  `capabilities`, `defaultPrompt`, brand color, icons), which has no other home. That was judged
+  not worth a second manifest to keep in version-sync with the Claude Code one. Note the
+  consequence: `.claude-plugin/plugin.json` is now load-bearing for **both** harnesses, so its
+  `name` and `version` are not Claude-only fields any more. If you ever add
+  `.codex-plugin/plugin.json`, `codex/loader_test.sh` will fail until you restore field checks for
+  it — the manifest is rejected outright if it carries a `hooks` key or any field outside Codex's
+  allowed set.
 - **The plugin manifest rejects a `hooks` field.** Hooks arrive purely through default discovery at
   `<plugin root>/hooks/hooks.json`, and Codex resolves `${CLAUDE_PLUGIN_ROOT}` inside it as a
   compatibility alias for the installed plugin directory. That is why the Claude Code hooks file

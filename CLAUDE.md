@@ -42,14 +42,14 @@ All hook scripts require **jq** to parse the hook payload (they skip gracefully 
 
 ### Codex
 
-This repo is a Codex plugin too. `.codex-plugin/plugin.json` makes it installable, with the
-marketplace entry living in `very-good-claude-code-marketplace` alongside the Claude Code one.
-Codex then reads
+This repo installs as a Codex plugin with no Codex-specific config: the marketplace entry lives in
+`very-good-claude-code-marketplace` alongside the Claude Code one, and Codex falls back to
+`.claude-plugin/plugin.json` for the plugin's identity. It reads
 `skills/`, `.mcp.json`, and this same `hooks/hooks.json` — resolving `${CLAUDE_PLUGIN_ROOT}` as a
 compatibility alias. That is why the `PostToolUse` matcher says `apply_patch|Edit|Write`: Codex
 names its file-editing tool `apply_patch`, and the extra alternative is inert on Claude Code.
 
-The only Codex-specific asset is `codex/agents/flutter-reviewer.toml`, because a plugin cannot ship
-a Codex subagent. `codex/loader_test.sh` installs the repo the way a user would and asserts Codex
+The only Codex-specific asset is `codex/agents/flutter-reviewer.toml`, because Codex has no way to
+bundle a subagent in a plugin — users copy it to `~/.codex/agents/` themselves. `codex/loader_test.sh` installs the repo the way a user would and asserts Codex
 picks it all up. Change a hook or the reviewer agent and both harnesses are affected — see
 `AGENTS.md` → Maintaining Existing Skills, Hooks, and MCP Tools.

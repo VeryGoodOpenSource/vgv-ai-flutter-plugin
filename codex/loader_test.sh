@@ -19,7 +19,10 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-MANIFEST="$PLUGIN_ROOT/.codex-plugin/plugin.json"
+# This repo ships no Codex plugin manifest. Codex falls back to the Claude Code
+# one for the plugin's identity, which makes that file load-bearing for both
+# harnesses — hence reading the name from it here.
+MANIFEST="$PLUGIN_ROOT/.claude-plugin/plugin.json"
 
 PASSED=0
 FAILED=0
@@ -73,35 +76,20 @@ codex_in_sandbox() {
 printf '\033[1mCodex %s\033[0m\n' "$(codex --version 2>/dev/null | head -1)"
 
 echo ""
-echo "=== Plugin manifest ==="
+echo "=== Plugin identity ==="
 PLUGIN_NAME=$(jq -r '.name // empty' "$MANIFEST" 2>/dev/null)
 if [ -n "$PLUGIN_NAME" ]; then
-  pass "plugin.json is valid JSON (name: $PLUGIN_NAME)"
+  pass "plugin identity resolves from .claude-plugin/plugin.json (name: $PLUGIN_NAME)"
 else
-  fail "plugin.json is valid JSON"
+  fail "plugin identity resolves from .claude-plugin/plugin.json"
   exit 1
 fi
-
-# Codex ingestion requires all of these; a missing one makes the plugin
-# uninstallable, and nothing else in this repo checks them.
-for field in .version .description .author.name \
-             .interface.displayName .interface.shortDescription \
-             .interface.longDescription .interface.developerName \
-             .interface.category .interface.capabilities .interface.defaultPrompt; do
-  if [ -n "$(jq -r "$field // empty" "$MANIFEST")" ]; then
-    pass "plugin.json has $field"
-  else
-    fail "plugin.json has $field"
-  fi
-done
-
-# release-please bumps both manifests; drift means one of them is stale.
-assert_eq "plugin.json version matches .claude-plugin/plugin.json" \
-  "$(jq -r .version "$PLUGIN_ROOT/.claude-plugin/plugin.json")" \
-  "$(jq -r .version "$MANIFEST")"
-# `mcpServers` is what carries .mcp.json into Codex; without it there is no MCP.
-assert_eq "plugin.json points mcpServers at .mcp.json" "./.mcp.json" \
-  "$(jq -r '.mcpServers // empty' "$MANIFEST")"
+if [ ! -e "$PLUGIN_ROOT/.codex-plugin" ]; then
+  pass "no Codex-specific plugin manifest to keep in sync"
+else
+  fail "no Codex-specific plugin manifest to keep in sync" \
+    "found .codex-plugin — either delete it or restore its checks here"
+fi
 
 echo ""
 echo "=== Native install ==="

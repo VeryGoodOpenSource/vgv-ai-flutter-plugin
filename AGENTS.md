@@ -9,10 +9,7 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
 ```text
 .mcp.json                # MCP server configuration (Dart and Very Good CLI); read by both harnesses
 .claude-plugin/
-  plugin.json          # Claude Code plugin manifest (name, version, keywords)
-.codex-plugin/
-  plugin.json          # Codex plugin manifest (interface metadata + mcpServers -> ./.mcp.json);
-                       # the marketplace entry pointing here lives in very-good-claude-code-marketplace
+  plugin.json          # Plugin manifest (name, version, keywords); Codex falls back to this too
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 codex/                 # The only Codex-specific assets; skills, MCP and hooks are shared
@@ -181,11 +178,9 @@ documentation in the same change:
   in `README.md`, and check whether any skill's `allowed-tools` names a tool that
   was renamed or removed. Nothing validates those names. A new **server** goes in
   `.mcp.json` only; both harnesses read that file.
-- **Editing either plugin manifest** — `.claude-plugin/plugin.json` and
-  `.codex-plugin/plugin.json` describe the same plugin. Keep
-  `interface.longDescription` in the Codex manifest in step with `description` in
-  the Claude Code one, and leave `version` to release-please, which bumps both.
-  `codex/loader_test.sh` fails if the versions drift.
+- **Editing `.claude-plugin/plugin.json`** — Codex falls back to this manifest for
+  the plugin's name and version, so it is no longer Claude-Code-only. Renaming the
+  plugin changes the skill namespace on both harnesses.
 - **Changing what a hook script reads from its payload** — the two harnesses
   describe an edit differently (Claude Code `tool_input.file_path`, Codex
   `tool_input.command` holding an apply_patch envelope). `hook-payload-common.sh`
