@@ -29,19 +29,9 @@ Apply these standards to ALL internationalization work:
 - **Handle RTL layout properly** — use directional widgets for padding, positioning, and alignment
 - **Implement i18n early** — even if only one language is planned initially, the overhead is small and the long-term benefit is significant
 
-## Key Definitions
-
-| Term                            | Definition                                                                                            |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| **Locale**                      | Set of properties defining user region, language, and preferences (currency, time, numbers)           |
-| **Localization (l10n)**         | Process of adapting software for a specific language by translating text and adding regional layouts  |
-| **Internationalization (i18n)** | Process of designing software so it can be adapted to different languages without engineering changes |
-
 ## Setup Pipeline and ARB File Format
 
 Add `flutter_localizations` and `intl` as dependencies, enable `generate: true` in `pubspec.yaml`, configure `l10n.yaml`, create ARB files in `lib/l10n/arb/`, run `flutter gen-l10n`, and wire up `MaterialApp` with `localizationsDelegates` and `supportedLocales`. ARB files support simple strings, placeholders, and ICU plural syntax.
-
-See [references/setup.md](references/setup.md) for the full step-by-step setup pipeline and ARB file format examples.
 
 ## BuildContext Extension
 
@@ -114,13 +104,9 @@ showDialog<bool>(
 
 Use `EdgeInsetsDirectional` (start/end) instead of `EdgeInsets` (left/right) for all padding and margins. Use directional widget variants (`PositionedDirectional`, `AlignDirectional`, `BorderDirectional`) for RTL-aware layouts. Icons mirror automatically in RTL; images require `matchTextDirection: true`.
 
-See [references/directionality.md](references/directionality.md) for the full directionality guide including visual vs directional widgets, icon/image mirroring rules, and Material Design bidirectionality standards.
-
 ## Backend Considerations
 
 Store backend content with per-locale translations and require clients to transmit the user's locale. For error messages, map HTTP status codes or custom backend error constants to l10n keys on the frontend.
-
-See [references/backend.md](references/backend.md) for multi-language content storage patterns and error message localization approaches.
 
 ## Common Patterns
 
@@ -146,19 +132,8 @@ See [references/backend.md](references/backend.md) for multi-language content st
 3. Add plural forms in all locale ARB files
 4. Use via `context.l10n.itemCount(items.length)`
 
-## Quick Reference
+## Additional Resources
 
-| Package                 | Purpose                                 |
-| ----------------------- | --------------------------------------- |
-| `flutter_localizations` | Flutter's built-in localization support |
-| `intl`                  | Internationalization utilities          |
-
-| Command            | Purpose                                      |
-| ------------------ | -------------------------------------------- |
-| `flutter gen-l10n` | Generate localization classes from ARB files |
-
-| File               | Purpose                                            |
-| ------------------ | -------------------------------------------------- |
-| `l10n.yaml`        | Localization configuration (ARB dir, output, etc.) |
-| `app_en.arb`       | Template ARB file (source of truth)                |
-| `app_<locale>.arb` | Translated ARB file for each locale                |
+- [references/setup.md](references/setup.md) — full step-by-step setup pipeline and ARB file format examples
+- [references/directionality.md](references/directionality.md) — visual vs directional widgets, icon/image mirroring, Material bidirectionality standards
+- [references/backend.md](references/backend.md) — multi-language content storage and error message localization

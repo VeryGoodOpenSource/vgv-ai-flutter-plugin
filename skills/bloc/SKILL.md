@@ -32,13 +32,13 @@ Apply these standards to ALL Bloc/Cubit work:
 
 ## Cubit vs Bloc
 
-| Aspect            | Cubit                          | Bloc                                    |
-| ----------------- | ------------------------------ | --------------------------------------- |
-| API               | Functions → `emit(state)`      | Events → `on<Event>` → `emit(state)`    |
-| Complexity        | Low                            | Higher                                  |
-| Traceability      | Less (no event log)            | Full (events + transitions)             |
-| When to use       | Simple state, UI-driven logic  | Complex flows, event-driven, transforms |
-| Testing           | Call methods, assert states    | Add events, assert states               |
+| Aspect       | Cubit                         | Bloc                                    |
+| ------------ | ----------------------------- | --------------------------------------- |
+| API          | Functions → `emit(state)`     | Events → `on<Event>` → `emit(state)`    |
+| Complexity   | Low                           | Higher                                  |
+| Traceability | Less (no event log)           | Full (events + transitions)             |
+| When to use  | Simple state, UI-driven logic | Complex flows, event-driven, transforms |
+| Testing      | Call methods, assert states   | Add events, assert states               |
 
 ### Cubit Example
 
@@ -80,13 +80,13 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 
 **Pattern:** `BlocSubject` + `Noun` + `VerbPastTense`
 
-| Event class name                | Meaning                          |
-| ------------------------------- | -------------------------------- |
-| `TodoListSubscriptionRequested` | Subscribing to todo list stream  |
-| `TodoListTodoDeleted`           | Deleting a specific todo         |
-| `TodoListUndoDeletionRequested` | Undoing the last deletion        |
-| `LoginFormSubmitted`            | Submitting the login form        |
-| `ProfilePageRefreshed`          | Refreshing the profile page      |
+| Event class name                | Meaning                         |
+| ------------------------------- | ------------------------------- |
+| `TodoListSubscriptionRequested` | Subscribing to todo list stream |
+| `TodoListTodoDeleted`           | Deleting a specific todo        |
+| `TodoListUndoDeletionRequested` | Undoing the last deletion       |
+| `LoginFormSubmitted`            | Submitting the login form       |
+| `ProfilePageRefreshed`          | Refreshing the profile page     |
 
 ```dart
 sealed class TodoListEvent extends Equatable {
@@ -114,12 +114,12 @@ final class TodoListTodoDeleted extends TodoListEvent {
 
 Use when each state carries different data.
 
-| State class name              | Meaning                          |
-| ----------------------------- | -------------------------------- |
-| `LoginInitial`                | No action taken yet              |
-| `LoginInProgress`             | Login request in flight          |
-| `LoginSuccess`                | Login succeeded                  |
-| `LoginFailure`                | Login failed                     |
+| State class name  | Meaning                 |
+| ----------------- | ----------------------- |
+| `LoginInitial`    | No action taken yet     |
+| `LoginInProgress` | Login request in flight |
+| `LoginSuccess`    | Login succeeded         |
+| `LoginFailure`    | Login failed            |
 
 ```dart
 sealed class LoginState extends Equatable {
@@ -151,54 +151,19 @@ final class LoginFailure extends LoginState {
 
 #### Single Class Approach (one state, multiple fields)
 
-Use when all states share the same data shape.
-
-| Field         | Type                | Purpose                        |
-| ------------- | ------------------- | ------------------------------ |
-| `status`      | `enum`              | Current loading status         |
-| `items`       | `List<Item>`        | Loaded data                    |
-| `error`       | `String?`           | Error message if failed        |
-
-```dart
-enum TodoListStatus { initial, loading, success, failure }
-
-class TodoListState extends Equatable {
-  const TodoListState({
-    this.status = TodoListStatus.initial,
-    this.todos = const [],
-    this.error,
-  });
-
-  final TodoListStatus status;
-  final List<Todo> todos;
-  final String? error;
-
-  TodoListState copyWith({
-    TodoListStatus? status,
-    List<Todo>? todos,
-    String? error,
-  }) {
-    return TodoListState(
-      status: status ?? this.status,
-      todos: todos ?? this.todos,
-      error: error ?? this.error,
-    );
-  }
-
-  @override
-  List<Object?> get props => [status, todos, error];
-}
-```
+Use when all states share the same data shape: one class holding a `status` enum plus the
+data fields, with a `copyWith` for transitions. See
+[references/patterns.md](references/patterns.md) for the full shape.
 
 ---
 
 ## Architecture
 
-| Layer              | Contains                           | Depends on          |
-| ------------------ | ---------------------------------- | ------------------- |
-| **Presentation**   | Pages, Views, Widgets              | Business Logic      |
-| **Business Logic** | Blocs, Cubits                      | Data                |
-| **Data**           | Repositories, Data Providers       | External sources    |
+| Layer              | Contains                     | Depends on       |
+| ------------------ | ---------------------------- | ---------------- |
+| **Presentation**   | Pages, Views, Widgets        | Business Logic   |
+| **Business Logic** | Blocs, Cubits                | Data             |
+| **Data**           | Repositories, Data Providers | External sources |
 
 ### Data Layer
 
@@ -210,12 +175,18 @@ See [references/architecture.md](references/architecture.md) for the repository 
 
 ## Flutter Widgets
 
-- `BlocProvider` — creates and provides a Bloc/Cubit to the subtree
-- `BlocBuilder` — rebuilds widget when state changes
-- `BlocListener` — executes side effects (navigation, snackbar) on state change
-- `BlocConsumer` — combines `BlocBuilder` + `BlocListener`
-- `BlocSelector` — rebuilds only when a selected property changes
-- Use `context.read` in callbacks (`onPressed`, `onTap`), `context.watch` or `BlocBuilder` in `build` methods
-- Never use `context.watch` outside of `build`
+Use `BlocProvider` to supply a Bloc or Cubit to a subtree, then `BlocBuilder`,
+`BlocListener`, `BlocConsumer`, or `BlocSelector` to consume it. Reach for `BlocSelector`
+when a rebuild should depend on one field rather than the whole state, and `BlocListener`
+for side effects such as navigation or a snackbar.
 
-See [references/widgets.md](references/widgets.md) for the full widget and context extension tables, Page/View pattern example, and BlocListener example. See [references/testing.md](references/testing.md) for `blocTest()` parameters, Cubit/Bloc test examples, mocking dependencies, and widget integration tests. See [references/patterns.md](references/patterns.md) for adding features with Bloc/Cubit, async operations, and event transformers.
+The rule that matters: **`context.read` in callbacks** (`onPressed`, `onTap`),
+**`context.watch` or `BlocBuilder` in `build`**. Never call `context.watch` outside a
+`build` method.
+
+## Additional Resources
+
+- [references/architecture.md](references/architecture.md) — repository example, feature folder structure, test directory layout
+- [references/widgets.md](references/widgets.md) — widget and context extension tables, Page/View pattern, `BlocListener` example
+- [references/testing.md](references/testing.md) — `blocTest()` parameters, Cubit/Bloc test examples, mocking dependencies, widget integration tests
+- [references/patterns.md](references/patterns.md) — single-class state, adding features with Bloc/Cubit, async operations, event transformers

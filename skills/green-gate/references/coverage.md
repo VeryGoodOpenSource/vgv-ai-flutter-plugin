@@ -8,7 +8,7 @@ per-file fix targets).
 ## Default target
 
 `100` is VGV's house standard — the `very_good_cli` templates ship at 100% and
-Very Good Core's CI fails below it. "100%" means 100% of *testable, hand-written*
+Very Good Core's CI fails below it. "100%" means 100% of _testable, hand-written_
 code: generated files leave the denominator via `exclude_coverage`, and
 `check_ignore: true` honors `// coverage:ignore` for genuinely unreachable lines,
 so the target is achievable rather than a ceiling on every generated line. It is

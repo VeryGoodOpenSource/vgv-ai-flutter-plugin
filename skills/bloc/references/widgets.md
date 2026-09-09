@@ -1,23 +1,23 @@
 # Flutter Widgets
 
-| Widget              | Purpose                                                      |
-| ------------------- | ------------------------------------------------------------ |
-| `BlocProvider`      | Creates and provides a Bloc/Cubit to the subtree             |
-| `BlocBuilder`       | Rebuilds widget when state changes                           |
-| `BlocListener`      | Executes side effects (navigation, snackbar) on state change |
-| `BlocConsumer`      | Combines `BlocBuilder` + `BlocListener`                      |
-| `BlocSelector`      | Rebuilds only when a selected property changes               |
-| `MultiBlocProvider` | Provides multiple Blocs/Cubits without nesting               |
-| `MultiBlocListener` | Registers multiple listeners without nesting                 |
-| `RepositoryProvider`| Provides a repository to the subtree                         |
+| Widget               | Purpose                                                      |
+| -------------------- | ------------------------------------------------------------ |
+| `BlocProvider`       | Creates and provides a Bloc/Cubit to the subtree             |
+| `BlocBuilder`        | Rebuilds widget when state changes                           |
+| `BlocListener`       | Executes side effects (navigation, snackbar) on state change |
+| `BlocConsumer`       | Combines `BlocBuilder` + `BlocListener`                      |
+| `BlocSelector`       | Rebuilds only when a selected property changes               |
+| `MultiBlocProvider`  | Provides multiple Blocs/Cubits without nesting               |
+| `MultiBlocListener`  | Registers multiple listeners without nesting                 |
+| `RepositoryProvider` | Provides a repository to the subtree                         |
 
 ## Context Extensions
 
-| Extension                | Purpose                                          | Rebuilds?       |
-| ------------------------ | ------------------------------------------------ | --------------- |
-| `context.read<T>()`      | Access Bloc/Cubit instance (one-time read)       | No              |
-| `context.watch<T>()`     | Access Bloc/Cubit and subscribe to changes       | Yes             |
-| `context.select<T, R>()` | Subscribe to a specific state property           | Yes (selective) |
+| Extension                | Purpose                                    | Rebuilds?       |
+| ------------------------ | ------------------------------------------ | --------------- |
+| `context.read<T>()`      | Access Bloc/Cubit instance (one-time read) | No              |
+| `context.watch<T>()`     | Access Bloc/Cubit and subscribe to changes | Yes             |
+| `context.select<T, R>()` | Subscribe to a specific state property     | Yes (selective) |
 
 - Use `context.read` in callbacks (`onPressed`, `onTap`, `initState`)
 - Use `context.watch` or `BlocBuilder` in `build` methods

@@ -26,7 +26,7 @@ to fix failures, and loops until one final iteration proves all four pass
 simultaneously with observed numbers. Acts autonomously on objective failures;
 escalates only on stalls, genuine ambiguity, or infrastructure failure.
 
-This skill orchestrates tools and edits files. It defers the *how* of writing
+This skill orchestrates tools and edits files. It defers the _how_ of writing
 tests to the `testing` skill — it never duplicates mocking, structure, or
 coverage-pattern guidance.
 
@@ -53,7 +53,7 @@ Apply these to ALL green-gate work:
   with `applyFixes: true`, `mcp__dart__dart_format`, `mcp__very-good-cli__test`
   with the coverage triple), in gate order, with the precedence rule that makes
   the order matter. Never substitute an improvised shell plan of `flutter
-  analyze` / `flutter test --coverage` for the tools the loop actually runs.
+analyze` / `flutter test --coverage` for the tools the loop actually runs.
 - **Never cache green** — re-evaluate every gate every round. Fixing analyze or
   test failures and writing new test files shifts both formatting and the
   coverage denominator, so a previously green gate can regress.
@@ -96,7 +96,7 @@ For each package root (see **Recursive / Monorepo**), run this algorithm:
    authoritative pass/fail. Parse `coverage/lcov.info` for the displayed
    percentage and per-file fix targets (advisory). If below target, author tests
    for the ranked under-covered files (via the `testing` skill), go to step 7.
-6. **Exit** — if all four gates are green in *this same iteration*, confirm
+6. **Exit** — if all four gates are green in _this same iteration_, confirm
    success with the observed numbers and stop. This is the only exit-green path.
 7. **Re-verify** — increment the iteration counter, recompute the failure
    fingerprint, check escalation triggers (no progress, oscillation, cap). If a
@@ -259,7 +259,7 @@ Stop and surface to the user when:
 | **Ambiguous fix**                 | Multiple valid resolutions (e.g. change the API vs suppress the lint) — prefer root-cause; escalate when it is a product/API decision                                                                                                                                                                                                               |
 | **Unreachable-code coverage gap** | Suggest `// coverage:ignore` (requires `check_ignore: true`, Dart-only) rather than chasing 100%                                                                                                                                                                                                                                                    |
 | **Denominator hygiene**           | A generated file not matched by the exclude glob — widen `exclude_coverage`, not `// coverage:ignore`                                                                                                                                                                                                                                               |
-| **Tool / hook failure**           | MCP test timeout (`timeout_seconds` kill), analyzer crash, CLI-missing hook denial (escalate with the install hint `dart pub global activate very_good_cli`), or a *repeated* `analyze.sh` rejection that still blocks a needed edit after revision — a single rejection is in-loop analyze-gate feedback (see **Analyze Gate**), not an escalation |
+| **Tool / hook failure**           | MCP test timeout (`timeout_seconds` kill), analyzer crash, CLI-missing hook denial (escalate with the install hint `dart pub global activate very_good_cli`), or a _repeated_ `analyze.sh` rejection that still blocks a needed edit after revision — a single rejection is in-loop analyze-gate feedback (see **Analyze Gate**), not an escalation |
 
 When escalating, name the gate that is red — analyze, format, test, or coverage —
 then give its fingerprint entries verbatim (`diagnosticCode @ file:line` for

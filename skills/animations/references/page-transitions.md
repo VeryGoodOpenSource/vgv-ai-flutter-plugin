@@ -107,3 +107,28 @@ class DetailsPageRoute extends GoRouteData {
   }
 }
 ```
+
+## Hero Animations
+
+Use `Hero` for shared-element transitions between routes. The framework handles the
+animation automatically — matching tags on both routes is the whole setup.
+
+```dart
+// Source screen
+Hero(
+  tag: 'product-image-${product.id}',
+  child: Image.network(product.imageUrl),
+)
+
+// Destination screen
+Hero(
+  tag: 'product-image-${product.id}',
+  child: Image.network(product.imageUrl),
+)
+```
+
+Rules for `Hero`:
+
+- **Tags must be unique within each route** — use meaningful identifiers, not indices
+- **Both source and destination must be visible during the transition** — `Hero` does not work with lazy lists that remove the source widget
+- **Wrap only the visual element** — not the entire card or list tile

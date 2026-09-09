@@ -98,3 +98,45 @@ extension PumpApp on WidgetTester {
   }
 }
 ```
+
+## Pumping Methods
+
+| Method               | When to use                                                                     |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `pumpWidget(widget)` | Initial render — builds the widget tree for the first time                      |
+| `pump()`             | Trigger a single frame rebuild (after `setState`, tap, etc.)                    |
+| `pump(Duration)`     | Advance time by a specific duration (animations, debounce)                      |
+| `pumpAndSettle()`    | Pump repeatedly until no pending frames — use for animations that must complete |
+
+## Finders
+
+| Finder                          | Use case                              | Example                                                                  |
+| ------------------------------- | ------------------------------------- | ------------------------------------------------------------------------ |
+| `find.byType(T)`                | Find widgets by type (default choice) | `find.byType(ElevatedButton)`                                            |
+| `find.text('x')`                | Find text content visible to users    | `find.text('Submit')`                                                    |
+| `find.byKey(Key)`               | Find by explicit key (last resort)    | `find.byKey(Key('submit_button'))`                                       |
+| `find.byWidget(w)`              | Find an exact widget instance         | `find.byWidget(myWidget)`                                                |
+| `find.descendant(of, matching)` | Scoped search within a subtree        | `find.descendant(of: find.byType(AppBar), matching: find.text('Title'))` |
+
+## Interactions
+
+```dart
+// Tap
+await tester.tap(find.byType(ElevatedButton));
+await tester.pump();
+
+// Enter text
+await tester.enterText(find.byType(TextField), 'hello@example.com');
+await tester.pump();
+
+// Drag / scroll
+await tester.drag(find.byType(ListView), const Offset(0, -300));
+await tester.pump();
+
+// Long press
+await tester.longPress(find.byType(ListTile));
+await tester.pump();
+```
+
+Always call `pump()` (or `pumpAndSettle()`) after every interaction — widgets do not
+rebuild until a frame is triggered.

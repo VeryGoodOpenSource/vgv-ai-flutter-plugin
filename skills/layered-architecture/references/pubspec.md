@@ -102,3 +102,41 @@ dev_dependencies:
     sdk: flutter
   very_good_analysis: ^7.0.0
 ```
+
+## Layer Boundaries in `pubspec.yaml`
+
+Each layer's `pubspec.yaml` is what actually enforces the architecture. Path dependencies
+point one direction only.
+
+### Data Package (`packages/user_api_client/pubspec.yaml`)
+
+```yaml
+dependencies:
+  # External packages only — no local dependencies
+  http: ^1.4.0
+  json_annotation: ^4.9.0
+```
+
+### Repository Package (`packages/user_repository/pubspec.yaml`)
+
+```yaml
+dependencies:
+  equatable: ^2.0.7
+  # Path dependency on data layer package
+  user_api_client:
+    path: ../user_api_client
+```
+
+### Root App (`pubspec.yaml`)
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.0
+  # Repository packages only — data packages are transitive
+  auth_repository:
+    path: packages/auth_repository
+  user_repository:
+    path: packages/user_repository
+```

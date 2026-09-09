@@ -1,6 +1,80 @@
 # Explicit Animation Patterns
 
-Detailed patterns for `AnimationController`-based animations. See the main skill file for core setup and standards.
+Detailed patterns for `AnimationController`-based animations. Reach for these only after the
+decision tree in the main skill file rules out an implicit animation.
+
+## Controller Setup
+
+```dart
+class _MyWidgetState extends State<MyWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Durations.medium2,
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Easing.standard,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _fadeAnimation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fadeAnimation.value,
+          child: child,
+        );
+      },
+      child: child, // static child — not rebuilt each frame
+    );
+  }
+}
+```
+
+Use `SingleTickerProviderStateMixin` when the widget owns exactly one controller, and
+`TickerProviderStateMixin` only when it owns several.
+
+## Staggering with Intervals
+
+Use `Interval` inside `CurvedAnimation` to stagger animations on a single controller — the
+slide starts partway through the fade rather than alongside it. The overlapping `Interval`
+ranges are the whole point of this pattern.
+
+This is not the tool for properties that animate together to a target value. A fade and a
+slide that both run on the same rebuild are two implicit widgets, not a controller with two
+intervals:
+
+```dart
+late final Animation<double> _fadeAnimation = CurvedAnimation(
+  parent: _controller,
+  curve: const Interval(0.0, 0.5, curve: Easing.standard),
+);
+
+late final Animation<Offset> _slideAnimation = Tween<Offset>(
+  begin: const Offset(0, 0.25),
+  end: Offset.zero,
+).animate(
+  CurvedAnimation(
+    parent: _controller,
+    curve: const Interval(0.2, 0.8, curve: Easing.emphasized),
+  ),
+);
+```
 
 ## Responding to Widget Updates
 

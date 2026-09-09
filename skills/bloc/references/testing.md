@@ -2,16 +2,16 @@
 
 ## `blocTest()` Parameters
 
-| Parameter  | Type                        | Purpose                                        |
-| ---------- | --------------------------- | ---------------------------------------------- |
-| `build`    | `() => Bloc/Cubit`          | Creates the Bloc/Cubit under test              |
-| `act`      | `(bloc) => void`            | Interacts with the Bloc/Cubit                  |
-| `expect`   | `() => List<State>`         | Expected states emitted (in order)             |
-| `seed`     | `() => State`               | Initial state before `act`                     |
-| `setUp`    | `() => void`                | Runs before `build`                            |
-| `verify`   | `(bloc) => void`            | Additional verifications after `expect`        |
-| `errors`   | `() => List<Matcher>`       | Expected errors thrown                         |
-| `wait`     | `Duration`                  | Wait duration before asserting (for debounce)  |
+| Parameter | Type                  | Purpose                                       |
+| --------- | --------------------- | --------------------------------------------- |
+| `build`   | `() => Bloc/Cubit`    | Creates the Bloc/Cubit under test             |
+| `act`     | `(bloc) => void`      | Interacts with the Bloc/Cubit                 |
+| `expect`  | `() => List<State>`   | Expected states emitted (in order)            |
+| `seed`    | `() => State`         | Initial state before `act`                    |
+| `setUp`   | `() => void`          | Runs before `build`                           |
+| `verify`  | `(bloc) => void`      | Additional verifications after `expect`       |
+| `errors`  | `() => List<Matcher>` | Expected errors thrown                        |
+| `wait`    | `Duration`            | Wait duration before asserting (for debounce) |
 
 ## Cubit Test Example
 
