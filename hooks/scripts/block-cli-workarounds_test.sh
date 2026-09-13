@@ -90,6 +90,52 @@ assert_allowed "ls"
 assert_allowed "pwd"
 
 echo ""
+echo "--- Tool scoping ---"
+
+# Run hook with an explicit tool_name alongside the command.
+# Returns: "blocked" or "allowed"
+run_hook_for_tool() {
+  local tool="$1"
+  local cmd="$2"
+  local payload
+  payload=$(jq -n --arg t "$tool" --arg c "$cmd" '{"tool_name":$t,"tool_input":{"command":$c}}')
+  local output
+  output=$(echo "$payload" | bash "$HOOK" 2>/dev/null) || true
+  if echo "$output" | grep -q '"permissionDecision"'; then
+    echo "blocked"
+  else
+    echo "allowed"
+  fi
+}
+
+assert_tool_result() {
+  local expected="$1"
+  local tool="$2"
+  local cmd="$3"
+  local result
+  result=$(run_hook_for_tool "$tool" "$cmd")
+  if [ "$result" = "$expected" ]; then
+    printf "  \033[32mPASS\033[0m  %-8s %-22s %s\n" "$expected" "$tool" "$cmd"
+    PASSED=$((PASSED + 1))
+  else
+    printf "  \033[31mFAIL\033[0m  expected %s but got %s:  %s / %s\n" "$expected" "$result" "$tool" "$cmd"
+    FAILED=$((FAILED + 1))
+  fi
+}
+
+# The host's shell tool is this hook's business, whatever it is named.
+assert_tool_result blocked "Bash"  "flutter test"
+assert_tool_result blocked "Shell" "flutter test"
+assert_tool_result blocked "Bash"  "very_good create flutter_app"
+
+# Anything else is not. An unrelated MCP tool can carry a `command` argument of its own,
+# and reaches this hook on any host that does not apply the hooks.json matcher.
+assert_tool_result allowed "MCP:run_terminal_cmd" "flutter test"
+assert_tool_result allowed "MCP:browser_tabs"     "flutter test"
+assert_tool_result allowed "mcp__some-server__exec" "dart test --coverage"
+assert_tool_result allowed "Write"                "flutter test"
+
+echo ""
 echo "=== Results: $PASSED passed, $FAILED failed ==="
 
 if [ "$FAILED" -gt 0 ]; then
