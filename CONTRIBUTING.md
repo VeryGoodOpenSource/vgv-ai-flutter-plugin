@@ -35,7 +35,7 @@ argument-hint: "[file-or-directory]"   # optional
 
 | Field | Required | Rules |
 | ----- | -------- | ----- |
-| `name` | Yes | Lowercase letters, numbers, and hyphens only; no leading, trailing, or consecutive hyphen; 1-64 chars; **must match the skill's directory name** (enforced in CI by `validate-skill`) |
+| `name` | Yes | Lowercase letters, numbers, and hyphens only; no leading, trailing, or consecutive hyphen; 1-64 chars; **must match the skill's directory name** (enforced in CI by `skills_lint`) |
 | `description` | Yes | Describes when the skill should be triggered |
 | `allowed-tools` | No | Space-separated list of tools the skill may use; a Claude Code permission hint, not a hard cap |
 | `argument-hint` | No | Placeholder hint shown to the user |
@@ -141,17 +141,19 @@ extras (`argument-hint`, `effort`, `model`) are not spec fields, but
 Claude Code reads them and nothing else breaks. (The spec's optional `skills-ref` linter is
 stricter, rejecting any top-level field outside the six it allows; `npx skills` does not run
 it, and nesting these extras under `metadata:` is the escape hatch if strict conformance is
-ever needed.) The `Skill validation` CI job (`Flash-Brew-Digital/validate-skill@v1`) enforces
-the spec (including name-matches-directory) across every skill on each pull request.
+ever needed.) The `Skills Lint` CI job runs VGV's
+[`skills_lint`](https://github.com/VeryGoodOpenSource/very_good_workflows/blob/main/.github/workflows/skills_lint.yml)
+reusable workflow, which enforces the spec (including name-matches-directory) across every
+skill on each pull request. Rule severities live in `skills_lint.yaml` at the repo root.
 
 **Description length** — `description` carries the whole trigger surface, so it is the field
-that grows. The spec caps it at **1024 characters and `validate-skill` treats an overrun as an
-error**, not a warning, so `ignore-rules` and `fail-on-warning` will not save a long one: it
-hard-fails CI. Claude Code separately truncates the listing at 1536 characters, and Codex
-truncates at 1024 with no warning. Under 50 characters trips a `description-quality` warning,
-which does fail the build here. Keep the field to trigger phrases and scope, and
-leave pure teaching material to the body, which has no cap. Do **not** assume a sentence is
-redundant because the body repeats it: routing happens before the body is ever read, so a
+that grows. The spec caps it at **1024 characters and `skills_lint` treats an overrun as an
+error** via its `description-too-long` rule, not a warning, so no config will save a long one:
+it hard-fails CI. Claude Code separately truncates the listing at 1536 characters, and Codex
+truncates at 1024 with no warning. Nothing in CI enforces a *minimum* length, but a
+description under 50 characters is almost never specific enough to route on. Keep the field to
+trigger phrases and scope, and leave pure teaching material to the body, which has no cap.
+Do **not** assume a sentence is redundant because the body repeats it: routing happens before the body is ever read, so a
 clause that reads like explanation may be the only thing that makes the skill findable.
 `green-gate` lost its "exit only on observed numbers" clause on exactly that reasoning and
 fell from 3/3 to 1/3 on the case measuring it. Re-run a skill's eval cases after trimming its
@@ -306,7 +308,7 @@ Every pull request runs the following checks automatically:
 | ----- | ------------ | ------ |
 | Markdown quality | Lints all `*.md` files with markdownlint-cli2 | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
-| Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
+| Skills Lint | Validates **every** `SKILL.md`'s frontmatter, structure, and linked paths against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `skills_lint.yaml` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
 | Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
 

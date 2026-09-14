@@ -1,0 +1,9 @@
+# Configuration for skills_lint, run in CI by the `🔍 Skills Lint` job in
+# .github/workflows/ci.yaml. See https://pub.dev/packages/skills_lint.
+#
+# Both rules below are off or warning-only by default. They are promoted to
+# errors here so a broken reference or a stale path fails the build.
+skills_lint:
+  rules:
+    check-relative-paths: error
+    check-absolute-paths: error
