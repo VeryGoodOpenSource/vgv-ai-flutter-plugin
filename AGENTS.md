@@ -194,6 +194,20 @@ Isolation between the two columns is held by the provider keys in `promptfooconf
 and nothing checks it automatically, so treat any change to `tools`, `working_dir`,
 `setting_sources` or `plugins` as invalidating earlier numbers.
 
+## Publishing
+
+Two install paths ship from this repo. The Claude Code plugin carries everything: skills,
+hooks, the `flutter-reviewer` agent, and the MCP servers. The
+[skills.sh](https://skills.sh) registry carries the skills alone, installed with
+`npx skills add VeryGoodOpenSource/vgv-ai-flutter-plugin` into `.agents/skills/` on any
+host that reads it.
+
+The registry needs no manifest and no submission, but it does depend on the `skills` CLI
+finding every skill at `skills/<name>/SKILL.md`. Adding a `SKILL.md` at the repository
+root shadows that whole tree. The `Skills Install` CI job guards the contract. See
+`CONTRIBUTING.md` → Cross-harness portability → Publishing to skills.sh, which is the
+authority on it.
+
 ## Commits
 
 Use conventional commits: `type(scope): description`

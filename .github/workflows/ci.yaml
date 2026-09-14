@@ -73,6 +73,42 @@ jobs:
           echo "Valid: ${{ steps.validate.outputs.valid }}"
           echo "Errors: ${{ steps.validate.outputs.errors }}"
           echo "Warnings: ${{ steps.validate.outputs.warnings }}"
+  skills-install:
+    name: 📥 Skills Install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Install this tree with the skills CLI
+        env:
+          DISABLE_TELEMETRY: '1'
+          DO_NOT_TRACK: '1'
+        run: |
+          mkdir -p "$RUNNER_TEMP/skills-install"
+          cd "$RUNNER_TEMP/skills-install"
+          npx --yes skills@latest add "$GITHUB_WORKSPACE" --all
+      - name: Verify every skill installed into .agents/skills
+        run: |
+          target="$RUNNER_TEMP/skills-install/.agents/skills"
+          expected=$(find -L skills -name SKILL.md -type f | \
+            xargs -n1 dirname | xargs -n1 basename | sort -u)
+          actual=$(ls -1 "$target" | sort -u)
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::skills CLI discovery does not match skills/ in this tree."
+            echo "A skill the CLI cannot see is a skill nobody can install with npx skills."
+            diff <(echo "$expected") <(echo "$actual") || true
+            exit 1
+          fi
+          for skill in $expected; do
+            if ! diff -r "skills/$skill" "$target/$skill" >/dev/null; then
+              echo "::error::$skill was rewritten on install and no longer matches the source."
+              diff -r "skills/$skill" "$target/$skill" || true
+              exit 1
+            fi
+          done
+          echo "$(echo "$expected" | wc -l) skills installed byte-identical into .agents/skills/"
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest

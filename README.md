@@ -13,6 +13,8 @@ VGV AI Flutter Plugin is a collection of contextual best-practices skills that C
 
 ## Installation
 
+### Claude Code
+
 One-line install from your terminal:
 
 ```bash
@@ -34,6 +36,18 @@ Or inside an active Claude Code session, run these as **two separate commands** 
    ```
 
 For more details, see the [Very Good Claude Marketplace][marketplace_link].
+
+### Other agents
+
+The skills are also published to the [skills.sh][skills_sh_link] registry as [Agent Skills][agentskills_link], so any agent that reads `.agents/skills/` can install them:
+
+```bash
+npx skills add VeryGoodOpenSource/vgv-ai-flutter-plugin
+```
+
+That command installs every skill in this repository into `.agents/skills/`, byte-identical to the copies here, and wires them into each agent's own skills directory. Loading is verified on Claude Code, Codex, and Gemini CLI. The `skills` CLI also wires up Amp, Cursor, GitHub Copilot, and OpenCode, which this repository does not test.
+
+Skills are all this path installs. The hooks, the `flutter-reviewer` agent, and the two MCP servers are Claude Code plugin features and still need the plugin install above. Every skill that drives an MCP tool names the equivalent `very_good`, `dart`, or `flutter` command as a fallback, so none of them blocks when the servers are absent.
 
 ## Skills
 
@@ -188,6 +202,8 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
+[skills_sh_link]: https://skills.sh/?q=vgv-ai-flutter-plugin
+[agentskills_link]: https://agentskills.io/specification
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures
 [very_good_ventures_link_dark]: https://verygood.ventures#gh-dark-mode-only

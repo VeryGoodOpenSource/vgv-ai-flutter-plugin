@@ -203,6 +203,29 @@ it **user-invoked**: set `disable-model-invocation: true` in the frontmatter and
 `policy.allow_implicit_invocation: false` in its `agents/openai.yaml`, and keep the two in
 sync — a skill is user-invoked in both harnesses or neither.
 
+**Publishing to skills.sh** — this repo is published to the
+[skills.sh](https://skills.sh) registry, so `npx skills add
+VeryGoodOpenSource/vgv-ai-flutter-plugin` installs every skill here into `.agents/skills/`
+on any host that reads it. There is nothing to submit and no registry manifest to maintain:
+the `skills` CLI clones the repo and walks it, and the listing populates itself from
+anonymous install telemetry. What the listing depends on is **discovery**, and discovery
+is a contract on the tree's shape:
+
+- Skills stay at `skills/<name>/SKILL.md`. That is one of the CLI's standard search
+  locations, which is why no `skills` array in `.claude-plugin/plugin.json` is needed. The
+  CLI does read a `skills` array when a plugin manifest declares one, but only to reach
+  paths outside its bounded depth-3 walk, and every skill here is already inside it.
+- **Never add a `SKILL.md` at the repository root.** A root skill shadows the whole
+  `skills/` tree, and the CLI then discovers exactly one skill instead of all of them.
+  `validate-skill` would still pass, so nothing else would catch it.
+- A skill the CLI cannot read is dropped in silence, not reported. Malformed frontmatter
+  is the usual cause, which is what the frontmatter rules above are protecting.
+
+The `Skills Install` CI job holds this contract: it installs the pull request's own tree
+with the CLI and fails if the set of installed skills differs from `skills/`, or if any
+installed skill is no longer byte-identical to its source. It sets `DISABLE_TELEMETRY=1`,
+so CI runs never inflate the registry's install counts.
+
 ## Testing Locally
 
 Editing a skill or hook and pushing straight to a PR only tells you the files
@@ -276,6 +299,20 @@ Then, inside a session:
 /plugin install vgv-ai-flutter-plugin
 ```
 
+### Rehearse the skills.sh install (optional)
+
+The `skills` CLI takes a local path as a source, so you can install your working copy
+exactly the way a user on another host would, without pushing:
+
+```bash
+mkdir /tmp/skills-test && cd /tmp/skills-test
+DISABLE_TELEMETRY=1 npx --yes skills@latest add /ABSOLUTE/path/to/vgv-ai-flutter-plugin --all
+```
+
+Skills land in `/tmp/skills-test/.agents/skills/`, with per-agent directories linking to
+them. Check that the skill you touched is present and that its `references/` came with it.
+Keep `DISABLE_TELEMETRY=1` set so a local rehearsal is not counted as a real install.
+
 ### Validate before you push
 
 Run the same check CI runs, from the repository root:
@@ -307,6 +344,7 @@ Every pull request runs the following checks automatically:
 | Markdown quality | Lints all `*.md` files with markdownlint-cli2 | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | Skill validation | Validates **every** `SKILL.md`'s frontmatter and structure against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `Flash-Brew-Digital/validate-skill@v1` |
+| Skills install | Installs this tree with the `skills` CLI and checks every skill lands in `.agents/skills/` byte-identical, so the `npx skills add` path cannot regress unnoticed | `.github/workflows/ci.yaml` |
 | Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
 | Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
 
