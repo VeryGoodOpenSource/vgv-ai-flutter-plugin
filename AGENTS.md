@@ -7,11 +7,16 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
 ## Repository Structure
 
 ```text
-.mcp.json                # MCP server configuration (Dart and Very Good CLI)
+.mcp.json                # MCP server configuration (Dart and Very Good CLI); read by both harnesses
 .claude-plugin/
-  plugin.json          # Plugin manifest (name, version, keywords)
+  plugin.json          # Claude Code plugin manifest (name, version, keywords)
+.codex-plugin/
+  plugin.json          # Codex plugin manifest (interface metadata + mcpServers -> ./.mcp.json)
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
+codex/                 # The only Codex-specific assets; skills, MCP and hooks are shared
+  agents/
+    flutter-reviewer.toml  # Codex port of agents/flutter-reviewer.md — users copy it to ~/.codex/agents/
 docs/
   plan/                # Planning and design documents
 evals/
@@ -167,10 +172,27 @@ documentation in the same change:
   automatically, so verify each one by hand.
 - **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
   section in `README.md` (and the `## Hooks` section in `CLAUDE.md` if behavior
-  changes).
+  changes). The file is shared with Codex, so keep any `PostToolUse` matcher
+  covering `apply_patch` as well as `Edit|Write`, or the hook stops firing there.
 - **Adding or changing an MCP tool** — update the **MCP Integration** tools table
   in `README.md`, and check whether any skill's `allowed-tools` names a tool that
-  was renamed or removed. Nothing validates those names.
+  was renamed or removed. Nothing validates those names. A new **server** goes in
+  `.mcp.json` only; both harnesses read that file.
+- **Editing either plugin manifest** — `.claude-plugin/plugin.json` and
+  `.codex-plugin/plugin.json` describe the same plugin. Keep
+  `interface.longDescription` in the Codex manifest in step with `description` in
+  the Claude Code one; release-please bumps `version` in both. Renaming the plugin
+  changes the skill namespace on both harnesses.
+- **Changing what a hook script reads from its payload** — the two harnesses
+  describe an edit differently (Claude Code `tool_input.file_path`, Codex
+  `tool_input.command` holding an apply_patch envelope). `analyze.sh` and
+  `format.sh` each read both shapes with the same inline `jq` expression — keep
+  the two copies identical.
+- **Changing `agents/flutter-reviewer.md`** — port the same change to
+  `codex/agents/flutter-reviewer.toml`. A Codex plugin cannot ship a subagent, so
+  that file is a separate copy users install by hand. Its output contract (the
+  four-column findings table) is consumed verbatim by callers on both harnesses,
+  so the two must not drift.
 
 ## Evals
 

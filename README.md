@@ -73,13 +73,48 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 | **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__.*very-good-cli__.*`) | Auto-approves Very Good CLI MCP tool calls in every run mode via a PreToolUse `allow` decision, so they never dead-end when the tool isn't on `permissions.allow` (including under `skipAutoPermissionPrompt`); denies with an install/upgrade message if the CLI is missing or < 1.3.0 |
 | **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the Bash tool; exits 2 on failure (blocking) |
 | **Allow Read-only Git** (`allow-readonly-git.sh`) | PreToolUse (`Bash`, `flutter-reviewer` agent only) | Restricts the `flutter-reviewer` agent's Bash to `git diff`/`git status`; exits 2 on anything else (blocking). Scoped via the agent's frontmatter, not `hooks.json` |
-| **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
-| **Format** (`format.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
+| **Analyze** (`analyze.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file(s); on failure exits 2, which surfaces the analyzer output to the model as feedback so it fixes the issue. The edit itself already happened and is not reverted |
+| **Format** (`format.sh`) | PostToolUse (`apply_patch`/`Edit`/`Write`) | Runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking — formatting is applied silently) |
+
+Codex runs this same `hooks/hooks.json` and these same scripts — `apply_patch` is its file-editing
+tool, which is why that matcher covers it.
 
 ### Prerequisites
 
 - **Dart SDK** — must be available on your `PATH`
 - **jq** — used to parse the hook payload; hooks are skipped gracefully if `jq` is not installed
+
+## Codex
+
+Codex installs from the same marketplace as Claude Code:
+
+```bash
+codex plugin marketplace add VeryGoodOpenSource/very-good-claude-code-marketplace && codex plugin add vgv-ai-flutter-plugin@very-good-claude-code-marketplace
+```
+
+That one install gives you the skills, both MCP servers, and the hooks. Codex discovers them from
+the same files Claude Code uses — `skills/`, `.mcp.json`, and `hooks/hooks.json` — so there is no
+Codex-specific configuration in this repo at all. Restart Codex afterwards, then approve the hooks
+with `/hooks`, since Codex requires a review before a hook runs for the first time.
+
+The reviewer agent is the one piece `codex plugin add` does **not** install: Codex has no way to
+bundle a subagent in a plugin ([openai/codex#18988][codex_agents_issue]), and loads custom agents
+only from `~/.codex/agents/` or a project's `.codex/agents/`. Pick whichever scope fits.
+
+For yourself, across every project:
+
+```bash
+mkdir -p ~/.codex/agents && cp codex/agents/flutter-reviewer.toml ~/.codex/agents/
+```
+
+For a whole team, commit it into the Flutter project instead — then everyone gets the reviewer with
+no per-developer setup:
+
+```bash
+mkdir -p .codex/agents && cp codex/agents/flutter-reviewer.toml .codex/agents/
+```
+
+Either way, ask Codex to spawn `flutter-reviewer`.
 
 ## Evals
 
@@ -187,6 +222,11 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
+On Codex the same two servers are registered in `~/.codex/config.toml` instead — see
+[Codex](#codex). Skills that drive an MCP tool always name the equivalent `very_good`, `dart`, or
+`flutter` command as a fallback, so they keep working on a host where neither server is connected.
+
+[codex_agents_issue]: https://github.com/openai/codex/issues/18988
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures
