@@ -37,7 +37,6 @@ jobs:
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/skills_lint.yml@v1.21.1
     with:
       skills_directories: 'skills'
-      skills_lint_version: '^0.5.0'
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest
