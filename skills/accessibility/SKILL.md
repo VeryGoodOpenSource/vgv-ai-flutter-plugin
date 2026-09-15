@@ -51,7 +51,7 @@ Apply these standards to all accessibility work:
 
 **Icon Buttons** (WCAG 4.1.2) — Icon-only buttons must have a `Tooltip` or `Semantics(label:)`. Screen readers have no other way to convey purpose.
 
-**Exclude Semantics** (WCAG 1.1.1) — Never use `ExcludeSemantics` on non-decorative content.
+**Exclude Semantics** (WCAG 1.1.1) — Never use `ExcludeSemantics` on non-decorative content. It strips its whole subtree from the semantics tree, so any button or other control inside it disappears from TalkBack and VoiceOver and its action becomes unreachable for screen reader users. State that consequence when declining a request to wrap actionable content. To stop a screen reader from stopping on every child, use `MergeSemantics` around the static label and value pair only, leaving interactive siblings outside it so they stay independently focusable.
 
 **Text Containers** (WCAG 1.4.4) — Fixed-height containers must not wrap `Text`. Use `minHeight` constraints. Fixed heights clip text at 1.5x font scale on Android, sooner on iOS where Larger Accessibility Sizes go to ~3.1x.
 
@@ -60,6 +60,8 @@ Apply these standards to all accessibility work:
 **Cupertino Semantics** (WCAG 4.1.2) — Cupertino widgets (`CupertinoSwitch`, `CupertinoSlider`, `CupertinoSegmentedControl`, `CupertinoButton`) ship with weaker semantic defaults than their Material equivalents. Always wrap them in `Semantics(label:, value:, button:)`.
 
 **Autofill Hints** (WCAG 1.3.5) — Every `TextField` collecting structured personal data (email, username, password, name, address, phone, oneTimeCode) must declare `autofillHints`. Required for 1.3.5 at AA and the foundation for 3.3.7 Redundant Entry at A.
+
+**Finding Format** — Every audit finding carries the WCAG criterion ID together with that criterion's name (`2.5.8 Target Size (Minimum)`, never a bare `2.5.8`), a severity of exactly CRITICAL, MAJOR, or MINOR in upper case, and the fix as before-and-after Dart code. Never grade severity as High/Medium/Low or Serious/Moderate/Minor. Never ship a finding whose fix is prose only.
 
 **Async Announcements** (WCAG 4.1.3) — Every async user-visible state change must announce itself via `Semantics(liveRegion: true)` or `SemanticsService.announce`.
 
@@ -135,7 +137,47 @@ For each selected platform, audit the provided files or widgets across seven cat
 
 Apply only criteria active at the selected level (plus opted-in AAA) and relevant to the selected platforms.
 
-For each finding, capture: file path and approximate line number, WCAG criterion ID + name + version (2.0 / 2.1 / 2.2), platform(s) affected, severity (CRITICAL / MAJOR / MINOR), current behavior, expected behavior, Flutter fix as a before-and-after diff.
+Write every finding in this block, with no row omitted:
+
+````markdown
+### 1. Close button is a 16x16 GestureDetector
+- **File:** lib/order/order_summary.dart ~L26
+- **WCAG:** 2.1.1 Keyboard (Level A, WCAG 2.0)
+- **Platform(s):** iOS, Android
+- **Severity:** CRITICAL
+- **Issue:** `GestureDetector` is pointer-only, so the close action is unreachable via VoiceOver, TalkBack, Switch Control, and Switch Access. Expected: a focusable, activatable button with an accessible name.
+- **Fix:**
+
+```dart
+// Before
+SizedBox(
+  width: 16,
+  height: 16,
+  child: GestureDetector(
+    onTap: onClose,
+    child: const Icon(Icons.close, size: 16),
+  ),
+)
+```
+
+```dart
+// After
+IconButton(
+  onPressed: onClose,
+  tooltip: 'Close order summary',
+  iconSize: 24,
+  constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+  icon: const Icon(Icons.close),
+)
+```
+````
+
+Rules that hold for every finding in the report, MINOR ones included:
+
+- **Criterion.** Write the ID and the criterion's name together, then the level and the WCAG version: `2.5.8 Target Size (Minimum) (Level AA, WCAG 2.2)`. A bare number is an incomplete finding.
+- **Severity.** Exactly one of CRITICAL, MAJOR, MINOR, taken from the severity guide in [`references/audit-templates.md`](references/audit-templates.md). When platforms differ, keep those three labels and qualify them: `CRITICAL (iOS, Android), MAJOR (Web)`.
+- **Fix.** Always a Before block and an After block of real Dart, side by side under that finding. Prose advice alone is not a fix, and neither is an After block on its own — the reader has to see the exact code being replaced. One consolidated corrected widget at the end of the report does not satisfy this for the findings above it.
+- **Scope.** If a check raises a concern you cannot resolve from the code alone (contrast without colors, reading order without a running app), state it under Out of Scope, not as a finding. A finding is something you can cite, grade, and fix.
 
 **Outcome:** After completing all seven categories, produce the Audit Report using the template in [`references/audit-templates.md`](references/audit-templates.md). Pick the level-specific passed-check list that matches Phase 1.
 
@@ -246,7 +288,8 @@ Full code samples and corrected versions live in [`references/examples.md`](refe
 ### Semantics (WCAG 1.1.1, 4.1.2)
 
 ```dart
-// WRONG: empty label, no label, ExcludeSemantics over actionable
+// WRONG: empty label, no label, ExcludeSemantics over actionable content removes the button
+// from the semantics tree entirely, so the action is unreachable for screen reader users
 Image.asset('assets/warning.png', semanticLabel: '')
 Image.asset('assets/chart.png')
 ExcludeSemantics(child: ElevatedButton(onPressed: _submit, child: const Text('Submit')))

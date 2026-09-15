@@ -39,21 +39,21 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 
 | Skill | Description |
 | ----- | ----------- |
-| [**Create Project**](skills/create-project/SKILL.md) | Scaffold new Dart/Flutter projects from Very Good CLI templates — `flutter_app`, `dart_package`, `flutter_plugin`, `dart_cli`, `flame_game`, and more |
+| [**Create Project**](skills/create-project/SKILL.md) | Scaffold new Dart/Flutter projects from Very Good CLI templates — `flutter_app`, `dart_package`, `flutter_plugin`, `dart_cli`, `flame_game`, and more — including vague requests where the template, name, or organization is still missing |
 | [**Animations**](skills/animations/SKILL.md) | Flutter built-in animations — implicit vs explicit decision tree, Material 3 motion tokens (`Durations`, `Easing`), page transitions with GoRouter, Hero animations, staggered animations, and performance guidelines |
 | [**Accessibility**](skills/accessibility/SKILL.md) | WCAG 2.2 compliance with A/AA/AAA conformance level selection across iOS, Android, Web, macOS, Windows, and Linux — semantics, screen reader support, touch targets, focus management, color contrast, text scaling, and motion sensitivity |
-| [**Testing**](skills/testing/SKILL.md) | Unit, widget, and golden testing — `mocktail` mocking, `pumpApp` helpers, test structure & naming, coverage patterns, and `dart_test.yaml` configuration |
-| [**Navigation**](skills/navigation/SKILL.md) | GoRouter routing — `@TypedGoRoute` type-safe routes, deep linking, redirects, shell routes, and widget testing with `MockGoRouter` |
-| [**Internationalization**](skills/internationalization/SKILL.md) | i18n/l10n — ARB files, `context.l10n` patterns, pluralization, RTL/LTR support with directional widgets, and backend localization strategies |
+| [**Testing**](skills/testing/SKILL.md) | Unit, widget, and golden/snapshot testing — `mocktail` mocking (never `mockito`), `pumpApp` helpers, `TestTag` golden tagging, test structure & naming, coverage patterns, and `dart_test.yaml` configuration. Also covers one-line golden-test requests and asks for the patterns it forbids |
+| [**Navigation**](skills/navigation/SKILL.md) | GoRouter routing — `@TypedGoRoute` type-safe routes, deep linking, redirects, shell routes, `go()` vs `push()` call sites, and widget testing with `MockGoRouter` |
+| [**Internationalization**](skills/internationalization/SKILL.md) | i18n/l10n — ARB files, `context.l10n` patterns, pluralization, RTL/LTR support with directional widgets for Arabic and Hebrew, staying on `flutter_localizations` instead of third-party i18n packages, and backend localization strategies |
 | [**Material Theming**](skills/material-theming/SKILL.md) | Material 3 theming — `ColorScheme`, `TextTheme`, component themes, spacing systems, light/dark mode support, and refactoring hardcoded or duplicated styling out of widget code |
 | [**Bloc**](skills/bloc/SKILL.md) | State management with Bloc/Cubit — sealed events & states, `BlocProvider`/`BlocBuilder` widgets, event transformers, and testing with `blocTest()` & `mocktail` |
-| [**Layered Architecture**](skills/layered-architecture/SKILL.md) | VGV layered architecture — four-layer package structure (Data, Repository, Business Logic, Presentation), dependency rules, data flow, and bootstrap wiring |
-| [**Security**](skills/static-security/SKILL.md) | Flutter-specific static security review — secrets management, `flutter_secure_storage`, certificate pinning, `Random.secure()`, `formz` validation, dependency vulnerability scanning with `osv-scanner`, and OWASP Mobile Top 10 guidance |
-| [**UI Package**](skills/ui-package/SKILL.md) | Flutter UI package creation — custom widget libraries with `ThemeExtension`-based theming, design tokens, barrel file exports, widget tests, Widgetbook catalog, and consistent API conventions |
+| [**Layered Architecture**](skills/layered-architecture/SKILL.md) | VGV layered architecture — four-layer package structure (Data, Repository, Business Logic, Presentation), laying out a new app's packages from a one-line description, dependency rules, where a model or file belongs and why a domain model cannot live in a data package, data flow, and bootstrap wiring |
+| [**Security**](skills/static-security/SKILL.md) | Flutter-specific static security review — secrets management (rejects `--dart-define`, `String.fromEnvironment`, `.env`, and CI-injected keys as fixes), `flutter_secure_storage`, certificate pinning, `Random.secure()`, `formz` validation, dependency vulnerability scanning with `osv-scanner`, and OWASP Mobile Top 10 guidance |
+| [**UI Package**](skills/ui-package/SKILL.md) | Flutter UI package creation — custom widget libraries with `ThemeExtension`-based theming, design tokens, a barrel-only public API consumers import instead of reaching into `lib/src/`, `pumpApp`-based widget tests, Widgetbook catalog, and consistent API conventions |
 | [**License Compliance**](skills/license-compliance/SKILL.md) | Dependency license auditing — categorizes licenses (permissive, weak/strong copyleft, unknown), flags non-compliant or missing licenses, and produces a structured compliance report using Very Good CLI |
 | [**Dart/Flutter SDK Upgrade**](skills/dart-flutter-sdk-upgrade/SKILL.md) | Bump Dart and Flutter SDK constraints across packages — CI workflow versions, pubspec.yaml environment constraints, and PR preparation for SDK upgrades |
 | [**Very Good Analysis Upgrade**](skills/very-good-analysis-upgrade/SKILL.md) | Upgrade the `very_good_analysis` lint package across Dart/Flutter projects — version bump in `pubspec.yaml`, minimal lint fixes for new rules, and PR preparation |
-| [**Green Gate**](skills/green-gate/SKILL.md) | Autonomous verify-fix-rerun loop that drives a package to green across four quality gates — analyze, format, test, and coverage — exiting only when a final iteration proves all four pass with observed numbers (default 100% coverage, overridable). Also answers how the gates are configured — tool per gate, arguments, order, coverage target and exclusions |
+| [**Green Gate**](skills/green-gate/SKILL.md) | Autonomous verify-fix-rerun loop that drives a package to green across four quality gates — analyze, format, test, and coverage — exiting only when a final iteration proves all four pass with observed numbers (default 100% coverage, overridable). Also answers how the gates are configured — tool per gate, arguments, order, coverage target and exclusions — and holds the line when asked to weaken one: no lowered threshold, no coverage ignore on reachable code, no skipping a gate that passed earlier |
 
 ## Agents
 
@@ -83,15 +83,15 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 
 ## Evals
 
-Skill evals ask whether Claude routes to a skill and follows it. [promptfoo](https://www.promptfoo.dev) sends each case's prompt through the Claude Agent SDK twice — once with this plugin loaded, once sealed with nothing loaded — so a grader that passes in both columns is measuring the model rather than the skill. They authenticate through your local Claude Code session, so they need no API key.
+Skill evals ask whether Claude routes to a skill and follows it. [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) runs each case with this plugin loaded and again with no plugin at all, so a grader that passes in both arms is measuring the model rather than the skill. Runs authenticate the same way your normal Claude Code sessions do, so they need no API key locally.
 
 ```bash
-npx promptfoo@latest eval -c evals/promptfooconfig.yaml
+claude plugin eval . --scaffold
 ```
 
 Run them locally before opening a PR that changes a skill. CI also runs them **after** a merge to `main`, scoped to the skills that changed, as an advisory signal rather than a gate — see [evals/README.md](evals/README.md#running-in-ci).
 
-See [evals/README.md](evals/README.md) for the case format, the assertion reference, prerequisites, and what these evals deliberately do not cover.
+See [evals/README.md](evals/README.md) for the case format, the grader reference, prerequisites, and what these evals deliberately do not cover.
 
 ## Usage
 
