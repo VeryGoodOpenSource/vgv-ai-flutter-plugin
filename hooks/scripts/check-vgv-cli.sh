@@ -12,6 +12,17 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/vgv-cli-common.sh"
 
+INPUT=$(cat)
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
+
+# The hooks.json matcher is not a guarantee. Hosts name MCP tools differently and do not
+# all treat a non-matching matcher as exclusionary, so this hook can be handed a tool it
+# knows nothing about. Confirm the caller really is a Very Good CLI tool before deciding;
+# anything else is none of this hook's business.
+if ! is_vgv_cli_tool "$TOOL_NAME"; then
+  exit 0
+fi
+
 cli_status=$(check_vgv_cli)
 case "$cli_status" in
   not_installed)
@@ -20,6 +31,11 @@ case "$cli_status" in
   outdated:*)
     version="${cli_status#outdated:}"
     deny "Very Good CLI ${version} is too old. This tool requires Very Good CLI >= ${MIN_VERSION}. Update with: dart pub global activate very_good_cli"
+    ;;
+  unverifiable)
+    # The CLI is present but its version could not be read. Stand aside rather than
+    # deny a genuine call on an inconclusive check; normal permission handling applies.
+    exit 0
     ;;
 esac
 
