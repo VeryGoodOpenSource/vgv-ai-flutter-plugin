@@ -32,47 +32,11 @@ jobs:
             **/*.yaml
             !CHANGELOG.md
           config: 'config/cspell.json'
-  list-skills:
-    name: 🔎 List Skills
-    runs-on: ubuntu-latest
-    outputs:
-      skills: ${{ steps.list-skills.outputs.skills }}
-    steps:
-      - uses: actions/checkout@v7
-      - name: List all skills
-        id: list-skills
-        run: |
-          SKILLS=$(find -L skills -name SKILL.md -type f | \
-            xargs -I {} dirname {} | \
-            sort -u | \
-            jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "skills=$SKILLS" >> "$GITHUB_OUTPUT"
-          echo "Skills: $SKILLS"
-  validate-skills:
-    name: 🔍 Validate Skills
-    needs: list-skills
-    if: needs.list-skills.outputs.skills != '[]'
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        skill: ${{ fromJson(needs.list-skills.outputs.skills) }}
-    steps:
-      - uses: actions/checkout@v7
-      - name: Validate ${{ matrix.skill }}
-        id: validate
-        uses: Flash-Brew-Digital/validate-skill@v1
-        with:
-          path: ${{ matrix.skill }}
-          validate-references: 'true'
-          fail-on-warning: 'true'
-          ignore-rules: 'unknown-field'
-      - name: Check results
-        if: always()
-        run: |
-          echo "Valid: ${{ steps.validate.outputs.valid }}"
-          echo "Errors: ${{ steps.validate.outputs.errors }}"
-          echo "Warnings: ${{ steps.validate.outputs.warnings }}"
+  skills-lint:
+    name: 🔍 Skills Lint
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/skills_lint.yml@v1.21.0
+    with:
+      skills_directories: 'skills'
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest
