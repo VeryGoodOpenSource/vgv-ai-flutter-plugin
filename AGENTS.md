@@ -164,8 +164,9 @@ documentation in the same change:
   does.
 - **Restructuring a skill's reference files** (`reference.md` ↔ `references/`) —
   update the repository structure block in `AGENTS.md` to match the new layout, and
-  update every markdown link pointing at the moved file. Nothing checks these links
-  automatically, so verify each one by hand.
+  update every markdown link pointing at the moved file. CI catches a link that points
+  at a file that no longer exists (`check-relative-paths` in `skills_lint.yaml`), but it
+  cannot tell you a link now points at the wrong file, so still read each one.
 - **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
   section in `README.md` (and the `## Hooks` section in `CLAUDE.md` if behavior
   changes).
