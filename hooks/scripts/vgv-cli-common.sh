@@ -6,16 +6,41 @@ MIN_MAJOR=1
 MIN_MINOR=3
 MIN_PATCH=0
 
+# Which harness fired this hook. Claude Code names the pre-tool event
+# "PreToolUse"; Gemini CLI names the same event "BeforeTool" and reads a
+# different response shape, so every response helper branches on this.
+# Set it with read_hook_event before calling deny/allow.
+HOOK_EVENT_NAME="PreToolUse"
+
+# Read the firing event name out of a hook payload, defaulting to Claude Code's
+# name when the payload is empty or carries no event.
+# Usage: HOOK_EVENT_NAME=$(read_hook_event "$INPUT")
+read_hook_event() {
+  local event
+  event=$(printf '%s' "$1" | jq -r '.hook_event_name // empty' 2>/dev/null)
+  echo "${event:-PreToolUse}"
+}
+
 deny() {
-  jq -n \
-    --arg reason "$1" \
-    '{
-      hookSpecificOutput: {
-        hookEventName: "PreToolUse",
-        permissionDecision: "deny",
-        permissionDecisionReason: $reason
-      }
-    }'
+  if [ "$HOOK_EVENT_NAME" = "BeforeTool" ]; then
+    # Gemini CLI reads a top-level decision/reason pair.
+    jq -n \
+      --arg reason "$1" \
+      '{
+        decision: "deny",
+        reason: $reason
+      }'
+  else
+    jq -n \
+      --arg reason "$1" \
+      '{
+        hookSpecificOutput: {
+          hookEventName: "PreToolUse",
+          permissionDecision: "deny",
+          permissionDecisionReason: $reason
+        }
+      }'
+  fi
   exit 0
 }
 
@@ -23,7 +48,14 @@ deny() {
 # A PreToolUse "allow" fires before the permission-mode check, so the call
 # proceeds in every run mode (interactive, headless, skipAutoPermissionPrompt).
 # Explicit deny/ask rules and managed deny lists still take precedence.
+#
+# Gemini CLI has no auto-approve for BeforeTool hooks — a hook there can block
+# or stay out of the way, nothing else — so this exits silently on that harness.
+# The equivalent there is "trust": true on the MCP server in settings.json.
 allow() {
+  if [ "$HOOK_EVENT_NAME" = "BeforeTool" ]; then
+    exit 0
+  fi
   jq -n \
     --arg reason "$1" \
     '{

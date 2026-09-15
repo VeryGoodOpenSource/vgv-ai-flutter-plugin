@@ -63,6 +63,10 @@ This plugin ships subagents that Claude Code can dispatch as isolated, specializ
 | ----- | ----------- |
 | [**Flutter Reviewer**](agents/flutter-reviewer.md) | Read-only reviewer of changed Dart code against the preloaded `bloc`, `testing`, `static-security`, and `accessibility` standards — emits a `location \| problem \| fix \| standard` findings table. Never edits files; Bash is hook-restricted to `git diff`/`git status` |
 
+A Gemini CLI port of the same reviewer lives at
+[`gemini/agents/flutter-reviewer.md`](gemini/agents/flutter-reviewer.md) — see
+[Gemini CLI](#gemini-cli).
+
 ## Hooks
 
 This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that validate the Very Good CLI, guard against CLI bypass, and automatically run Dart analysis and formatting on `.dart` files.
@@ -80,6 +84,49 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 
 - **Dart SDK** — must be available on your `PATH`
 - **jq** — used to parse the hook payload; hooks are skipped gracefully if `jq` is not installed
+
+## Gemini CLI
+
+The skills need no setup. Gemini CLI reads the [Agent Skills][agent_skills_link] standard
+directly, so installing them is one command and all 15 land:
+
+```bash
+gemini skills install https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin --path skills
+```
+
+The MCP servers, the hooks, and the reviewer agent are the parts Gemini cannot take from the
+Claude Code files as they stand — it uses different hook event names, different tool names, and a
+stricter agent schema. `gemini/` holds those three, ported. Clone this repo somewhere and point
+`VGV_PLUGIN_ROOT` at it, since the hook scripts live here. Put it in your shell profile rather
+than one terminal — Gemini resolves it when it loads its settings, so it has to be set wherever
+you launch `gemini`:
+
+```bash
+export VGV_PLUGIN_ROOT=/path/to/vgv-ai-flutter-plugin
+```
+
+Then merge `gemini/settings.json` into your Gemini settings — `~/.gemini/settings.json` for
+yourself, or a project's `.gemini/settings.json` to give a whole team the same enforcement with no
+per-developer setup. It registers both MCP servers and wires the same hook scripts under Gemini's
+event names.
+
+The reviewer agent is a separate copy for the same reason. Pick whichever scope fits.
+
+For yourself, across every project:
+
+```bash
+mkdir -p ~/.gemini/agents && cp gemini/agents/flutter-reviewer.md ~/.gemini/agents/
+```
+
+For a whole team, commit it into the Flutter project instead:
+
+```bash
+mkdir -p .gemini/agents && cp gemini/agents/flutter-reviewer.md .gemini/agents/
+```
+
+Then ask Gemini to run `flutter-reviewer`. It holds the same read-only contract Claude Code
+enforces with a hook, by a different mechanism: Gemini has no agent-scoped hooks, so the agent is
+granted no shell tool at all and the caller passes it the changed files.
 
 ## Evals
 
@@ -187,6 +234,12 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
+On Gemini CLI the same two servers are registered in `settings.json` instead — see
+[Gemini CLI](#gemini-cli). Skills that drive an MCP tool always name the equivalent `very_good`,
+`dart`, or `flutter` command as a fallback, so they keep working on a host where neither server is
+connected.
+
+[agent_skills_link]: https://agentskills.io/specification
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures

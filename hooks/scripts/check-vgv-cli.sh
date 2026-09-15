@@ -12,6 +12,11 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/vgv-cli-common.sh"
 
+# Drain stdin so the payload's event name picks the right response shape
+# (Claude Code "PreToolUse" vs Gemini CLI "BeforeTool").
+INPUT=$(cat 2>/dev/null)
+HOOK_EVENT_NAME=$(read_hook_event "$INPUT")
+
 cli_status=$(check_vgv_cli)
 case "$cli_status" in
   not_installed)
