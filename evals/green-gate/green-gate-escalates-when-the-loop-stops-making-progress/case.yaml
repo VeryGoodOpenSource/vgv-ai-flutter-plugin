@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: green-gate-escalates-when-the-loop-stops-making-progress
+context:
+  scaffold_script: fixture.sh

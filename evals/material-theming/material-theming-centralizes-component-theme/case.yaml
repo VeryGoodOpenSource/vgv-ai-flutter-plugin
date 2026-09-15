@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: material-theming-centralizes-component-theme
+context:
+  scaffold_script: fixture.sh

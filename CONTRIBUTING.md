@@ -14,7 +14,7 @@ First of all, thank you for taking the time to contribute! 🎉👍 Before you d
 | ------------ | ----- |
 | **New skill** | `skills/<skill-name>/SKILL.md` |
 | **Improve an existing skill** | Edit the relevant `skills/*/SKILL.md` or `reference.md` |
-| **Eval cases** | `evals/tests/<skill-name>.yaml` |
+| **Eval cases** | `evals/<skill-name>/<case-name>/` |
 | **Hooks** | `hooks/` directory |
 | **Bug reports & feature requests** | [GitHub Issues](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues) |
 
@@ -57,9 +57,9 @@ interface:
 
 ### 2. Add eval cases
 
-Create `evals/tests/<skill-name>.yaml` — prompts that prove the skill actually
-changes what Claude produces — and register it under `tests:` in
-`evals/promptfooconfig.yaml`. See [Eval Cases](#eval-cases) below.
+Create one case directory per prompt under `evals/<skill-name>/` — prompts that
+prove the skill actually changes what Claude produces. Nothing has to be registered;
+cases are discovered from the directory tree. See [Eval Cases](#eval-cases) below.
 
 ### 3. Update `plugin.json` tags
 
@@ -80,19 +80,21 @@ Add the new skill directory and files to the repository structure tree in `AGENT
 ## Eval Cases
 
 Evals ask one question: does Claude route to the skill, and does the output follow it?
-[promptfoo](https://www.promptfoo.dev) runs every case twice, once with this plugin
-loaded and once sealed with nothing loaded, so a grader that passes in both columns is
-measuring the model rather than the skill.
+[`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) runs every case
+twice, once with this plugin loaded and once with no plugin at all, so a grader that
+passes in both arms is measuring the model rather than the skill.
 
 ```bash
-npx promptfoo@latest eval -c evals/promptfooconfig.yaml
+claude plugin eval . --scaffold
 ```
 
-Adding a skill means adding one case file, `evals/tests/<skill>.yaml`, registered
-under `tests:` in `evals/promptfooconfig.yaml`.
+Adding a skill means adding a `evals/<skill>/<case-name>/` directory per case, each with
+a `prompt.md`, a `case.yaml`, and one file per grader under `graders/`. There is no
+central registry to update — cases are discovered from the tree — but you must run
+`evals/_fixture/sync.sh` after adding one.
 
 [evals/README.md](evals/README.md) is the single source of truth — the case format,
-the assertion reference, prerequisites, what makes a case worth having, and what
+the grader reference, prerequisites, what makes a case worth having, and what
 these evals deliberately do not cover. Read it before writing a case, and add new
 eval documentation there rather than here.
 
@@ -317,7 +319,7 @@ to `main` instead, scoped to the skills that changed:
 
 | Check | What it does | Config |
 | ----- | ------------ | ------ |
-| Evals (post-merge) | Runs the eval cases for the changed skills, `with-skill` column only. Advisory, never blocking | `.github/workflows/evals.yaml` |
+| Evals (post-merge) | Runs the eval cases for the changed skills, with-plugin arm only. Advisory, never blocking | `.github/workflows/evals.yaml` |
 
 That means a regression is reported after the merge rather than before it, which is a
 deliberate trade: a single eval run is too noisy to gate on, and running the full suite on

@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: testing-stays-out-of-non-test-work
+context:
+  scaffold_script: fixture.sh

@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: green-gate-excludes-generated-files-instead-of-ignoring-them
+context:
+  scaffold_script: fixture.sh

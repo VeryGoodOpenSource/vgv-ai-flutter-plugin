@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: static-security-audits-file-with-severity-tiers
+context:
+  scaffold_script: fixture.sh

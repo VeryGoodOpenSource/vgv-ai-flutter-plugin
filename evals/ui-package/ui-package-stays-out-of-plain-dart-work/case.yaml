@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: ui-package-stays-out-of-plain-dart-work
+context:
+  scaffold_script: fixture.sh

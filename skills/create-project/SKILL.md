@@ -5,8 +5,13 @@ description: >
   flutter_app, dart_package, flutter_package, flutter_plugin, dart_cli, flame_game, and
   docs_site templates, inferring the right one from what the user wants to build and then
   installing dependencies. Use when the user says "create a new project", "start a new flutter
-  app", "scaffold a package", "initialize a dart cli", "new flame game", or "generate a
-  plugin".
+  app", "scaffold a package", "create a new package", "initialize a dart cli", "new flame
+  game", or "generate a plugin". Use it for bare, vague, or under-specified scaffolding
+  requests too — "create a new package for me", "make me a new app", "I need a new project",
+  "set one up" — including ones that name no template, no project name, and no organization,
+  or that only hint at what is being built. Missing or ambiguous details are a reason to use
+  this skill, not a reason to skip it: it asks the clarifying questions and picks the
+  template.
 allowed-tools: mcp__very-good-cli__create mcp__very-good-cli__packages_get
 argument-hint: "[template] [project-name]"
 model: haiku

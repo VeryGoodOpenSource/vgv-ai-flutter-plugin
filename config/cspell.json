@@ -1,6 +1,7 @@
 {
   "language": "en",
   "words": [
+    "ablation",
     "activatable",
     "adversarial",
     "agentskills",
@@ -30,6 +31,7 @@
     "gradeable",
     "hoverable",
     "icontains",
+    "idgetbook",
     "inlines",
     "introspect",
     "introspection",
@@ -46,8 +48,6 @@
     "opencode",
     "pasteable",
     "prefs",
-    "promptfoo",
-    "promptfooconfig",
     "pubspec",
     "pubspecs",
     "redirections",
@@ -66,6 +66,7 @@
     "WCAG",
     "widgetbook",
     "Widgetbook",
+    "xhigh",
     "xxlg"
   ],
   "flagWords": []

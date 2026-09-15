@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: animations-stays-out-of-non-motion-work
+context:
+  scaffold_script: fixture.sh

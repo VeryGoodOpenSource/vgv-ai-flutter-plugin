@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: animations-custom-page-transition-via-go-route-data
+context:
+  scaffold_script: fixture.sh

@@ -113,6 +113,33 @@ class AccessibleCupertinoSlider extends StatelessWidget {
 }
 ```
 
+### ExcludeSemantics never fixes redundant stops on actionable content
+
+```dart
+// WRONG — ExcludeSemantics over a row that contains a control
+// It removes the whole subtree from the semantics tree, so the button is gone from
+// TalkBack and VoiceOver and the action is unreachable for screen reader users.
+ExcludeSemantics(
+  child: Row(
+    children: [
+      const Text('Total'),
+      const Text('42.00 USD'),
+      ElevatedButton(onPressed: _submit, child: const Text('Pay now')),
+    ],
+  ),
+)
+
+// CORRECT — merge the static label and value pair, leave the button focusable
+Row(
+  children: [
+    MergeSemantics(
+      child: Row(children: [const Text('Total'), const Text('42.00 USD')]),
+    ),
+    ElevatedButton(onPressed: _submit, child: const Text('Pay now')),
+  ],
+)
+```
+
 ### MergeSemantics: correct and incorrect usage
 
 ```dart

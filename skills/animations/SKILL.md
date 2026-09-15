@@ -28,7 +28,7 @@ Apply these standards to ALL animation work:
 - **Dispose controllers** — every `AnimationController` must be disposed in the `dispose()` method of the `State`
 - **Use `SingleTickerProviderStateMixin` for one controller** — use `TickerProviderStateMixin` only when the widget owns multiple controllers
 - **Keep animated subtrees small** — wrap only the widgets that change inside the animation builder, not entire widget trees
-- **Never animate layout-triggering properties in a tight loop** — animating `width`/`height` on complex layouts causes expensive rebuilds; prefer `Transform` or `Opacity` which operate on the compositing layer
+- **Never animate a layout-triggering property** — `width`, `height`, `padding` and `SizedBox` dimensions force a fresh layout pass on every frame, in a one-child tree as much as in a deep one. Animate a `Transform` instead, `Transform.scale` for size and `Transform.translate` for position, or `Opacity` for fade, since those run on the compositing layer and skip layout
 
 ---
 
@@ -287,7 +287,7 @@ Rules for Hero:
 
 ### Do Not
 
-- **Do not animate `width`, `height`, or `padding` on complex layouts** — triggers expensive layout recalculations every frame
+- **Do not animate `width`, `height`, or `padding`** — each frame forces a new layout pass over the subtree, and the cost is the layout pass itself, not the depth of the tree, so a single `SizedBox` around one child is no exception. Replace a growing width with `Transform.scale` and a moving offset with `Transform.translate`
 - **Do not wrap entire screens in `AnimatedBuilder`** — only wrap the subtree that changes
 - **Do not create multiple `AnimationController` instances for animations that share timing** — use `Interval` on a single controller. This applies once the animation already needs a controller; properties that animate to a target on the same rebuild are composed implicit widgets, not one controller with intervals
 
@@ -329,6 +329,37 @@ void dispose() {
   super.dispose();
 }
 ```
+
+### Animating a width instead of a Transform
+
+```dart
+// Bad — every frame re-runs layout on the SizedBox and everything under it
+AnimatedBuilder(
+  animation: _controller,
+  builder: (context, child) {
+    return SizedBox(
+      width: 200 + (_controller.value * 120),
+      child: child,
+    );
+  },
+  child: const ExpensiveChart(),
+)
+
+// Good — Transform.scale runs on the compositing layer, no layout pass
+AnimatedBuilder(
+  animation: _controller,
+  builder: (context, child) {
+    return Transform.scale(
+      scaleX: 1 + (_controller.value * 0.6),
+      child: child,
+    );
+  },
+  child: const ExpensiveChart(),
+)
+```
+
+When reviewing, call this out by name: an animated `width` or `height` forces a layout
+pass on every frame, and the fix is `Transform.scale` or `Transform.translate`.
 
 ### Rebuilding static children every frame
 

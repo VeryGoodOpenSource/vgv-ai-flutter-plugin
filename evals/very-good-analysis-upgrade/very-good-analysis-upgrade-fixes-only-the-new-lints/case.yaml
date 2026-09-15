@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: very-good-analysis-upgrade-fixes-only-the-new-lints
+context:
+  scaffold_script: fixture.sh
