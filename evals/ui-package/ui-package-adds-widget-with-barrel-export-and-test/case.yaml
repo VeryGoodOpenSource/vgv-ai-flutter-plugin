@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: ui-package-adds-widget-with-barrel-export-and-test
+context:
+  scaffold_script: fixture.sh

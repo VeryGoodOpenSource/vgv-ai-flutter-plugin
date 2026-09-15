@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: accessibility-stays-out-of-plain-dart-work
+context:
+  scaffold_script: fixture.sh

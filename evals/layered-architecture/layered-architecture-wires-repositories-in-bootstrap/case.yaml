@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: layered-architecture-wires-repositories-in-bootstrap
+context:
+  scaffold_script: fixture.sh

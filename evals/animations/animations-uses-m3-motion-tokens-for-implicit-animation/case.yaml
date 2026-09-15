@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: animations-uses-m3-motion-tokens-for-implicit-animation
+context:
+  scaffold_script: fixture.sh

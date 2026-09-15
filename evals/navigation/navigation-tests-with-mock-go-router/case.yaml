@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: navigation-tests-with-mock-go-router
+context:
+  scaffold_script: fixture.sh

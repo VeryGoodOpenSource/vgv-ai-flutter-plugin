@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: create-project-does-not-over-ask
+context:
+  scaffold_script: fixture.sh

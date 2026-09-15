@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: bloc-upgrades-cubit-to-bloc-for-transforms
+context:
+  scaffold_script: fixture.sh

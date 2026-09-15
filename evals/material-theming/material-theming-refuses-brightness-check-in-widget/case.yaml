@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: material-theming-refuses-brightness-check-in-widget
+context:
+  scaffold_script: fixture.sh
