@@ -106,9 +106,8 @@ eval documentation there rather than here.
 
 ## What Belongs in a `SKILL.md`
 
-Claude 5 generation models already know the Flutter and Dart framework. A skill earns its
-tokens by carrying what the model *cannot* infer: the opinions this team holds. Reference
-material that merely restates the framework displaces those opinions and slows routing.
+A skill earns its tokens by carrying what the model *cannot* infer: the opinions this team holds.
+Reference material that merely restates the framework displaces those opinions and slows routing.
 
 Every section you write gets one of three verdicts.
 

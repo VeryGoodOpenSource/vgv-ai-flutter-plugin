@@ -89,7 +89,7 @@ my_app/
 │   │   └── view/
 │   │       ├── login_page.dart               # Page provides Bloc
 │   │       └── login_view.dart               # View consumes state
-│   ├── profile/                              # Feature: profile (cubit/ instead of bloc/)
+│   ├── profile/                              # Feature: profile
 │   ├── main_development.dart                 # Flavor entrypoint
 │   ├── main_staging.dart
 │   └── main_production.dart
