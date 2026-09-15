@@ -49,20 +49,20 @@ group('copyWith', () {
 
 ### Packages
 
-| Package | Purpose | Dev dependency? |
-| --- | --- | --- |
-| `test` | Core Dart test framework | Yes |
-| `flutter_test` | Flutter test framework (includes `test`) | Yes (SDK) |
-| `mocktail` | Mock creation and stubbing | Yes |
-| `fake_async` | Control async execution (timers, microtasks) | Yes |
-| `clock` | Injectable clock for time-dependent logic | No |
-| `bloc_test` | Mock Blocs/Cubits for widget tests | Yes |
+| Package        | Purpose                                      | Dev dependency? |
+| -------------- | -------------------------------------------- | --------------- |
+| `test`         | Core Dart test framework                     | Yes             |
+| `flutter_test` | Flutter test framework (includes `test`)     | Yes (SDK)       |
+| `mocktail`     | Mock creation and stubbing                   | Yes             |
+| `fake_async`   | Control async execution (timers, microtasks) | Yes             |
+| `clock`        | Injectable clock for time-dependent logic    | No              |
+| `bloc_test`    | Mock Blocs/Cubits for widget tests           | Yes             |
 
 ### Imports
 
-| Import | When to use |
-| --- | --- |
-| `import 'package:test/test.dart';` | Pure Dart packages (no Flutter dependency) |
-| `import 'package:flutter_test/flutter_test.dart';` | Flutter packages (re-exports `package:test`) |
-| `import 'package:mocktail/mocktail.dart';` | Any test file that uses `Mock`, `Fake`, `when`, `verify` |
-| `import '../helpers/helpers.dart';` | Every widget and golden test file --- provides `pumpApp` and `TestTag` |
+| Import                                             | When to use                                                            |
+| -------------------------------------------------- | ---------------------------------------------------------------------- |
+| `import 'package:test/test.dart';`                 | Pure Dart packages (no Flutter dependency)                             |
+| `import 'package:flutter_test/flutter_test.dart';` | Flutter packages (re-exports `package:test`)                           |
+| `import 'package:mocktail/mocktail.dart';`         | Any test file that uses `Mock`, `Fake`, `when`, `verify`               |
+| `import '../helpers/helpers.dart';`                | Every widget and golden test file --- provides `pumpApp` and `TestTag` |

@@ -74,16 +74,16 @@ test('renders correctly', tags: TestTag.golden, () {
 
 Run tests through the `very_good_cli` MCP `test` tool — never `dart test` or `flutter test` via the shell (the `block-cli-workarounds` hook denies those). Pass `timeout_seconds` to cap the run so a hung `pumpAndSettle()` cannot stall it indefinitely.
 
-| Goal | MCP `test` tool parameters |
-| ---- | -------------------------- |
-| Run all tests (Flutter auto-detected) | _(no parameters)_ |
-| Run Dart tests | `dart: true` |
-| Run tests in a subdirectory | `directory: 'mobile'` |
-| Run only tests with a tag | `tags: 'unit'` |
-| Skip tests with a tag | `exclude_tags: 'integration'` |
-| Generate coverage (`coverage/lcov.info`) | `coverage: true` |
-| Enforce a minimum coverage percentage | `min_coverage: '100'` |
-| Run on a specific platform | `platform: 'chrome'` |
-| Randomize test execution order | `test_randomize_ordering_seed: 'random'` |
-| Run recursively across nested packages | `recursive: true` |
-| Cap runtime to avoid a hung test process | `timeout_seconds: 120` |
+| Goal                                     | MCP `test` tool parameters               |
+| ---------------------------------------- | ---------------------------------------- |
+| Run all tests (Flutter auto-detected)    | _(no parameters)_                        |
+| Run Dart tests                           | `dart: true`                             |
+| Run tests in a subdirectory              | `directory: 'mobile'`                    |
+| Run only tests with a tag                | `tags: 'unit'`                           |
+| Skip tests with a tag                    | `exclude_tags: 'integration'`            |
+| Generate coverage (`coverage/lcov.info`) | `coverage: true`                         |
+| Enforce a minimum coverage percentage    | `min_coverage: '100'`                    |
+| Run on a specific platform               | `platform: 'chrome'`                     |
+| Randomize test execution order           | `test_randomize_ordering_seed: 'random'` |
+| Run recursively across nested packages   | `recursive: true`                        |
+| Cap runtime to avoid a hung test process | `timeout_seconds: 120`                   |

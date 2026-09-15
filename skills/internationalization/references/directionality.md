@@ -19,10 +19,10 @@ Retrieve the current direction: `Directionality.of(context)`
 
 ## Visual vs Directional Widgets
 
-| Widget Type     | Direction Terms            | Use Case                                  |
-| --------------- | -------------------------- | ----------------------------------------- |
-| **Visual**      | top, left, right, bottom   | Absolute positioning that never changes   |
-| **Directional** | top, start, end, bottom    | Relative to text direction (respects RTL) |
+| Widget Type     | Direction Terms          | Use Case                                  |
+| --------------- | ------------------------ | ----------------------------------------- |
+| **Visual**      | top, left, right, bottom | Absolute positioning that never changes   |
+| **Directional** | top, start, end, bottom  | Relative to text direction (respects RTL) |
 
 ## `EdgeInsetsDirectional` vs `EdgeInsets`
 

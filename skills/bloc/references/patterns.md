@@ -59,9 +59,51 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
 }
 ```
 
-| Transformer       | Behavior                                              |
-| ------------------| ----------------------------------------------------- |
-| `concurrent()`    | Process all events concurrently (default)             |
-| `sequential()`    | Process events one at a time in order                 |
-| `droppable()`     | Ignore new events while one is processing             |
-| `restartable()`   | Cancel current processing, start new event            |
+| Transformer     | Behavior                                   |
+| --------------- | ------------------------------------------ |
+| `concurrent()`  | Process all events concurrently (default)  |
+| `sequential()`  | Process events one at a time in order      |
+| `droppable()`   | Ignore new events while one is processing  |
+| `restartable()` | Cancel current processing, start new event |
+
+## Single-Class State
+
+Use one state class with a status enum when every state shares the same data shape. The
+`copyWith` method is what keeps transitions terse at the emit site.
+
+| Field    | Type         | Purpose                 |
+| -------- | ------------ | ----------------------- |
+| `status` | `enum`       | Current loading status  |
+| `items`  | `List<Item>` | Loaded data             |
+| `error`  | `String?`    | Error message if failed |
+
+```dart
+enum TodoListStatus { initial, loading, success, failure }
+
+class TodoListState extends Equatable {
+  const TodoListState({
+    this.status = TodoListStatus.initial,
+    this.todos = const [],
+    this.error,
+  });
+
+  final TodoListStatus status;
+  final List<Todo> todos;
+  final String? error;
+
+  TodoListState copyWith({
+    TodoListStatus? status,
+    List<Todo>? todos,
+    String? error,
+  }) {
+    return TodoListState(
+      status: status ?? this.status,
+      todos: todos ?? this.todos,
+      error: error ?? this.error,
+    );
+  }
+
+  @override
+  List<Object?> get props => [status, todos, error];
+}
+```

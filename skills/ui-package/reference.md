@@ -6,12 +6,12 @@ Concrete examples and step-by-step workflows for the UI Package skill.
 
 ## ThemeExtension Key Classes
 
-| Class | Purpose |
-| ----- | ------- |
-| `AppColors extends ThemeExtension<AppColors>` | Custom color tokens beyond `ColorScheme` (success, warning, info + on-variants) |
-| `AppSpacing extends ThemeExtension<AppSpacing>` | Spacing scale (xxs through xxlg) with `copyWith` and `lerp` |
-| `AppTheme` | Composes `ThemeData` with `ColorScheme.fromSeed` + custom extensions, for light and dark variants |
-| `AppThemeBuildContext` extension | Shorthand `context.appColors` and `context.appSpacing` |
+| Class                                           | Purpose                                                                                           |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `AppColors extends ThemeExtension<AppColors>`   | Custom color tokens beyond `ColorScheme` (success, warning, info + on-variants)                   |
+| `AppSpacing extends ThemeExtension<AppSpacing>` | Spacing scale (xxs through xxlg) with `copyWith` and `lerp`                                       |
+| `AppTheme`                                      | Composes `ThemeData` with `ColorScheme.fromSeed` + custom extensions, for light and dark variants |
+| `AppThemeBuildContext` extension                | Shorthand `context.appColors` and `context.appSpacing`                                            |
 
 Every `ThemeExtension` must implement `copyWith` and `lerp` for theme animation support.
 
@@ -101,10 +101,10 @@ export 'src/widgets/app_text_field.dart';
 
 ### Commands
 
-| Command | Purpose |
-| ------- | ------- |
+| Command                                                                     | Purpose                                                          |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `cd widgetbook && dart run build_runner build --delete-conflicting-outputs` | Regenerate use-case directories after adding/modifying use cases |
-| `cd widgetbook && flutter run -d chrome` | Run the catalog locally |
+| `cd widgetbook && flutter run -d chrome`                                    | Run the catalog locally                                          |
 
 ## Common Workflows
 

@@ -15,15 +15,11 @@ allowed-tools: Read Glob Grep
 
 # Accessibility
 
-Flutter accessibility auditing and remediation across WCAG 2.2 conformance levels A, AA, and AAA. The skill is split into a workflow (this file) plus reference files loaded on demand:
+Flutter accessibility auditing and remediation across WCAG 2.2 conformance levels A, AA, and
+AAA. This file is the workflow; the reference files listed under **Additional Resources** are
+loaded on demand, and each phase below names the one it needs.
 
-- [`references/audit-templates.md`](references/audit-templates.md) — severity guide, report template, level-specific passed-check lists for A, AA, AA + selected AAA, and AAA. Also includes cross-platform severity adjustment table.
-- [`references/examples.md`](references/examples.md) — extended Flutter code per category, including WCAG 2.2 patterns (focus-not-obscured, dragging alternatives, Cupertino semantic wrappers, MergeSemantics correctness).
-- [`references/widget-mapping.md`](references/widget-mapping.md) — table mapping each Flutter widget to its accessibility requirement and the recommended implementation. Use it when auditing a specific widget.
-- [`references/testing.md`](references/testing.md) — complete accessibility test suite covering semantics, touch targets, focus management, contrast, text scaling, and motion. Use it when writing the tests that lock in a remediation.
-- [`references/platforms/ios.md`](references/platforms/ios.md), [`android.md`](references/platforms/android.md), [`web.md`](references/platforms/web.md), [`macos.md`](references/platforms/macos.md), [`windows.md`](references/platforms/windows.md), [`linux.md`](references/platforms/linux.md) — per-platform WCAG 2.2 checks. Load only the file(s) matching the selected platform(s).
-
-Read whichever reference file matches the current phase. Do not duplicate its content here.
+Load only the file the current phase names. Do not duplicate its content here.
 
 ---
 

@@ -59,65 +59,13 @@ Hierarchical sub-routes produce proper backward navigation automatically — whe
 
 ## Type-Safe Routes
 
-Use `@TypedGoRoute` annotations with `GoRouteData` classes to eliminate typos and manual parameter casting. The `go_router_builder` package generates type-safe route helpers at build time.
+Every route is a `GoRouteData` class carrying a `@TypedGoRoute` annotation — never a raw
+string path. Sub-routes nest inside the parent's `routes:` list so the hierarchy above is
+expressed in the type system, and `package:go_router_builder` generates the navigation
+helpers.
 
-### Basic Route
-
-```dart
-@TypedGoRoute<CategoriesPageRoute>(
-  name: 'categories',
-  path: '/categories',
-)
-@immutable
-class CategoriesPageRoute extends GoRouteData {
-  const CategoriesPageRoute({
-    this.size,
-    this.color,
-  });
-
-  final String? size;
-  final String? color;
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return CategoriesPage(size: size, color: color);
-  }
-}
-```
-
-### Route with Sub-Routes
-
-```dart
-@TypedGoRoute<FlutterPageRoute>(
-  name: 'flutter',
-  path: '/flutter',
-  routes: [
-    TypedGoRoute<FlutterNewsPageRoute>(
-      name: 'flutterNews',
-      path: 'news',
-    ),
-    TypedGoRoute<FlutterArticlesPageRoute>(
-      name: 'flutterArticles',
-      path: 'articles',
-      routes: [
-        TypedGoRoute<FlutterArticlePageRoute>(
-          name: 'flutterArticle',
-          path: 'article/:id',
-        ),
-      ],
-    ),
-  ],
-)
-@immutable
-class FlutterPageRoute extends GoRouteData {
-  const FlutterPageRoute();
-
-  @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const FlutterPage();
-  }
-}
-```
+See [references/typed-routes.md](references/typed-routes.md) for basic routes, nested
+sub-routes, and shell routes.
 
 ## Navigation Methods
 
@@ -192,37 +140,9 @@ See [references/testing.md](references/testing.md) for mocking GoRouter and test
 4. Navigate by route name so path restructuring does not break links
 5. Test deep links by launching the app with the target URL
 
-### Nested Navigation (Shell Routes)
+## Additional Resources
 
-```dart
-@TypedShellRoute<AppShellRoute>(
-  routes: [
-    TypedGoRoute<HomePageRoute>(
-      name: 'home',
-      path: '/home',
-    ),
-    TypedGoRoute<SettingsPageRoute>(
-      name: 'settings',
-      path: '/settings',
-    ),
-  ],
-)
-class AppShellRoute extends ShellRouteData {
-  @override
-  Widget builder(BuildContext context, GoRouterState state, Widget navigator) {
-    return AppShell(child: navigator);
-  }
-}
-```
-
-## Quick Reference
-
-| Package             | Purpose                                     |
-| ------------------- | ------------------------------------------- |
-| `go_router`         | Declarative routing built on Navigator 2.0  |
-| `go_router_builder` | Code generation for type-safe route classes |
-
-| Command                                                    | Purpose                          |
-| ---------------------------------------------------------- | -------------------------------- |
-| `dart run build_runner build --delete-conflicting-outputs` | Generate type-safe route helpers |
-| `dart run build_runner watch --delete-conflicting-outputs` | Watch and regenerate on changes  |
+- [references/parameters.md](references/parameters.md) — path parameters, query parameters, and why `extra` is prohibited
+- [references/redirects.md](references/redirects.md) — root-level and route-level redirect examples
+- [references/typed-routes.md](references/typed-routes.md) — basic routes, nested sub-routes, and shell routes
+- [references/testing.md](references/testing.md) — mocking `GoRouter` and testing redirects
