@@ -26,14 +26,12 @@ pasted into the prompt.
 static-security is one of the ten skills added after the measured baseline, so none of
 these cases has ever been run. Treat the first run as calibration.
 
-Every case lists graders in this order: routing, mechanical, judged.
-
 ## Cases
 
-### static-security-refuses-dart-define-for-secrets
+What each case asks for is in its own `prompt.md` `description`. These notes record why
+the case exists and what separates the two arms.
 
-**Measures.** The skill refuses to move a hardcoded key to `--dart-define` and requires
-the secret to be served from a backend at runtime.
+### static-security-refuses-dart-define-for-secrets
 
 **Discriminates.** The baseline writes the requested `--dart-define` change and attaches
 a caveat, or suggests `.env` / obfuscation / string splitting.
@@ -45,16 +43,8 @@ the refusal.
 
 ### static-security-audits-file-with-severity-tiers
 
-**Measures.** A whole-file audit reports findings in the skill's three severity tiers and
-gives the skill's fixes: `flutter_secure_storage` for the token, `Random.secure()` for
-the session id, backend for the key.
-
 **Discriminates.** The bare model finds the same problems but grades them High / Medium /
 Low or by CVSS, and offers `--dart-define` for the key.
-
-**History.** The severity rubric alone was not enough: with five assertions a
-High/Medium/Low report failed only that rubric and still averaged 0.8, so the tier check
-is also graded mechanically.
 
 **Grader notes.** The middle tier is the tell. `uses-warning-tier` has no trailing `\b` on
 `Warning` so a "Warnings" heading counts; `no-medium-tier` uses `\bMedium\b` so it will
@@ -65,16 +55,10 @@ secrets prohibition, on an audit rather than a refusal.
 
 ### static-security-hashes-passwords-with-dart-crypt
 
-**Measures.** Password storage is rewritten onto `package:dart_crypt` with SHA-512-crypt
-and verified through `.match(`, per `references/crypto.md`.
-
 **Discriminates.** The unaided model answers bcrypt or argon2, right in general but not
 what this skill teaches, so the three regex graders carry the lift.
 
 ### static-security-validates-input-with-formz
-
-**Measures.** Form validation goes through a `FormzInput` subclass per field, and submit
-reads validated values off state instead of a controller.
 
 **Discriminates.** The baseline hand-rolls a `RegExp` check in the widget or reaches for
 a `TextFormField` validator, which leaves the raw controller text as the value that
@@ -85,9 +69,6 @@ package:formz for all form validation. Define a FormzInput subclass per field."
 
 ### static-security-refuses-platform-channel-biometrics
 
-**Measures.** The skill refuses a hand-written `MethodChannel` for biometrics and routes
-the gate through `package:local_auth` instead.
-
 **Discriminates.** The baseline writes the `com.acme/biometrics` MethodChannel as asked.
 
 **Grader notes.** `names-local-auth` and `uses-local-authentication` come from
@@ -95,10 +76,6 @@ the gate through `package:local_auth` instead.
 directly."
 
 ### static-security-scans-dependencies-before-release
-
-**Measures.** The pre-release dependency check named by the skill: `osv-scanner` over
-`pubspec.lock` plus `dart pub outdated`, and an `ignored_advisories` entry challenged for
-a written justification.
 
 **Discriminates.** The bare model answers `dart pub outdated` and generic advice, and
 accepts the `ignored_advisories` entry as listed.
@@ -113,8 +90,6 @@ the step.
 
 ### static-security-stays-out-of-plain-formatting-work
 
-**Measures.** A plain string-formatting task does not activate the skill.
-
 **Discriminates.** Nothing else catches a skill firing where it should not. The response
 must carry no security review at all: no secure storage, `formz`, `Random.secure`,
 `osv-scanner`, `local_auth`, certificate pinning, and no threat-model prose.
@@ -122,11 +97,3 @@ must carry no security review at all: no secure storage, `formz`, `Random.secure
 **Grader notes.** Task success is graded mechanically by `answers-the-question`, not by
 the judge. The judge never sees the prompt, so "did it write the formatter" is
 unanswerable from the output alone.
-
-## Dropped in the native migration
-
-The `dart-parses` syntax assertion has no native equivalent and was deleted from:
-
-- static-security-hashes-passwords-with-dart-crypt
-- static-security-validates-input-with-formz
-- static-security-refuses-platform-channel-biometrics

@@ -28,23 +28,17 @@ Not measurable here: whether the theme actually renders, and whether the code co
 This skill has no measured baseline yet, so read its first run as calibration rather than
 as a verdict.
 
-Every case orders its assertions routing, then mechanical, then judged. Grader files carry
-no order of their own, so that ordering survives only here.
-
 ## Cases
 
-### material-theming-builds-app-theme-from-scratch
+What each case asks for is in its own `prompt.md` `description`. These notes record why
+the case exists and what separates the two arms.
 
-**Measures.** Greenfield theme setup follows the skill's "Creating a Theme" steps 1 to 6,
-AppColors, AppTextStyle, AppSpacing, then light and dark getters.
+### material-theming-builds-app-theme-from-scratch
 
 **Discriminates.** An unaided model emits one big ThemeData with inline `Color(0x...)`
 literals and independently declared TextStyle constructors.
 
 ### material-theming-refactors-hardcoded-widget
-
-**Measures.** A "just review this" request pulls both the color and the TextStyle out of
-the widget, and drops `EdgeInsets.fromLTRB`.
 
 **Discriminates.** Without the skill the fault is not named in the prompt, so the model
 tidies formatting or swaps only the color and leaves the TextStyle.
@@ -54,9 +48,6 @@ response that fixes the color and keeps the TextStyle literal would otherwise cl
 case on partial credit.
 
 ### material-theming-defines-spacing-scale
-
-**Measures.** An AppSpacing scale whose every step derives from one base unit, plus the
-rewrite that consumes it instead of raw numbers.
 
 **Discriminates.** A bare model invents xs/s/m/l/xl or space4/space8 with independent
 literal values, and keeps `EdgeInsets.fromLTRB`.
@@ -69,16 +60,10 @@ file.
 
 ### material-theming-centralizes-component-theme
 
-**Measures.** Duplicated InputDecoration moves into ThemeData as an InputDecorationTheme,
-and the call site keeps only its labelText.
-
 **Discriminates.** The obvious unaided answer is a shared InputDecoration constant, a
 decoration-building helper, or a wrapper widget each field opts into.
 
 ### material-theming-refuses-brightness-check-in-widget
-
-**Measures.** The skill's flattest prohibition, "Never check Brightness in widget code".
-The prompt asks for it outright, so a compliant answer fails.
 
 **Discriminates.** A model without the skill does as it is told and hands back a tidier
 branch, a ternary on `Theme.of(context).brightness` or a `context.isDarkMode` extension,
@@ -95,9 +80,6 @@ not a branch, so the judge does not read the dark scheme as the defect.
 
 ### material-theming-stays-out-of-non-visual-work
 
-**Measures.** That a plain Dart string-formatting request leaves the skill dormant.
-Nothing else catches it firing where it should not.
-
 **Discriminates.** material-theming must not be invoked, and none of its vocabulary may
 appear, no ThemeData, ColorScheme, textTheme, Theme.of, AppColors, AppSpacing,
 AppTextStyle or EdgeInsets.
@@ -105,13 +87,3 @@ AppTextStyle or EdgeInsets.
 **Notes.** `answers-the-question` grades task success mechanically rather than by the
 judge. The judge never sees the prompt, so "did it format the duration" is unanswerable
 from the output alone.
-
-## Dropped in the native migration
-
-Native plugin evals have no custom-code graders, so the `dart-parses` syntax check has no
-equivalent. It was deleted with no replacement. Four cases lost it:
-
-- `material-theming-builds-app-theme-from-scratch`
-- `material-theming-refactors-hardcoded-widget`
-- `material-theming-defines-spacing-scale`
-- `material-theming-centralizes-component-theme`

@@ -25,14 +25,12 @@ This is one of the ten skills added after the measured baseline, so it has no ba
 row and a first full run is calibration, not a verdict. The comparisons in the History
 lines below come from ad-hoc runs during authoring.
 
-Graders are written in the original assertion order: routing, mechanical, judged.
-
 ## Cases
 
-### very-good-analysis-upgrade-resolves-target-version-without-asking
+What each case asks for is in its own `prompt.md` `description`. These notes record why
+the case exists and what separates the two arms.
 
-**Measures.** Resolves the target version itself via the pub.dev API and lays out the
-bump → pub get → analyze → fix → analyze sequence in order.
+### very-good-analysis-upgrade-resolves-target-version-without-asking
 
 **Discriminates.** No version is supplied on purpose. SKILL.md's "Before You Start" says
 fetch the latest and proceed; a bare model asks which version to target or reaches for
@@ -52,9 +50,6 @@ fetch the latest and proceed; a bare model asks which version to target or reach
 
 ### very-good-analysis-upgrade-keeps-the-caret-and-changes-nothing-else
 
-**Measures.** Writes `^10.0.0` against an explicit request to pin exactly, says the caret
-is the VGV convention, and touches nothing else in the pubspec.
-
 **Discriminates.** "pin it exactly" is the discriminator. SKILL.md Step 1: keep the
 caret, don't change anything else in the file. A bare model complies with the pin and
 often tidies the neighboring dev deps while it is in there.
@@ -68,39 +63,12 @@ often tidies the neighboring dev deps while it is in there.
 
 ### very-good-analysis-upgrade-fixes-only-the-new-lints
 
-**Measures.** Fixes the two new style lints, leaves the two pre-existing ones for their
-own PR, and escalates the one whose fix changes runtime behavior.
-
 **Discriminates.** `avoid_dynamic_calls` is what separates the arms. The obvious fix —
 casting the receiver — throws a TypeError on a JSON int where the dynamic call returned a
 value, so Core Standards says flag it for review. An unaided model casts it and moves on.
 No other case in this skill grades that standard.
 
-**History.** The pre-existing-versus-new split alone measured nothing: with the prompt
-stating outright which two predate the bump, the no-plugin arm made the same call, in the
-same words, and passed every content assertion here. The third new lint is what gives
-this case lift.
-
-- `const-and-trailing-comma` — one regex covers both style lints:
-  prefer_const_constructors wants the `const`, require_trailing_commas wants the comma,
-  and both land on the same line. The pattern carries a backslash *and* a single quote,
-  so its YAML value is single-quoted with the inner quotes doubled; a double-quoted
-  scalar would reject the `\(` escape.
-- `leaves-pre-existing-lints` and `exactly-two-edits` — "fix only new warnings" graded
-  twice: once on the stated decision, once on the list of what it will change.
-- `exactly-two-edits` — phrased as "what the response says it changed" rather than "what
-  it changed": the judge never sees the original file, so a rename or reorder is
-  invisible to it. Its FAIL clause used to open "FAIL if it also claims a cast", which
-  collided with `escalates-dynamic-call-lint`: that grader requires the response to name
-  the cast in order to hand it to a human, and the judge read the required mention as a
-  claimed edit and failed a correct answer. FAIL now fires only on a third change the
-  response says it *applied*, and naming a change in order to decline it is called out as
-  a PASS.
-
 ### very-good-analysis-upgrade-bumps-each-monorepo-package
-
-**Measures.** One pubspec edit per package, `pub get` inside each package, a single
-analyze from the repo root.
 
 **Discriminates.** A bare model writes one root-level change and one root-level pub get,
 or analyzes package by package. SKILL.md splits the two commands by where they run.
@@ -115,27 +83,12 @@ or analyzes package by package. SKILL.md splits the two commands by where they r
 
 ### very-good-analysis-upgrade-refuses-scope-creep
 
-**Measures.** Splits the reply: declines the http bump, the TODO sweep and the blanket
-`dart fix --apply`, then still commits to the bump and its forced fixes.
-
-**Discriminates.** A bare model does the whole bundle in one PR, or bumps http with a
-caveat attached. The other failure mode is refusing everything, which the third rubric
-catches.
-
-**History.** The first prompt said "I am describing my package from memory" while
-describing nothing, so the model refused outright and all three rubrics failed on the
-refusal rather than on scope judgment. The pubspec gives it something concrete and the
-close asks for PR contents, not edits. Four graders and no cheap regex on "10.0.0" is
-deliberate: the prompt states the version, so echoing it proves nothing, and a free
-grader would only widen the gap. Note the threshold arithmetic, though: with routing at
-weight 3 and three content graders the total weight is 6, so one content miss scores 5/6
-= 0.83 and still clears 0.8. This case can pass while failing `refuses-http-bump`, which
-is its headline assertion. Weighting that grader would close the hole.
+**Discriminates.** The reply has to split: decline the http bump, the TODO sweep and the
+blanket `dart fix --apply`, then still commit to the bump and its forced fixes. A bare
+model does the whole bundle in one PR, or bumps http with a caveat attached. The other
+failure mode is refusing everything, which the third rubric catches.
 
 ### very-good-analysis-upgrade-surfaces-resolution-conflict
-
-**Measures.** On a solver failure, names both conflicting analyzer constraints and hands
-the decision back instead of resolving it.
 
 **Discriminates.** The user explicitly authorizes the forbidden shortcut, and a bare
 model takes it — bumping build_runner, relaxing a constraint, or running a blanket major
@@ -145,9 +98,6 @@ upgrade. SKILL.md, Tips: never force resolution.
 
 Negative control.
 
-**Measures.** That a plain Dart utility request routes nowhere near this skill. Nothing
-else catches it firing where it should not.
-
 **Discriminates.** The skill must not fire, and none of its vocabulary may appear: no
 very_good_analysis, dev_dependencies, pub get or analyze, and no lint packages, analyzer
 config, pubspec edits or dependency upgrades.
@@ -155,9 +105,3 @@ config, pubspec edits or dependency upgrades.
 - `answers-the-question` — task success is graded mechanically, not by the judge. The
   judge never sees the prompt, so "did it write the function" is unanswerable from the
   output alone.
-
-## Dropped in the native migration
-
-The `dart-parses` syntax assertion has no native equivalent and was deleted from:
-
-- very-good-analysis-upgrade-fixes-only-the-new-lints

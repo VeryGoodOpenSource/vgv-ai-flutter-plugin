@@ -25,37 +25,27 @@ that uses both still passes.
 None of these cases has been run. ui-package is one of the ten skills added after the
 measured baseline, so treat the first numbers as calibration, not a verdict.
 
-Graders are written in the original assertion order: routing, mechanical, judged.
-
 ## Cases
 
-### ui-package-scaffolds-with-app-ui-package-template
+What each case asks for is in its own `prompt.md` `description`. These notes record why
+the case exists and what separates the two arms.
 
-**Measures.** Scaffolding through the Very Good CLI `app_ui_package` template, and the
-lib/src + single-barrel layout that template ships.
+### ui-package-scaffolds-with-app-ui-package-template
 
 **Discriminates.** A bare model builds the package by hand or runs `flutter create
 --template=package`, and puts public widgets at the top of lib/.
 
-**History.** A negative check on the literal string `flutter create` was here and was
-removed: the first rubric names `flutter create --template=package` as the wrong path, so
-a correct answer routinely writes that string in order to reject it, and the negative
-failed the right answer. Same trap as `flutter test` in green-gate.
-
-The template name is the whole point of this case: `app_ui_package` appears only in this
-SKILL.md, and create-project's template list does not contain it either.
-
 ### ui-package-adds-widget-with-barrel-export-and-test
 
-**Measures.** The whole add-a-widget workflow: one widget per file under
-lib/src/widgets, a barrel export, a mirrored widget test, and a Widgetbook use case with
-the build_runner regeneration.
+**Discriminates.** The workflow is one widget per file under lib/src/widgets, a barrel
+export, a mirrored widget test, and a Widgetbook use case with the build_runner
+regeneration. A bare model writes the widget file and stops, with no barrel export, no
+mirrored test path, and no Widgetbook, which is named nowhere outside this skill's
+references. Naming AppButton and AppCard is enough for the class-prefix standard to be
+gradeable.
 
-**Discriminates.** A bare model writes the widget file and stops — no barrel export, no
-mirrored test path, no Widgetbook, which is named nowhere outside this skill's
-references. The barrel file is deliberately not pasted into the prompt; showing it would
-hand the no-plugin arm the convention under test. Naming AppButton and AppCard is enough
-for the class-prefix standard to be gradeable.
+**Note.** The barrel file is deliberately not pasted into the prompt. Showing it would
+hand the no-plugin arm the convention under test.
 
 - `widget-file-path` — one widget per file, named after the widget in snake_case, under
   src/. `\w` covers underscores, so app_badge.dart and app_unread_badge.dart both match.
@@ -70,9 +60,6 @@ for the class-prefix standard to be gradeable.
 
 ### ui-package-declines-hand-rolled-button
 
-**Measures.** The refusal to rebuild a Material primitive: compose the Material button
-widgets, read colors from the theme, and type the callback.
-
 **Discriminates.** A bare model builds the GestureDetector + DecoratedBox it was asked
 for, keeps Color(0xFF6750A4) in build, and leaves the `final Function onTap` the prompt
 handed it untouched.
@@ -82,20 +69,7 @@ handed it untouched.
 - `typed-callback` — "Expose callbacks with ValueChanged<T> or VoidCallback — do not use
   raw Function." The prompt hands the model `final Function onTap` to see if it keeps it.
 
-**History.** `no-hardcoded-color-in-build` failed a routed run at 0.86. Its FAIL clause
-reached past the widget — "colors come from anywhere other than the theme, such as a
-private color constant declared in the package" — and reference.md teaches exactly that
-constant: `static const _seedColor = Color(0xFF6750A4)` inside `AppTheme`. A correct
-answer that moves the hex to the seed tripped the FAIL while satisfying the PASS. The
-rubric now names the widget class as the only subject, puts theme setup explicitly out of
-scope, and accepts a widget that declares no colors at all and inherits them from the
-ambient theme, which the old PASS ("colors are read from Theme.of(context).colorScheme")
-did not cover.
-
 ### ui-package-refuses-parallel-theme-system
-
-**Measures.** Custom tokens as a ThemeExtension registered on ThemeData and read through
-a BuildContext extension, holding only what Material lacks.
 
 **Discriminates.** A bare model delivers the requested StorefrontTheme InheritedWidget,
 redeclares primary/onSurface in it, and writes the StorefrontTheme.of(context) lookup the
@@ -110,21 +84,16 @@ prompt asked for.
 
 ### ui-package-tests-widget-through-pump-app-helper
 
-**Measures.** Widget tests pumped through the package's reusable pumpApp helper, which
-carries the package theme.
-
 **Discriminates.** The unaided answer builds tester.pumpWidget(MaterialApp(...)) inline
 in every test; pumpApp exists only in this skill's reference.md.
 
 ### ui-package-refuses-imports-from-src
 
-**Measures.** That everything under a package's src/ is private, that consumers import
-the one barrel file, and that the barrel re-exports material.dart so no second Material
-import is needed.
-
-**Discriminates.** A bare model may land on a barrel file, but it does not know the
-barrel re-exports material.dart. Endorsing the per-file imports, or calling it a matter
-of taste, also fails.
+**Discriminates.** Three rules: everything under a package's src/ is private, consumers
+import the one barrel file, and the barrel re-exports material.dart so no second Material
+import is needed. A bare model may land on a barrel file, but it does not know the barrel
+re-exports material.dart. Endorsing the per-file imports, or calling it a matter of taste,
+also fails.
 
 - `barrel-import-path` — the pattern matches the barrel path without a leading
   `package:`. That omission was forced by a parsing rule in the previous harness that no longer applies
@@ -137,9 +106,6 @@ of taste, also fails.
 
 Negative control.
 
-**Measures.** That plain Dart work with no widget and no theme leaves the skill dormant.
-Nothing else catches it firing where it should not.
-
 **Discriminates.** ui-package must not be invoked, and none of its vocabulary may
 appear: no ThemeExtension, app_ui_package, Widgetbook, pumpApp, barrel file, or
 context.appColors / context.appSpacing accessors.
@@ -147,12 +113,3 @@ context.appColors / context.appSpacing accessors.
 - `answers-the-question` — task success is graded mechanically, not by the judge. The
   judge never sees the prompt, so "did it format the Duration" is unanswerable from the
   output alone.
-
-## Dropped in the native migration
-
-The `dart-parses` syntax assertion has no native equivalent and was deleted from:
-
-- ui-package-adds-widget-with-barrel-export-and-test
-- ui-package-declines-hand-rolled-button
-- ui-package-refuses-parallel-theme-system
-- ui-package-tests-widget-through-pump-app-helper

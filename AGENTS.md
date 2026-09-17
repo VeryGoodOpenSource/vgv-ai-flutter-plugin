@@ -23,7 +23,7 @@ evals/                 # `claude plugin eval` suite — all 15 skills, 100 cases
   _tools/
     ci-summary.js      # Renders aggregate-result.json into a GitHub step summary
   <skill>/             # One directory per skill, named for the skill it covers
-    NOTES.md           # What each case measures, what it discriminates, its history
+    NOTES.md           # What each case discriminates and why it exists
     <case-name>/       # One directory per case, named for the case
       prompt.md        # Frontmatter: run limits and tools. Body: the prompt
       case.yaml        # schema_version, name, and the scaffold hook

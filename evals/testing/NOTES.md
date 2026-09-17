@@ -25,16 +25,12 @@ Measured baseline, first full run under the previous harness: 4/5 with the plugi
 without it, negative control excluded because a model without the skill passes the
 negative routing grader for free.
 
-Graders follow the old assertion order: routing, then mechanical, then judged. The
-syntax slot that sat between mechanical and judged is gone, see the last section.
-
 ## Cases
 
-### testing-structures-unit-tests-as-sentences
+What each case asks for is in its own `prompt.md` `description`. These notes record why
+the case exists and what separates the two arms.
 
-**Measures.** The whole unit-test shape at once: private `_Mock` class, `late` + `setUp`
-inside a group, and names that read as sentences with `$Type` interpolation so renames
-propagate.
+### testing-structures-unit-tests-as-sentences
 
 **Discriminates.** A bare model writes public `MockApiClient`, a top-level `final` mock
 or a `setUp` at the top of `main()`, and names like 'test getUser' with the type spelled
@@ -47,55 +43,24 @@ comparable.
 
 ### testing-declines-mockito
 
-**Measures.** That the standard is *surfaced* when the user asks for the banned package
-by name. Complying is allowed, complying silently is not.
-
 **Discriminates.** A bare model never raises mocktail at all and scores 0.25 here.
 
-**History.** The earlier version asserted that the mockito import was absent plus a
-mocktail import present, demanding outright substitution, and flaked 1 run in 3: the
-model names mocktail as the standard, then honors the explicit request and offers the
-alternative, which is reasonable behavior to reward rather than fail. Routing is
-separately flaky here, this case routed 3 of 3 on one pass and failed to route on the
-next, taking every downstream assertion with it.
-
 ### testing-uses-pump-app-in-widget-tests
-
-**Measures.** Widget tests wrap through the shared `pumpApp` helper and drive the view
-with a MockBloc/MockCubit rather than a real bloc.
 
 **Discriminates.** A bare model inlines `pumpWidget(MaterialApp(home: ...))` and
 constructs a real bloc, turning the widget test into an integration test.
 
-**History.** "using our existing widget-test helpers" is in the prompt because without
-it the skill reached for `pumpWidget(MaterialApp(...))` inline on some runs, failing
-both the helper regex and the rubric. The convention under test is still the skill's,
-the prompt names no helper.
-
 ### testing-avoids-asserting-visual-properties
-
-**Measures.** Test behavior, not properties. Padding, color and font size are golden-test
-territory, and the skill must say so.
 
 **Discriminates.** A bare model happily writes the padding/color/font assertions with no
 caveat and never mentions golden tests.
 
-**History.** An earlier version demanded the widget test be withheld entirely, which the
-skill does not do: it supplies the test the user asked for while stating the assertions
-are fragile. `flags-fragile-assertions` grades that it never complies silently.
-
 ### testing-tags-golden-tests-with-a-constant
-
-**Measures.** Golden tests carry a tag, and the tag comes from an abstract `TestTag`
-class so goldens can be run or updated independently.
 
 **Discriminates.** A bare model either omits the tag or passes the raw literal
 `tags: 'golden'`.
 
 ### testing-stays-out-of-non-test-work
-
-**Measures.** That a one-line variable rename leaves the skill dormant. Nothing else
-catches it firing where it should not.
 
 **Discriminates.** testing must not be invoked, and none of its vocabulary may appear:
 no testWidgets, pumpApp, mocktail or setUp bolted onto the rename.
@@ -109,10 +74,3 @@ An earlier version matched the bare name inside word boundaries and fired on a r
 that said "renamed `usr` to `user`", scoring a presentation choice as a skill failure.
 Anchoring on the declaration also retired the `cspell:ignore` directive the grader used
 to carry.
-
-## Dropped in the native migration
-
-The `dart-parses` syntax assertion has no native equivalent, so these cases lost it:
-
-- testing-structures-unit-tests-as-sentences
-- testing-uses-pump-app-in-widget-tests

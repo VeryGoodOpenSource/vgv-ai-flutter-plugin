@@ -23,15 +23,12 @@ Not measurable here: the Core Standard "Clarify visual intent when the request i
 ambiguous". A single-shot harness gives the model nobody to ask, so a deliberately vague
 prompt grades the harness rather than the skill.
 
-Every case orders its assertions routing, then mechanical, then judged. Grader files carry
-no order of their own, so that ordering survives only here.
-
 ## Cases
 
-### animations-uses-m3-motion-tokens-for-implicit-animation
+What each case asks for is in its own `prompt.md` `description`. These notes record why
+the case exists and what separates the two arms.
 
-**Measures.** The decision tree. A value with a target on a rebuilding widget is an
-implicit animation, timed with M3 tokens.
+### animations-uses-m3-motion-tokens-for-implicit-animation
 
 **Discriminates.** Without the skill the model reaches for a StatefulWidget with an
 AnimationController and hardcodes 300ms and Curves.easeOut.
@@ -48,9 +45,6 @@ sometimes written without the space.
 
 ### animations-declines-controller-for-simple-fade
 
-**Measures.** The prohibition. The user asks for the anti-pattern by name, and the skill
-has to push back with AnimatedOpacity instead.
-
 **Discriminates.** Without the skill the model complies. It writes the StatefulWidget, the
 controller and the AnimatedBuilder exactly as asked.
 
@@ -62,15 +56,8 @@ explains itself.
 
 ### animations-staggers-on-a-single-controller
 
-**Measures.** Two animations that share timing run off one controller with Interval, on
-SingleTickerProviderStateMixin, timed by M3 tokens.
-
 **Discriminates.** Without the skill the model spins up a controller per animation and
 hardcodes each duration, so the two-controller negative fires.
-
-**History.** Controller disposal is deliberately not asserted. The bare model disposes
-too, so it would score in both arms, and pinning `_controller.dispose()` fails a correct
-answer that named the field `_animationController`.
 
 **Notes.** `staggers-with-interval` comes from Performance, Do Not: "Do not create
 multiple AnimationController instances for animations that share timing, use Interval on
@@ -83,9 +70,6 @@ and curves each Interval with `Easing.`.
 
 ### animations-custom-page-transition-via-go-route-data
 
-**Measures.** A custom route transition goes through a buildPage override returning
-CustomTransitionPage, curved with an emphasized easing.
-
 **Discriminates.** Without the skill the model wraps the page body in a FadeTransition
 inside build, or passes a hand-rolled Duration and Curves value.
 
@@ -96,24 +80,17 @@ every page transition with `Easing.emphasizedDecelerate`.
 
 ### animations-reviews-planted-violations
 
-**Measures.** Review mode over code carrying four planted violations, a hardcoded duration
-and curve, the wrong ticker mixin, an ExpensiveChart rebuilt every frame, and an animated
-width. Graded on prose, because the prompt asks for findings, not for Dart.
+**Discriminates.** Four violations are planted: a hardcoded duration and curve, the wrong
+ticker mixin, an ExpensiveChart rebuilt every frame, and an animated width. Without the
+skill the review stops at the missing dispose and does not mention M3 tokens, the mixin
+choice, or the layout cost.
 
-**Discriminates.** Without the skill the review stops at the missing dispose and does not
-mention M3 tokens, the mixin choice, or the layout cost.
-
-**History.** The missing `_controller.dispose()` is deliberately not asserted. The bare
-model catches it too, so grading it would measure Flutter common knowledge rather than the
-skill.
+**Note.** Graded on prose, not Dart, because the prompt asks for findings.
 
 **Notes.** `uses-single-ticker-mixin` is Core Standards, SingleTickerProviderStateMixin
 for one controller and TickerProviderStateMixin only for several.
 
 ### animations-centralizes-motion-constants
-
-**Measures.** Motion spread across features gets a centralized AppMotion class whose
-constants are M3 tokens, then one usage of it.
 
 **Discriminates.** Without the skill the model either inlines timings per feature or
 writes a constants class full of raw `Duration(milliseconds: ...)`, which the third arm of
@@ -126,9 +103,6 @@ not a rename of magic numbers.
 
 ### animations-stays-out-of-non-motion-work
 
-**Measures.** Negative control. A hex-string-to-Color helper is not animation work, so the
-skill must not fire.
-
 **Discriminates.** What must not appear is the skill firing at all, any animation widget
 such as AnimationController, AnimatedBuilder, TweenAnimationBuilder or
 CustomTransitionPage, and the token vocabulary `Durations.`, `Easing.` and `AppMotion`.
@@ -139,14 +113,3 @@ rather than by the judge. The judge never sees the prompt, so "did it parse the 
 string" is unanswerable from the output. `parses-the-hex-string` carries `(try)?` because
 a correct answer that returns null on bad input uses `int.tryParse`, which a bare
 `int\.parse` would fail.
-
-## Dropped in the native migration
-
-Native plugin evals have no custom-code graders, so the `dart-parses` syntax check has no
-equivalent. It was deleted with no replacement. Five cases lost it:
-
-- `animations-uses-m3-motion-tokens-for-implicit-animation`
-- `animations-declines-controller-for-simple-fade`
-- `animations-staggers-on-a-single-controller`
-- `animations-custom-page-transition-via-go-route-data`
-- `animations-centralizes-motion-constants`

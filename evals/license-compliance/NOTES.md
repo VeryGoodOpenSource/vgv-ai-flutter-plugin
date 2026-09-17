@@ -23,18 +23,16 @@ the scan output in.
 These cases have no measured baseline yet — read a first run as calibration rather than as
 a verdict on the skill.
 
-Graders keep the source assertion order: routing, mechanical, syntax, judged. No case in
-this skill had a syntax assertion.
-
 ## Cases
+
+What each case asks for is in its own `prompt.md` `description`. These notes record why
+the case exists and what separates the two arms.
 
 ### license-compliance-runs-check-with-full-license-info
 
-**Measures.** That the audit is described as the license check with full license
-information, and that the deliverable is the prescribed report with risk levels rather
-than a list of licenses.
-
-**Discriminates.** A bare model offers to eyeball the pubspec, or names the check without
+**Discriminates.** Two things have to land: the check is named with full license
+information, and the deliverable is the prescribed report with risk levels rather than a
+list of licenses. A bare model offers to eyeball the pubspec, or names the check without
 the flag that makes it print licenses instead of a count.
 
 **Grader notes.** `names-check-licenses` is a regex so both surface forms of the same
@@ -56,31 +54,24 @@ says a blank template or skeleton counts.
 
 ### license-compliance-scopes-check-to-monorepo-subdirectory
 
-**Measures.** The Core Standard that a project below the workspace root needs a
-`directory` argument. The layout is asserted in the prompt rather than built in the
-fixture, which must stay one bare app — a `mobile/` directory there would hand the
-without-skill arm the same context.
+**Discriminates.** The Core Standard under test is that a project below the workspace root
+needs a `directory` argument. A bare model targets the workspace root, where a melos repo
+has no app pubspec to resolve.
 
-**Discriminates.** A bare model targets the workspace root, where a melos repo has no app
-pubspec to resolve.
-
-**History.** The bound on the directory regex was 16, which the `directory parameter:
-mobile` form overruns. 24 admits it while still excluding prose that merely has both words
-near each other, e.g. "in the root directory, since the app lives in mobile/" (28
-characters between them). All four forms verified against node.
+**Note.** The monorepo layout is asserted in the prompt rather than built in the fixture,
+which must stay one bare app. A `mobile/` directory there would hand the without-skill arm
+the same context.
 
 **Grader notes.** `directory-points-at-mobile` is the load-bearing detail in any of its
 forms: `directory: 'mobile'`, `--directory mobile`, or `directory parameter: mobile`.
 
 ### license-compliance-categorizes-and-reports-scan-output
 
-**Measures.** Categorization of scan output it is handed: strong copyleft as high risk,
-weak copyleft as medium, and an unrecognized or absent identifier as high risk needing
-manual review — written up in the report skeleton the skill prescribes.
-
-**Discriminates.** A bare model writes a flat list with no risk column and no scanned
-total, and rates GPL-3.0 and MPL-2.0 alike. It may well flag the two unknowns on its own —
-the report shape is where the lift is.
+**Discriminates.** The categories are strong copyleft as high risk, weak copyleft as
+medium, and an unrecognized or absent identifier as high risk needing manual review, all
+written up in the report skeleton the skill prescribes. A bare model writes a flat list
+with no risk column and no scanned total, and rates GPL-3.0 and MPL-2.0 alike. It may well
+flag the two unknowns on its own, so the report shape is where the lift is.
 
 **Grader notes.** The report skeleton is graded twice, by `report-heading` and
 `total-scanned-line`. Either alone is one formatting slip away from a false negative.
@@ -89,33 +80,23 @@ it must be flagged.
 
 ### license-compliance-refuses-to-certify-from-pubspec-alone
 
-**Measures.** The Core Standard that transitive dependencies carry obligations of their
-own, so a direct dependency list cannot certify compliance.
-
-**Discriminates.** A bare model recites the five packages' licenses and calls the project
-clear, which is what the prompt asks for.
+**Discriminates.** The Core Standard under test is that transitive dependencies carry
+obligations of their own, so a direct dependency list cannot certify compliance. A bare
+model recites the five packages' licenses and calls the project clear, which is what the
+prompt asks for.
 
 ### license-compliance-refuses-to-clear-missing-licenses
 
-**Measures.** The prohibition. Core Standards: a missing license means all rights
-reserved, always flag; never assume compliance without a clear license identifier. Graded
-with the alternative it must offer.
-
-**Discriminates.** No rule binds a bare model to flag these, so under the ship-tonight
-framing it can grant the exception, and it offers no remediation path. Correcting the
-premise alone is not enough to pass.
+**Discriminates.** Two Core Standards carry this case: a missing license means all rights
+reserved and is always flagged, and compliance is never assumed without a clear license
+identifier. No rule binds a bare model to flag these, so under the ship-tonight framing it
+can grant the exception, and it offers no remediation path. The case is graded with the
+alternative the skill must offer, so correcting the premise alone is not enough to pass.
 
 ### license-compliance-stays-out-of-unrelated-dart-work
-
-**Measures.** That the skill stays out of ordinary Dart work. Nothing else catches it
-firing where it should not.
 
 **Discriminates.** No license names, license categories, copyleft talk or dependency
 compliance may appear, and the skill must not be invoked.
 
 **Grader notes.** Task success is graded mechanically by `answers-the-question`, not by
 the judge. The prompt hands over the signature, so this is deterministic.
-
-## Dropped in the native migration
-
-Nothing. No case in this skill used the `dart-parses` assertion.
