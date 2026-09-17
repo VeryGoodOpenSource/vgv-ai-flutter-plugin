@@ -40,10 +40,11 @@ on:
         type: string
         default: '40'
 
-# Never let two eval runs bill concurrently.
+# Never let two eval runs bill concurrently. Queue rather than cancel: a cancelled run has
+# already spent most of its ceiling and leaves no aggregate-result.json behind.
 concurrency:
   group: evals-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -63,7 +64,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tags: ${{ steps.pick.outputs.tags }}
-      skills: ${{ steps.pick.outputs.skills }}
       run_evals: ${{ steps.pick.outputs.run_evals }}
     steps:
       - uses: actions/checkout@v7
@@ -122,7 +122,6 @@ jobs:
             echo "No skill with eval cases changed. Nothing to run."
             echo "run_evals=false" >> "$GITHUB_OUTPUT"
             echo "tags=" >> "$GITHUB_OUTPUT"
-            echo "skills=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -134,7 +133,6 @@ jobs:
 
           echo "run_evals=true" >> "$GITHUB_OUTPUT"
           echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
-          echo "skills=$TAGS" >> "$GITHUB_OUTPUT"
 
           {
             echo "### Eval scope"
@@ -177,12 +175,18 @@ jobs:
           fi
 
       - name: Run the scoped evals
+        # Every `${{ }}` value arrives through env. Interpolating one into the script body
+        # would let a workflow_dispatch input inject shell into a job holding the API key.
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          INCLUDE_BASELINE: ${{ inputs.include_baseline }}
+          RUNS: ${{ inputs.runs || '1' }}
+          MAX_COST: ${{ inputs.max_cost_usd || '40' }}
+          TAGS: ${{ needs.scope.outputs.tags }}
         run: |
           set -euo pipefail
           ABLATION=none
-          if [ "${{ inputs.include_baseline }}" = "true" ]; then ABLATION=with-without; fi
+          if [ "$INCLUDE_BASELINE" = "true" ]; then ABLATION=with-without; fi
 
           # Exit 1 means a case scored below the threshold, which is expected here: this
           # workflow is advisory and the summary step reports the outcome. Exit 2 means the
@@ -192,14 +196,14 @@ jobs:
           set +e
           claude plugin eval . \
             --trust-plugin --scaffold --no-publish \
-            --runs "${{ inputs.runs || '1' }}" \
+            --runs "$RUNS" \
             --ablation "$ABLATION" \
             --threshold 0.8 \
             --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
-            --max-cost-usd "${{ inputs.max_cost_usd || '40' }}" \
+            --max-cost-usd "$MAX_COST" \
             --output-dir evals/results/ci \
             -j 4 \
-            --tag ${{ needs.scope.outputs.tags }} 2>&1 | tee /tmp/eval.log
+            --tag $TAGS 2>&1 | tee /tmp/eval.log
           CODE=${PIPESTATUS[0]}
           set -e
           if [ "$CODE" = "2" ] && [ ! -f evals/results/ci/aggregate-result.json ]; then
@@ -227,9 +231,11 @@ jobs:
             echo "a red case, and confirm it locally with \`--runs 3\`."
             echo
             echo '```text'
-            tail -n 60 /tmp/eval.log 2>/dev/null || echo "(no run output captured)"
+            # 200, not 60: a full 100-case run prints more than 60 lines of table alone, and
+            # a tail shorter than the table drops its header and its earliest rows.
+            tail -n 200 /tmp/eval.log 2>/dev/null || echo "(no run output captured)"
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the run
         if: always()

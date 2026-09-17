@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+env:
+  # Pinned for the same reason evals.yaml pins it: an unpinned install lets a CLI rollout
+  # turn every open PR red and read as a plugin regression.
+  CLAUDE_CODE_VERSION: '2.1.270'
+
 jobs:
   markdown:
     name: 📝 Markdown Quality
@@ -50,7 +55,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
       - name: Validate Plugin
         run: claude plugin validate .
       # Every case's fixture.sh must stay a symlink to the one canonical script.

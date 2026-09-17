@@ -13,7 +13,7 @@ skills_lint.yaml         # skills_lint rule severities, read by the CI Skills Li
   plugin.json          # Plugin manifest (name, version, keywords)
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
-docs/
+docs/                  # Local only, gitignored: never present in a fresh clone
   plan/                # Planning and design documents
 evals/                 # `claude plugin eval` suite — all 15 skills, 100 cases
   README.md            # Case format, grader reference, how to add a case
@@ -151,7 +151,11 @@ documentation in the same change:
   `README.md` skills table and the `interface.short_description` in the skill's
   `agents/openai.yaml`, so all three stay in sync. Nothing checks them against
   each other. `description` also carries every trigger phrase and is capped at
-  1024 characters, which `skills_lint` enforces as an error. Keep it to
+  1024 characters, which `skills_lint` enforces as an error. Five descriptions
+  already sit within ten characters of that cap (`ui-package` 1021,
+  `layered-architecture` 1020, `static-security` 1019, `testing` 1016,
+  `green-gate` 1015), so adding a trigger phrase to one of those means
+  reclaiming room in it first. Keep it to
   triggers and scope, leaving pure teaching material to the body. Do not cut a
   sentence just because the body repeats it — routing happens before the body
   loads — and re-run the skill's eval cases after any trim.
