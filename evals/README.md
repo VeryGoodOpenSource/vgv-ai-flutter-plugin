@@ -67,6 +67,9 @@ Write a LoginBloc for email and password authentication with submit and logout e
 and success and failure states. Output Dart code only.
 ```
 
+Every case repeats that frontmatter verbatim. `claude plugin eval` has no shared-defaults
+mechanism, so this is forced by the tool rather than duplication worth removing.
+
 `case.yaml`:
 
 ```yaml
@@ -276,8 +279,8 @@ that has stopped discriminating goes unnoticed. Re-check that deliberately with
 
 - Changing `_fixture/` widens the scope to all 15 skills, since it affects every case.
 - CI needs `ANTHROPIC_API_KEY`, having no Claude Code session, and `--trust-plugin`,
-  because a run with no terminal cannot answer the trust prompt. A one-case smoke test
-  runs first so auth fails in seconds rather than after a full matrix.
+  because a run with no terminal cannot answer the trust prompt. An auth failure at the
+  first run exits 2, which the job checks for rather than swallowing.
 - `--ablation none` is also the only mode where a `tool_used: Skill` grader is scored by
   default. This suite sets `arm: both` so routing scores in either mode, but the two
   modes still weight the baseline differently. Compare runs from one mode at a time.
@@ -294,9 +297,10 @@ that has stopped discriminating goes unnoticed. Re-check that deliberately with
 - **Dart syntax.** The previous harness parsed every fenced `dart` block with
   `dart format --output=none` through a custom JavaScript assertion. Native plugin evals
   have **no custom-code graders**, so that check did not survive the migration. Thirty
-  cases across eleven skills lost it. The response text is not in
-  `aggregate-result.json` either — only a `tracePath` into a sandbox that is deleted
-  unless `--keep-temp` is passed — so there is no clean post-hoc route back to it.
+  cases across eleven skills lost it. No response text was found in
+  `aggregate-result.json` either, only a `tracePath` into a sandbox that is deleted unless
+  `--keep-temp` is passed, so there is no clean post-hoc route back to it. The `report.html`
+  does show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
 - **Tool execution.** The six tool-driven skills are graded only on the decisions they
   narrate. `claude plugin eval` *can* mock MCP servers, under `evals/mocks/<server>/`,
@@ -306,8 +310,10 @@ that has stopped discriminating goes unnoticed. Re-check that deliberately with
   routing is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate. An earlier version asserted a hundred `contains`
   patterns against skill bodies, so a copy-edit failed the gate.
-- **The skills' own surfaces.** Nothing checks that an `allowed-tools` name exists, that
-  a reference link resolves, or that `name` matches the directory. `claude plugin
+- **The skills' own surfaces.** `skills_lint` now covers two of the three gaps this
+  section used to list: `check-relative-paths` fails a link pointing at a file that is not
+  there, and the `name`/directory match is enforced. It cannot tell you a link resolves to
+  the *wrong* file, and nothing checks that an `allowed-tools` name exists. `claude plugin
   validate .` was measured passing with a bogus tool name, a broken link and a
   `name`/folder mismatch all at once. Four invariants are convention alone:
   `create-project` must not declare `Bash`, `green-gate` must declare it for parsing
