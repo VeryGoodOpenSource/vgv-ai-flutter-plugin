@@ -8,6 +8,7 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
 
 ```text
 .mcp.json                # MCP server configuration (Dart and Very Good CLI)
+skills_lint.yaml         # skills_lint rule severities, read by the CI Skills Lint job
 .claude-plugin/
   plugin.json          # Plugin manifest (name, version, keywords)
 agents/
@@ -153,7 +154,7 @@ documentation in the same change:
   `README.md` skills table and the `interface.short_description` in the skill's
   `agents/openai.yaml`, so all three stay in sync. Nothing checks them against
   each other. `description` also carries every trigger phrase and is capped at
-  1024 characters, which `validate-skill` enforces as an error. Keep it to
+  1024 characters, which `skills_lint` enforces as an error. Keep it to
   triggers and scope, leaving pure teaching material to the body. Do not cut a
   sentence just because the body repeats it — routing happens before the body
   loads — and re-run the skill's eval cases after any trim.
@@ -164,8 +165,9 @@ documentation in the same change:
   does.
 - **Restructuring a skill's reference files** (`reference.md` ↔ `references/`) —
   update the repository structure block in `AGENTS.md` to match the new layout, and
-  update every markdown link pointing at the moved file. Nothing checks these links
-  automatically, so verify each one by hand.
+  update every markdown link pointing at the moved file. CI catches a link that points
+  at a file that no longer exists (`check-relative-paths` in `skills_lint.yaml`), but it
+  cannot tell you a link now points at the wrong file, so still read each one.
 - **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
   section in `README.md` (and the `## Hooks` section in `CLAUDE.md` if behavior
   changes).
