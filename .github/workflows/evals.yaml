@@ -56,7 +56,13 @@ env:
   # Pin both models for the same reason. The agent under test and the judge move
   # independently, and either one drifting invalidates comparison with earlier runs.
   EVAL_MODEL: claude-sonnet-5
-  EVAL_JUDGE_MODEL: claude-haiku-4-5
+  # Sonnet judges, not Haiku. Measured on a 100-case run: Haiku produced two false
+  # negatives that both scored a clean pass under Sonnet, one of them dropping a case from
+  # 1.00 to 0.67 with every grader flipping. 32 judge graders failed across that run, so
+  # the exposure is wider than the two cases it happened to sink. Sonnet costs roughly
+  # $0.02-0.04 more per case, about +$3 on a full run and cents on a scoped one, which is
+  # cheap next to an advisory signal people learn to ignore.
+  EVAL_JUDGE_MODEL: claude-sonnet-5
 
 jobs:
   scope:

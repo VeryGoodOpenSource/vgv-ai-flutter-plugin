@@ -7,7 +7,7 @@ than editing these.
 ```bash
 claude plugin eval . --trust-plugin --scaffold \
   --ablation with-without --runs 1 --threshold 0.8 \
-  --model claude-sonnet-5 --judge-model claude-haiku-4-5 \
+  --model claude-sonnet-5 --judge-model claude-sonnet-5 \
   --no-publish --max-cost-usd 40 -j 4
 ```
 
@@ -110,8 +110,10 @@ worth keeping if it can fail in the no-plugin arm.
 - **Single run per arm** in both sweeps. Treat any one case's Δ as a shortlist entry, not
   a verdict. Two cases were measured scoring identically across runs with a *different*
   grader failing each time.
-- **Haiku judge.** Per the plugin-eval docs, suspect the judge before the plugin when a
-  case routes but scores badly, and re-check with `--judge-model claude-sonnet-5`.
+- **Every number above was measured with a Haiku judge**, which the suite no longer uses.
+  A later 100-case run found Haiku marking two correct answers wrong, both clean passes
+  under Sonnet, so the recorded scores understate the suite by an unmeasured amount and are
+  not comparable with anything run since. Re-baseline before quoting them.
 - **`create-project` pins `model: haiku`** in its `SKILL.md`, and the docs confirm the
   override applies for the rest of the turn. Routing is decided before the switch, so it
   never explains a routing miss, but every answer after the skill fires ran on Haiku while

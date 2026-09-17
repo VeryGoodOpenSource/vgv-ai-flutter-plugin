@@ -242,7 +242,7 @@ $E --tag bloc --tag testing                    # two skills
 $E --case bloc-writes-sealed-events-and-states # one case
 $E --ablation none                             # with-plugin arm only, half the cost
 $E --runs 3 --threshold 0.8                    # is a red case real?
-$E --judge-model claude-sonnet-5               # when you suspect the judge, not the skill
+$E --judge-model claude-haiku-4-5              # cheaper judge, and measurably less reliable
 ```
 
 Read the two arm scores, not the total. The without-arm is supposed to score badly.
@@ -258,8 +258,12 @@ graders passed with no plugin loaded and which skills fail to route.
   `cases[].arms.with[].error` in the JSON, before believing a red case.
 - A usage limit hit mid-suite makes every later run fail the same way without marking the
   document `partial`. It looks like a cliff-edge regression. Check the errors.
-- `--judge-model` defaults to a small fast model. A correct answer formatted unusually
-  can be marked wrong by it; re-run with a stronger judge before editing the skill.
+- `--judge-model` defaults to a small fast model, which this suite does **not** use. On a
+  100-case run Haiku marked two correct answers wrong, both clean passes under Sonnet, one
+  of them flipping every grader on its case. CI and `BASELINE.md` pin
+  `claude-sonnet-5` as the judge for that reason. Sonnet is not infallible either, so when
+  a case routes but scores badly, read the judge's votes in the report before editing the
+  skill.
 
 Cost per run was measured between **$0.055 and $0.147** across three sample runs, and the
 spread is real: a case that asks for a whole theme file costs several times one that asks
