@@ -284,11 +284,10 @@ that has stopped discriminating goes unnoticed. Re-check that deliberately with
 - `--ablation none` is also the only mode where a `tool_used: Skill` grader is scored by
   default. This suite sets `arm: both` so routing scores in either mode, but the two
   modes still weight the baseline differently. Compare runs from one mode at a time.
-- The job has a one-hour ceiling. Measured at `-j 4`, a run takes about 22 seconds, so the
-  CI default of one arm at `--runs 1` fits all 100 cases in roughly 35 minutes and a
-  single-skill merge finishes in a couple of minutes. A full two-arm run at `--runs 3` is
-  600 runs and would need something like three and a half hours, so it does not fit: use
-  the manual trigger with `scope: all-skills`, and expect to raise the ceiling.
+- The job has a one-hour ceiling. All 100 cases in one arm at `--runs 1` was measured at
+  roughly 35 minutes with `-j 4`, and a single-skill merge finishes in a couple of minutes.
+  A full two-arm run at `--runs 3` is 600 runs and does not fit: use the manual trigger
+  with `scope: all-skills`, and expect to raise the ceiling.
 
 ---
 

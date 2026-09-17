@@ -58,6 +58,11 @@ hand the no-plugin arm the convention under test.
   and a build_runner regeneration. Nothing outside the skill's references mentions
   Widgetbook.
 
+**Grader notes.** No negative check on the literal string `flutter create`. The first
+rubric names `flutter create --template=package` as the wrong path, so a correct answer
+routinely writes that string in order to reject it, and the negative failed the right
+answer. Same trap as `flutter test` in green-gate.
+
 ### ui-package-declines-hand-rolled-button
 
 **Discriminates.** A bare model builds the GestureDetector + DecoratedBox it was asked

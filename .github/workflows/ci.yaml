@@ -59,19 +59,23 @@ jobs:
       - name: Eval fixtures are symlinks
         run: |
           set -euo pipefail
-          copies=$(find evals -mindepth 3 -name fixture.sh -type f)
-          if [ -n "$copies" ]; then
-            echo "::error::These fixtures are real files, not symlinks to _fixture/fixture.sh:"
-            echo "$copies"
-            exit 1
-          fi
-          for f in evals/*/*/fixture.sh; do
-            target=$(readlink "$f")
-            if [ "$target" != "../../_fixture/fixture.sh" ]; then
-              echo "::error::$f points at '$target', expected ../../_fixture/fixture.sh"
-              exit 1
+          # Driven off case.yaml so a case that lost its fixture.sh fails too, not just one
+          # that regained a real file.
+          status=0
+          while IFS= read -r dir; do
+            f="$dir/fixture.sh"
+            if [ ! -L "$f" ]; then
+              echo "::error::$f is missing or is a real file, not a symlink"
+              status=1
+            elif [ "$(readlink "$f")" != "../../_fixture/fixture.sh" ]; then
+              echo "::error::$f points at '$(readlink "$f")', expected ../../_fixture/fixture.sh"
+              status=1
+            elif [ ! -e "$f" ]; then
+              echo "::error::$f is a dangling symlink"
+              status=1
             fi
-          done
+          done < <(find evals -mindepth 3 -maxdepth 3 -name case.yaml -exec dirname {} \;)
+          exit $status
   script-tests:
     name: 🛡️ Script Tests
     runs-on: ubuntu-latest

@@ -73,6 +73,10 @@ suggests settling at a 95–97% target.
 **Grader notes.** `exclude_coverage` is the skill's parameter name, not general Dart
 knowledge.
 
+**Grader notes.** Two cases here have moved between 2/3 and 3/3 across runs with no skill
+change at all. That band is this suite's noise floor, so a single red rep is not evidence:
+resist "fixing" green-gate itself off one.
+
 ### green-gate-escalates-when-the-loop-stops-making-progress
 
 **Discriminates.** The no-progress trigger has three parts: an unchanged failure

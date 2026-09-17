@@ -30,10 +30,9 @@ the case exists and what separates the two arms.
 
 ### license-compliance-runs-check-with-full-license-info
 
-**Discriminates.** Two things have to land: the check is named with full license
-information, and the deliverable is the prescribed report with risk levels rather than a
-list of licenses. A bare model offers to eyeball the pubspec, or names the check without
-the flag that makes it print licenses instead of a count.
+**Discriminates.** A bare model offers to eyeball the pubspec, or names the check without
+the flag that makes it print licenses instead of a count, and hands back a list of
+licenses where the skill produces the prescribed report with risk levels.
 
 **Grader notes.** `names-check-licenses` is a regex so both surface forms of the same
 thing count: the `packages_check_licenses` MCP tool and `very_good packages check

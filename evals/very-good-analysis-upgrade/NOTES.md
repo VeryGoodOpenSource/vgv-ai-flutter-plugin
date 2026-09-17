@@ -22,8 +22,8 @@ it contains nothing but the bump and the lint fixes it forces — is graded in t
 scope-creep case instead.
 
 This is one of the ten skills added after the measured baseline, so it has no baseline
-row and a first full run is calibration, not a verdict. The comparisons in the History
-lines below come from ad-hoc runs during authoring.
+row and a first full run is calibration, not a verdict. The arm comparisons below come
+from ad-hoc runs during authoring.
 
 ## Cases
 

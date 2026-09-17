@@ -186,8 +186,9 @@ jobs:
 
           # Exit 1 means a case scored below the threshold, which is expected here: this
           # workflow is advisory and the summary step reports the outcome. Exit 2 means the
-          # run never really started, an auth failure or the cost ceiling, and that is worth
-          # failing the step for rather than summarizing an empty document.
+          # run was cut short, by an auth failure or by the cost ceiling. The ceiling case
+          # still writes a partial document worth reading, so the gate is whether the
+          # document exists, not the exit code.
           set +e
           claude plugin eval . \
             --trust-plugin --scaffold --no-publish \
@@ -201,14 +202,16 @@ jobs:
             --tag ${{ needs.scope.outputs.tags }}
           CODE=$?
           set -e
-          if [ "$CODE" = "2" ]; then
-            echo "::error::The run was cut short before it produced results: auth failed or the cost ceiling was hit. See the output above."
+          if [ "$CODE" = "2" ] && [ ! -f evals/results/ci/aggregate-result.json ]; then
+            echo "::error::The run was cut short before it produced any results: auth failed, or the cost ceiling was hit before the first case finished."
             exit 1
           fi
 
           test -f evals/results/ci/aggregate-result.json
 
       - name: Summarize
+        # Always, so a partial run from the cost ceiling still reports what it measured.
+        if: always()
         run: node evals/_tools/ci-summary.js evals/results/ci/aggregate-result.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the run

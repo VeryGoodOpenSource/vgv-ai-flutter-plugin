@@ -16,7 +16,9 @@ every run. Mocking the server in the native harness is a separate, later piece o
 and none of these cases assume it.
 
 `create-project-infers-dart-package-for-api-client` carries no routing grader, and that is
-deliberate — see its History line. Every other case grades routing.
+deliberate: a one-word template question does not activate the skill, measured at 0/2 with
+the answer correct both times, so grading routing there would only ever report the harness.
+Every other case grades routing.
 
 Measured baseline, first full run under the previous harness: 5 of 6 with the skill against 0 of 6 without
 it, negative control excluded.
