@@ -169,6 +169,14 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
 - **Prompts must be self-contained.** Each run starts in a workspace holding only the
   fixture, so paste in any class a prompt refers to, and name pasted text as
   authoritative when it describes state not on disk.
+- **The plugin's own SessionStart hook fires inside the run.** `warn-missing-mcp.sh`
+  injects "Very Good CLI is not installed" into the context of every **with-plugin** run,
+  because the sandbox has no `very_good` on PATH. Measured: `create-project`'s install case
+  answered with "Blocker 1: Very Good CLI isn't installed" and offered `flutter create` as
+  a fallback, failing a `not_contains` grader on exactly that string. The warning is
+  correct behavior for a real user, so the fix belongs in the prompt: say the CLI is
+  installed and that a startup notice saying otherwise should be ignored. This only skews
+  the with-plugin arm, since the hook ships with the plugin.
 
 Beyond that: write prompts as a user would send them, name no skill in a prompt so the
 routing grader stays a real routing test, grade mechanically where you can, include the

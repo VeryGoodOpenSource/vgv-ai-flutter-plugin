@@ -2,6 +2,6 @@
 type: llm
 ---
 
-PASS if the report the response gives or promises identifies each remaining failure individually, by diagnostic code and by file and line.
+PASS if all four remaining failures appear individually, each with its diagnostic code and its file and line number. Any layout counts: a list of `code @ file:line` entries, or a table with the code in one column and the location in another.
 
-FAIL if a summary count such as "4 errors remain" is all it provides, or if the failures are listed individually but any of them carries no diagnostic code, or no file and line.
+FAIL if the response gives only a count such as "4 errors remain", or if any of the four is missing its diagnostic code, its file, or its line number.
