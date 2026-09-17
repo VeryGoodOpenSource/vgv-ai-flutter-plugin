@@ -46,7 +46,7 @@ A case is a directory. Nothing registers it; it is found by being there.
 evals/<skill>/<case-name>/
 ├── prompt.md          # frontmatter: run limits; body: the prompt
 ├── case.yaml          # schema_version, name, and the fixture hook
-├── fixture.sh         # generated — run evals/_fixture/sync.sh, never hand-edit
+├── fixture.sh         # symlink to ../../_fixture/fixture.sh — never a real file
 └── graders/
     ├── skill-fired.md
     └── <one file per grader>
@@ -167,8 +167,8 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
   fixture, so paste in any class a prompt refers to, and name pasted text as
   authoritative when it describes state not on disk.
 
-Beyond that: write prompts as a user would send them, name no skill in a prompt so
-`skill-used` stays a real routing test, grade mechanically where you can, include the
+Beyond that: write prompts as a user would send them, name no skill in a prompt so the
+routing grader stays a real routing test, grade mechanically where you can, include the
 cases where the skill must say no, keep a negative control's rubric to the absence of the
 skill's vocabulary, and check a grader fails in the without-arm before trusting it.
 
@@ -201,13 +201,24 @@ prompt somewhere to stand is recreated per run by `fixture.sh`, hooked up throug
 flag the script is skipped silently and cases start failing for reasons that have nothing
 to do with the skill.
 
-`context.scaffold_script` rejects any path containing `..`, so every case directory holds
-its own identical copy of the script. The canonical copy is `_fixture/fixture.sh`. Edit
-that one, then:
+`context.scaffold_script` will not take a path that leaves the case directory. Measured:
+
+```text
+path "../../_fixture/fixture.sh" escapes the case directory (`..` or an absolute path)
+— it must name something inside it
+```
+
+It does resolve a **symlink** inside the case directory, so each case's `fixture.sh` is a
+symlink to `_fixture/fixture.sh` and there is exactly one copy of the script. Edit that
+one and every case follows. A new case needs its own symlink:
 
 ```bash
-evals/_fixture/sync.sh      # after editing the fixture, and after adding a case
+ln -s ../../_fixture/fixture.sh evals/<skill>/<case>/fixture.sh
 ```
+
+**On Windows**, a checkout without `core.symlinks=true` turns each link into a text file
+holding the path, and runs then fail at scaffold time. `git config core.symlinks true`
+followed by a fresh checkout fixes it. CI runs on Linux and is unaffected.
 
 ---
 
@@ -292,7 +303,7 @@ that has stopped discriminating goes unnoticed. Re-check that deliberately with
   which would let those skills be graded on the calls they actually make. Nothing here
   uses it yet.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why
-  `skill-used` is its own grader rather than inferred from content.
+  routing is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate. An earlier version asserted a hundred `contains`
   patterns against skill bodies, so a copy-edit failed the gate.
 - **The skills' own surfaces.** Nothing checks that an `allowed-tools` name exists, that

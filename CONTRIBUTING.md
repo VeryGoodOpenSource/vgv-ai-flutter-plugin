@@ -90,8 +90,8 @@ claude plugin eval . --scaffold
 
 Adding a skill means adding a `evals/<skill>/<case-name>/` directory per case, each with
 a `prompt.md`, a `case.yaml`, and one file per grader under `graders/`. There is no
-central registry to update — cases are discovered from the tree — but you must run
-`evals/_fixture/sync.sh` after adding one.
+central registry to update — cases are discovered from the tree — and the new case's
+`fixture.sh` is a symlink to `evals/_fixture/fixture.sh`.
 
 [evals/README.md](evals/README.md) is the single source of truth — the case format,
 the grader reference, prerequisites, what makes a case worth having, and what

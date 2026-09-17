@@ -53,6 +53,25 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code
       - name: Validate Plugin
         run: claude plugin validate .
+      # Every case's fixture.sh must stay a symlink to the one canonical script.
+      # `context.scaffold_script` rejects a `..` path but resolves a symlink, so a case
+      # that regains a real file silently runs its own stale skeleton.
+      - name: Eval fixtures are symlinks
+        run: |
+          set -euo pipefail
+          copies=$(find evals -mindepth 3 -name fixture.sh -type f)
+          if [ -n "$copies" ]; then
+            echo "::error::These fixtures are real files, not symlinks to _fixture/fixture.sh:"
+            echo "$copies"
+            exit 1
+          fi
+          for f in evals/*/*/fixture.sh; do
+            target=$(readlink "$f")
+            if [ "$target" != "../../_fixture/fixture.sh" ]; then
+              echo "::error::$f points at '$target', expected ../../_fixture/fixture.sh"
+              exit 1
+            fi
+          done
   script-tests:
     name: 🛡️ Script Tests
     runs-on: ubuntu-latest
