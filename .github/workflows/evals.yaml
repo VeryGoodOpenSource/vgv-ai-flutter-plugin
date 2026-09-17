@@ -1,30 +1,15 @@
 name: evals
 
-# Skill evals cost real money, so this workflow is built around spending as little as
-# possible while still catching a skill regression.
+# Runs the eval cases for the skills a merge changed. Advisory, never a merge gate.
 #
-# Three things keep the bill down:
+# The cost shape and the trade-offs behind it are in evals/README.md -> "Running in CI".
+# Two things that only live here:
 #
-#   1. It runs AFTER merge, not on every push to a PR. A PR gets pushed to many times;
-#      main gets merged into once.
-#   2. It runs only the skills whose SKILL.md changed in that merge, selected by tag.
-#      One skill is 6-7 cases out of 100.
-#   3. It runs `--ablation none`, the with-plugin arm only. The no-plugin baseline
-#      exists to prove a *case discriminates*, which is a question you answer once when
-#      writing the case. Regression detection does not need it, and skipping it halves
-#      the cost.
-#
-# It is deliberately NON-BLOCKING. Two unedited cases were measured moving between runs,
-# one of them across the pass/fail line, so a single run is not a reliable gate. Treat a
-# red case as a prompt to look, and confirm with `--runs 3` locally before believing it.
-#
-# One consequence of `--ablation none` is worth knowing: it is the only mode in which a
-# `tool_used: Skill` grader is scored by default. The suite sets `arm: both` on every
-# routing grader so it scores in both modes, but that means a local two-arm run and this
-# job weight the baseline differently. Read scores from one mode at a time.
-#
-# Use the manual trigger for a full run before a release. That is ~100 cases and the
-# expensive one.
+#   - `continue-on-error` is deliberate. Two unedited cases were measured moving between
+#     runs, one across the pass/fail line, so a single run cannot gate a merge. Treat a red
+#     case as a prompt to look, and confirm with `--runs 3` locally.
+#   - Use the manual trigger for a full run before a release. That is ~100 cases and the
+#     expensive one.
 
 on:
   push:
@@ -191,46 +176,6 @@ jobs:
             exit 1
           fi
 
-      - name: Auth smoke test (one case)
-        # Locally the suite authenticates through the Claude Code session. This proves the
-        # API-key path works before committing to the full spend, and fails in well under a
-        # minute if it does not. A credential rejected at the first run exits 2.
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          set -euo pipefail
-          SMOKE=$(find evals -mindepth 3 -maxdepth 3 -name case.yaml -exec dirname {} \; \
-                  | sort | head -1 | xargs basename)
-          echo "Smoke case: $SMOKE"
-          set +e
-          claude plugin eval . \
-            --trust-plugin --scaffold --no-publish \
-            --runs 1 --ablation none \
-            --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
-            --output-dir /tmp/smoke \
-            --case "$SMOKE"
-          CODE=$?
-          set -e
-          # Exit 1 here means the case scored below the default threshold, which is not an
-          # auth problem. Exit 2 means the credential was rejected.
-          if [ "$CODE" = "2" ]; then
-            echo "::error::Auth failed or the run was cut short before it started. See the output above."
-            exit 1
-          fi
-          node -e '
-            const j = require("/tmp/smoke/aggregate-result.json");
-            if (j.partial) {
-              console.error("::error::Smoke run was partial: " + j.partialReason);
-              process.exit(1);
-            }
-            const err = j.cases?.[0]?.arms?.with?.[0]?.error;
-            if (err && /api key|authentication|credential|401|403/i.test(String(err))) {
-              console.error("::error::Auth failed against the API key: " + String(err).slice(0, 300));
-              process.exit(1);
-            }
-            console.log("Auth OK. Sample case:", j.cases?.[0]?.name, "score", j.cases?.[0]?.aggregates?.score);
-          '
-
       - name: Run the scoped evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -239,8 +184,11 @@ jobs:
           ABLATION=none
           if [ "${{ inputs.include_baseline }}" = "true" ]; then ABLATION=with-without; fi
 
-          # `claude plugin eval` exits 1 when any case is below the threshold, which is
-          # expected here — this workflow is advisory. The summary step reports the outcome.
+          # Exit 1 means a case scored below the threshold, which is expected here: this
+          # workflow is advisory and the summary step reports the outcome. Exit 2 means the
+          # run never really started, an auth failure or the cost ceiling, and that is worth
+          # failing the step for rather than summarizing an empty document.
+          set +e
           claude plugin eval . \
             --trust-plugin --scaffold --no-publish \
             --runs "${{ inputs.runs || '1' }}" \
@@ -248,14 +196,20 @@ jobs:
             --threshold 0.8 \
             --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
             --max-cost-usd "${{ inputs.max_cost_usd || '40' }}" \
-            --output-dir evals/.runs/ci \
+            --output-dir evals/results/ci \
             -j 4 \
-            --tag ${{ needs.scope.outputs.tags }} || true
+            --tag ${{ needs.scope.outputs.tags }}
+          CODE=$?
+          set -e
+          if [ "$CODE" = "2" ]; then
+            echo "::error::The run was cut short before it produced results: auth failed or the cost ceiling was hit. See the output above."
+            exit 1
+          fi
 
-          test -f evals/.runs/ci/aggregate-result.json
+          test -f evals/results/ci/aggregate-result.json
 
       - name: Summarize
-        run: node evals/_tools/ci-summary.js evals/.runs/ci/aggregate-result.json | tee -a "$GITHUB_STEP_SUMMARY"
+        run: node evals/_tools/ci-summary.js evals/results/ci/aggregate-result.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the run
         if: always()
@@ -263,6 +217,6 @@ jobs:
         with:
           name: eval-run
           path: |
-            evals/.runs/ci/aggregate-result.json
-            evals/.runs/ci/report.html
+            evals/results/ci/aggregate-result.json
+            evals/results/ci/report.html
           retention-days: 14

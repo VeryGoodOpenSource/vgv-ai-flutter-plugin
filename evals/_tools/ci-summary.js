@@ -1,7 +1,7 @@
 /**
  * Turns a `claude plugin eval` aggregate-result.json into a GitHub step summary.
  *
- *   node evals/_tools/ci-summary.js evals/.runs/ci/aggregate-result.json [>> $GITHUB_STEP_SUMMARY]
+ *   node evals/_tools/ci-summary.js evals/results/ci/aggregate-result.json [>> $GITHUB_STEP_SUMMARY]
  *
  * Lives in a file rather than inline in the workflow so it can be run against a real
  * result locally, which is the only way to know the field paths still hold after a
