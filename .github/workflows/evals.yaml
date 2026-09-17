@@ -199,8 +199,8 @@ jobs:
             --max-cost-usd "${{ inputs.max_cost_usd || '40' }}" \
             --output-dir evals/results/ci \
             -j 4 \
-            --tag ${{ needs.scope.outputs.tags }}
-          CODE=$?
+            --tag ${{ needs.scope.outputs.tags }} 2>&1 | tee /tmp/eval.log
+          CODE=${PIPESTATUS[0]}
           set -e
           if [ "$CODE" = "2" ] && [ ! -f evals/results/ci/aggregate-result.json ]; then
             echo "::error::The run was cut short before it produced any results: auth failed, or the cost ceiling was hit before the first case finished."
@@ -212,7 +212,24 @@ jobs:
       - name: Summarize
         # Always, so a partial run from the cost ceiling still reports what it measured.
         if: always()
-        run: node evals/_tools/ci-summary.js evals/results/ci/aggregate-result.json | tee -a "$GITHUB_STEP_SUMMARY"
+        run: |
+          set -uo pipefail
+          RESULT=evals/results/ci/aggregate-result.json
+          {
+            echo "### Eval results"
+            echo
+            if [ -f "$RESULT" ] && [ "$(jq -r '.partial' "$RESULT")" = "true" ]; then
+              echo "> **Partial run** (\`$(jq -r '.partialReason' "$RESULT")\`). Scores below are incomplete, so leave them out of any trend."
+              echo
+            fi
+            echo "A run that timed out, hit the turn cap or was rate limited scores 0 with no failing"
+            echo "grader, which reads like a content regression. Check the NOTES column before believing"
+            echo "a red case, and confirm it locally with \`--runs 3\`."
+            echo
+            echo '```text'
+            tail -n 60 /tmp/eval.log 2>/dev/null || echo "(no run output captured)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the run
         if: always()

@@ -20,8 +20,6 @@ evals/                 # `claude plugin eval` suite — all 15 skills, 100 cases
   BASELINE.md          # Last full two-arm measurement: per-skill Δ and routing
   _fixture/
     fixture.sh         # The only copy of the neutral Flutter skeleton; every case symlinks here
-  _tools/
-    ci-summary.js      # Renders aggregate-result.json into a GitHub step summary
   <skill>/             # One directory per skill, named for the skill it covers
     NOTES.md           # What each case discriminates and why it exists
     <case-name>/       # One directory per case, named for the case

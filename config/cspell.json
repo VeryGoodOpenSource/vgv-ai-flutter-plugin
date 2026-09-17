@@ -49,6 +49,7 @@
     "opencode",
     "pasteable",
     "pipefail",
+    "PIPESTATUS",
     "prefs",
     "pubspec",
     "pubspecs",
@@ -67,8 +68,8 @@
     "unrouted",
     "vsync",
     "WCAG",
-    "Widgetbook",
     "widgetbook",
+    "Widgetbook",
     "xhigh",
     "xxlg"
   ],
