@@ -78,3 +78,5 @@ jobs:
         run: bash hooks/scripts/allow-readonly-git_test.sh
       - name: Block CLI workarounds hook tests
         run: bash hooks/scripts/block-cli-workarounds_test.sh
+      - name: Check VGV CLI hook tests
+        run: bash hooks/scripts/check-vgv-cli_test.sh

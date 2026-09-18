@@ -12,6 +12,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/vgv-cli-common.sh"
 
 INPUT=$(cat)
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
+
+# Only shell commands are this hook's business. Filtering on .tool_input.command alone
+# keys on a field name rather than the caller's identity, so an unrelated MCP tool that
+# happens to take a `command` argument can reach this hook and be denied on a host that
+# does not apply the hooks.json matcher. When a host sends no tool_name at all, fall
+# through to the command check rather than silently dropping enforcement.
+if [ -n "$TOOL_NAME" ] && ! is_shell_tool "$TOOL_NAME"; then
+  exit 0
+fi
+
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
 
 if [ -z "$COMMAND" ]; then
