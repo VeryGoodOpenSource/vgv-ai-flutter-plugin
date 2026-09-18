@@ -158,7 +158,7 @@ editing, because a single reading of a case is not a measurement.
   the switch, so it never explains a routing miss, but every answer after the skill fires
   ran on Haiku while the no-plugin arm ran on Sonnet. Its Δ is understated by an
   unmeasured amount.
-- **Tool-driven skills are graded on narration.** `very-good-cli` has mocks and they are
-  reachable, but no case drives one yet, so these skills are still measured on the calls
+- **Tool-driven skills are graded on narration.** `very-good-cli` has a stand-in inside an
+  eval run, which changes nothing outside one, and it is reachable, but no case drives it yet, so these skills are still measured on the calls
   they describe rather than the calls they make. See `README.md` → Mocking the MCP
   servers.
