@@ -27,9 +27,9 @@ on:
         type: string
         default: '1'
       max_cost_usd:
-        description: 'Cost ceiling in USD. The default covers the scoped post-merge run; a full two-arm run at --runs 3 is ~600 runs and needs far more, or it is cut short with partial results.'
+        description: 'Cost ceiling in USD. Covers the scoped post-merge run, which measures about $1. Raise it for a full run: 100 cases is ~$13 in one arm and ~$25 in both.'
         type: string
-        default: '40'
+        default: '5'
 
 # Never let two eval runs bill concurrently.
 concurrency:
@@ -168,7 +168,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           INCLUDE_BASELINE: ${{ inputs.include_baseline }}
           RUNS: ${{ inputs.runs || '1' }}
-          MAX_COST: ${{ inputs.max_cost_usd || '40' }}
+          MAX_COST: ${{ inputs.max_cost_usd || '5' }}
           TAGS: ${{ needs.scope.outputs.tags }}
         run: |
           set -euo pipefail

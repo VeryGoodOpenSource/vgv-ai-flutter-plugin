@@ -14,11 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # `evals/**/prompt.md` is excluded from both linters on purpose. A prompt body is
-      # verbatim model input, not prose: it carries pasted Dart, so markdownlint reads
-      # `_client` as an emphasis marker and cspell reads identifiers as misspellings.
-      # Editing one to satisfy a linter would change what the model is asked, which is
-      # exactly what the suite must not do.
       - name: Lint Markdown
         uses: DavidAnson/markdownlint-cli2-action@v24.2.0
         with:
