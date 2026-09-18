@@ -163,6 +163,51 @@ mechanically where you can, include the cases where the skill must say no, keep 
 control's rubric to the absence of the skill's vocabulary, and check a grader fails in the
 without-arm before trusting it.
 
+### Graders that cannot fail
+
+A grader that passes in the no-plugin arm measures the model, not the skill. Find them by
+running the case two-arm and comparing the two `graders` lists.
+
+**One two-arm run cannot disqualify a grader.** The no-plugin arm swings hard between runs.
+`accessibility-declines-gesture-detector-tap-target` had all three content graders *failing*
+without the plugin on one run and all three *passing* on the next, with nothing changed in
+between. Use `--runs 3` on both arms before calling a grader free, and prefer reasons that
+do not depend on a score at all: redundancy, restating the prompt, and what the two arms'
+text actually differs on.
+
+**Adding beats deleting.** A free grader still fails if the skill later regresses, so it is
+a regression test even when it earns no Δ. Keep every free grader that pins a Core Standard
+or an anti-pattern: `no-mockito`, `no-left-anchored-insets` and `no-hand-rolled-icon-mirroring`
+all pass in both arms today and all catch a real regression tomorrow. A grader pass over
+these six cases deleted fifteen of them on a single free reading and had to put eleven back.
+
+Delete only for a reason that holds without a score:
+
+1. **A genuine duplicate.** `uses-pump-app` matched `pumpApp` beside a rubric judging the
+   same thing; `names-all-rights-reserved` was the regex of the rubric next to it.
+2. **It restates the prompt.** `class WeatherRepository` passes whenever the model read the
+   question.
+3. **It is table stakes for the format.** `testWidgets` appears in every widget test ever
+   written.
+
+Everything else gets *added to*, not cut. Read both arms' output side by side, find what
+only the plugin produced, grade that, and weight it so the case turns on it.
+`license-compliance-refuses-to-clear-missing-licenses` graded several ways of saying "no",
+which any model says; what the plugin added was the skill's risk categorization, so that
+became a weighted grader beside the ones already there.
+
+If a case has no discriminating grader even then, the skill may genuinely teach nothing the
+model does not already do, and the honest fix is the skill rather than the case.
+`bloc-tests-with-bloc-test-and-mocktail` was that: both arms reached for `bloc_test` and
+`mocktail` unaided, and the only real difference was that the plugin built a fresh bloc
+inside `build:` while the bare model shared one from `setUp`. The skill's examples showed
+that and its Core Standards never said it, so the standard was added and the grader now
+tests it. That moved the case from Δ +0.38 to +0.75.
+
+**Check that both arms answered.** A no-plugin arm that asks a clarifying question instead
+of doing the work makes every grader look discriminating for one run. That is a prompt that
+is not self-contained, not a result.
+
 ### Writing an `llm` rubric
 
 Frontmatter is only `type: llm`. The body is the rubric, written as concrete PASS and FAIL

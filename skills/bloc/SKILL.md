@@ -27,6 +27,7 @@ Apply these standards to ALL Bloc/Cubit work:
 
 - **Use `blocTest()` from `package:bloc_test`** for all Bloc and Cubit tests — never raw `test()` with manual stream assertions
 - **Use `package:mocktail` for mocking** — never `package:mockito`
+- **`build:` constructs the bloc under test** — return a new instance from the callback, never one built in `setUp` and shared, so every `blocTest` starts from a clean bloc and its lifecycle stays with `blocTest`
 - **No bloc-to-bloc direct dependencies** — blocs communicate through the UI or shared repositories
 - **Page/View separation** — Page provides the Bloc/Cubit via `BlocProvider`, View consumes via `BlocBuilder`/`BlocListener`
 - **Sealed classes for events and multi-state types** — enables exhaustive pattern matching with Dart 3 `switch`

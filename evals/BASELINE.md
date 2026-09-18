@@ -11,9 +11,11 @@ claude plugin eval . --trust-plugin --scaffold \
   --no-publish --max-cost-usd 45 -j 4
 ```
 
-`--runs 1` is deliberate for a two-arm sweep: one no-plugin pass is enough to disqualify a
-grader, which is what the sweep is for. Anything about a *single* case, whether it
-regressed or whether it routes reliably, needs `--runs 3`, because both arms are noisy.
+`--runs 1` is deliberate for a two-arm sweep over the whole suite: it is a shortlist, not a
+verdict. It is **not** enough to disqualify a grader. Measured 2026-09-18, the no-plugin arm
+of `accessibility-declines-gesture-detector-tap-target` failed all three content graders on
+one run and passed all three on the next. Anything about a single case or a single grader
+needs `--runs 3` on both arms.
 
 ## Full two-arm run, 2026-09-17, Claude Code 2.1.270
 
@@ -34,22 +36,31 @@ The previous sweep, under a Haiku judge and before the refusal-shaped descriptio
 measured 5 misses out of 83, and the one before that measured 14. There is no
 "skill did not route" row in the table above because the population is empty.
 
-## `bloc-writes-sealed-events-and-states`, re-measured 2026-09-18
+## `bloc-writes-sealed-events-and-states`, fixed 2026-09-18
 
-The CI run on 2026-09-18 scored it 0.60, failing `sealed-state-hierarchy`,
-`pinned-in-progress-name`, `final-class-subclasses` and `past-tense-event-names`. A
-`--runs 3` re-measurement on the same model and judge CI uses scored **1.00, 3/3, every
-grader passing on every run**.
+The CI run scored it 0.60, failing `sealed-state-hierarchy`, `pinned-in-progress-name`,
+`final-class-subclasses` and `past-tense-event-names`. A first `--runs 3` scored it 1.00,
+3/3, which looked like variance. It was not: a later run scored 0.70, so the readings were
+1.00, 0.70 and 0.60 on an unchanged case.
 
-```bash
-claude plugin eval . --scaffold --trust-plugin --ablation none --runs 3 \
-  --threshold 0.8 --model claude-sonnet-5 --judge-model claude-sonnet-5 \
-  --case bloc-writes-sealed-events-and-states
-```
+**The case was grading one of two approaches the skill sanctions.** `skills/bloc/SKILL.md`
+documents a Subclass Approach and a Single Class Approach, and says to choose by whether
+the states carry different data. The graders only accept the first, so a model that wrote
+the status-enum state was following the skill and failing the case anyway.
 
-Four graders failing at once looked like a real miss and was not. The case, its graders and
-`skills/bloc/SKILL.md` are unchanged. Treat it as the worked example of why one CI reading
-is not a measurement.
+The prompt now supplies states that carry different data, which is the skill's own rule for
+choosing subclasses: a spinner while in flight, a `User` on success, an error message on
+failure. Measured after the change, `--runs 3` on both arms:
+
+|         |                  runs |  mean |
+| ------- | --------------------- | ----: |
+| with    | 1.00, 1.00, 1.00      |  1.00 |
+| without | 0.70, 0.40, 0.60      |  0.57 |
+
+No grader failed in any with-arm run. An intermediate attempt that asked for "the whole
+request lifecycle the UI will render" instead made it consistently *worse*, 0.70 three
+times out of three, by steering harder toward the enum. The wording has to select the
+approach the way the skill selects it, not describe the feature.
 
 ## Reading the two numbers that look bad
 
@@ -68,9 +79,34 @@ cases that clear less than Δ 0.50, which is where a free grader actually costs 
 - `license-compliance-refuses-to-clear-missing-licenses`
 - `testing-uses-pump-app-in-widget-tests`
 
-A grader is only worth keeping if it can fail in the no-plugin arm. Those six cases are
-the shortlist for the next grader pass. The remaining 93 free graders sit on cases that
-discriminate through their other graders, which is untidy rather than disqualifying.
+Those six cases were the shortlist for the grader pass below.
+
+## Grader pass over the six weakest cases, 2026-09-18
+
+A free grader is still a regression test, so this pass mostly **added** signal rather than
+cutting. Four graders were deleted, each for a reason that does not depend on a score: two
+exact duplicates of a rubric beside them, one that restates the prompt
+(`class WeatherRepository`), and one that is table stakes for the format (`testWidgets`).
+An earlier draft of this pass deleted fifteen on a single free reading and had to restore
+eleven.
+
+| case                                                       | Δ before | Δ after |
+| ---------------------------------------------------------- | -------: | ------: |
+| `license-compliance-refuses-to-clear-missing-licenses`     |    +0.43 |   +0.86 |
+| `internationalization-uses-directional-insets-for-rtl`     |    +0.50 |   +0.86 |
+| `bloc-tests-with-bloc-test-and-mocktail`                   |    +0.38 |   +0.75 |
+| `layered-architecture-transforms-models-in-the-repository` |    +0.67 |   +0.57 |
+| `testing-uses-pump-app-in-widget-tests`                    |    +0.38 |   +0.43 |
+| `accessibility-declines-gesture-detector-tap-target`       |    +0.86 |   +0.50 |
+
+`license-compliance` and `internationalization` were measured at `--runs 3` on both arms.
+The rest are single-run readings and move several tenths on their own, so read the last two
+rows as noise rather than regression: nothing was removed from `accessibility` that its
+remaining graders do not still cover.
+
+Two skills changed because the grader pass found the skill at fault rather than the case.
+`skills/bloc/SKILL.md` gained a Core Standard for `build:` constructing the bloc under test,
+which is what separated the two arms of `bloc-tests-with-bloc-test-and-mocktail`.
 
 ## Per-skill mean Δ
 
