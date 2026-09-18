@@ -31,7 +31,6 @@ on:
         type: string
         default: '5'
 
-# Never let two eval runs bill concurrently.
 concurrency:
   group: evals-${{ github.ref }}
   cancel-in-progress: false
@@ -40,11 +39,7 @@ permissions:
   contents: read
 
 env:
-  # Pin the CLI. `claude plugin eval` reached general availability in 2.1.269, and an
-  # unpinned install would let a CLI rollout read as a skill regression.
   CLAUDE_CODE_VERSION: '2.1.270'
-  # Pin both models for the same reason. The agent under test and the judge move
-  # independently, and either one drifting invalidates comparison with earlier runs.
   EVAL_MODEL: claude-sonnet-5
   EVAL_JUDGE_MODEL: claude-sonnet-5
 
@@ -69,11 +64,6 @@ jobs:
           set -euo pipefail
 
           all_skills() {
-            # A skill is eligible only if it has at least one case directory. Asking for a
-            # tag that matches nothing is an error rather than a pass, but listing a skill
-            # with no cases would still waste a job.
-            # -exec dirname rather than -printf, which is GNU-only and would break
-            # anyone running this script on macOS.
             find evals -mindepth 3 -maxdepth 3 -name case.yaml -exec dirname {} \; \
               | sed 's|^evals/||; s|/[^/]*$||' | sort -u
           }
@@ -81,17 +71,12 @@ jobs:
           if [ "$SCOPE" = "all-skills" ]; then
             SKILLS=$(all_skills)
           else
-            # On push, github.event.before is the previous main tip. On a manual run there
-            # is no diff to take, so fall back to the last commit.
             BASE="${BEFORE:-}"
             if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
               BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
             fi
             CHANGED=$(git diff --name-only "$BASE" "${{ github.sha }}" || true)
 
-            # A skill is in scope if its SKILL.md, any of its references, or any of its own
-            # cases changed. Editing a reference file changes what the skill teaches just as
-            # much as editing SKILL.md does.
             SKILLS=$(
               {
                 echo "$CHANGED" | { grep -oE '^skills/[^/]+/' || true; } | cut -d/ -f2
@@ -101,7 +86,6 @@ jobs:
                   done
             )
 
-            # A change to the shared fixture affects every case, so widen to everything.
             if echo "$CHANGED" | grep -qE '^evals/_fixture/'; then
               echo "fixture changed — widening to all skills"
               SKILLS=$(all_skills)
@@ -115,9 +99,6 @@ jobs:
             exit 0
           fi
 
-          # Every case is tagged with its skill folder name, so `--tag a b c` selects
-          # exactly the cases for the skills in scope. `--tag` keeps a case matching ANY
-          # of the tags given.
           TAGS=$(echo "$SKILLS" | paste -sd' ' -)
           COUNT=$(echo "$SKILLS" | wc -l | tr -d ' ')
 
@@ -138,8 +119,6 @@ jobs:
     if: needs.scope.outputs.run_evals == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
-    # 100 cases in one arm at --runs 1 measured ~35 minutes at -j 4. A full two-arm run at
-    # --runs 3 is 600 runs and will not fit; raise this alongside max_cost_usd for one.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7

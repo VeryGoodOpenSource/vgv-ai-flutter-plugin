@@ -3,11 +3,7 @@
 #
 # THE ONLY COPY. Every case's fixture.sh is a symlink to this file. Edit it here.
 #
-# KEEP THIS NEUTRAL - context, not answers. An empty workspace is its own confound:
-# with no project in sight the model asks for code instead of writing it. But the
-# pubspec must not list bloc, flutter_bloc, equatable, mocktail or very_good_analysis
-# either. An earlier version did, and the no-plugin baseline inferred the conventions
-# the cases exist to measure, collapsing bloc's measured lift from +10 points to +1.
+# KEEP THIS NEUTRAL. The pubspec must not name anything a skill teaches.
 set -euo pipefail
 mkdir -p lib test
 touch lib/.gitkeep test/.gitkeep
