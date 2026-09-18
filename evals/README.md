@@ -208,9 +208,47 @@ holding the path, and runs then fail at scaffold time. CI runs on Linux and is u
 ## Mocking the MCP servers
 
 A run never starts the plugin's real MCP servers. `evals/mocks/<server>/<tool>.md` registers
-a stand-in under the server's own name from `.mcp.json`, and a mocked tool is callable
-without an `--allow-tools` grant. A server with no mock directory is not started at all and
-its tools are absent, which every run reports on a `mocked:` line.
+a stand-in under the server's own name from `.mcp.json`. A server with no mock directory is
+not started at all and its tools are absent, which every run reports on a `mocked:` line.
+
+**Two things block a mocked call, and both bite before any grader runs.**
+
+**The grant.** The published docs say a mocked tool "is allowed without an `--allow-tools`
+grant". Measured on Claude Code 2.1.270, it is not. Listing the tool in a case's
+`allowed_tools` is necessary and not sufficient, and without the operator grant the run
+reports:
+
+```text
+not granted (missing --allow-tools grant, or a malformed entry):
+mcp__very-good-cli__packages_check_licenses
+```
+
+So any case that drives a mocked tool needs both, and the tool name is the **bare** server
+form, not the plugin-namespaced one:
+
+```bash
+claude plugin eval . --scaffold --allow-tools 'mcp__very-good-cli__packages_check_licenses'
+```
+
+**The plugin's own PreToolUse hook.** `check-vgv-cli.sh` matches `mcp__.*very-good-cli__.*`
+and denies the call outright when `check_vgv_cli` does not return `ok`. In the sandbox it
+never does, so every mocked `very-good-cli` call comes back as:
+
+```text
+Very Good CLI is not installed. This tool requires Very Good CLI >= 1.3.0.
+```
+
+That is the hook's deny message, not the mock. The mock is never reached. `command -v
+very_good` actually *succeeds* inside a run, because the sandbox inherits the host PATH;
+what fails is the next line, `very_good --version`, which returns nothing under the run's
+throwaway `$HOME`. On a machine where `dart` is a version-manager shim it resolves through
+`$HOME`, and the CI runner has no `very_good` at all. Either way `check_vgv_cli` reports
+`not_installed` and the call is denied.
+
+**Until that is resolved, the `very-good-cli` mocks are registered but unreachable**, and
+the tool-driven cases stay graded on narration. Fixing it means changing what the hook
+gates on, which is shipped plugin behavior rather than an eval concern, so it is not
+decided here.
 
 `very-good-cli` is mocked. `dart` is not, so runs still print
 `plugin_vgv-ai-flutter-plugin_dart[not started: no mock]`.
