@@ -103,6 +103,10 @@ threshold is `1.0`, so **pass `--threshold 0.8` or every imperfect case exits 1*
 
 There are **no custom-code graders**. A check that needs to execute something has no home.
 
+A grader reads `last_message` unless its `target` says otherwise. The other targets are
+`trace`, `files`, `{ source: file, path: <path> }`, and `mock_calls`, which is every call
+made to a [mocked MCP tool](#mocking-the-mcp-servers).
+
 ### Routing graders
 
 Ninety-nine of the hundred cases carry one.
@@ -146,7 +150,9 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
   injects "Very Good CLI is not installed" into every with-plugin run, because the sandbox
   has no `very_good` on PATH. Tool-driven cases answer with that blocker instead of the
   question. Say in the prompt that the CLI is installed and that a startup notice saying
-  otherwise should be ignored.
+  otherwise should be ignored. **Mocking the server does not silence it.** `check_vgv_cli`
+  tests `command -v very_good`, so it reports on the PATH and never on whether the MCP
+  tools are reachable. A mocked run carries the same warning an unmocked one does.
 
 Beyond that: write prompts as a user would send them, name no skill in a prompt, grade
 mechanically where you can, include the cases where the skill must say no, keep a negative
@@ -199,6 +205,62 @@ holding the path, and runs then fail at scaffold time. CI runs on Linux and is u
 
 ---
 
+## Mocking the MCP servers
+
+A run never starts the plugin's real MCP servers. `evals/mocks/<server>/<tool>.md` registers
+a stand-in under the server's own name from `.mcp.json`, and a mocked tool is callable
+without an `--allow-tools` grant. A server with no mock directory is not started at all and
+its tools are absent, which every run reports on a `mocked:` line.
+
+`very-good-cli` is mocked. `dart` is not, so runs still print
+`plugin_vgv-ai-flutter-plugin_dart[not started: no mock]`.
+
+```text
+evals/mocks/very-good-cli/
+├── _tools.json                 # the real tools/list response
+├── create.md
+├── packages_check_licenses.md
+├── packages_get.md
+└── test.md
+```
+
+A mock file is frontmatter plus a body, and the body is the tool result:
+
+| Key          | Default | Purpose                                                         |
+| ------------ | ------- | --------------------------------------------------------------- |
+| `type`       | `fixed` | `agent` instead plays the server through a judge-model call     |
+| `expect`     | unset   | Per-input guard: a type name, a literal, a list, or a `/regex/` |
+| `error`      | `false` | `fixed` only. Return the body as a tool error                   |
+| `abort_when` | unset   | `agent` only                                                    |
+
+`{{input.<field>}}` substitutes a call argument into the body, and
+`{{file:fixtures/<name>}}` inserts a file from a `fixtures/` directory beside the mock.
+`_server.md` answers several tools from one `agent` mock; a `<tool>.md` for the same tool
+wins. A case's own `mocks/` directory overrides the suite's file by file.
+
+**`expect` aborts, it does not fail.** A call that violates it ends the run at score 0,
+reported as `aborted`, with no failing grader to read. Keep it to what the real server's
+schema already enforces and grade argument *choices* with `tool_used` or with a `regex`
+against the `mock_calls` target, which carries every mocked call, its input, and the
+answer.
+
+Every mock here is `type: fixed`. An `agent` mock answers through the judge model, so it
+costs money, varies run to run, and needs a recording adopted from
+`results/<timestamp>/mock-recordings/` into `.replay/` before CI repeats.
+
+`_tools.json` is the real `tools/list` response, so a mocked tool carries the real
+descriptions and input schemas rather than a permissive placeholder. Regenerate it after a
+Very Good CLI release by speaking MCP to `very_good mcp` over stdio and saving the
+`tools/list` result. A stale one teaches the model a schema the CLI no longer has.
+
+`packages_check_licenses` returns a deliberately mixed result, one `GPL-3.0` and one
+`unknown` among twelve permissive licenses, so a case has something real to flag.
+
+Keep the bodies as raw tool output. A mock that already names what a skill teaches hands
+the answer to the no-plugin arm, exactly as a non-neutral fixture does.
+
+---
+
 ## Running
 
 ```bash
@@ -244,7 +306,13 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
 A regression is therefore reported after it lands, and a case that has stopped
 discriminating goes unnoticed until you re-check with `include_baseline`.
 
-- Changing `_fixture/` widens the scope to all 15 skills.
+- Changing `_fixture/` or `mocks/` widens the scope to all 15 skills. Both are shared
+  inputs, so a change to either can move any case.
+- The scope job's `find` writes `-exec dirname {} \;` rather than the shorter
+  `-printf '%h\n'`. `-printf` is a GNU extension that BSD `find` does not have, so the
+  short form passes in CI and fails for anyone running the same job on macOS.
+- A directory under `evals/` only becomes a `--tag` if it actually holds `*/case.yaml`.
+  `mocks/` and `results/` sit there without being skills.
 - CI needs `ANTHROPIC_API_KEY`, having no Claude Code session, and `--trust-plugin`,
   because a run with no terminal cannot answer the trust prompt.
 - `--ablation none` is the only mode where a `tool_used: Skill` grader is scored by
@@ -263,9 +331,12 @@ discriminating goes unnoticed until you re-check with `include_baseline`.
   a `tracePath` into a sandbox deleted unless `--keep-temp` is passed. `report.html` does
   show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution.** The six tool-driven skills are graded on the decisions they narrate.
-  `claude plugin eval` can mock MCP servers under `evals/mocks/<server>/<tool>.md`, which
-  would grade them on the calls they actually make. Nothing here uses it yet.
+- **Tool execution.** `very-good-cli` is now mocked, so its four tools can be called
+  inside a run and graded with `tool_used` or against `mock_calls`. No case does yet: every
+  prompt still says the session cannot run anything, and every `allowed_tools` still lists
+  only `[Read, Glob, Grep, Skill]`. Until both change, the tool-driven skills stay graded on
+  the calls they narrate rather than the calls they make. The `dart` server has no mock at
+  all.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate. An earlier version asserted a hundred `contains`
