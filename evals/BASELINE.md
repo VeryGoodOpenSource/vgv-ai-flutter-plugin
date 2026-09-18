@@ -122,8 +122,7 @@ editing, because a single reading of a case is not a measurement.
   the switch, so it never explains a routing miss, but every answer after the skill fires
   ran on Haiku while the no-plugin arm ran on Sonnet. Its Δ is understated by an
   unmeasured amount.
-- **Tool-driven skills are graded on narration.** `very-good-cli` now has mocks, but they
-  are unreachable: the plugin's own `check-vgv-cli.sh` PreToolUse hook denies every
-  `mcp__*very-good-cli__*` call inside a run. The skills that drive tools are still
-  measured on the calls they describe, not the calls they make. See `README.md` →
-  Mocking the MCP servers.
+- **Tool-driven skills are graded on narration.** `very-good-cli` has mocks and they are
+  reachable, but no case drives one yet, so these skills are still measured on the calls
+  they describe rather than the calls they make. See `README.md` → Mocking the MCP
+  servers.

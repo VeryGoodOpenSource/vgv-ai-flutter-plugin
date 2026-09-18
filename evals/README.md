@@ -223,32 +223,30 @@ not granted (missing --allow-tools grant, or a malformed entry):
 mcp__very-good-cli__packages_check_licenses
 ```
 
-So any case that drives a mocked tool needs both, and the tool name is the **bare** server
-form, not the plugin-namespaced one:
-
 ```bash
 claude plugin eval . --scaffold --allow-tools 'mcp__very-good-cli__packages_check_licenses'
 ```
 
-**The plugin's own PreToolUse hook.** `check-vgv-cli.sh` matches `mcp__.*very-good-cli__.*`
-and denies the call outright when `check_vgv_cli` does not return `ok`. In the sandbox it
-never does, so every mocked `very-good-cli` call comes back as:
+**Two different tool names are in play, and mixing them up costs a grader.** The *bare*
+`mcp__very-good-cli__<tool>` form works for the `--allow-tools` grant and for a case's
+`allowed_tools`. The name the model actually invokes, and therefore the name a
+`tool_used` grader has to carry, is the plugin-namespaced one:
 
 ```text
-Very Good CLI is not installed. This tool requires Very Good CLI >= 1.3.0.
+mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses
 ```
 
-That is the hook's deny message, not the mock. The mock is never reached. `command -v
-very_good` actually *succeeds* inside a run, because the sandbox inherits the host PATH;
-what fails is the next line, `very_good --version`, which returns nothing under the run's
-throwaway `$HOME`. On a machine where `dart` is a version-manager shim it resolves through
-`$HOME`, and the CI runner has no `very_good` at all. Either way `check_vgv_cli` reports
-`not_installed` and the call is denied.
+**The plugin's own PreToolUse hook used to eat every call.** `check-vgv-cli.sh` matches
+`mcp__.*very-good-cli__.*` and denied outright whenever `check_vgv_cli` did not return
+`ok`, so the model received the hook's "Very Good CLI is not installed" text as the tool
+result and the mock was never reached. In a run `command -v very_good` *succeeds*, because
+the sandbox inherits the host PATH; `very_good --version` then returns nothing under the
+run's throwaway `$HOME`, because the installed `very_good` is a shim that execs `dart`.
 
-**Until that is resolved, the `very-good-cli` mocks are registered but unreachable**, and
-the tool-driven cases stay graded on narration. Fixing it means changing what the hook
-gates on, which is shipped plugin behavior rather than an eval concern, so it is not
-decided here.
+`check_vgv_cli` now returns `unverifiable` for exactly that case and both hooks stand
+aside, so the mocks are reachable and the SessionStart notice does not fire either.
+**Mocked cases therefore require a plugin that has the `unverifiable` status**; against an
+older build every `very-good-cli` mock is dead.
 
 `very-good-cli` is mocked. `dart` is not, so runs still print
 `plugin_vgv-ai-flutter-plugin_dart[not started: no mock]`.
@@ -369,12 +367,12 @@ discriminating goes unnoticed until you re-check with `include_baseline`.
   a `tracePath` into a sandbox deleted unless `--keep-temp` is passed. `report.html` does
   show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution.** `very-good-cli` is now mocked, so its four tools can be called
-  inside a run and graded with `tool_used` or against `mock_calls`. No case does yet: every
-  prompt still says the session cannot run anything, and every `allowed_tools` still lists
-  only `[Read, Glob, Grep, Skill]`. Until both change, the tool-driven skills stay graded on
-  the calls they narrate rather than the calls they make. The `dart` server has no mock at
-  all.
+- **Tool execution.** `very-good-cli` is mocked and a mocked call has been driven end to
+  end, so its four tools can be graded with `tool_used` or against `mock_calls`. No case
+  does yet: every prompt still says the session cannot run anything, and every
+  `allowed_tools` still lists only `[Read, Glob, Grep, Skill]`. Until both change, the
+  tool-driven skills stay graded on the calls they narrate. The `dart` server has no mock
+  at all.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate. An earlier version asserted a hundred `contains`
