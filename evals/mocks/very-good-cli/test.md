@@ -1,12 +1,3 @@
----
-expect:
-  directory: string
-  recursive: boolean
-  coverage: boolean
-  min_coverage: string
-  optimization: boolean
----
-
 Running "flutter test"...
 00:04 +38: All tests passed!
 

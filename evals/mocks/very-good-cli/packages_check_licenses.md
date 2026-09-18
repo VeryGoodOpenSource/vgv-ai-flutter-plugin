@@ -1,9 +1,3 @@
----
-expect:
-  directory: string
-  licenses: boolean
----
-
 Retrieved 14 licenses from 14 packages.
 
 | package                  | version | license      |
