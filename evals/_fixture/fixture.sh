@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 # Recreates the neutral Flutter skeleton in the run's empty workspace.
 #
-# THE ONLY COPY. Every case's fixture.sh is a symlink to this file, because
-# `context.scaffold_script` rejects any path containing `..` but resolves a symlink
-# inside the case directory. Edit this file and every case follows.
+# THE ONLY COPY. Every case's fixture.sh is a symlink to this file. Edit it here.
 #
 # KEEP THIS NEUTRAL - context, not answers. An empty workspace is its own confound:
 # with no project in sight the model asks for code instead of writing it. But the

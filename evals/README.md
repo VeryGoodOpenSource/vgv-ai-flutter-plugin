@@ -154,7 +154,7 @@ point, give that grader a weight too, or the case can pass without it.
 
 Negative controls use the same grader with `min: 0` and `max: 0`.
 
-### Four traps that have each cost a false result
+### Traps that have each cost a false result
 
 - **Rubrics are graded blind.** The judge sees the response and the criterion, not the
   prompt. "The response fixes the loop bound" therefore scores at random. Grade task
@@ -265,11 +265,11 @@ graders passed with no plugin loaded and which skills fail to route.
   a case routes but scores badly, read the judge's votes in the report before editing the
   skill.
 
-Cost per run was measured between **$0.055 and $0.147** across three sample runs, and the
-spread is real: a case that asks for a whole theme file costs several times one that asks
-for a refusal. Three runs across both arms is six runs per case, so budget roughly
-**$0.35 to $0.90 per case**, putting a full two-arm suite somewhere around **$35 to $90**.
-Treat it as a release check rather than an edit-loop one. `--ablation none` halves it.
+Measured on full runs: **$13.14** for 100 cases in one arm, **$24.93** for both arms, at
+roughly **$0.12 per run**. Per-case cost varies several-fold, since a case asking for a
+whole theme file costs far more than one asking for a refusal. At `--runs 3` a two-arm
+sweep is six runs per case, so budget around **$75**. Treat that as a release check rather
+than an edit-loop one. `--ablation none` halves it.
 `--max-cost-usd` bounds a run, and `-j` up to 8 shortens wall clock without raising
 throughput past your rate limit.
 
