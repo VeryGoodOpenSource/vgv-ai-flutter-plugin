@@ -261,30 +261,30 @@ A run never starts the plugin's real MCP servers. `evals/mocks/<server>/<tool>.m
 a stand-in under the server's own name from `.mcp.json`. A server with no mock directory is
 not started at all and its tools are absent, which every run reports on a `mocked:` line.
 
-**Two things block a mocked call, and both bite before any grader runs.**
+**A mocked tool needs no grant, and must not be listed in `allowed_tools`.** It is callable
+with `allowed_tools: [Read, Glob, Grep, Skill]` and no `--allow-tools` on the command line,
+exactly as the docs say. Verified: with neither, the model still called
+`packages_check_licenses` with `{"directory": ".", "licenses": true}`.
 
-**The grant.** The published docs say a mocked tool "is allowed without an `--allow-tools`
-grant". Measured on Claude Code 2.1.270, it is not. Listing the tool in a case's
-`allowed_tools` is necessary and not sufficient, and without the operator grant the run
-reports:
+**Use the plugin-namespaced tool name everywhere.** The name is
+`mcp__plugin_<plugin>_<server>__<tool>`, so here:
+
+```text
+mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses
+```
+
+That is the name a `tool_used` grader has to carry. The bare `mcp__very-good-cli__<tool>`
+form, which the skills' own `allowed-tools` use for a real session, is **not** a valid
+entry here: putting it in a case's `allowed_tools` produces a warning that reads as if the
+tool needed a grant, when it is really telling you the name does not exist.
 
 ```text
 not granted (missing --allow-tools grant, or a malformed entry):
 mcp__very-good-cli__packages_check_licenses
 ```
 
-```bash
-claude plugin eval . --scaffold --allow-tools 'mcp__very-good-cli__packages_check_licenses'
-```
-
-**Two different tool names are in play, and mixing them up costs a grader.** The *bare*
-`mcp__very-good-cli__<tool>` form works for the `--allow-tools` grant and for a case's
-`allowed_tools`. The name the model actually invokes, and therefore the name a
-`tool_used` grader has to carry, is the plugin-namespaced one:
-
-```text
-mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses
-```
+Both halves of that message are offered because the runner cannot tell them apart. Check
+the name before reaching for `--allow-tools`.
 
 **The plugin's own PreToolUse hook used to eat every call.** `check-vgv-cli.sh` matches
 `mcp__.*very-good-cli__.*` and denied outright whenever `check_vgv_cli` did not return
@@ -313,7 +313,8 @@ evals/mocks/very-good-cli/
 └── test.md
 ```
 
-A mock file is frontmatter plus a body, and the body is the tool result:
+A mock file is an optional frontmatter block plus a body, and the body is the tool result.
+Three of the four here have no frontmatter at all, which is the same as `type: fixed`:
 
 | Key          | Default | Purpose                                                         |
 | ------------ | ------- | --------------------------------------------------------------- |
@@ -327,6 +328,17 @@ A mock file is frontmatter plus a body, and the body is the tool result:
 `_server.md` answers several tools from one `agent` mock; a `<tool>.md` for the same tool
 wins. A case's own `mocks/` directory overrides the suite's file by file.
 
+**`expect` treats a missing field as a violation**, which the reference does not say. It
+reads as a type guard, so naming an optional argument looks harmless, and it is not:
+
+```text
+aborted by mock very-good-cli/packages_check_licenses: the model's call violates
+expect: directory = (missing) is not a string
+```
+
+Only `create` has required arguments (`subcommand`, `name`), so only `create.md` carries an
+`expect`. Guard what the real schema requires and nothing else.
+
 **`expect` aborts, it does not fail.** A call that violates it ends the run at score 0,
 reported as `aborted`, with no failing grader to read. Keep it to what the real server's
 schema already enforces and grade argument *choices* with `tool_used` or with a `regex`
@@ -337,10 +349,12 @@ Every mock here is `type: fixed`. An `agent` mock answers through the judge mode
 costs money, varies run to run, and needs a recording adopted from
 `results/<timestamp>/mock-recordings/` into `.replay/` before CI repeats.
 
-`_tools.json` is the real `tools/list` response, so a mocked tool carries the real
-descriptions and input schemas rather than a permissive placeholder. Regenerate it after a
-Very Good CLI release by speaking MCP to `very_good mcp` over stdio and saving the
-`tools/list` result. A stale one teaches the model a schema the CLI no longer has.
+`_tools.json` is the real `tools/list` result, the object with the `tools` array, so a
+mocked tool carries the real descriptions and input schemas rather than a permissive
+placeholder. It is load-bearing: renaming an argument in it and changing nothing else made
+the model call the tool with the renamed argument. Regenerate it after a Very Good CLI
+release by speaking MCP to `very_good mcp` over stdio and saving the `tools/list` result. A
+stale one teaches the model a schema the CLI no longer has.
 
 `packages_check_licenses` returns a deliberately mixed result, one `GPL-3.0` and one
 `unknown` among twelve permissive licenses, so a case has something real to flag.
