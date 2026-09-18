@@ -27,9 +27,9 @@ on:
         type: string
         default: '1'
       max_cost_usd:
-        description: 'Cost ceiling in USD. Covers the scoped post-merge run, which measures about $1. Raise it for a full run: 100 cases is ~$13 in one arm and ~$25 in both.'
+        description: 'Cost ceiling in USD. Leave blank to size it from the scope: $5 for changed skills, $20 for all skills in one arm, $40 in both. Multiplied by runs.'
         type: string
-        default: '5'
+        default: ''
 
 concurrency:
   group: evals-${{ github.ref }}
@@ -147,12 +147,20 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           INCLUDE_BASELINE: ${{ inputs.include_baseline }}
           RUNS: ${{ inputs.runs || '1' }}
-          MAX_COST: ${{ inputs.max_cost_usd || '5' }}
+          MAX_COST: ${{ inputs.max_cost_usd }}
+          SCOPE: ${{ inputs.scope || 'changed-skills' }}
           TAGS: ${{ needs.scope.outputs.tags }}
         run: |
           set -euo pipefail
           ABLATION=none
           if [ "$INCLUDE_BASELINE" = "true" ]; then ABLATION=with-without; fi
+
+          if [ -z "$MAX_COST" ]; then
+            if [ "$SCOPE" = "all-skills" ]; then MAX_COST=20; else MAX_COST=5; fi
+            if [ "$ABLATION" = "with-without" ]; then MAX_COST=$(( MAX_COST * 2 )); fi
+            MAX_COST=$(( MAX_COST * RUNS ))
+          fi
+          echo "Cost ceiling: \$$MAX_COST (scope=$SCOPE ablation=$ABLATION runs=$RUNS)"
 
           set +e
           claude plugin eval . \
