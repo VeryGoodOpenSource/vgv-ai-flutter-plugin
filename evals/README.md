@@ -257,8 +257,9 @@ holding the path, and runs then fail at scaffold time. CI runs on Linux and is u
 
 ## Mocking the MCP servers
 
-A run never starts the plugin's real MCP servers. `evals/mocks/<server>/<tool>.md` registers
-a stand-in under the server's own name from `.mcp.json`. A server with no mock directory is
+A run never starts the plugin's real MCP servers unless you ask, with `--allow-real-servers`
+or `--mocks off`. Neither is used here. `evals/mocks/<server>/<tool>.md` registers a
+stand-in under the server's own name from `.mcp.json`. A server with no mock directory is
 not started at all and its tools are absent, which every run reports on a `mocked:` line.
 
 **A mocked tool needs no grant, and must not be listed in `allowed_tools`.** It is callable
@@ -306,7 +307,7 @@ real session, and a user's `very-good-cli` tools still go to the real
 
 ```text
 evals/mocks/very-good-cli/
-├── _tools.json                 # the real tools/list response
+├── _tools.json                 # the real tools/list result
 ├── create.md
 ├── packages_check_licenses.md
 ├── packages_get.md
