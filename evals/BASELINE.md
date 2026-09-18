@@ -34,6 +34,23 @@ The previous sweep, under a Haiku judge and before the refusal-shaped descriptio
 measured 5 misses out of 83, and the one before that measured 14. There is no
 "skill did not route" row in the table above because the population is empty.
 
+## `bloc-writes-sealed-events-and-states`, re-measured 2026-09-18
+
+The CI run on 2026-09-18 scored it 0.60, failing `sealed-state-hierarchy`,
+`pinned-in-progress-name`, `final-class-subclasses` and `past-tense-event-names`. A
+`--runs 3` re-measurement on the same model and judge CI uses scored **1.00, 3/3, every
+grader passing on every run**.
+
+```bash
+claude plugin eval . --scaffold --trust-plugin --ablation none --runs 3 \
+  --threshold 0.8 --model claude-sonnet-5 --judge-model claude-sonnet-5 \
+  --case bloc-writes-sealed-events-and-states
+```
+
+Four graders failing at once looked like a real miss and was not. The case, its graders and
+`skills/bloc/SKILL.md` are unchanged. Treat it as the worked example of why one CI reading
+is not a measurement.
+
 ## Reading the two numbers that look bad
 
 **15 cases show Δ <= 0.** All 15 are negative controls, and that is the design: a model
@@ -105,6 +122,8 @@ editing, because a single reading of a case is not a measurement.
   the switch, so it never explains a routing miss, but every answer after the skill fires
   ran on Haiku while the no-plugin arm ran on Sonnet. Its Δ is understated by an
   unmeasured amount.
-- **Tool-driven skills are graded on narration.** The MCP servers are not mocked, so the
-  six skills that drive tools are measured on the calls they describe, not the calls they
-  make.
+- **Tool-driven skills are graded on narration.** `very-good-cli` now has mocks, but they
+  are unreachable: the plugin's own `check-vgv-cli.sh` PreToolUse hook denies every
+  `mcp__*very-good-cli__*` call inside a run. The skills that drive tools are still
+  measured on the calls they describe, not the calls they make. See `README.md` →
+  Mocking the MCP servers.
