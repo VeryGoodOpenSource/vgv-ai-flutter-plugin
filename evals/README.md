@@ -297,7 +297,10 @@ aside, so the mocks are reachable and the SessionStart notice does not fire eith
 **Mocked cases therefore require a plugin that has the `unverifiable` status**; against an
 older build every `very-good-cli` mock is dead.
 
-`very-good-cli` is mocked. `dart` is not, so runs still print
+These mocks exist only for eval runs. They are not shipped behavior, they do not affect a
+real session, and a user's `very-good-cli` tools still go to the real
+[`very_good mcp`](https://pub.dev/packages/very_good_cli) server as always. Inside a run,
+`very-good-cli` has a stand-in and `dart` does not, so runs still print
 `plugin_vgv-ai-flutter-plugin_dart[not started: no mock]`.
 
 ```text
@@ -416,9 +419,9 @@ discriminating goes unnoticed until you re-check with `include_baseline`.
   a `tracePath` into a sandbox deleted unless `--keep-temp` is passed. `report.html` does
   show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution.** `very-good-cli` is mocked and a mocked call has been driven end to
-  end, so its four tools can be graded with `tool_used` or against `mock_calls`. No case
-  does yet: every prompt still says the session cannot run anything, and every
+- **Tool execution.** `very-good-cli` has a stand-in *inside an eval run* and a mocked call
+  has been driven end to end, so its four tools can be graded with `tool_used` or against
+  `mock_calls`. No case does yet: every prompt still says the session cannot run anything, and every
   `allowed_tools` still lists only `[Read, Glob, Grep, Skill]`. Until both change, the
   tool-driven skills stay graded on the calls they narrate. The `dart` server has no mock
   at all.
