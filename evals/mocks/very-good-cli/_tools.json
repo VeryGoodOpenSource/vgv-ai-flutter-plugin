@@ -1,0 +1,205 @@
+{
+  "tools": [
+    {
+      "name": "create",
+      "description": "Create a very good Dart or Flutter project in seconds based on the provided template. Each template has a corresponding sub-command.\n        ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "subcommand": {
+            "type": "string",
+            "description": "The available subcommands to provide an specific template, are:\napp_ui_package - Generate a Very Good App UI package.\ndart_cli - Generate a Very Good Dart CLI application.\ndart_package - Generate a Very Good Dart package.\ndocs_site - Generate a Very Good documentation site.\nflame_game - Generate a Very Good Flame game.\nflutter_app - Generate a Very Good Flutter application.\nflutter_package - Generate a Very Good Flutter package.\nflutter_plugin - Generate a Very Good Flutter plugin.\n",
+            "enum": [
+              "app_ui_package",
+              "flame_game",
+              "flutter_app",
+              "flutter_package",
+              "flutter_plugin",
+              "dart_cli",
+              "dart_package",
+              "docs_site"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "description": "Project name"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description for this new project.\n(defaults to \"A Very Good Project created by Very Good CLI.\")"
+          },
+          "org_name": {
+            "type": "string",
+            "description": "The organization for this new project.\n(defaults to \"com.example.verygoodcore\")"
+          },
+          "output_directory": {
+            "type": "string",
+            "description": "The desired output directory when creating a new project."
+          },
+          "application_id": {
+            "type": "string",
+            "description": "The bundle identifier on iOS or application id on Android. (defaults to <org-name>.<project-name>)"
+          },
+          "platforms": {
+            "type": "string",
+            "description": "Comma-separated platforms. 'Example: \"android,ios,web\".\nThe values for platforms are: android, ios, web, macos, linux, and windows.\nIf is omitted, then all platforms are enabled by default.\nOnly available for subcommands: flutter_plugin with all values) and flame_game (only android and ios)\n                  "
+          },
+          "publishable": {
+            "type": "boolean",
+            "description": "Whether package is intended for publishing (flutter_package, dart_package  only)"
+          },
+          "workspace": {
+            "type": "boolean",
+            "description": "Whether the generated project should resolve its dependencies from a parent Pub workspace."
+          },
+          "executable-name": {
+            "type": "string",
+            "description": "CLI custom executable name (dart_cli  only)"
+          },
+          "template": {
+            "type": "string",
+            "description": "The template used to generate this new project.\nThe values are:\ncore - Generate a Very Good Flutter application.\nIf is omitted, then core will be selected.\n"
+          }
+        },
+        "required": [
+          "subcommand",
+          "name"
+        ]
+      }
+    },
+    {
+      "name": "test",
+      "description": "Run tests in a Dart or Flutter project.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The package to test (defaults to current directory). Can be absolute or relative path to project root. A package path belongs here, not in \"paths\"."
+          },
+          "paths": {
+            "type": "array",
+            "description": "Test files or directories to run, relative to the package selected by \"directory\" (e.g. ['test/src/foo_test.dart', 'test/widgets']). These are targets inside that one package: to test a different package, set \"directory\" to it rather than putting its path here. When omitted, the whole suite runs. Cannot be combined with \"recursive\". Note that targeting specific paths disables the test optimization step.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dart": {
+            "type": "boolean",
+            "description": "Whether to run Dart tests. If not specified, Flutter tests will be run if a Flutter project is detected."
+          },
+          "coverage": {
+            "type": "boolean",
+            "description": "Whether to collect coverage information."
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "Run tests recursively for all nested packages. Cannot be combined with \"paths\", because each package runs in its own working directory and a path is only meaningful within one of them."
+          },
+          "optimization": {
+            "type": "boolean",
+            "description": "Whether to apply optimizations for test performance.\nAutomatically disabled when --platform is specified.\nAdd the `skip_very_good_optimization` tag to specific test files to disable them individually.\n(defaults to on)"
+          },
+          "concurrency": {
+            "type": "string",
+            "description": "The number of concurrent test suites run.\nAutomatically set to 1 when --platform is specified.\n(defaults to \"4\")"
+          },
+          "tags": {
+            "type": "string",
+            "description": "Run only tests associated with the specified tags."
+          },
+          "exclude_coverage": {
+            "type": "string",
+            "description": "A glob which will be used to exclude files that match from the coverage (e.g. '**/*.g.dart')."
+          },
+          "exclude_tags": {
+            "type": "string",
+            "description": "Run only tests that do not have the specified tags."
+          },
+          "min_coverage": {
+            "type": "string",
+            "description": "Whether to enforce a minimum coverage percentage."
+          },
+          "test_randomize_ordering_seed": {
+            "type": "string",
+            "description": "The seed to randomize the execution order of test cases within test files."
+          },
+          "update_goldens": {
+            "type": "boolean",
+            "description": "Whether \"matchesGoldenFile()\" calls within your test methods should update the golden files."
+          },
+          "force_ansi": {
+            "type": "boolean",
+            "description": "Whether to force ansi output. If not specified, it will maintain the default behavior based on stdout and stderr."
+          },
+          "dart-define": {
+            "type": "string",
+            "description": "Additional key-value pairs that will be available as constants from the String.fromEnvironment, bool.fromEnvironment, int.fromEnvironment, and double.fromEnvironment constructors.\nMultiple defines can be passed by repeating \"--dart-define\" multiple times.\n(e.g., foo=bar)\n"
+          },
+          "dart-define-from-file": {
+            "type": "string",
+            "description": "The path of a .json or .env file containing key-value pairs that will be available as environment variables. These can be accessed using the String.fromEnvironment, bool.fromEnvironment, and int.fromEnvironment constructors.\nMultiple defines can be passed by repeating \"--dart-define-from-file\" multiple times. Entries from \"--dart-define\" with identical keys take precedence over entries from these files."
+          },
+          "platform": {
+            "type": "string",
+            "description": "The platform to run tests on.\nThe available values are: chrome, vm, android, ios.\nOnly one value can be selected.\n  "
+          },
+          "run_skipped": {
+            "type": "boolean",
+            "description": "Run skipped tests instead of skipping them. Only applies to Dart tests (dart: true)."
+          },
+          "check_ignore": {
+            "type": "boolean",
+            "description": "Whether to check for and respect coverage ignore comments (e.g. // coverage:ignore-line). Only applies to Dart tests (dart: true)."
+          },
+          "show_uncovered": {
+            "type": "boolean",
+            "description": "Whether to list uncovered lines when coverage is below 100%. Implicitly enables coverage collection when used alone. Useful for identifying which lines still need tests after a min_coverage failure."
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "description": "Maximum seconds to wait for the test run before killing the Flutter test process. Flutter tests can hang indefinitely when pumpAndSettle() is called without a timeout argument. When omitted, no timeout is applied."
+          }
+        }
+      }
+    },
+    {
+      "name": "packages_get",
+      "description": "            Install or update a Dart/Flutter package dependencies.\n            Use after creating a project or modifying pubspec.yaml.\n            Supports recursive installation and package exclusion.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "Target directory path (defaults to current directory). Can be absolute or relative path to project root."
+          },
+          "recursive": {
+            "type": "boolean",
+            "description": "Install dependencies for all nested packages recursively. Useful for monorepos or projects with multiple packages."
+          },
+          "ignore": {
+            "type": "string",
+            "description": "Comma-separated list of package names to skip. Example: \"package1,package2\". Useful to avoid processing problematic packages."
+          }
+        }
+      }
+    },
+    {
+      "name": "packages_check_licenses",
+      "description": "            Verify package licenses for compliance and validation in a Dart or Flutter project.\n            Identifies license types (MIT, BSD, Apache, etc.) for all\n            dependencies. Use to ensure license compatibility.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "Target directory path (defaults to current directory). Path to the project root containing pubspec.yaml."
+          },
+          "licenses": {
+            "type": "boolean",
+            "description": "Verify all package licenses (defaults to true). Currently the only supported check type. Reports license types for all dependencies."
+          }
+        }
+      }
+    }
+  ]
+}

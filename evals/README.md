@@ -103,6 +103,10 @@ threshold is `1.0`, so **pass `--threshold 0.8` or every imperfect case exits 1*
 
 There are **no custom-code graders**. A check that needs to execute something has no home.
 
+A grader reads `last_message` unless its `target` says otherwise. The other targets are
+`trace`, `files`, `{ source: file, path: <path> }`, and `mock_calls`, which is every call
+made to a [mocked MCP tool](#mocking-the-mcp-servers).
+
 ### Routing graders
 
 Ninety-nine of the hundred cases carry one.
@@ -146,12 +150,64 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
   injects "Very Good CLI is not installed" into every with-plugin run, because the sandbox
   has no `very_good` on PATH. Tool-driven cases answer with that blocker instead of the
   question. Say in the prompt that the CLI is installed and that a startup notice saying
-  otherwise should be ignored.
+  otherwise should be ignored — **but check whether it is still needed before writing one.**
+  Mocking the server does not silence the hook, because `check_vgv_cli` tests
+  `command -v very_good` rather than whether the MCP tools are reachable. The
+  `unverifiable` status does silence it: the binary resolves, its version cannot be read,
+  and the hook emits nothing. `create-project-scopes-dependency-install-to-the-new-project`
+  carried two sentences of insulation against the old behavior and now carries none,
+  measured 3/3 at 1.00 without them. The other two prompts keep theirs, which guard against
+  a different thing: the sandbox has no real toolchain, and no hook change fixes that.
 
 Beyond that: write prompts as a user would send them, name no skill in a prompt, grade
 mechanically where you can, include the cases where the skill must say no, keep a negative
 control's rubric to the absence of the skill's vocabulary, and check a grader fails in the
 without-arm before trusting it.
+
+### Graders that cannot fail
+
+A grader that passes in the no-plugin arm measures the model, not the skill. Find them by
+running the case two-arm and comparing the two `graders` lists.
+
+**One two-arm run cannot disqualify a grader.** The no-plugin arm swings hard between runs.
+`accessibility-declines-gesture-detector-tap-target` had all three content graders *failing*
+without the plugin on one run and all three *passing* on the next, with nothing changed in
+between. Use `--runs 3` on both arms before calling a grader free, and prefer reasons that
+do not depend on a score at all: redundancy, restating the prompt, and what the two arms'
+text actually differs on.
+
+**Adding beats deleting.** A free grader still fails if the skill later regresses, so it is
+a regression test even when it earns no Δ. Keep every free grader that pins a Core Standard
+or an anti-pattern: `no-mockito`, `no-left-anchored-insets` and `no-hand-rolled-icon-mirroring`
+all pass in both arms today and all catch a real regression tomorrow. A grader pass over
+these six cases deleted fifteen of them on a single free reading and had to put eleven back.
+
+Delete only for a reason that holds without a score:
+
+1. **A genuine duplicate.** `uses-pump-app` matched `pumpApp` beside a rubric judging the
+   same thing; `names-all-rights-reserved` was the regex of the rubric next to it.
+2. **It restates the prompt.** `class WeatherRepository` passes whenever the model read the
+   question.
+3. **It is table stakes for the format.** `testWidgets` appears in every widget test ever
+   written.
+
+Everything else gets *added to*, not cut. Read both arms' output side by side, find what
+only the plugin produced, grade that, and weight it so the case turns on it.
+`license-compliance-refuses-to-clear-missing-licenses` graded several ways of saying "no",
+which any model says; what the plugin added was the skill's risk categorization, so that
+became a weighted grader beside the ones already there.
+
+If a case has no discriminating grader even then, the skill may genuinely teach nothing the
+model does not already do, and the honest fix is the skill rather than the case.
+`bloc-tests-with-bloc-test-and-mocktail` was that: both arms reached for `bloc_test` and
+`mocktail` unaided, and the only real difference was that the plugin built a fresh bloc
+inside `build:` while the bare model shared one from `setUp`. The skill's examples showed
+that and its Core Standards never said it, so the standard was added and the grader now
+tests it. That moved the case from Δ +0.38 to +0.75.
+
+**Check that both arms answered.** A no-plugin arm that asks a clarifying question instead
+of doing the work makes every grader look discriminating for one run. That is a prompt that
+is not self-contained, not a result.
 
 ### Writing an `llm` rubric
 
@@ -196,6 +252,116 @@ ln -s ../../_fixture/fixture.sh evals/<skill>/<case>/fixture.sh
 
 **On Windows**, a checkout without `core.symlinks=true` turns each link into a text file
 holding the path, and runs then fail at scaffold time. CI runs on Linux and is unaffected.
+
+---
+
+## Mocking the MCP servers
+
+A run never starts the plugin's real MCP servers unless you ask, with `--allow-real-servers`
+or `--mocks off`. Neither is used here. `evals/mocks/<server>/<tool>.md` registers a
+stand-in under the server's own name from `.mcp.json`. A server with no mock directory is
+not started at all and its tools are absent, which every run reports on a `mocked:` line.
+
+**A mocked tool needs no grant, and must not be listed in `allowed_tools`.** It is callable
+with `allowed_tools: [Read, Glob, Grep, Skill]` and no `--allow-tools` on the command line,
+exactly as the docs say. Verified: with neither, the model still called
+`packages_check_licenses` with `{"directory": ".", "licenses": true}`.
+
+**Use the plugin-namespaced tool name everywhere.** The name is
+`mcp__plugin_<plugin>_<server>__<tool>`, so here:
+
+```text
+mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses
+```
+
+That is the name a `tool_used` grader has to carry. The bare `mcp__very-good-cli__<tool>`
+form, which the skills' own `allowed-tools` use for a real session, is **not** a valid
+entry here: putting it in a case's `allowed_tools` produces a warning that reads as if the
+tool needed a grant, when it is really telling you the name does not exist.
+
+```text
+not granted (missing --allow-tools grant, or a malformed entry):
+mcp__very-good-cli__packages_check_licenses
+```
+
+Both halves of that message are offered because the runner cannot tell them apart. Check
+the name before reaching for `--allow-tools`.
+
+**The plugin's own PreToolUse hook used to eat every call.** `check-vgv-cli.sh` matches
+`mcp__.*very-good-cli__.*` and denied outright whenever `check_vgv_cli` did not return
+`ok`, so the model received the hook's "Very Good CLI is not installed" text as the tool
+result and the mock was never reached. In a run `command -v very_good` *succeeds*, because
+the sandbox inherits the host PATH; `very_good --version` then returns nothing under the
+run's throwaway `$HOME`, because the installed `very_good` is a shim that execs `dart`.
+
+`check_vgv_cli` now returns `unverifiable` for exactly that case and both hooks stand
+aside, so the mocks are reachable and the SessionStart notice does not fire either.
+**Mocked cases therefore require a plugin that has the `unverifiable` status**; against an
+older build every `very-good-cli` mock is dead.
+
+These mocks exist only for eval runs. They are not shipped behavior, they do not affect a
+real session, and a user's `very-good-cli` tools still go to the real
+[`very_good mcp`](https://pub.dev/packages/very_good_cli) server as always. Inside a run,
+`very-good-cli` has a stand-in and `dart` does not, so runs still print
+`plugin_vgv-ai-flutter-plugin_dart[not started: no mock]`.
+
+```text
+evals/mocks/very-good-cli/
+├── _tools.json                 # the real tools/list result
+├── create.md
+├── packages_check_licenses.md
+├── packages_get.md
+└── test.md
+```
+
+A mock file is an optional frontmatter block plus a body, and the body is the tool result.
+Three of the four here have no frontmatter at all, which is the same as `type: fixed`:
+
+| Key          | Default | Purpose                                                         |
+| ------------ | ------- | --------------------------------------------------------------- |
+| `type`       | `fixed` | `agent` instead plays the server through a judge-model call     |
+| `expect`     | unset   | Per-input guard: a type name, a literal, a list, or a `/regex/` |
+| `error`      | `false` | `fixed` only. Return the body as a tool error                   |
+| `abort_when` | unset   | `agent` only                                                    |
+
+`{{input.<field>}}` substitutes a call argument into the body, and
+`{{file:fixtures/<name>}}` inserts a file from a `fixtures/` directory beside the mock.
+`_server.md` answers several tools from one `agent` mock; a `<tool>.md` for the same tool
+wins. A case's own `mocks/` directory overrides the suite's file by file.
+
+**`expect` treats a missing field as a violation**, which the reference does not say. It
+reads as a type guard, so naming an optional argument looks harmless, and it is not:
+
+```text
+aborted by mock very-good-cli/packages_check_licenses: the model's call violates
+expect: directory = (missing) is not a string
+```
+
+Only `create` has required arguments (`subcommand`, `name`), so only `create.md` carries an
+`expect`. Guard what the real schema requires and nothing else.
+
+**`expect` aborts, it does not fail.** A call that violates it ends the run at score 0,
+reported as `aborted`, with no failing grader to read. Keep it to what the real server's
+schema already enforces and grade argument *choices* with `tool_used` or with a `regex`
+against the `mock_calls` target, which carries every mocked call, its input, and the
+answer.
+
+Every mock here is `type: fixed`. An `agent` mock answers through the judge model, so it
+costs money, varies run to run, and needs a recording adopted from
+`results/<timestamp>/mock-recordings/` into `.replay/` before CI repeats.
+
+`_tools.json` is the real `tools/list` result, the object with the `tools` array, so a
+mocked tool carries the real descriptions and input schemas rather than a permissive
+placeholder. It is load-bearing: renaming an argument in it and changing nothing else made
+the model call the tool with the renamed argument. Regenerate it after a Very Good CLI
+release by speaking MCP to `very_good mcp` over stdio and saving the `tools/list` result. A
+stale one teaches the model a schema the CLI no longer has.
+
+`packages_check_licenses` returns a deliberately mixed result, one `GPL-3.0` and one
+`unknown` among twelve permissive licenses, so a case has something real to flag.
+
+Keep the bodies as raw tool output. A mock that already names what a skill teaches hands
+the answer to the no-plugin arm, exactly as a non-neutral fixture does.
 
 ---
 
@@ -244,7 +410,13 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
 A regression is therefore reported after it lands, and a case that has stopped
 discriminating goes unnoticed until you re-check with `include_baseline`.
 
-- Changing `_fixture/` widens the scope to all 15 skills.
+- Changing `_fixture/` or `mocks/` widens the scope to all 15 skills. Both are shared
+  inputs, so a change to either can move any case.
+- The scope job's `find` writes `-exec dirname {} \;` rather than the shorter
+  `-printf '%h\n'`. `-printf` is a GNU extension that BSD `find` does not have, so the
+  short form passes in CI and fails for anyone running the same job on macOS.
+- A directory under `evals/` only becomes a `--tag` if it actually holds `*/case.yaml`.
+  `mocks/` and `results/` sit there without being skills.
 - CI needs `ANTHROPIC_API_KEY`, having no Claude Code session, and `--trust-plugin`,
   because a run with no terminal cannot answer the trust prompt.
 - `--ablation none` is the only mode where a `tool_used: Skill` grader is scored by
@@ -263,9 +435,12 @@ discriminating goes unnoticed until you re-check with `include_baseline`.
   a `tracePath` into a sandbox deleted unless `--keep-temp` is passed. `report.html` does
   show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution.** The six tool-driven skills are graded on the decisions they narrate.
-  `claude plugin eval` can mock MCP servers under `evals/mocks/<server>/<tool>.md`, which
-  would grade them on the calls they actually make. Nothing here uses it yet.
+- **Tool execution.** `very-good-cli` has a stand-in *inside an eval run* and a mocked call
+  has been driven end to end, so its four tools can be graded with `tool_used` or against
+  `mock_calls`. No case does yet: every prompt still says the session cannot run anything, and every
+  `allowed_tools` still lists only `[Read, Glob, Grep, Skill]`. Until both change, the
+  tool-driven skills stay graded on the calls they narrate. The `dart` server has no mock
+  at all.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate. An earlier version asserted a hundred `contains`
