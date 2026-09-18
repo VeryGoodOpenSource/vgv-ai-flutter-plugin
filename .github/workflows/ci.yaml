@@ -6,8 +6,6 @@ on:
       - main
 
 env:
-  # Pinned for the same reason evals.yaml pins it: an unpinned install lets a CLI rollout
-  # turn every open PR red and read as a plugin regression.
   CLAUDE_CODE_VERSION: '2.1.270'
 
 jobs:
@@ -58,14 +56,9 @@ jobs:
         run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
       - name: Validate Plugin
         run: claude plugin validate .
-      # Every case's fixture.sh must stay a symlink to the one canonical script.
-      # `context.scaffold_script` rejects a `..` path but resolves a symlink, so a case
-      # that regains a real file silently runs its own stale skeleton.
       - name: Eval fixtures are symlinks
         run: |
           set -euo pipefail
-          # Driven off case.yaml so a case that lost its fixture.sh fails too, not just one
-          # that regained a real file.
           status=0
           while IFS= read -r dir; do
             f="$dir/fixture.sh"

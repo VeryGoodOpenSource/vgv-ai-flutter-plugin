@@ -1,15 +1,6 @@
 name: evals
 
 # Runs the eval cases for the skills a merge changed. Advisory, never a merge gate.
-#
-# The cost shape and the trade-offs behind it are in evals/README.md -> "Running in CI".
-# Two things that only live here:
-#
-#   - `continue-on-error` is deliberate. Two unedited cases were measured moving between
-#     runs, one across the pass/fail line, so a single run cannot gate a merge. Treat a red
-#     case as a prompt to look, and confirm with `--runs 3` locally.
-#   - Use the manual trigger for a full run before a release. That is ~100 cases and the
-#     expensive one.
 
 on:
   push:
@@ -40,8 +31,7 @@ on:
         type: string
         default: '40'
 
-# Never let two eval runs bill concurrently. Queue rather than cancel: a cancelled run has
-# already spent most of its ceiling and leaves no aggregate-result.json behind.
+# Never let two eval runs bill concurrently.
 concurrency:
   group: evals-${{ github.ref }}
   cancel-in-progress: false
@@ -56,12 +46,6 @@ env:
   # Pin both models for the same reason. The agent under test and the judge move
   # independently, and either one drifting invalidates comparison with earlier runs.
   EVAL_MODEL: claude-sonnet-5
-  # Sonnet judges, not Haiku. Measured on a 100-case run: Haiku produced two false
-  # negatives that both scored a clean pass under Sonnet, one of them dropping a case from
-  # 1.00 to 0.67 with every grader flipping. 32 judge graders failed across that run, so
-  # the exposure is wider than the two cases it happened to sink. Sonnet costs roughly
-  # $0.02-0.04 more per case, about +$3 on a full run and cents on a scoped one, which is
-  # cheap next to an advisory signal people learn to ignore.
   EVAL_JUDGE_MODEL: claude-sonnet-5
 
 jobs:
@@ -153,7 +137,6 @@ jobs:
     needs: scope
     if: needs.scope.outputs.run_evals == 'true'
     runs-on: ubuntu-latest
-    # Advisory, never a merge gate. See the header comment.
     continue-on-error: true
     # 100 cases in one arm at --runs 1 measured ~35 minutes at -j 4. A full two-arm run at
     # --runs 3 is 600 runs and will not fit; raise this alongside max_cost_usd for one.
@@ -181,8 +164,6 @@ jobs:
           fi
 
       - name: Run the scoped evals
-        # Every `${{ }}` value arrives through env. Interpolating one into the script body
-        # would let a workflow_dispatch input inject shell into a job holding the API key.
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           INCLUDE_BASELINE: ${{ inputs.include_baseline }}
@@ -194,11 +175,6 @@ jobs:
           ABLATION=none
           if [ "$INCLUDE_BASELINE" = "true" ]; then ABLATION=with-without; fi
 
-          # Exit 1 means a case scored below the threshold, which is expected here: this
-          # workflow is advisory and the summary step reports the outcome. Exit 2 means the
-          # run was cut short, by an auth failure or by the cost ceiling. The ceiling case
-          # still writes a partial document worth reading, so the gate is whether the
-          # document exists, not the exit code.
           set +e
           claude plugin eval . \
             --trust-plugin --scaffold --no-publish \
@@ -220,7 +196,6 @@ jobs:
           test -f evals/results/ci/aggregate-result.json
 
       - name: Summarize
-        # Always, so a partial run from the cost ceiling still reports what it measured.
         if: always()
         run: |
           set -uo pipefail
@@ -237,8 +212,6 @@ jobs:
             echo "a red case, and confirm it locally with \`--runs 3\`."
             echo
             echo '```text'
-            # 200, not 60: a full 100-case run prints more than 60 lines of table alone, and
-            # a tail shorter than the table drops its header and its earliest rows.
             tail -n 200 /tmp/eval.log 2>/dev/null || echo "(no run output captured)"
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
