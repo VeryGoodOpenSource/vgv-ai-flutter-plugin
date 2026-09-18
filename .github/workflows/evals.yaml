@@ -82,12 +82,14 @@ jobs:
                 echo "$CHANGED" | { grep -oE '^skills/[^/]+/' || true; } | cut -d/ -f2
                 echo "$CHANGED" | { grep -oE '^evals/[^_][^/]*/' || true; } | cut -d/ -f2
               } | sort -u | while read -r s; do
-                    [ -n "$s" ] && [ -d "evals/$s" ] && echo "$s"
+                    if [ -n "$s" ] && compgen -G "evals/$s/*/case.yaml" >/dev/null; then
+                      echo "$s"
+                    fi
                   done
             )
 
-            if echo "$CHANGED" | grep -qE '^evals/_fixture/'; then
-              echo "fixture changed — widening to all skills"
+            if echo "$CHANGED" | grep -qE '^evals/(_fixture|mocks)/'; then
+              echo "shared eval input changed — widening to all skills"
               SKILLS=$(all_skills)
             fi
           fi
