@@ -150,13 +150,14 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
   injects "Very Good CLI is not installed" into every with-plugin run, because the sandbox
   has no `very_good` on PATH. Tool-driven cases answer with that blocker instead of the
   question. Say in the prompt that the CLI is installed and that a startup notice saying
-  otherwise should be ignored. **Mocking the server does not silence it**, because
-  `check_vgv_cli` tests `command -v very_good` rather than whether the MCP tools are
-  reachable. What does silence it is the `unverifiable` status: the binary resolves but its
-  version cannot be read, and the hook then emits nothing. `create-project-scopes-dependency-install-to-the-new-project`
-  has had the workaround sentence removed on that basis, measured 3/3 at 1.00. The other
-  two prompts keep theirs, which guard against a different thing: the sandbox has no real
-  toolchain, and no hook change fixes that.
+  otherwise should be ignored — **but check whether it is still needed before writing one.**
+  Mocking the server does not silence the hook, because `check_vgv_cli` tests
+  `command -v very_good` rather than whether the MCP tools are reachable. The
+  `unverifiable` status does silence it: the binary resolves, its version cannot be read,
+  and the hook emits nothing. `create-project-scopes-dependency-install-to-the-new-project`
+  carried two sentences of insulation against the old behavior and now carries none,
+  measured 3/3 at 1.00 without them. The other two prompts keep theirs, which guard against
+  a different thing: the sandbox has no real toolchain, and no hook change fixes that.
 
 Beyond that: write prompts as a user would send them, name no skill in a prompt, grade
 mechanically where you can, include the cases where the skill must say no, keep a negative
