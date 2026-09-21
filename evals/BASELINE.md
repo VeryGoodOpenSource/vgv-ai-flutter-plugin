@@ -36,7 +36,39 @@ The previous sweep, under a Haiku judge and before the refusal-shaped descriptio
 measured 5 misses out of 83, and the one before that measured 14. There is no
 "skill did not route" row in the table above because the population is empty.
 
-## `bloc-writes-sealed-events-and-states`, fixed 2026-09-18
+## Full one-arm run, 2026-09-21, this branch with #155
+
+100 cases, 1 run each, with-plugin arm only, `partial: false`, **$13.35**, 10 minutes at
+`-j 4`, models and judge pinned to `claude-sonnet-5`.
+
+|                                 |      value |
+| ------------------------------- | ---------: |
+| Mean case score                 |  **0.961** |
+| Cases at or above threshold 0.8 | **94/100** |
+| Cases scoring a perfect 1.00    | **83/100** |
+| Usage or auth errors            |      **0** |
+
+Not comparable with the 2026-09-17 sweep above: that one was two-arm, and
+`--ablation none` weights the routing graders differently.
+
+Six cases came in under 0.8. One is a harness error rather than a result, and the four
+that were re-measured at `--runs 3` split three ways:
+
+| case                                                     | 1-run | `--runs 3` | reading                                   |
+| -------------------------------------------------------- | ----: | ---------: | ----------------------------------------- |
+| `ui-package-declines-hand-rolled-button`                 |  0.43 |          — | hit the 12-turn cap; no content verdict   |
+| `layered-architecture-wires-repositories-in-bootstrap`   |  0.50 |   **0.61** | real, and consistently short              |
+| `green-gate-budgets-per-package-across-a-monorepo`       |  0.62 |          — | matches its 2026-09-17 score exactly      |
+| `bloc-writes-sealed-events-and-states`                   |  0.70 |   **1.00** | improved, not cured; see below            |
+| `green-gate-refuses-to-carry-green-forward`              |  0.71 |   **0.91** | clears threshold on average               |
+| `create-project-asks-for-organization-when-required`     |  0.75 |   **0.83** | borderline; `asks-for-organization` flaps |
+
+`layered-architecture-wires-repositories-in-bootstrap` is the one worth acting on:
+`constructs-in-bootstrap` failed all three runs and two runs also lost `path-dependencies`
+and `uses-repository-provider`. It is untouched by this branch, so it is either drift since
+2026-09-17 or a single-run miss in that sweep.
+
+## `bloc-writes-sealed-events-and-states`, improved 2026-09-18
 
 The CI run scored it 0.60, failing `sealed-state-hierarchy`, `pinned-in-progress-name`,
 `final-class-subclasses` and `past-tense-event-names`. A first `--runs 3` scored it 1.00,
@@ -57,10 +89,16 @@ failure. Measured after the change, `--runs 3` on both arms:
 | with    | 1.00, 1.00, 1.00      |  1.00 |
 | without | 0.70, 0.40, 0.60      |  0.57 |
 
-No grader failed in any with-arm run. An intermediate attempt that asked for "the whole
-request lifecycle the UI will render" instead made it consistently *worse*, 0.70 three
-times out of three, by steering harder toward the enum. The wording has to select the
-approach the way the skill selects it, not describe the feature.
+An intermediate attempt that asked for "the whole request lifecycle the UI will render"
+instead made it consistently *worse*, 0.70 three times out of three, by steering harder
+toward the enum. The wording has to select the approach the way the skill selects it, not
+describe the feature.
+
+**Improved rather than cured.** Across seven post-fix runs the case scored 1.00 six times
+and 0.70 once, against one in three before, and the 0.70 lost the same three graders as
+ever. The prompt biases the model toward the subclass approach; it does not force it. If it
+needs to be airtight, the skill has to say which approach a request lifecycle with
+differing payloads takes, rather than leaving it to the selection rule.
 
 ## Reading the two numbers that look bad
 
