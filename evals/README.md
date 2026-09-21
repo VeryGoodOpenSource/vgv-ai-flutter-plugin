@@ -179,8 +179,7 @@ text actually differs on.
 **Adding beats deleting.** A free grader still fails if the skill later regresses, so it is
 a regression test even when it earns no Δ. Keep every free grader that pins a Core Standard
 or an anti-pattern: `no-mockito`, `no-left-anchored-insets` and `no-hand-rolled-icon-mirroring`
-all pass in both arms today and all catch a real regression tomorrow. A grader pass over
-these six cases deleted fifteen of them on a single free reading and had to put eleven back.
+all pass in both arms today and all catch a real regression tomorrow.
 
 Delete only for a reason that holds without a score:
 
@@ -267,37 +266,19 @@ with `allowed_tools: [Read, Glob, Grep, Skill]` and no `--allow-tools` on the co
 exactly as the docs say. Verified: with neither, the model still called
 `packages_check_licenses` with `{"directory": ".", "licenses": true}`.
 
-**Use the plugin-namespaced tool name everywhere.** The name is
-`mcp__plugin_<plugin>_<server>__<tool>`, so here:
+**Use the plugin-namespaced tool name**, `mcp__plugin_<plugin>_<server>__<tool>`, which
+here is `mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses`. That is
+what a `tool_used` grader carries. The bare `mcp__very-good-cli__<tool>` form the skills
+use for a real session is not valid in a case: put it in `allowed_tools` and you get
+`not granted (missing --allow-tools grant, or a malformed entry)`, which is the runner
+saying the name is unknown rather than that a grant is needed.
 
-```text
-mcp__plugin_vgv-ai-flutter-plugin_very-good-cli__packages_check_licenses
-```
-
-That is the name a `tool_used` grader has to carry. The bare `mcp__very-good-cli__<tool>`
-form, which the skills' own `allowed-tools` use for a real session, is **not** a valid
-entry here: putting it in a case's `allowed_tools` produces a warning that reads as if the
-tool needed a grant, when it is really telling you the name does not exist.
-
-```text
-not granted (missing --allow-tools grant, or a malformed entry):
-mcp__very-good-cli__packages_check_licenses
-```
-
-Both halves of that message are offered because the runner cannot tell them apart. Check
-the name before reaching for `--allow-tools`.
-
-**The plugin's own PreToolUse hook used to eat every call.** `check-vgv-cli.sh` matches
-`mcp__.*very-good-cli__.*` and denied outright whenever `check_vgv_cli` did not return
-`ok`, so the model received the hook's "Very Good CLI is not installed" text as the tool
-result and the mock was never reached. In a run `command -v very_good` *succeeds*, because
-the sandbox inherits the host PATH; `very_good --version` then returns nothing under the
-run's throwaway `$HOME`, because the installed `very_good` is a shim that execs `dart`.
-
-`check_vgv_cli` now returns `unverifiable` for exactly that case and both hooks stand
-aside, so the mocks are reachable and the SessionStart notice does not fire either.
-**Mocked cases therefore require a plugin that has the `unverifiable` status**; against an
-older build every `very-good-cli` mock is dead.
+**The mocks need `check_vgv_cli` to return `unverifiable`.** In a run `very_good` resolves
+on PATH but `very_good --version` answers nothing, because it is a shim that execs `dart`
+and `$HOME` is throwaway. Without the `unverifiable` status the PreToolUse hook reads that
+as "not installed" and denies the call, so the model gets the hook's text as the tool
+result and the mock is never reached. That status also keeps the SessionStart notice
+quiet.
 
 These mocks exist only for eval runs. They are not shipped behavior, they do not affect a
 real session, and a user's `very-good-cli` tools still go to the real

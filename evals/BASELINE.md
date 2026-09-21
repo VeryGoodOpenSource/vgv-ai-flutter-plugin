@@ -36,10 +36,10 @@ The previous sweep, under a Haiku judge and before the refusal-shaped descriptio
 measured 5 misses out of 83, and the one before that measured 14. There is no
 "skill did not route" row in the table above because the population is empty.
 
-## Full one-arm run, 2026-09-21, this branch with #155
+## Full one-arm run, 2026-09-21
 
-100 cases, 1 run each, with-plugin arm only, `partial: false`, **$13.35**, 10 minutes at
-`-j 4`, models and judge pinned to `claude-sonnet-5`.
+100 cases, 1 run each, with-plugin arm, `partial: false`, **$13.35**, 10 minutes at `-j 4`,
+models and judge pinned to `claude-sonnet-5`.
 
 |                                 |      value |
 | ------------------------------- | ---------: |
@@ -48,57 +48,30 @@ measured 5 misses out of 83, and the one before that measured 14. There is no
 | Cases scoring a perfect 1.00    | **83/100** |
 | Usage or auth errors            |      **0** |
 
-Not comparable with the 2026-09-17 sweep above: that one was two-arm, and
-`--ablation none` weights the routing graders differently.
+Not comparable with the two-arm sweep above: `--ablation none` weights the routing graders
+differently.
 
-Six cases came in under 0.8. One is a harness error rather than a result, and the four
-that were re-measured at `--runs 3` split three ways:
-
-| case                                                     | 1-run | `--runs 3` | reading                                   |
-| -------------------------------------------------------- | ----: | ---------: | ----------------------------------------- |
-| `ui-package-declines-hand-rolled-button`                 |  0.43 |          — | hit the 12-turn cap; no content verdict   |
-| `layered-architecture-wires-repositories-in-bootstrap`   |  0.50 |   **0.61** | real, and consistently short              |
-| `green-gate-budgets-per-package-across-a-monorepo`       |  0.62 |          — | matches its 2026-09-17 score exactly      |
-| `bloc-writes-sealed-events-and-states`                   |  0.70 |   **1.00** | improved, not cured; see below            |
-| `green-gate-refuses-to-carry-green-forward`              |  0.71 |   **0.91** | clears threshold on average               |
-| `create-project-asks-for-organization-when-required`     |  0.75 |   **0.83** | borderline; `asks-for-organization` flaps |
-
-`layered-architecture-wires-repositories-in-bootstrap` is the one worth acting on:
-`constructs-in-bootstrap` failed all three runs and two runs also lost `path-dependencies`
-and `uses-repository-provider`. It is untouched by this branch, so it is either drift since
-2026-09-17 or a single-run miss in that sweep.
+Six cases came in under 0.8. Re-measured at `--runs 3`, only one holds:
+**`layered-architecture-wires-repositories-in-bootstrap` at 0.61**, losing
+`constructs-in-bootstrap` on all three runs. `green-gate-refuses-to-carry-green-forward`
+(0.91) and `create-project-asks-for-organization-when-required` (0.83) clear or nearly
+clear, `ui-package-declines-hand-rolled-button` hit the turn cap rather than failing on
+content, and `green-gate-budgets-per-package-across-a-monorepo` matches its 2026-09-17
+score.
 
 ## `bloc-writes-sealed-events-and-states`, improved 2026-09-18
 
-The CI run scored it 0.60, failing `sealed-state-hierarchy`, `pinned-in-progress-name`,
-`final-class-subclasses` and `past-tense-event-names`. A first `--runs 3` scored it 1.00,
-3/3, which looked like variance. It was not: a later run scored 0.70, so the readings were
-1.00, 0.70 and 0.60 on an unchanged case.
+The case was grading one of two approaches the skill sanctions. `skills/bloc/SKILL.md`
+documents a Subclass Approach and a Single Class Approach and chooses by whether the states
+carry different data; the graders accept only the first, so a status-enum answer followed
+the skill and failed anyway. The prompt now supplies states that carry different data,
+which is the skill's own rule.
 
-**The case was grading one of two approaches the skill sanctions.** `skills/bloc/SKILL.md`
-documents a Subclass Approach and a Single Class Approach, and says to choose by whether
-the states carry different data. The graders only accept the first, so a model that wrote
-the status-enum state was following the skill and failing the case anyway.
-
-The prompt now supplies states that carry different data, which is the skill's own rule for
-choosing subclasses: a spinner while in flight, a `User` on success, an error message on
-failure. Measured after the change, `--runs 3` on both arms:
-
-|         |                  runs |  mean |
-| ------- | --------------------- | ----: |
-| with    | 1.00, 1.00, 1.00      |  1.00 |
-| without | 0.70, 0.40, 0.60      |  0.57 |
-
-An intermediate attempt that asked for "the whole request lifecycle the UI will render"
-instead made it consistently *worse*, 0.70 three times out of three, by steering harder
-toward the enum. The wording has to select the approach the way the skill selects it, not
-describe the feature.
-
-**Improved rather than cured.** Across seven post-fix runs the case scored 1.00 six times
-and 0.70 once, against one in three before, and the 0.70 lost the same three graders as
-ever. The prompt biases the model toward the subclass approach; it does not force it. If it
-needs to be airtight, the skill has to say which approach a request lifecycle with
-differing payloads takes, rather than leaving it to the selection rule.
+Readings went from 1.00/0.70/0.60 on the unchanged case to six 1.00s and one 0.70 across
+seven post-fix runs. **Improved, not cured.** Making it airtight means the skill naming
+which approach a request lifecycle with differing payloads takes, rather than leaving it to
+the selection rule. An attempt to fix it by asking for "the whole request lifecycle the UI
+will render" made it consistently worse, 0.70 three times out of three.
 
 ## Reading the two numbers that look bad
 
@@ -121,13 +94,6 @@ Those six cases were the shortlist for the grader pass below.
 
 ## Grader pass over the six weakest cases, 2026-09-18
 
-A free grader is still a regression test, so this pass mostly **added** signal rather than
-cutting. Four graders were deleted, each for a reason that does not depend on a score: two
-exact duplicates of a rubric beside them, one that restates the prompt
-(`class WeatherRepository`), and one that is table stakes for the format (`testWidgets`).
-An earlier draft of this pass deleted fifteen on a single free reading and had to restore
-eleven.
-
 | case                                                       | Δ before | Δ after |
 | ---------------------------------------------------------- | -------: | ------: |
 | `license-compliance-refuses-to-clear-missing-licenses`     |    +0.43 |   +0.86 |
@@ -137,14 +103,8 @@ eleven.
 | `testing-uses-pump-app-in-widget-tests`                    |    +0.38 |   +0.43 |
 | `accessibility-declines-gesture-detector-tap-target`       |    +0.86 |   +0.50 |
 
-`license-compliance` and `internationalization` were measured at `--runs 3` on both arms.
-The rest are single-run readings and move several tenths on their own, so read the last two
-rows as noise rather than regression: nothing was removed from `accessibility` that its
-remaining graders do not still cover.
-
-Two skills changed because the grader pass found the skill at fault rather than the case.
-`skills/bloc/SKILL.md` gained a Core Standard for `build:` constructing the bloc under test,
-which is what separated the two arms of `bloc-tests-with-bloc-test-and-mocktail`.
+The first two were measured at `--runs 3` on both arms; the rest are single-run and move
+several tenths on their own, so the last two rows are noise rather than regression.
 
 ## Per-skill mean Δ
 
