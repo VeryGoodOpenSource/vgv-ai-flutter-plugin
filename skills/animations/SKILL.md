@@ -250,54 +250,11 @@ See [references/staggered-animations.md](references/staggered-animations.md) for
 
 ## Page Transitions
 
-Custom page transitions integrate with GoRouter via `CustomTransitionPage` in `GoRouteData.buildPage`.
-
-```dart
-@override
-Page<void> buildPage(BuildContext context, GoRouterState state) {
-  return CustomTransitionPage(
-    key: state.pageKey,
-    child: const DetailsPage(),
-    transitionDuration: Durations.medium4,
-    reverseTransitionDuration: Durations.medium4,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: CurvedAnimation(
-          parent: animation,
-          curve: Easing.emphasizedDecelerate,
-        ),
-        child: child,
-      );
-    },
-  );
-}
-```
-
-See [references/page-transitions.md](references/page-transitions.md) for a reusable `AppPageTransitions` helper class with fade, slide-fade, and slide-up transitions, and usage with `GoRouteData`.
-
-### Hero Animations
-
-Use `Hero` for shared-element transitions between routes. The framework handles the animation automatically.
-
-```dart
-// Source screen
-Hero(
-  tag: 'product-image-${product.id}',
-  child: Image.network(product.imageUrl),
-)
-
-// Destination screen
-Hero(
-  tag: 'product-image-${product.id}',
-  child: Image.network(product.imageUrl),
-)
-```
-
-Rules for Hero:
-
-- **Tags must be unique within each route** — use meaningful identifiers, not indices
-- **Both source and destination must be visible during the transition** — Hero does not work with lazy lists that remove the source widget
-- **Wrap only the visual element** — not the entire card or list tile
+Custom page transitions integrate with GoRouter via `CustomTransitionPage` in
+`GoRouteData.buildPage`. Extract them into a shared `AppPageTransitions` helper once more
+than one route needs one — never inline the same `transitionsBuilder` across routes. See
+[references/page-transitions.md](references/page-transitions.md) for the helper, GoRouter
+wiring, and `Hero` shared-element transitions.
 
 ---
 
@@ -423,16 +380,6 @@ so it is wired properly" — on a fade driven by a bool, that is the bad form ab
 as a request. Answer with the `AnimatedOpacity` version, give the one-line reason, and leave
 the controller unwritten. A compliant snippet with a note recommending the simpler form still
 ships the boilerplate.
-
----
-
-## Page Transitions
-
-Custom page transitions integrate with GoRouter via `CustomTransitionPage` in
-`GoRouteData.buildPage`. Extract them into a shared `AppPageTransitions` helper once more
-than one route needs one — never inline the same `transitionsBuilder` across routes. See
-[references/page-transitions.md](references/page-transitions.md) for the helper and
-GoRouter wiring.
 
 ---
 

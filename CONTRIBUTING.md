@@ -144,12 +144,10 @@ may run longer; the steps *are* the content.
 Two things this rubric does **not** apply to:
 
 - **The frontmatter `description`.** It is the router and loads before the body, so every
-  trigger phrase in it is load-bearing. Do not trim it for length. It is capped at 1024
-  characters, which `validate-skill` enforces as an error.
-- **Genuinely important areas.** Hard constraints stay hard in `static-security`,
-  `accessibility` WCAG criteria, `license-compliance`'s refuse-to-certify rule, and
-  `green-gate`'s MCP-only tool routing. Directive density is not the defect; generic
-  reference material is.
+  trigger phrase is load-bearing — do not trim it for length (see
+  [Cross-harness portability](#cross-harness-portability) → Description length).
+- **Genuinely important areas.** Hard constraints stay hard. Directive density is not the
+  defect; generic reference material is.
 
 ## Cross-harness portability
 
