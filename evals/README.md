@@ -278,6 +278,13 @@ answer to the no-plugin arm, exactly as a non-neutral fixture does.
 `packages_check_licenses` returns one `GPL-3.0` and one `unknown` among twelve permissive
 licenses, so a case has something real to flag.
 
+**Converting a case to drive a tool invalidates every rubric that read the narration.** The
+model stops describing the call and just makes it, so a blind judge sees no evidence and
+fails a rubric that was passing. Four rubrics went stale this way in one pass, two of them
+asserting outright that no tool was available. When you convert a case, reread every `llm`
+grader on it: replace the ones that judged the described call with `tool_used`, and keep
+only those judging something still in the reply.
+
 **A mocked tool is not there in the no-plugin arm**, so a `tool_used` grader on one fails
 for free and takes any grader that needs the tool's output with it. Unlike
 `tool_used: Skill`, nothing excludes these from the score, so Δ reads as if the plugin
