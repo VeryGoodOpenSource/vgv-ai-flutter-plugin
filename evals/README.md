@@ -435,12 +435,9 @@ discriminating goes unnoticed until you re-check with `include_baseline`.
   a `tracePath` into a sandbox deleted unless `--keep-temp` is passed. `report.html` does
   show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution.** `very-good-cli` has a stand-in *inside an eval run* and a mocked call
-  has been driven end to end, so its four tools can be graded with `tool_used` or against
-  `mock_calls`. No case does yet: every prompt still says the session cannot run anything, and every
-  `allowed_tools` still lists only `[Read, Glob, Grep, Skill]`. Until both change, the
-  tool-driven skills stay graded on the calls they narrate. The `dart` server has no mock
-  at all.
+- **Tool execution.** No case drives a tool, so the skills that would are graded on the
+  calls they narrate. Closing that gap is what
+  [Mocking the MCP servers](#mocking-the-mcp-servers) is for, and nothing uses it yet.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate. An earlier version asserted a hundred `contains`
