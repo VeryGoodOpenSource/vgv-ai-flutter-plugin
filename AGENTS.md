@@ -17,7 +17,6 @@ docs/                  # Gitignored, local only
   plan/                # Planning and design documents
 evals/                 # `claude plugin eval` suite — all 15 skills, 100 cases
   README.md            # Case format, grader reference, how to add a case
-  BASELINE.md          # Last full two-arm measurement: per-skill Δ and routing
   _fixture/
     fixture.sh         # The only copy of the neutral Flutter skeleton; every case symlinks here
   <skill>/             # One directory per skill, named for the skill it covers

@@ -292,7 +292,6 @@ $E --runs 3 --threshold 0.8                    # is a red case real?
 ```
 
 Read the two arm scores, not the total. The without-arm is supposed to score badly.
-[BASELINE.md](BASELINE.md) records the measurements.
 
 **One run is not a measurement**, and these are not a merge gate.
 
@@ -304,6 +303,12 @@ Read the two arm scores, not the total. The without-arm is supposed to score bad
   document `partial`. Check the errors.
 - The suite judges with `claude-sonnet-5`. When a case routes but scores badly, read the
   judge's votes in the report before editing the skill.
+- **The no-plugin arm swings between runs.** One two-arm run cannot disqualify a grader:
+  `accessibility-declines-gesture-detector-tap-target` failed all three content graders
+  without the plugin on one run and passed all three on the next.
+- **`create-project` pins `model: haiku`.** Its with-arm answers on a weaker model than its
+  baseline, so its Δ reads low. Routing is decided before the switch, so the pin never
+  explains a routing miss.
 
 Costs: **$13** for 100 cases in one arm, **$25** for both, roughly **$0.12 per run**. At
 `--runs 3` a two-arm sweep is six runs per case, so budget around **$75**. `-j` up to 8
