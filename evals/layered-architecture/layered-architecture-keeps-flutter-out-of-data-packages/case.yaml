@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: layered-architecture-keeps-flutter-out-of-data-packages
+context:
+  scaffold_script: fixture.sh

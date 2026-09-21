@@ -1,16 +1,17 @@
 ---
 name: static-security
 description: >
-  Static security review for Flutter mobile apps and Dart code, flagging hardcoded secrets,
-  insecure storage, unsafe network calls, leaky logs, and vulnerable dependencies. Use when
-  reviewing or writing code that handles secrets, user data, network communication,
-  authentication, or cryptography, or when adding validation to user input such as login,
-  sign-up, or payment forms whose values reach a repository or an API, with prompts like "add
-  validation to this form", "nothing is checked before this hits the API", or "validate these
-  fields". Also use for dependency vulnerability review, a security audit even when the
-  request never says "security": "we cut a release tomorrow, is this pubspec safe", "check our
-  dependencies for known vulnerabilities", "scan for CVEs", "we have an ignored_advisories
-  entry, is that fine", or "these versions are pinned, what are we exposed to".
+  Static security review for Flutter mobile apps and Dart code: hardcoded secrets, insecure
+  storage, unsafe network calls, leaky logs, vulnerable dependencies. Use when reviewing or
+  writing code handling secrets, user data, network communication, authentication, or
+  cryptography, or adding validation to user input in login, sign-up, or payment forms reaching a
+  repository or an API, as in "add validation to this form", "nothing is checked before this hits
+  the API", or "validate these fields". Also when asked to implement the insecure change, not
+  review it: "our reviewer flagged this line", "move this API key to --dart-define", "read it back
+  with String.fromEnvironment", a .env file, or "pass it in from our CI secrets". Also for
+  dependency vulnerability review and security audits even when it never says "security": "we cut
+  a release tomorrow, is this pubspec safe", "check our dependencies for known vulnerabilities",
+  "scan for CVEs", "is this ignored_advisories entry fine", or pinned versions we're exposed to.
 argument-hint: "[file-or-directory]"
 allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
 effort: high

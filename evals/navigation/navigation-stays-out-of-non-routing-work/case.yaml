@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: navigation-stays-out-of-non-routing-work
+context:
+  scaffold_script: fixture.sh

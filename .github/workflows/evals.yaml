@@ -1,24 +1,6 @@
 name: evals
 
-# Skill evals cost real money, so this workflow is built around spending as little as
-# possible while still catching a skill regression.
-#
-# Three things keep the bill down:
-#
-#   1. It runs AFTER merge, not on every push to a PR. A PR gets pushed to many times;
-#      main gets merged into once.
-#   2. It runs only the skills whose SKILL.md changed in that merge. One skill is 6-7
-#      cases out of 100.
-#   3. It runs only the `with-skill` provider. The `sealed-baseline` column exists to
-#      prove a *case discriminates*, which is a question you answer once when writing
-#      the case. Regression detection does not need it, and skipping it halves the cost.
-#
-# It is deliberately NON-BLOCKING. Two unedited cases were measured moving between runs,
-# one of them across the pass/fail line, so a single run is not a reliable gate. Treat a
-# red case as a prompt to look, and confirm with `--repeat 3` locally before believing it.
-#
-# Use the manual trigger for a full run before a release. That is ~200 results and the
-# expensive one.
+# Runs the eval cases for the skills a merge changed. Advisory, never a merge gate.
 
 on:
   push:
@@ -37,29 +19,36 @@ on:
           - changed-skills
           - all-skills
       include_baseline:
-        description: 'Also run the sealed-baseline column (doubles the cost; only needed to re-check that cases discriminate)'
+        description: 'Also run the no-plugin baseline arm (doubles the cost; only needed to re-check that cases discriminate)'
         type: boolean
         default: false
-      repeat:
-        description: 'Runs per case. 1 is cheapest; 3 separates a real failure from noise.'
+      runs:
+        description: 'Runs per case per arm. 1 is cheapest; 3 separates a real failure from noise.'
         type: string
         default: '1'
+      max_cost_usd:
+        description: 'Cost ceiling in USD. Leave blank to size it from the scope: $5 for changed skills, $20 for all skills in one arm, $40 in both. Multiplied by runs.'
+        type: string
+        default: ''
 
-# Never let two eval runs bill concurrently.
 concurrency:
   group: evals-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
+
+env:
+  CLAUDE_CODE_VERSION: '2.1.270'
+  EVAL_MODEL: claude-sonnet-5
+  EVAL_JUDGE_MODEL: claude-sonnet-5
 
 jobs:
   scope:
     name: 🔎 Scope
     runs-on: ubuntu-latest
     outputs:
-      pattern: ${{ steps.pick.outputs.pattern }}
-      skills: ${{ steps.pick.outputs.skills }}
+      tags: ${{ steps.pick.outputs.tags }}
       run_evals: ${{ steps.pick.outputs.run_evals }}
     steps:
       - uses: actions/checkout@v7
@@ -75,40 +64,30 @@ jobs:
           set -euo pipefail
 
           all_skills() {
-            # A skill is eligible only if it has a case file; ten of fifteen did not at
-            # first, and asking promptfoo for a pattern that matches nothing looks like a
-            # pass rather than a gap.
-            for f in evals/tests/*.yaml; do basename "$f" .yaml; done
+            find evals -mindepth 3 -maxdepth 3 -name case.yaml -exec dirname {} \; \
+              | sed 's|^evals/||; s|/[^/]*$||' | sort -u
           }
 
           if [ "$SCOPE" = "all-skills" ]; then
             SKILLS=$(all_skills)
           else
-            # On push, github.event.before is the previous main tip. On a manual run there
-            # is no diff to take, so fall back to the last commit.
             BASE="${BEFORE:-}"
             if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
               BASE=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
             fi
             CHANGED=$(git diff --name-only "$BASE" "${{ github.sha }}" || true)
 
-            # A skill is in scope if its SKILL.md, any of its references, or its own case
-            # file changed. Editing a reference file changes what the skill teaches just as
-            # much as editing SKILL.md does.
             SKILLS=$(
               {
                 echo "$CHANGED" | { grep -oE '^skills/[^/]+/' || true; } | cut -d/ -f2
-                echo "$CHANGED" | { grep -oE '^evals/tests/[^/]+\.yaml$' || true; } \
-                  | xargs -r -n1 basename | sed 's/\.yaml$//'
+                echo "$CHANGED" | { grep -oE '^evals/[^_][^/]*/' || true; } | cut -d/ -f2
               } | sort -u | while read -r s; do
-                    [ -n "$s" ] && [ -f "evals/tests/$s.yaml" ] && echo "$s"
+                    [ -n "$s" ] && [ -d "evals/$s" ] && echo "$s"
                   done
             )
 
-            # A change to the harness itself (config, the shared assertion, the fixture)
-            # can affect every case, so widen to everything.
-            if echo "$CHANGED" | grep -qE '^evals/(promptfooconfig\.yaml|assertions/|fixture/)'; then
-              echo "harness changed — widening to all skills"
+            if echo "$CHANGED" | grep -qE '^evals/_fixture/'; then
+              echo "fixture changed — widening to all skills"
               SKILLS=$(all_skills)
             fi
           fi
@@ -116,26 +95,22 @@ jobs:
           if [ -z "$SKILLS" ]; then
             echo "No skill with eval cases changed. Nothing to run."
             echo "run_evals=false" >> "$GITHUB_OUTPUT"
-            echo "pattern=" >> "$GITHUB_OUTPUT"
-            echo "skills=" >> "$GITHUB_OUTPUT"
+            echo "tags=" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # Case descriptions are `<skill>-<what-it-does>`, so anchoring on the skill name
-          # keeps `testing` from also selecting every other file's cases.
-          PATTERN="^($(echo "$SKILLS" | paste -sd'|' -))-"
+          TAGS=$(echo "$SKILLS" | paste -sd' ' -)
           COUNT=$(echo "$SKILLS" | wc -l | tr -d ' ')
 
           echo "run_evals=true" >> "$GITHUB_OUTPUT"
-          echo "pattern=$PATTERN" >> "$GITHUB_OUTPUT"
-          echo "skills=$(echo "$SKILLS" | paste -sd' ' -)" >> "$GITHUB_OUTPUT"
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
 
           {
             echo "### Eval scope"
             echo
             echo "\`$COUNT\` skill(s) in scope: $(echo "$SKILLS" | paste -sd', ' -)"
             echo
-            echo "Filter: \`$PATTERN\`"
+            echo "Tags: \`$TAGS\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   run:
@@ -143,7 +118,6 @@ jobs:
     needs: scope
     if: needs.scope.outputs.run_evals == 'true'
     runs-on: ubuntu-latest
-    # Advisory, never a merge gate. See the header comment.
     continue-on-error: true
     timeout-minutes: 60
     steps:
@@ -151,18 +125,13 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          # promptfoo enforces ^20.20.0 || >=22.22.0 and refuses to start below it.
-          node-version: '22.22.0'
+          node-version: '22.x'
 
-      - name: Set up Dart
-        # Only the `dart-parses` assertion needs this, but a missing `dart` makes that
-        # assertion fail rather than skip, which would read as a content regression.
-        uses: dart-lang/setup-dart@v1.8.1
-
-      - name: Install the Claude Agent SDK
-        # promptfoo resolves the SDK from the working directory. A -g install does not work
-        # and neither does NODE_PATH.
-        run: npm install --no-save @anthropic-ai/claude-agent-sdk
+      - name: Install Claude Code
+        run: |
+          set -euo pipefail
+          npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+          claude --version
 
       - name: Check the API key is present
         env:
@@ -173,64 +142,73 @@ jobs:
             exit 1
           fi
 
-      - name: Auth smoke test (one case)
-        # The suite has only ever run against a local Claude Code session, where both
-        # providers set `apiKeyRequired: false`. This proves the API-key path works before
-        # committing to the full spend, and fails in ~30 seconds if it does not.
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          PROMPTFOO_DISABLE_TELEMETRY: '1'
-        run: |
-          set -euo pipefail
-          npx -y promptfoo@latest eval \
-            -c evals/promptfooconfig.yaml \
-            --filter-pattern "${{ needs.scope.outputs.pattern }}" \
-            --filter-providers with-skill \
-            --filter-first-n 1 \
-            --no-table --no-cache \
-            -o /tmp/smoke.json 2>&1 | tail -20 || true
-          node -e '
-            const r = require("/tmp/smoke.json");
-            const x = (r.results?.results || [])[0];
-            if (!x) { console.error("::error::Smoke run produced no result."); process.exit(1); }
-            const err = String(x.error || "");
-            if (/api key|authentication|401|403/i.test(err)) {
-              console.error("::error::Auth failed against the API key: " + err.slice(0, 300));
-              process.exit(1);
-            }
-            console.log("Auth OK. Sample case:", x.testCase?.description, "score", x.score);
-          '
-
       - name: Run the scoped evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          PROMPTFOO_DISABLE_TELEMETRY: '1'
+          INCLUDE_BASELINE: ${{ inputs.include_baseline }}
+          RUNS: ${{ inputs.runs || '1' }}
+          MAX_COST: ${{ inputs.max_cost_usd }}
+          SCOPE: ${{ inputs.scope || 'changed-skills' }}
+          TAGS: ${{ needs.scope.outputs.tags }}
         run: |
           set -euo pipefail
-          mkdir -p evals/.runs
-          PROVIDERS="--filter-providers with-skill"
-          if [ "${{ inputs.include_baseline }}" = "true" ]; then PROVIDERS=""; fi
+          ABLATION=none
+          if [ "$INCLUDE_BASELINE" = "true" ]; then ABLATION=with-without; fi
 
-          # promptfoo exits non-zero when any case fails, which is expected here — the
-          # sealed column is meant to fail, and this workflow is advisory. The summary step
-          # is what reports the outcome.
-          npx -y promptfoo@latest eval \
-            -c evals/promptfooconfig.yaml \
-            --filter-pattern "${{ needs.scope.outputs.pattern }}" \
-            $PROVIDERS \
-            --repeat "${{ inputs.repeat || '1' }}" \
-            --no-cache --no-table \
-            -o evals/.runs/ci.json 2>&1 | tail -30 || true
+          if [ -z "$MAX_COST" ]; then
+            if [ "$SCOPE" = "all-skills" ]; then MAX_COST=20; else MAX_COST=5; fi
+            if [ "$ABLATION" = "with-without" ]; then MAX_COST=$(( MAX_COST * 2 )); fi
+            MAX_COST=$(( MAX_COST * RUNS ))
+          fi
+          echo "Cost ceiling: \$$MAX_COST (scope=$SCOPE ablation=$ABLATION runs=$RUNS)"
 
-          test -f evals/.runs/ci.json
+          set +e
+          claude plugin eval . \
+            --trust-plugin --scaffold --no-publish \
+            --runs "$RUNS" \
+            --ablation "$ABLATION" \
+            --threshold 0.8 \
+            --model "$EVAL_MODEL" --judge-model "$EVAL_JUDGE_MODEL" \
+            --max-cost-usd "$MAX_COST" \
+            --output-dir evals/results/ci \
+            -j 4 \
+            --tag $TAGS 2>&1 | tee /tmp/eval.log
+          CODE=${PIPESTATUS[0]}
+          set -e
+          if [ "$CODE" = "2" ] && [ ! -f evals/results/ci/aggregate-result.json ]; then
+            echo "::error::The run was cut short before it produced any results: auth failed, or the cost ceiling was hit before the first case finished."
+            exit 1
+          fi
+
+          test -f evals/results/ci/aggregate-result.json
 
       - name: Summarize
-        run: node evals/ci-summary.js evals/.runs/ci.json | tee -a "$GITHUB_STEP_SUMMARY"
+        if: always()
+        run: |
+          set -uo pipefail
+          RESULT=evals/results/ci/aggregate-result.json
+          {
+            echo "### Eval results"
+            echo
+            if [ -f "$RESULT" ] && [ "$(jq -r '.partial' "$RESULT")" = "true" ]; then
+              echo "> **Partial run** (\`$(jq -r '.partialReason' "$RESULT")\`). Scores below are incomplete, so leave them out of any trend."
+              echo
+            fi
+            echo "A run that timed out, hit the turn cap or was rate limited scores 0 with no failing"
+            echo "grader, which reads like a content regression. Check the NOTES column before believing"
+            echo "a red case, and confirm it locally with \`--runs 3\`."
+            echo
+            echo '```text'
+            tail -n 200 /tmp/eval.log 2>/dev/null || echo "(no run output captured)"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload the run
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: eval-run
-          path: evals/.runs/ci.json
+          path: |
+            evals/results/ci/aggregate-result.json
+            evals/results/ci/report.html
           retention-days: 14

@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: accessibility-wraps-cupertino-and-announces-on-ios
+context:
+  scaffold_script: fixture.sh

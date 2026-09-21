@@ -1,3 +1,3 @@
 interface:
   display_name: "Create Project"
-  short_description: "Scaffold a Dart or Flutter project"
+  short_description: "Scaffold a Dart or Flutter project, even from a vague request"

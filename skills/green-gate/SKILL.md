@@ -1,17 +1,17 @@
 ---
 name: green-gate
 description: >
-  Drives a Dart or Flutter package fully green through an autonomous verify-fix-rerun loop
-  across four quality gates: analyze, format, test, and coverage, exiting only when one final
-  iteration proves all four pass with observed numbers. It also owns gate configuration, so
-  plan-only questions belong here: which tool and arguments run each gate,
-  in what order, the coverage target, what leaves the coverage denominator, coverage ignore
-  comments, "just re-check coverage", and "confirm the package is green". Use it when the
-  user says "green gate", "make it green", "get CI green", "fix all the analyze and test
-  failures", "clean this package up before I open a PR", "bring coverage to 100", or "loop
-  until everything passes", and when a run stalls with the same failures repeating round
-  after round. Prefer it over the single-gate testing or analysis skills when a request spans
-  multiple gates or asks to fix and re-verify until clean.
+  Drives a Dart or Flutter package fully green through a verify-fix-rerun loop across four gates:
+  analyze, format, test, coverage. It owns gate configuration, so plan-only questions belong here:
+  which tool and arguments run each gate, in what order, the coverage target a package is held to,
+  and what leaves the coverage denominator. Use it when the user says "green gate", "make it
+  green", "get CI green", "fix all the analyze and test failures", "clean this package up before I
+  open a PR", "bring coverage to 100", "loop until everything passes", "just re-check coverage",
+  or "confirm the package is green". Use it too when the user wants a gate weakened or skipped:
+  drop the coverage threshold to 90, put coverage ignore comments on untested or generated code
+  (.freezed.dart, app_localizations.dart), skip analyze and format because they passed earlier,
+  call a 94% package clean and done, or keep retrying while the same failures repeat round after
+  round. Prefer it over the single-gate testing or analysis skills.
 argument-hint: "[directory]"
 allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__dart__dart_format mcp__very-good-cli__test
 model: sonnet

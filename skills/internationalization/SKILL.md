@@ -5,9 +5,14 @@ description: >
   built-in `flutter_localizations` and `intl` setup with ARB files as the single source of
   truth. Use when adding, modifying, or reviewing ARB translations, locale setup (`l10n.yaml`,
   `generate: true` in `pubspec.yaml`, `flutter gen-l10n`, `localizationsDelegates`,
-  `supportedLocales`), BuildContext l10n extensions such as `context.l10n`, hardcoded user-
-  facing strings that should be localized, localized strings passed into shared or reusable
-  widgets, or RTL/directional layout support with `EdgeInsetsDirectional`.
+  `supportedLocales`), BuildContext l10n extensions such as `context.l10n`, hardcoded
+  user-facing strings that should be localized, localized strings passed into shared or
+  reusable widgets, or RTL/directional layout support with `EdgeInsetsDirectional`. Also use
+  when asked to add or configure any third-party i18n or translation package
+  (easy_localization, slang, flutter_i18n, or intl_utils), and when shipping or fixing a
+  screen for a right-to-left language such as Arabic, Hebrew, Farsi, or Urdu,
+  including mirroring padding, alignment, icons, or images, and replacing `EdgeInsets`
+  left/right.
 allowed-tools: Read Glob Grep
 model: sonnet
 ---

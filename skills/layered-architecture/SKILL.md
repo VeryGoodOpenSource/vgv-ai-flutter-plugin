@@ -1,12 +1,17 @@
 ---
 name: layered-architecture
 description: >
-  Best practices for VGV layered monorepo architecture in Flutter, covering the four layers
-  Data, Repository, Business Logic, and Presentation, their unidirectional dependency rules,
-  model transformation across layer boundaries, and app bootstrap wiring. Use when structuring
-  a multi-package Flutter app, creating data or repository packages, defining layer
-  boundaries, or wiring dependencies between packages through path dependencies in
-  pubspec.yaml, barrel exports, and RepositoryProvider.
+  VGV layered monorepo architecture in Flutter: four layers Data, Repository, Business Logic, and
+  Presentation, unidirectional dependency rules, and model transformation across layers. Use when
+  structuring a multi-package Flutter app, creating data or repository packages, defining layer
+  boundaries, or wiring packages in app bootstrap via path dependencies in pubspec.yaml, barrel
+  exports, and RepositoryProvider. Use too when asked to put a domain model, entity, or shared
+  class in an api_client or data package so the repository and app import it from one place, or to
+  add a cross-package dependency the layers forbid. Also use for a new app, from a one-line
+  description like "I'm starting a weather app that reads from a REST API" plus a request to lay
+  out the package structure, project, folder, or directory layout, or asking how to organize an
+  app that talks to a backend, where a file or feature should live, or which package code belongs
+  in. Applies even when the user never says monorepo, layer, or architecture.
 allowed-tools: Read Glob Grep mcp__very-good-cli__create mcp__very-good-cli__packages_get mcp__very-good-cli__test
 effort: high
 ---
