@@ -145,30 +145,10 @@ ships the boilerplate.
 ## Page Transitions
 
 Custom page transitions integrate with GoRouter via `CustomTransitionPage` in
-`GoRouteData.buildPage`:
-
-```dart
-@override
-Page<void> buildPage(BuildContext context, GoRouterState state) {
-  return CustomTransitionPage(
-    key: state.pageKey,
-    child: const DetailsPage(),
-    transitionDuration: Durations.medium4,
-    reverseTransitionDuration: Durations.medium4,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(
-        opacity: CurvedAnimation(
-          parent: animation,
-          curve: Easing.emphasizedDecelerate,
-        ),
-        child: child,
-      );
-    },
-  );
-}
-```
-
-Extract these into a shared `AppPageTransitions` helper once more than one route needs one.
+`GoRouteData.buildPage`. Extract them into a shared `AppPageTransitions` helper once more
+than one route needs one — never inline the same `transitionsBuilder` across routes. See
+[references/page-transitions.md](references/page-transitions.md) for the helper and
+GoRouter wiring.
 
 ---
 

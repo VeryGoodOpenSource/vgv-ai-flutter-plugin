@@ -152,103 +152,48 @@ Two things this rubric does **not** apply to:
 ## Cross-harness portability
 
 Skills are authored for Claude Code but target the [Agent Skills open
-standard](https://agentskills.io/specification) (the `npx skills` format, supported by
-many agents), so they should degrade gracefully on non-Claude harnesses such as Codex,
-Gemini CLI, and OpenCode without changing Claude Code behavior. Under that standard a skill
-is a **static instruction set**: the agent loads it by matching its `description`, then reads
-the body — there is no argument or template substitution. `$ARGUMENTS` and
-`${CLAUDE_SKILL_DIR}` are Claude Code conveniences, not spec features, so a body that uses
-them must still work when they arrive unsubstituted.
+standard](https://agentskills.io/specification), so they should degrade gracefully on
+non-Claude harnesses (Codex, Gemini CLI, OpenCode) without changing Claude Code behavior.
+Under that standard a skill is a **static instruction set**: the agent matches its
+`description`, then reads the body — there is no argument or template substitution. The rules
+below keep a skill working on both.
 
-**`$ARGUMENTS`** — not a spec concept; on a plain Agent Skill it is never substituted and
-stays literal. Always pair it with a fallback that fires when it is empty *or still shows
-the literal text* `$ARGUMENTS`:
-
-```markdown
-<feature_description>$ARGUMENTS</feature_description>
-
-**If the feature description above is empty or still shows the literal text
-`$ARGUMENTS` (the host did not substitute it), ask the user** for it (or read it
-from the conversation).
-```
-
-**`${CLAUDE_SKILL_DIR}`** — no skill here uses it today (the hooks use
-`${CLAUDE_PLUGIN_ROOT}`, resolved by Claude Code, not by skill bodies). If a future skill
-references a bundled file, prefer the spec form — a **relative path from the skill root**
-(`scripts/x.sh`) — and add a fallback for hosts that do not substitute the absolute form.
-
-**Frontmatter** — an agent silently skips a skill whose frontmatter is malformed. Keep the
-opening `---` on line 1, close the block with `---`, and include a non-empty `name:`
-(kebab-case, **matching the directory name**) and `description:`. The spec also allows
-`license`, `compatibility`, `metadata`, and `allowed-tools`. This plugin's Claude Code
-extras (`argument-hint`, `effort`, `model`) are not spec fields, but
-`npx skills` and other agents ignore unknown frontmatter keys — keep them top-level so
-Claude Code reads them and nothing else breaks. (The spec's optional `skills-ref` linter is
-stricter, rejecting any top-level field outside the six it allows; `npx skills` does not run
-it, and nesting these extras under `metadata:` is the escape hatch if strict conformance is
-ever needed.) The `Skills Lint` CI job runs VGV's
-[`skills_lint`](https://github.com/VeryGoodOpenSource/very_good_workflows/blob/main/.github/workflows/skills_lint.yml)
-reusable workflow, which enforces the spec (including name-matches-directory) across every
-skill on each pull request. Rule severities live in `skills_lint.yaml` at the repo root.
-
-**Description length** — `description` carries the whole trigger surface, so it is the field
-that grows. The spec caps it at **1024 characters and `skills_lint` treats an overrun as an
-error** via its `description-too-long` rule, not a warning, so no config will save a long one:
-it hard-fails CI. Claude Code separately truncates the listing at 1536 characters, and Codex
-truncates at 1024 with no warning. Nothing in CI enforces a *minimum* length, but a
-description under 50 characters is almost never specific enough to route on. Keep the field to
-trigger phrases and scope, and leave pure teaching material to the body, which has no cap.
-Do **not** assume a sentence is redundant because the body repeats it: routing happens before the body is ever read, so a
-clause that reads like explanation may be the only thing that makes the skill findable.
-`green-gate` lost its "exit only on observed numbers" clause on exactly that reasoning and
-fell from 3/3 to 1/3 on the case measuring it. Re-run a skill's eval cases after trimming its
-description. Every description is also concatenated into the Codex prompt on every request, so
-length is a per-turn cost paid across all 15.
-
-**MCP references** — this plugin registers two MCP servers in `.mcp.json`: `dart` (Dart and
-Flutter actions) and `very-good-cli` (scaffolding, tests, license checks). On Claude Code
-they are the primary execution path, and the `check-vgv-cli.sh` / `block-cli-workarounds.sh`
-hooks deliberately steer the quality gates through the MCP tools instead of the raw CLI — do
-not weaken that on Claude Code. Those hooks do not run on other hosts and the MCP servers may
-not be connected there, so every skill that drives an MCP tool must name the equivalent
-`very_good` / `dart` / `flutter` CLI command as a fallback and never block when the server is
-absent. The `dart-flutter-sdk-upgrade` and `very-good-analysis-upgrade` skills already phrase
-this as "use the MCP tool if available; otherwise Bash" — match that.
-
-**Subagents** — subagents are not part of the Agent Skills standard, and no skill in this
-plugin dispatches one. The `flutter-reviewer` agent (`agents/flutter-reviewer.md`) is a
-Claude Code construct; on a host without a subagent mechanism its four preloaded standards
-(`bloc`, `testing`, `static-security`, `accessibility`) still apply — run the review inline
-against those skills instead of dispatching the agent.
-
-**`AskUserQuestion` and `allowed-tools`** — both are Claude Code conveniences. A skill that
-asks the user a structured question carries its own inline fallback: invoke whatever
-equivalent user-question tool the host provides, and drop to plain numbered text only where
-the host has none (see `accessibility` and `create-project`). Treat a narrow `allowed-tools`
-list as a permission hint for Claude Code, not a hard cap — a skill uses whatever tools its
-task needs.
-
-**Own your references** — a skill's reference files live inside that skill's own
-`references/` directory. Do not share a reference across skills by symlink or a cross-folder
-`../other-skill/…` link: those do not survive every install path, and skills.sh copies each
-skill on its own. Keep shared prose short enough to inline, or lift author-facing guidance
-into this file rather than shipping it as a runtime reference in two places.
-
-**Codex sidecar (`agents/openai.yaml`)** — every skill ships an `agents/openai.yaml` beside
-its `SKILL.md`, carrying the Codex skill-picker metadata: `interface.display_name`, which has no
-frontmatter equivalent, and `interface.short_description`, which takes precedence over the
-spec-legal `metadata: short-description` key. The `SKILL.md` body stays the one
-source of truth; the sidecar is thin, with no build step. Add one for every new skill.
-
-**Invocation** — every skill in this plugin is **model-invoked**: the model may reach for it
-autonomously when the context fits (that is the point of a best-practice skill), so neither
-`disable-model-invocation` (Claude Code) nor a `policy` block (Codex) is set. All trigger
-phrasing lives in `description`, and there is no `when_to_use` field: only Claude Code ever
-read it, so every other host silently dropped those triggers. If you add a skill only a
-human should fire, make
-it **user-invoked**: set `disable-model-invocation: true` in the frontmatter and
-`policy.allow_implicit_invocation: false` in its `agents/openai.yaml`, and keep the two in
-sync — a skill is user-invoked in both harnesses or neither.
+- **`$ARGUMENTS` / `${CLAUDE_SKILL_DIR}`** — Claude Code conveniences, not spec features, so a
+  body that uses them must still work unsubstituted. Always pair `$ARGUMENTS` with a fallback
+  that fires when it is empty *or still shows the literal text*, and ask the user (or read the
+  conversation) instead. For bundled files prefer a **relative path from the skill root**
+  (`scripts/x.sh`).
+- **Frontmatter** — an agent silently skips a skill with malformed frontmatter. Keep the
+  opening `---` on line 1, close the block, and include a non-empty `name:` (kebab-case,
+  **matching the directory name**) and `description:`. Plugin extras (`argument-hint`,
+  `effort`, `model`) are not spec fields but are ignored as unknown keys — keep them
+  top-level. The `Skills Lint` CI job enforces the spec on every PR (`skills_lint.yaml`).
+- **Description length** — `description` carries the whole trigger surface. The spec caps it
+  at **1024 characters** and `skills_lint` hard-fails an overrun. Keep it to trigger phrases
+  and scope; leave teaching material to the body. Do not assume a sentence is redundant
+  because the body repeats it — routing happens before the body is read. Re-run a skill's
+  eval cases after trimming its description.
+- **MCP references** — this plugin registers `dart` and `very-good-cli` in `.mcp.json`, the
+  primary execution path on Claude Code; do not weaken the hook-enforced routing there. Those
+  hooks and servers may be absent on other hosts, so every skill that drives an MCP tool must
+  name the equivalent `very_good` / `dart` / `flutter` CLI fallback and never block when the
+  server is missing ("use the MCP tool if available; otherwise Bash").
+- **Subagents** — not part of the standard. On a host without a subagent mechanism, the
+  `flutter-reviewer` agent's preloaded standards still apply — run the review inline.
+- **`AskUserQuestion` / `allowed-tools`** — Claude Code conveniences. Carry an inline
+  fallback for structured questions (drop to plain numbered text where the host has none), and
+  treat `allowed-tools` as a permission hint, not a hard cap.
+- **Own your references** — a skill's reference files live in its own `references/` directory.
+  Do not share a reference across skills by symlink or `../other-skill/…` link; those do not
+  survive every install path.
+- **Codex sidecar (`agents/openai.yaml`)** — every skill ships one beside its `SKILL.md` with
+  the picker metadata (`interface.display_name`, `interface.short_description`). The
+  `SKILL.md` body stays the source of truth. Add one for every new skill.
+- **Invocation** — every skill here is **model-invoked**; there is no `when_to_use` field
+  (only Claude Code read it). To make a skill user-invoked, set
+  `disable-model-invocation: true` in the frontmatter *and*
+  `policy.allow_implicit_invocation: false` in its `agents/openai.yaml` — both harnesses or
+  neither.
 
 ## Testing Locally
 
