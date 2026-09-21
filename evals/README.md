@@ -278,6 +278,13 @@ answer to the no-plugin arm, exactly as a non-neutral fixture does.
 `packages_check_licenses` returns one `GPL-3.0` and one `unknown` among twelve permissive
 licenses, so a case has something real to flag.
 
+**A mocked tool is not there in the no-plugin arm**, so a `tool_used` grader on one fails
+for free and takes any grader that needs the tool's output with it. Unlike
+`tool_used: Skill`, nothing excludes these from the score, so Δ reads as if the plugin
+supplied the content when it mostly supplied the tool. Read the with-arm score.
+`license-compliance-runs-check-with-full-license-info` is the worked example: 1.00 with the
+plugin and 0.00 without, on three runs each.
+
 ---
 
 ## Running
@@ -344,9 +351,9 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
   `aggregate-result.json`, only a `tracePath` into a sandbox deleted unless `--keep-temp`
   is passed. `report.html` does show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution.** No case drives a tool, so the skills that would are graded on the
-  calls they narrate. [Mocking the MCP servers](#mocking-the-mcp-servers) is the way to
-  close that, and nothing uses it yet.
+- **Tool execution, mostly.** One case drives a mocked tool,
+  `license-compliance-runs-check-with-full-license-info`. The other tool-driven skills are
+  still graded on the calls they narrate.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate: an earlier version asserted a hundred `contains`
