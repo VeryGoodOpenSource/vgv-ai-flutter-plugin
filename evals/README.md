@@ -285,6 +285,13 @@ asserting outright that no tool was available. When you convert a case, reread e
 grader on it: replace the ones that judged the described call with `tool_used`, and keep
 only those judging something still in the reply.
 
+**Driving a tool costs turns and wall clock.** A converted case does strictly more than the
+prompt it replaced: it routes, calls, reads the answer, then writes the reply.
+`ui-package-scaffolds-with-app-ui-package-template` measured 11 to 15 turns where the
+suite's usual `max_turns: 12` and `timeout_seconds: 600` had been ample, and hit both
+limits. The four tool-driving cases carry `max_turns: 20` and `timeout_seconds: 900`. A cap
+breach scores the case 0 with no failing grader, so it reads as a content failure.
+
 **A mocked tool is not there in the no-plugin arm**, so a `tool_used` grader on one fails
 for free and takes any grader that needs the tool's output with it. Unlike
 `tool_used: Skill`, nothing excludes these from the score, so Δ reads as if the plugin

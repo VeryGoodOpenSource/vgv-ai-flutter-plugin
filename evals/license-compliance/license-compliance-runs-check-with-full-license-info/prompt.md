@@ -1,6 +1,6 @@
 ---
-max_turns: 12
-timeout_seconds: 600
+max_turns: 20
+timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [license-compliance]
 description: Runs the license check with full license information and turns the scan output into the prescribed risk-rated report.

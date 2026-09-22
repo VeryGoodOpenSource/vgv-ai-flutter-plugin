@@ -1,6 +1,6 @@
 ---
-max_turns: 12
-timeout_seconds: 600
+max_turns: 20
+timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [create-project]
 description: The narrated plan scaffolds through Very Good CLI with an explicit template and does not stop at creation.

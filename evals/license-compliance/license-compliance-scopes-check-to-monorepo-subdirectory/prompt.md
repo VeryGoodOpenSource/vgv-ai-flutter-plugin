@@ -1,6 +1,6 @@
 ---
-max_turns: 12
-timeout_seconds: 600
+max_turns: 20
+timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [license-compliance]
 description: The license check is scoped to the app subdirectory of a monorepo rather than run at the repo root.

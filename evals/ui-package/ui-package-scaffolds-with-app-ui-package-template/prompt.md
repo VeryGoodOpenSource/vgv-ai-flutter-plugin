@@ -1,6 +1,6 @@
 ---
-max_turns: 12
-timeout_seconds: 600
+max_turns: 20
+timeout_seconds: 900
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [ui-package]
 description: "Scaffolding through the Very Good CLI app_ui_package template, and the lib/src + single-barrel layout that template ships."
