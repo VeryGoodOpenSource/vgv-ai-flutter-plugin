@@ -1,0 +1,84 @@
+{
+  "tools": [
+    {
+      "name": "analyze_files",
+      "description": "Analyzes specific paths, or the entire project, for errors.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "roots": {
+            "type": "array",
+            "title": "The project roots to run this tool in.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "root": {
+                  "type": "string",
+                  "title": "The file URI of the project root to run this tool in.",
+                  "description": "This must be equal to or a subdirectory of one of the roots allowed by the client. Must be a URI with a `file:` scheme (e.g. file:///absolute/path/to/root)."
+                },
+                "paths": {
+                  "type": "array",
+                  "title": "Paths to run this tool on. Must resolve to a path that is within the \"root\".",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "root"
+              ]
+            }
+          },
+          "applyFixes": {
+            "type": "boolean",
+            "description": "Whether or not to automatically apply quick fixes before returning diagnostics. Defaults to false."
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "title": "Analyze projects"
+      }
+    },
+    {
+      "name": "dart_format",
+      "description": "Runs `dart format .` for the given project roots.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "roots": {
+            "type": "array",
+            "title": "The project roots to run this tool in.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "root": {
+                  "type": "string",
+                  "title": "The file URI of the project root to run this tool in.",
+                  "description": "This must be equal to or a subdirectory of one of the roots allowed by the client. Must be a URI with a `file:` scheme (e.g. file:///absolute/path/to/root)."
+                },
+                "paths": {
+                  "type": "array",
+                  "title": "Paths to run this tool on. Must resolve to a path that is within the \"root\".",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "root"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "destructiveHint": true,
+        "title": "Dart format"
+      }
+    }
+  ]
+}
