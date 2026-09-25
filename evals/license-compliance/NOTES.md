@@ -16,8 +16,8 @@ What cannot be measured here: the audit loop's end-to-end behavior on real scan 
 and the accuracy of its counts. Cases that need scan data paste it into the prompt
 instead, which grades categorization and reporting but not retrieval.
 
-Prompts are self-contained. The fixture has no source and its pubspec deliberately lists
-almost nothing, so any prompt about "our dependencies" must paste the dependency list or
+Prompts are self-contained. The fixture seeds only a plain `Counter` class and its pubspec
+deliberately lists almost nothing, so any prompt about "our dependencies" must paste the dependency list or
 the scan output in.
 
 These cases have no measured baseline yet — read a first run as calibration rather than as

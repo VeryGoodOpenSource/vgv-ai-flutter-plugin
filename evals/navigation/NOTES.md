@@ -9,7 +9,7 @@ helpers never exist in the fixture, and the syntax check the previous harness ca
 gone.
 
 Prompts name no skill, so the routing grader catches a routing failure directly, and
-they are self-contained because the fixture has no source in `lib/`.
+they are self-contained because the fixture seeds only a plain `Counter` class.
 
 Rubrics are graded blind: the judge sees the response and the criterion, never the
 prompt. So task success is graded with a regex and rubrics are kept to properties

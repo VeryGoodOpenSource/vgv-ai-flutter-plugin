@@ -20,8 +20,8 @@ why they are wrong, so a faithful response contains the string. Those two prohib
 are judged instead.
 
 Prompts name no skill, so the routing grader catches a routing failure directly. Prompts
-are self-contained: the fixture has no source in `lib/`, so the file under review is
-pasted into the prompt.
+are self-contained: the fixture seeds only a plain `Counter` class, so the file under
+review is pasted into the prompt.
 
 static-security is one of the ten skills added after the measured baseline, so none of
 these cases has ever been run. Treat the first run as calibration.

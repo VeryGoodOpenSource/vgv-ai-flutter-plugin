@@ -3,18 +3,20 @@
 ## Grading
 
 Both MCP servers are mocked and the fixture seeds `lib/` and `test/`, so one case drives
-the loop for real. The other seven still grade narration, and the split is deliberate.
+the loop for real. Six grade narration and one is a negative control. The split is
+deliberate.
 
 `green-gate-runs-the-four-gates-on-a-green-package` grades the calls: which tool ran each
 gate, the arguments it carried, and the order. Everything the mock set can produce is
 green, so the only loop it can exercise is the skill's one-pass no-op path.
 
-The seven narration cases cover what green runs cannot reach — a red gate, a weakened
+The six narration cases cover what green runs cannot reach — a red gate, a weakened
 target, a stalled fingerprint, a monorepo — and they grade the decisions the skill
 narrates: which tool it says it would call, the arguments it would pass, the order, what
-it refuses to weaken, and when it stops and escalates. In those seven, never assert that a
+it refuses to weaken, and when it stops and escalates. In those six, never assert that a
 response *called* a tool: their prompts ask for a plan or a verdict, so a call would be
-wrong.
+wrong. The seventh, `green-gate-stays-out-of-plain-function-work`, is the negative control
+and asks for a Dart function rather than either.
 
 Every narration prompt therefore ends by asking for a plan or a verdict rather than for a
 run, and every scenario is stated in the prompt rather than left on disk. Prompts
@@ -23,13 +25,22 @@ on what it cannot find. Note that the fixture now has source in it, so the older
 "lib/ only has a .gitkeep" failure mode is gone, but a prompt describing eight packages
 still needs to say they are not there.
 
-**Read the with-arm score on the tool-driving case, never Δ.** A mocked tool is absent in
-the no-plugin arm, so its `tool_used` graders fail for free and drag the output graders
-with them. The case will read as this suite's biggest Δ while mostly measuring that the
-plugin supplied the server.
+**Read that case's with-arm score, never Δ** — `evals/README.md`, "Mocking the MCP
+servers", has the reason. Seven of its eleven graders need a mocked tool, so its Δ will be
+the largest here while mostly measuring that the plugin supplied the server.
 
-Routing is the dominant failure mode here. On a full run 4 of 6 positive cases missed
-routing, and every one of those was a prompt asking *about* the gates rather than for a
+**`analyze-before-test` is this suite's first `tool_order` grader.** Nothing else uses the
+type, so the `before`/`after` direction is asserted rather than demonstrated: a reversed
+pair asserts the opposite order and still passes silently. Confirm it on the first run by
+inverting the two fields locally and checking the case goes red, then delete this note.
+
+**The coverage parse has nowhere to go.** `SKILL.md` sends the loop to read
+`coverage/lcov.info` through Bash after the test gate, and the mocked test tool writes no
+such file. Expect one wasted turn there; `max_turns: 20` absorbs it. Seeding a token
+lcov.info would fix it at the cost of putting coverage data in every case's workspace.
+
+Routing is the dominant failure mode here. On a full run before the tool-driving case
+existed, 4 of the 6 positive cases then present missed routing, and every one of those was a prompt asking *about* the gates rather than for a
 run. The cause was legible: on `green-gate-plans-the-four-gates-in-order` the model named
 the skill in its own answer ("this is what the green-gate skill automates end to end. Want
 me to invoke it?") and then improvised a `flutter analyze` / `flutter test --coverage`

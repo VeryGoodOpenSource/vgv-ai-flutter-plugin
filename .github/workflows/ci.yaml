@@ -69,19 +69,30 @@ jobs:
             fi
           done < <(find evals -mindepth 3 -maxdepth 3 -name case.yaml -exec dirname {} \;)
           exit $status
-
-      - name: Every mocked tool has a body file
+      - name: Mock manifests and bodies agree
         run: |
           set -euo pipefail
+          shopt -s nullglob
           status=0
           for manifest in evals/mocks/*/_tools.json; do
             dir=$(dirname "$manifest")
-            while IFS= read -r tool; do
+            # Assigned on its own line so a malformed manifest trips set -e. Inside a
+            # process substitution the parser's exit status is discarded and the step
+            # would pass with nothing checked.
+            tools=$(python3 -c "import json,sys; print('\n'.join(t['name'] for t in json.load(open(sys.argv[1]))['tools']))" "$manifest")
+            for tool in $tools; do
               if [ ! -f "$dir/$tool.md" ]; then
                 echo "::error::$manifest lists '$tool' but $dir/$tool.md is missing"
                 status=1
               fi
-            done < <(python3 -c "import json,sys; [print(t['name']) for t in json.load(open(sys.argv[1]))['tools']]" "$manifest")
+            done
+            for body in "$dir"/*.md; do
+              name=$(basename "$body" .md)
+              if ! printf '%s\n' "$tools" | grep -qxF "$name"; then
+                echo "::error::$body has no '$name' entry in $manifest, so the model never sees it"
+                status=1
+              fi
+            done
           done
           exit $status
   script-tests:
