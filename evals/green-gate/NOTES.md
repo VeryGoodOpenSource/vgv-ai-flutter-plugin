@@ -2,20 +2,31 @@
 
 ## Grading
 
-Graded on narration, not on the artifact. No MCP server is available to these runs and the
-fixture has no source in `lib/` or `test/`, so the loop this skill exists to run cannot
-execute here. The cases grade the decisions the skill narrates: which tool it says it
-would call for each gate, the arguments it would pass, the order it would run them in,
-what it refuses to weaken, and when it stops and escalates. Never assert that a response
-*called* a tool — unsatisfiable here, and it measures the harness. Mocking the MCP servers
-in the native harness is a separate, later piece of work, and none of these cases assume
-it.
+Both MCP servers are mocked and the fixture seeds `lib/` and `test/`, so one case drives
+the loop for real. The other seven still grade narration, and the split is deliberate.
 
-Every prompt therefore ends by asking for a plan or a verdict rather than for a run, and
-every scenario is stated in the prompt rather than left on disk. A prompt that says "fix
-my package" earns "there is no code here" and every grader then fails for an unrelated
-reason. Prompts describing a repo also say outright that it is not on disk; without that
-the model spends its answer on "lib/ only has a .gitkeep".
+`green-gate-runs-the-four-gates-on-a-green-package` grades the calls: which tool ran each
+gate, the arguments it carried, and the order. Everything the mock set can produce is
+green, so the only loop it can exercise is the skill's one-pass no-op path.
+
+The seven narration cases cover what green runs cannot reach — a red gate, a weakened
+target, a stalled fingerprint, a monorepo — and they grade the decisions the skill
+narrates: which tool it says it would call, the arguments it would pass, the order, what
+it refuses to weaken, and when it stops and escalates. In those seven, never assert that a
+response *called* a tool: their prompts ask for a plan or a verdict, so a call would be
+wrong.
+
+Every narration prompt therefore ends by asking for a plan or a verdict rather than for a
+run, and every scenario is stated in the prompt rather than left on disk. Prompts
+describing a repo also say outright that it is not on disk, or the model spends its answer
+on what it cannot find. Note that the fixture now has source in it, so the older
+"lib/ only has a .gitkeep" failure mode is gone, but a prompt describing eight packages
+still needs to say they are not there.
+
+**Read the with-arm score on the tool-driving case, never Δ.** A mocked tool is absent in
+the no-plugin arm, so its `tool_used` graders fail for free and drag the output graders
+with them. The case will read as this suite's biggest Δ while mostly measuring that the
+plugin supplied the server.
 
 Routing is the dominant failure mode here. On a full run 4 of 6 positive cases missed
 routing, and every one of those was a prompt asking *about* the gates rather than for a
@@ -87,6 +98,23 @@ skill the model accepts the blanket permission and keeps grinding, or stops with
 
 **Grader notes.** `names-the-no-progress-trigger` matches the skill's own term for the
 comparison that makes "no progress" decidable.
+
+### green-gate-runs-the-four-gates-on-a-green-package
+
+**The only case here that calls anything.** An already-green package, all four gates run,
+green confirmed from the numbers observed that round, nothing edited.
+
+**Grader notes.** `calls-analyze-with-fixes` carries `weight: 3` and is the case's point:
+`input_match` on `"applyFixes": true` is an argument prose cannot satisfy, where the
+narration case's `names-apply-fixes` regex passes on the word alone. `analyze-before-test`
+proves gate precedence by `tool_order` rather than by a judge reading a plan. The three
+`test-call-*` graders split the coverage triple so a partial miss says which parameter was
+dropped.
+
+`edits-nothing` and `writes-nothing` are why `Edit` and `Write` are granted in
+`allowed_tools` at all. A `max: 0` grader on a tool the run never granted passes
+unconditionally forever; granting them makes "exits without editing a single file" a claim
+the run can actually break.
 
 ### green-gate-budgets-per-package-across-a-monorepo
 

@@ -69,6 +69,21 @@ jobs:
             fi
           done < <(find evals -mindepth 3 -maxdepth 3 -name case.yaml -exec dirname {} \;)
           exit $status
+
+      - name: Every mocked tool has a body file
+        run: |
+          set -euo pipefail
+          status=0
+          for manifest in evals/mocks/*/_tools.json; do
+            dir=$(dirname "$manifest")
+            while IFS= read -r tool; do
+              if [ ! -f "$dir/$tool.md" ]; then
+                echo "::error::$manifest lists '$tool' but $dir/$tool.md is missing"
+                status=1
+              fi
+            done < <(python3 -c "import json,sys; [print(t['name']) for t in json.load(open(sys.argv[1]))['tools']]" "$manifest")
+          done
+          exit $status
   script-tests:
     name: 🛡️ Script Tests
     runs-on: ubuntu-latest

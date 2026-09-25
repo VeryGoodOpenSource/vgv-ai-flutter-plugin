@@ -4,7 +4,7 @@ Does Claude route to the skill, and does the output follow it? Cases run through
 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) against real models.
 
 ```bash
-claude plugin eval . --scaffold                       # all 100 cases, both arms
+claude plugin eval . --scaffold                       # all 101 cases, both arms
 claude plugin eval . --scaffold --tag bloc            # one skill
 claude plugin eval . --scaffold --ablation none       # with-plugin arm only, half the cost
 ```
@@ -92,7 +92,7 @@ threshold is `1.0`, so **pass `--threshold 0.8` or every imperfect case exits 1*
 | ------------- | ------------------------------------- | ------------------------------------------------------------------------ |
 | `tool_used`   | `tool`, `input_match`, `min`, `max`   | Routing. The defaults are wrong for this suite, see below                |
 | `regex`       | `pattern`, `flags`, `match`, `target` | `match: not_contains` for absence. Case-insensitivity goes in `flags: i` |
-| `tool_order`  | `before`, `after`                     | Unused here                                                              |
+| `tool_order`  | `before`, `after`                     | Gate ordering in `green-gate`; nowhere else                              |
 | `file_exists` | `path`, `exists`                      | Unused here: cases are graded on the reply, not on files                 |
 | `llm`         | `criteria`, `focus`                   | Frontmatter is just `type: llm`; the file body is the rubric             |
 | `baseline`    | `baseline_file`, `criteria`           | Unused here                                                              |
@@ -105,7 +105,7 @@ made to a [mocked MCP tool](#mocking-the-mcp-servers).
 
 ### Routing graders
 
-Ninety-nine of the hundred cases carry one:
+A hundred of the hundred and one cases carry one:
 
 ```markdown
 ---
@@ -201,6 +201,13 @@ Match the skill's own vocabulary. Keep `llm` graders for short output; for anyth
 Every run starts in an empty workspace. `_fixture/fixture.sh` recreates the neutral Flutter
 skeleton, hooked up through `context.scaffold_script`, and runs **only with `--scaffold`**.
 
+It writes `pubspec.yaml`, `lib/counter.dart` and `test/counter_test.dart`. The two source
+files exist so a case that drives the MCP tools has something real on disk to act on, and
+they are deliberately the most boring code that satisfies that: a plain class with no
+Flutter import, and one `test()` with one `expect()`. Nothing there is a VGV convention,
+because everything there is visible to the no-plugin arm of every other skill's cases. Do
+not grow them into a widget, a bloc, a `pumpApp` or a mocked dependency.
+
 `context.scaffold_script` will not take a path that leaves the case directory, but it does
 resolve a symlink inside it, so each case's `fixture.sh` is a symlink to the one script. A
 new case needs its own:
@@ -221,8 +228,8 @@ and runs fail at scaffold time. CI runs on Linux and is unaffected.
 every run reports on a `mocked:` line. Real servers start only with `--allow-real-servers`
 or `--mocks off`, neither of which is used here.
 
-This applies to eval runs only. A real session still reaches the real `very_good mcp`
-server.
+This applies to eval runs only. A real session still reaches the real `very_good mcp` and
+`dart mcp-server` servers.
 
 ```text
 evals/mocks/very-good-cli/
@@ -231,9 +238,13 @@ evals/mocks/very-good-cli/
 ├── packages_check_licenses.md
 ├── packages_get.md
 └── test.md
+evals/mocks/dart/
+├── _tools.json                 # the analyze_files and dart_format entries only
+├── analyze_files.md
+└── dart_format.md
 ```
 
-Frontmatter is optional and the body is the tool result. Three of the four here have no
+Frontmatter is optional and the body is the tool result. Six of the seven here have no
 frontmatter, which is the same as `type: fixed`.
 
 | Key          | Default | Purpose                                                         |
@@ -261,8 +272,14 @@ Four things that are not obvious:
   that is `create`, so only `create.md` carries an `expect`. Grade argument *choices* with
   `tool_used` or a `regex` against `mock_calls`.
 - **`_tools.json` drives the schema the model sees.** It is the `tools/list` result, the
-  object with the `tools` array. Regenerate it after a Very Good CLI release by speaking
-  MCP to `very_good mcp` over stdio; a stale one teaches a schema the CLI no longer has.
+  object with the `tools` array. Regenerate it by speaking MCP over stdio to the server
+  itself — `very_good mcp` for one, `dart mcp-server --enable dart_format` for the other —
+  and capturing the `tools/list` result; a stale one teaches a schema the CLI no longer
+  has. Answer the server's `roots/list` request back to the client or `dart` blocks.
+- **A `_tools.json` may be narrower than the server.** `dart` exposes 15 tools; the mock
+  ships the 2 `green-gate` names. That removes the listed-but-unmocked case entirely, and
+  keeps `roots` out of reach — a separate tool whose real handshake a mock cannot perform.
+  Adding one later is additive: capture it from the same probe, drop in a `<tool>.md`.
 
 The mocks are reachable only when `check_vgv_cli` returns `unverifiable`. In a run
 `very_good` resolves on PATH but `very_good --version` answers nothing, because it is a
@@ -278,6 +295,16 @@ answer to the no-plugin arm, exactly as a non-neutral fixture does.
 `packages_check_licenses` returns one `GPL-3.0` and one `unknown` among twelve permissive
 licenses, so a case has something real to flag.
 
+**The mock set is green everywhere else**, so a case can drive every gate and reach an
+exit. `analyze_files` returns no errors, `dart_format` reports `0 changed`, and `test`
+passes at 100%. Those numbers agree with the fixture on disk: `dart format` on the seeded
+package really does say `Formatted 2 files (0 changed)`. A failure-path case supplies its
+own `mocks/` override rather than reddening the shared set.
+
+One body is deliberately lossy. Real `dart_format` output opens with
+`dart format in <absolute root>:`, which a fixed body cannot know, so the mock ships only
+the `Formatted N files (M changed)` line. That is the line the gate is read from.
+
 **Converting a case to drive a tool invalidates every rubric that read the narration.** The
 model stops describing the call and just makes it, so a blind judge sees no evidence and
 fails a rubric that was passing. Four rubrics went stale this way in one pass, two of them
@@ -289,7 +316,7 @@ only those judging something still in the reply.
 prompt it replaced: it routes, calls, reads the answer, then writes the reply.
 `ui-package-scaffolds-with-app-ui-package-template` measured 11 to 15 turns where the
 suite's usual `max_turns: 12` and `timeout_seconds: 600` had been ample, and hit both
-limits. The four tool-driving cases carry `max_turns: 20` and `timeout_seconds: 900`. A cap
+limits. Every tool-driving case carries `max_turns: 20` and `timeout_seconds: 900`. A cap
 breach scores the case 0 with no failing grader, so it reads as a content failure.
 
 **A mocked tool is not there in the no-plugin arm**, so a `tool_used` grader on one fails
@@ -331,7 +358,7 @@ Read the two arm scores, not the total. The without-arm is supposed to score bad
   baseline, so its Δ reads low. Routing is decided before the switch, so the pin never
   explains a routing miss.
 
-Costs: **$13** for 100 cases in one arm, **$25** for both, roughly **$0.12 per run**. At
+Costs: **$13** for 101 cases in one arm, **$25** for both, roughly **$0.12 per run**. At
 `--runs 3` a two-arm sweep is six runs per case, so budget around **$75**. `-j` up to 8
 shortens wall clock.
 
@@ -353,7 +380,7 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
 - CI needs `ANTHROPIC_API_KEY`, having no Claude Code session, and `--trust-plugin`.
 - `--ablation none` and `--ablation with-without` weight the baseline differently. Compare
   runs from one mode at a time.
-- The job has a one-hour ceiling. 100 cases in one arm measured roughly 35 minutes at
+- The job has a one-hour ceiling. 101 cases in one arm measured roughly 35 minutes at
   `-j 4`. A two-arm run at `--runs 3` is 600 runs and does not fit.
 
 ---
@@ -365,8 +392,9 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
   `aggregate-result.json`, only a `tracePath` into a sandbox deleted unless `--keep-temp`
   is passed. `report.html` does show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution, mostly.** One case drives a mocked tool,
-  `license-compliance-runs-check-with-full-license-info`. The other tool-driven skills are
+- **Tool execution, mostly.** Two cases drive a mocked tool,
+  `license-compliance-runs-check-with-full-license-info` and
+  `green-gate-runs-the-four-gates-on-a-green-package`. The other tool-driven skills are
   still graded on the calls they narrate.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
