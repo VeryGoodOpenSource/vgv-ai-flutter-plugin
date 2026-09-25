@@ -18,7 +18,8 @@ rather than the plugin. What the skill adds on top, and what these cases grade, 
 - the two prohibitions: no third-party i18n package, and no `AppLocalizations` inside a
   shared widget package
 
-Prompts are self-contained. The fixture has no source in `lib/`, so a prompt about "my
+Prompts are self-contained. The fixture seeds only a plain `Counter` class and one
+test, so a prompt about "my
 CartSummary" would earn a refusal and every grader would fail for an unrelated reason.
 Paste the widget in rather than adding source to the fixture.
 

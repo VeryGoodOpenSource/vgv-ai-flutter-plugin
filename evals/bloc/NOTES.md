@@ -10,7 +10,8 @@ than a snippet.
 Prompts name no skill, so the routing grader catches a routing failure directly instead
 of leaving it to show up as unexplained content failures downstream.
 
-Prompts are self-contained. The fixture has no source in `lib/`, so a prompt about "my
+Prompts are self-contained. The fixture seeds only a plain `Counter` class and one
+test, so a prompt about "my
 AuthService" earns a refusal and every grader then fails for an unrelated reason. Paste
 the class into the prompt rather than adding source to the fixture, which would leak
 answers to the without-plugin arm.

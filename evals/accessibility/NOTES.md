@@ -9,7 +9,8 @@ narrates, the question it asks, the report it writes, the request it declines.
 
 Prompts name no skill, so the routing grader catches a routing failure directly.
 
-Prompts are self-contained. The fixture has no source in `lib/`, so a prompt about "my
+Prompts are self-contained. The fixture seeds only a plain `Counter` class and one
+test, so a prompt about "my
 SettingsView" earns a refusal and every grader fails for an unrelated reason. The widget
 under audit is pasted in.
 

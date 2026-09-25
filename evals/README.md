@@ -244,8 +244,8 @@ evals/mocks/dart/
 └── dart_format.md
 ```
 
-Frontmatter is optional and the body is the tool result. Six of the seven here have no
-frontmatter, which is the same as `type: fixed`.
+Frontmatter is optional and the body is the tool result. Five of the six bodies here have
+no frontmatter, which is the same as `type: fixed`.
 
 | Key          | Default | Purpose                                                         |
 | ------------ | ------- | --------------------------------------------------------------- |
@@ -297,13 +297,16 @@ licenses, so a case has something real to flag.
 
 **The mock set is green everywhere else**, so a case can drive every gate and reach an
 exit. `analyze_files` returns no errors, `dart_format` reports `0 changed`, and `test`
-passes at 100%. Those numbers agree with the fixture on disk: `dart format` on the seeded
-package really does say `Formatted 2 files (0 changed)`. A failure-path case supplies its
-own `mocks/` override rather than reddening the shared set.
+passes at 100%. Only `dart_format` is true of the workspace as well — `dart format` on the
+seeded package really does print `Formatted 2 files (0 changed)`. The `test` body still
+describes a larger package than the fixture holds, which no grader reads and no case
+compares. A failure-path case supplies its own `mocks/` override rather than reddening the
+shared set.
 
 One body is deliberately lossy. Real `dart_format` output opens with
-`dart format in <absolute root>:`, which a fixed body cannot know, so the mock ships only
-the `Formatted N files (M changed)` line. That is the line the gate is read from.
+`dart format in <absolute root>:`, which a fixed body cannot know, so the mock drops that
+line and keeps the `Formatted N files (M changed)` summary the gate is actually read
+from.
 
 **Converting a case to drive a tool invalidates every rubric that read the narration.** The
 model stops describing the call and just makes it, so a blind judge sees no evidence and

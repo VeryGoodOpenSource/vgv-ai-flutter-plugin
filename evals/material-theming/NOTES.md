@@ -15,7 +15,8 @@ spacing scale derived from one base unit, styles built from a single private bas
 widget instances, and the two flat prohibitions, no `EdgeInsets.fromLTRB` and no
 brightness branching in widget code. Every grader traces to one of those.
 
-Prompts are self-contained. The fixture has no source in `lib/`, so a prompt about "my
+Prompts are self-contained. The fixture seeds only a plain `Counter` class and one
+test, so a prompt about "my
 PriceTag widget" earns a refusal and every grader then fails for an unrelated reason.
 Widgets are pasted in full rather than added to the fixture, which would leak answers to
 the without-arm.
