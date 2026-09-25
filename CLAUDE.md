@@ -24,8 +24,9 @@ from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is decla
 `flutter-reviewer` agent's frontmatter, not in `hooks.json`, so it only fires for that agent:
 
 - `Bash` matcher → `allow-readonly-git.sh` — restricts the `flutter-reviewer` agent's Bash to
-  `git diff` / `git status` only; exits 2 on anything else, including compound-command bypass
-  (blocking). Enforces the agent's read-only contract.
+  single-line `git diff` / `git status` only; denies anything else, including compound or
+  multi-line commands, shell expansion (`$`), and the `--output` / `--ext-diff` options that
+  write files or run programs (blocking). Enforces the agent's read-only contract.
 
 ### PostToolUse Hooks
 
