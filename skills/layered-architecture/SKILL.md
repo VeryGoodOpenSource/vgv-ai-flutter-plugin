@@ -26,7 +26,7 @@ Layered monorepo architecture for Flutter apps — four layers organized as inde
 
 Apply these standards to ALL layered architecture work:
 
-- **Four layers** — Data, Repository, Business Logic, Presentation — every feature spans exactly these four layers
+- **Four layers** — Data, Repository, Business Logic, Presentation — a feature spans all four whenever its repository reads an external source
 - **Unidirectional dependencies** — Presentation → Business Logic → Repository → Data — never skip or invert a layer
 - **Data and Repository layers live in `packages/`** — each is an independent Dart package with its own `pubspec.yaml`
 - **Business Logic and Presentation live in `lib/`** — organized by feature within the app
@@ -36,8 +36,9 @@ Apply these standards to ALL layered architecture work:
 - **One repository per domain** — `user_repository`, `weather_repository`, `auth_repository`
 - **Path dependencies for local packages** — never `git:` or pub version references for packages in the same repo
 - **Barrel exports at every package boundary** — `src/` is never imported directly by consumers
-- **Repositories accept data layer dependencies via constructor injection** — never instantiate clients internally
+- **Repositories take every external source through the constructor** — a data client or an SDK object such as `FirebaseAuth.instance`, built in bootstrap and passed in, never constructed or defaulted inside the repository
 - **App bootstrap wires all layers** — `main_<flavor>.dart` creates clients and repositories, provides them via `RepositoryProvider`
+- **Only the app's entrypoints and bootstrap import a data package** — blocs, widgets, and app tests reach data through a repository
 
 > **Cross-harness fallback.** This skill scaffolds and tests packages via the Very Good CLI MCP server. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create dart_package …`, `very_good packages get`, and `very_good test` commands directly.
 
@@ -46,7 +47,7 @@ Apply these standards to ALL layered architecture work:
 | Layer | Responsibility | Location | Depends On | Example |
 | --- | --- | --- | --- | --- |
 | **Data** | External communication — API calls, local storage, platform plugins | `packages/<name>_api_client/` | External packages only | `user_api_client`, `local_storage_client` |
-| **Repository** | Data orchestration — combines data sources, transforms models, caches | `packages/<name>_repository/` | Data layer packages | `user_repository`, `weather_repository` |
+| **Repository** | Data orchestration — combines data sources, transforms models, caches | `packages/<name>_repository/` | Zero or more data layer packages | `user_repository`, `weather_repository` |
 | **Business Logic** | State management — processes user actions, emits state changes | `lib/<feature>/bloc/` or `lib/<feature>/cubit/` | Repository layer | `LoginBloc`, `ProfileCubit` |
 | **Presentation** | UI — widgets, pages, views, layout | `lib/<feature>/view/` | Business Logic layer | `LoginPage`, `ProfileView` |
 
@@ -171,14 +172,14 @@ See [worked-example.md](references/worked-example.md) for the complete `user_api
 
 ## Repository Layer
 
-The repository layer orchestrates data sources and exposes domain models. Each repository composes one or more data clients, transforms response models into domain models, and provides a clean API for the business logic layer.
+The repository layer orchestrates data sources and exposes domain models. Each repository composes the data clients it needs, transforms response models into domain models, and provides a clean API for the business logic layer.
 
 **Rules:**
 - No inter-repository dependencies — repositories are isolated
 - No Flutter SDK — the `very_good_cli` MCP server `create dart_package` tool
 - Domain models live in the repository package — not in data packages
 - Transform data models into domain models — never leak API response shapes upstream
-- Accept all data clients via constructor injection
+- A repository with no external source, such as in-memory session state, takes no constructor arguments
 
 ### Pattern: Domain Model + Repository Transformation
 
@@ -231,13 +232,16 @@ See [worked-example.md](references/worked-example.md) for the complete `user_rep
 
 ## Dependency Graph
 
-Path dependencies in each `pubspec.yaml` are what enforce the architecture. A data package
-declares external packages only. A repository package declares a path dependency on its data
-package. The root app declares **repository packages only** — data packages arrive as
-transitive dependencies.
+Path dependencies in each `pubspec.yaml` point one direction. A data package declares
+external packages only. A repository package declares a path dependency on its data
+packages. The root app declares its repository packages and every data package its bootstrap
+constructs. `main_<flavor>.dart` imports each client to inject it, and
+`depend_on_referenced_packages` in `package:very_good_analysis` requires every imported
+package to be declared.
 
-**The app never depends on a data package directly.** That is the boundary: business logic
-and presentation cannot bypass the repository layer, because they cannot import past it.
+**Imports hold the layer boundary.** Once the app declares a data package, the lint no
+longer stops a bloc from importing it. The boundary is the import rule in Core Standards:
+only the app's entrypoints and bootstrap import a data package.
 
 ```yaml
 # packages/user_api_client/pubspec.yaml — external packages only
@@ -249,13 +253,16 @@ dependencies:
   user_api_client:
     path: ../user_api_client
 
-# pubspec.yaml — repository packages only; data packages are transitive
+# pubspec.yaml: repositories, plus the data packages bootstrap constructs
 dependencies:
+  user_api_client:
+    path: packages/user_api_client
   user_repository:
     path: packages/user_repository
 ```
 
-See [references/pubspec.md](references/pubspec.md) for the three files in full.
+See [references/pubspec.md](references/pubspec.md) for the three files in full and for
+checking the import boundary, including which files count as entrypoints and bootstrap.
 
 ## Data Flow
 
@@ -287,12 +294,19 @@ Future<void> _onLoadRequested(
 
 ## App Bootstrap
 
-`main_<flavor>.dart` constructs every data client and repository, then passes them to the
-`App` widget, which exposes them through `MultiRepositoryProvider`. Flavors change only
-configuration — base URLs, API keys — never the wiring shape.
+`main_<flavor>.dart` imports and constructs every data client and repository, then passes
+the repositories to the `App` widget, which exposes them through `MultiRepositoryProvider`.
+Flavors change only configuration — base URLs, API keys — never the wiring shape.
 
 ```dart
 // lib/main_development.dart
+import 'package:auth_api_client/auth_api_client.dart';
+import 'package:auth_repository/auth_repository.dart';
+import 'package:flutter/material.dart';
+import 'package:my_app/app/app.dart';
+import 'package:user_api_client/user_api_client.dart';
+import 'package:user_repository/user_repository.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -358,11 +372,12 @@ the `App` widget with `MultiRepositoryProvider`.
 
 ### Connecting a Repository to a Feature
 
-1. Add path dependency on the repository package to root `pubspec.yaml`
-2. Create the repository in `main_<flavor>.dart` and pass it to `App`
+1. Add path dependencies on the repository package and on each data package it takes to root `pubspec.yaml`
+2. Create the data clients and the repository in `main_<flavor>.dart` and pass the repository to `App`
 3. Add `RepositoryProvider.value` in `App`'s `MultiRepositoryProvider`
 4. Create the Bloc/Cubit with the repository injected — see the **bloc** skill
 5. Build the Page/View with `BlocProvider` and `BlocBuilder` — see the **bloc** skill
+6. Grep `lib/` and `test/` for `package:<data_package>/` imports. The work is done when every hit is an entrypoint or bootstrap file, as the pubspec reference's Import Boundary section defines them
 
 ## Additional Resources
 
