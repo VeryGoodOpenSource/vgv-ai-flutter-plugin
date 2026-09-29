@@ -35,6 +35,7 @@ Apply these standards to ALL Bloc/Cubit work:
 - **Business logic in Bloc/Cubit only** — never in widgets, pages, or views
 - **Single responsibility** — one Bloc/Cubit per feature concern
 - **Emit only after async checks** — use `emit` only inside the handler callback
+- **Use Dart 3.13 primary constructors on the VGV baseline** — on Dart 3.13+ (`very_good_core` 1.6 / `very_good_analysis` 11), declare event, state, and widget fields as primary-constructor declaring parameters, e.g. `class const ProfileRequested(final String userId) extends ProfileEvent`, not `const ProfileRequested(this.userId)` plus a separate `final String userId`. `use_declaring_parameters` flags the classic form; keep it only below Dart 3.13
 
 ---
 

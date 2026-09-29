@@ -61,6 +61,8 @@ Apply these standards to all accessibility work:
 
 **Async Announcements** (WCAG 4.1.3) — Every async user-visible state change must announce itself via `Semantics(liveRegion: true)` or `SemanticsService.announce`.
 
+**Dart 3.13 Primary Constructors** — On Dart 3.13+ (the `very_good_core` 1.6 / `very_good_analysis` 11 baseline), declare a widget's fields as primary-constructor declaring parameters, e.g. `class const StatusBadge({required final String label, super.key}) extends StatelessWidget`, not `const StatusBadge({required this.label, super.key})` plus a separate `final String label`. `use_declaring_parameters` flags the classic form; keep it only below Dart 3.13.
+
 ---
 
 ## Workflow

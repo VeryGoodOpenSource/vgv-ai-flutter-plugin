@@ -38,6 +38,7 @@ Apply these standards to ALL layered architecture work:
 - **Barrel exports at every package boundary** — `src/` is never imported directly by consumers
 - **Repositories accept data layer dependencies via constructor injection** — never instantiate clients internally
 - **App bootstrap wires all layers** — `main_<flavor>.dart` creates clients and repositories, provides them via `RepositoryProvider`
+- **Use Dart 3.13 primary constructors on the VGV baseline** — on Dart 3.13+ (`very_good_core` 1.6 / `very_good_analysis` 11), declare model and widget fields as primary-constructor declaring parameters, e.g. `class const User(final String id, final String name) extends Equatable`, not `const User(this.id, this.name)` plus separate `final` fields. `use_declaring_parameters` flags the classic form; keep it only below Dart 3.13
 
 > **Cross-harness fallback.** This skill scaffolds and tests packages via the Very Good CLI MCP server. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create dart_package …`, `very_good packages get`, and `very_good test` commands directly.
 
