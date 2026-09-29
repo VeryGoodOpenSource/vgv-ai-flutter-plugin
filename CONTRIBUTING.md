@@ -333,9 +333,12 @@ type(scope): description
 | `refactor` | Restructure without changing behavior | `refactor: reorganize testing skill sections` |
 | `ci` | CI pipeline changes | `ci: add manifest validation step` |
 
+PRs are squash-merged with the PR title as the commit message, and release-please builds the changelog from those titles. The **PR title must follow Conventional Commits**.
+
 ## Pull Requests
 
 - Branch from `main`.
+- Use a Conventional Commits PR title, for example `feat: add navigation skill`.
 - Keep PRs focused — **one skill per PR** for new skills.
 - Fill out the [PR template](.github/PULL_REQUEST_TEMPLATE.md) completely.
 - Ensure all CI checks pass before requesting review.
