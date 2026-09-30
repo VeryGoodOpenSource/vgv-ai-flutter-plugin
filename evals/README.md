@@ -319,8 +319,8 @@ only those judging something still in the reply.
 prompt it replaced: it routes, calls, reads the answer, then writes the reply.
 `ui-package-scaffolds-with-app-ui-package-template` measured 11 to 15 turns where the
 suite's usual `max_turns: 12` and `timeout_seconds: 600` had been ample, and hit both
-limits. Every tool-driving case carries `max_turns: 20` and `timeout_seconds: 900`. A cap
-breach scores the case 0 with no failing grader, so it reads as a content failure.
+limits. A tool-driving case therefore carries `max_turns: 20` and `timeout_seconds: 900`.
+A cap breach scores the case 0 with no failing grader, so it reads as a content failure.
 
 **A mocked tool is not there in the no-plugin arm**, so a `tool_used` grader on one fails
 for free and takes any grader that needs the tool's output with it. Unlike
@@ -395,10 +395,10 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
   `aggregate-result.json`, only a `tracePath` into a sandbox deleted unless `--keep-temp`
   is passed. `report.html` does show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
-- **Tool execution, mostly.** Two cases drive a mocked tool,
-  `license-compliance-runs-check-with-full-license-info` and
-  `green-gate-runs-the-four-gates-on-a-green-package`. The other tool-driven skills are
-  still graded on the calls they narrate.
+- **Tool execution, partly.** Six cases assert a call to a mocked tool, across
+  `create-project`, `green-gate`, `license-compliance` and `ui-package`; each skill's
+  `NOTES.md` names its own. Every other tool-driven case is still graded on the calls it
+  narrates.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate: an earlier version asserted a hundred `contains`
