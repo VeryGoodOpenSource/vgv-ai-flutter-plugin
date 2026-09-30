@@ -142,10 +142,13 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
 - **Check both arms answered.** A no-plugin arm that asks a clarifying question instead of
   doing the work makes every grader look discriminating. That is a prompt that is not
   self-contained, not a result.
-- **The plugin's SessionStart hook can fire inside a run.** `warn-missing-mcp.sh` injects
-  "Very Good CLI is not installed" whenever `check_vgv_cli` returns `not_installed`, and a
-  tool-driven case then answers with that blocker instead of the question. The
-  `unverifiable` status keeps it quiet. Two prompts still say the session cannot reach a
+- **The plugin's SessionStart hook fires inside every run.** `check_vgv_cli` returns
+  `unverifiable` there — `very_good` resolves on PATH but `very_good --version` answers
+  nothing, because it is a shim that execs `dart` under a throwaway `$HOME`. That does not
+  keep the hook quiet; it emits a notice, and an earlier wording of it asserted the MCP
+  server "will not start", which is false under mocks. Cases then opened with that blocker
+  instead of the answer and their rubrics failed. The notice now states only what is known
+  and says to carry on if the tools answer. Re-read it before blaming a case. Two prompts still say the session cannot reach a
   real toolchain, which is a different problem and true regardless.
 
 Beyond that: write prompts as a user would send them, name no skill in a prompt, grade
