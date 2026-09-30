@@ -2,19 +2,21 @@
 
 ## Grading
 
-No MCP server is available to these runs, so `packages_check_licenses` cannot be called
-and every response says so before handing the user a command or a plan. These cases
-therefore grade the decisions the skill narrates — which tool it would call, with which
-arguments, how it categorizes a license it is shown, the report it produces, and what it
-refuses to sign off on. Do not assert that a response *invokes* the MCP tool: that is
-unsatisfiable here and would measure the harness. Wiring the real server in is not the fix
-either — the fixture is a bare skeleton that is never pub-got, so a real scan has nothing
-to resolve. Mocking the server in the native harness is a separate, later piece of work,
-and none of these cases assume it.
+`packages_check_licenses` is mocked, so two cases call it for real and assert the call:
+`license-compliance-runs-check-with-full-license-info` and
+`license-compliance-scopes-check-to-monorepo-subdirectory`. The other four grade the
+decisions the skill narrates — how it categorizes a license it is shown, the report it
+produces, and what it refuses to sign off on — and there a `tool_used` assertion is wrong,
+because their prompts hand the scan output over rather than asking for a scan.
 
-What cannot be measured here: the audit loop's end-to-end behavior on real scan output,
-and the accuracy of its counts. Cases that need scan data paste it into the prompt
-instead, which grades categorization and reporting but not retrieval.
+Read the with-arm score on the two tool-driving cases, never Δ: a mocked tool is absent in
+the no-plugin arm, so its graders fail for free. `evals/README.md`, "Mocking the MCP
+servers", has the detail.
+
+The mock returns a fixed table — one `GPL-3.0` and one `unknown` among twelve permissive
+licenses — so what the scan finds is the same every run. What still cannot be measured
+here is the audit loop against a real resolve: the fixture is never pub-got, so no case
+sees a dependency graph it did not paste in or receive from the mock.
 
 Prompts are self-contained. The fixture seeds only a plain `Counter` class and its pubspec
 deliberately lists almost nothing, so any prompt about "our dependencies" must paste the dependency list or
