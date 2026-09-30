@@ -18,6 +18,14 @@ response *called* a tool: their prompts ask for a plan or a verdict, so a call w
 wrong. `green-gate-stays-out-of-plain-function-work` is the negative control and asks for a
 Dart function rather than either.
 
+**Grade mechanically wherever the check is mechanical.** Twelve judged runs of identical
+code showed no `llm` grader here stable — the best passed 11/12, the worst 4/12 — so a case
+with several of them fails something most runs regardless of what the skill did. Five were
+rewritten as a `regex` on the skill's own vocabulary, each checking one thing, and one
+compound rubric was cut to a single condition. What stays `llm` is a genuine judgment call
+(a refusal, a decision ask) that a pattern cannot read. When a judge fails a reply that
+plainly satisfies its rubric, that is the signal to convert, not to reword.
+
 Every narration prompt therefore ends by asking for a plan or a verdict rather than for a
 run, and every scenario is stated in the prompt rather than left on disk. Prompts
 describing a repo also say outright that it is not on disk, or the model spends its answer
@@ -77,6 +85,11 @@ produces, and omitting it makes the `// coverage:ignore` remedy a silent no-op.
 **Discriminates.** Without the skill the model is agreeable — it drops the threshold to
 90, adds the ignore comment, and declares the package clean.
 
+**Grader notes.** `offers-the-missing-test` is a regex for a Dart code block that names
+`formatFree`: the test is either shown or it is not. Its earlier rubric failed replies that
+showed the test and also noted the method could be deleted if dead, because it demanded
+the test be the only alternative.
+
 ### green-gate-refuses-to-carry-green-forward
 
 **Discriminates.** The rules are "Never cache green" and "exit only on observed numbers":
@@ -86,7 +99,9 @@ results, checks coverage only, and declares green.
 
 **Grader notes.** `format-judged-by-changed-count` covers the format gate's own trap: the
 format tool reports success whether or not it rewrote anything, so the changed count is
-the only signal it is green.
+the only signal it is green. It is a regex on the count vocabulary — `0 changed`, `zero
+changes`, `changed count` — because the rule is stated in words a pattern can read, and its
+rubric form was failing replies that stated it.
 
 ### green-gate-excludes-generated-files-instead-of-ignoring-them
 
@@ -109,7 +124,10 @@ skill the model accepts the blanket permission and keeps grinding, or stops with
 "4 errors remain" and no decision ask.
 
 **Grader notes.** `names-the-no-progress-trigger` matches the skill's own term for the
-comparison that makes "no progress" decidable.
+comparison that makes "no progress" decidable. `per-failure-detail` asserts the last of the
+four fingerprint entries verbatim, `code @ file:line`; a reply that reproduces the fourth
+that precisely has listed them all, and a reply that only says "4 errors remain" cannot
+match it.
 
 ### green-gate-runs-the-four-gates-on-a-green-package
 
@@ -147,8 +165,9 @@ frontmatter, not a case's `allowed_tools`.
 ### green-gate-budgets-per-package-across-a-monorepo
 
 **Discriminates.** The monorepo rules are a per-package iteration budget,
-continue-on-failure with a per-package report, one shared `min_coverage` with no
-per-package override, and pubspec.yaml-walk discovery shared by analyze and test. Without
+continue-on-failure, and one shared `min_coverage` with no per-package override. The
+pubspec.yaml-walk discovery rule is not graded here: the prompt hands over the package
+layout, so nothing needs discovering and a grader asking for the walk restated the prompt. Without
 the skill the model gives a generic "run the tests in each package" plan, invents a
 per-package coverage override for the 62% package, and aborts on the first red one.
 

@@ -151,6 +151,21 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
   and says to carry on if the tools answer. Re-read it before blaming a case. Two prompts still say the session cannot reach a
   real toolchain, which is a different problem and true regardless.
 
+- **A FAIL clause can punish a better answer than the PASS clause asked for.** Three
+  green-gate rubrics failed replies that did more than required: one listed every failure
+  and then asked for fuller analyzer text, one offered the required test and also noted the
+  method might be dead code, one stated the format rule for a run the prompt forbade. Each
+  FAIL clause was narrow enough that the extra thoroughness tripped it. Write the FAIL
+  clause for the wrong answer, not for any departure from the shortest right one.
+- **`PASS%` in the results table is runs scoring exactly 1.00**, not runs clearing
+  `--threshold`. A case at 0.90 shows `33%` while passing the threshold on every run. Read
+  `SCORE` against the threshold; read `PASS%` only when hunting flaky graders.
+- **Judges are not stable.** Twelve judged runs of unchanged green-gate code left no `llm`
+  grader at 12/12; the range was 4/12 to 11/12. A case with several `llm` graders will fail
+  something most runs whatever the skill did. When a judge fails a reply that plainly
+  satisfies its rubric, convert the check to a `regex` on the skill's vocabulary rather than
+  rewording the rubric.
+
 Beyond that: write prompts as a user would send them, name no skill in a prompt, grade
 mechanically where you can, include the cases where the skill must say no, and keep a
 negative control's rubric to the absence of the skill's vocabulary.
