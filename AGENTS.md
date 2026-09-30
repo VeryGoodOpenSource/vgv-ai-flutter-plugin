@@ -24,7 +24,6 @@ evals/                 # `claude plugin eval` suite — all 15 skills, 101 cases
       _tools.json      # The tools/list result the model sees; may be narrower than the server
       <tool>.md        # Frontmatter optional; the body is the tool result
   <skill>/             # One directory per skill, named for the skill it covers
-    NOTES.md           # What each case discriminates and why it exists
     <case-name>/       # One directory per case, named for the case
       prompt.md        # Frontmatter: run limits and tools. Body: the prompt
       case.yaml        # schema_version, name, and the scaffold hook
