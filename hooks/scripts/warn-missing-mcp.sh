@@ -16,9 +16,11 @@ case "$cli_status" in
     echo "⚠️ Very Good CLI ${version} is too old. The Very Good CLI MCP server requires >= ${MIN_VERSION}. Update with: dart pub global activate very_good_cli"
     ;;
   unverifiable)
-    # The very_good shim execs dart. The Very Good CLI MCP server starts through the same
-    # shim, so if dart is missing from the PATH hooks inherit, the server will not start.
-    echo "⚠️ Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so its version could not be verified and the Very Good CLI MCP server will not start. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session."
+    # The very_good shim execs dart, so a PATH without dart hides the version from this
+    # hook. That does not prove the server is down: hooks and the MCP client do not share
+    # a PATH, and under `claude plugin eval` the server is mocked and always answers. Say
+    # what is known, not what it implies, or a session spends its answer on a false blocker.
+    echo "ℹ️ Very Good CLI is installed but its version could not be verified here: dart is not on the PATH this hook inherits, so ${MIN_VERSION}+ could not be confirmed. If the Very Good CLI MCP tools answer, disregard this and carry on. If they do not, this is the likely cause — add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session."
     ;;
 esac
 
