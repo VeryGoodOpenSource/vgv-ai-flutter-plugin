@@ -29,10 +29,11 @@ still needs to say they are not there.
 servers", has the reason. Most of its graders need a mocked tool, so its Δ will be the
 largest here while mostly measuring that the plugin supplied the server.
 
-**`analyze-before-test` is this suite's first `tool_order` grader.** Nothing else uses the
-type, so the `before`/`after` direction is asserted rather than demonstrated: a reversed
-pair asserts the opposite order and still passes silently. Confirm it on the first run by
-inverting the two fields locally and checking the case goes red, then delete this note.
+**This case carries the suite's only `tool_order` graders.** The semantics, confirmed on a
+real run: `before:` names the tool that must come first and `after:` the one that follows,
+and the result reports the trace indices it matched
+(`analyze_files@4 precedes dart_format@5`). Read those indices when adding one — a reversed
+pair asserts the opposite order and still passes.
 
 **The coverage parse has nowhere to go.** `SKILL.md` sends the loop to read
 `coverage/lcov.info` through Bash after the test gate, and the mocked test tool writes no

@@ -1,5 +1,5 @@
 Running "flutter test"...
-00:04 +38: All tests passed!
+00:01 +1: All tests passed!
 
 Collected coverage to coverage/lcov.info.
-lines......: 100.0% (378 of 378 lines)
+lines......: 100.0% (3 of 3 lines)
