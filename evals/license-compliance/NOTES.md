@@ -2,19 +2,18 @@
 
 ## Grading
 
-`packages_check_licenses` is mocked, so two cases call it for real and assert the call:
-`license-compliance-runs-check-with-full-license-info` and
-`license-compliance-scopes-check-to-monorepo-subdirectory`. The other four grade the
-decisions the skill narrates — how it categorizes a license it is shown, the report it
+`packages_check_licenses` is mocked, so `license-compliance-runs-check-with-full-license-info`
+and `license-compliance-scopes-check-to-monorepo-subdirectory` call it for real and assert
+the call. The rest grade the decisions the skill narrates — how it categorizes a license it is shown, the report it
 produces, and what it refuses to sign off on — and there a `tool_used` assertion is wrong,
 because their prompts hand the scan output over rather than asking for a scan.
 
-Read the with-arm score on the two tool-driving cases, never Δ: a mocked tool is absent in
+Read the with-arm score on the tool-driving cases, never Δ: a mocked tool is absent in
 the no-plugin arm, so its graders fail for free. `evals/README.md`, "Mocking the MCP
 servers", has the detail.
 
-The mock returns a fixed table — one `GPL-3.0` and one `unknown` among twelve permissive
-licenses — so what the scan finds is the same every run. What still cannot be measured
+The mock returns a fixed table with a copyleft license and an unknown one among permissive
+ones, so what the scan finds is the same every run. What still cannot be measured
 here is the audit loop against a real resolve: the fixture is never pub-got, so no case
 sees a dependency graph it did not paste in or receive from the mock.
 

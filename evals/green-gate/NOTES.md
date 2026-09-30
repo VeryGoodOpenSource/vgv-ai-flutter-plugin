@@ -3,20 +3,20 @@
 ## Grading
 
 Both MCP servers are mocked and the fixture seeds `lib/` and `test/`, so one case drives
-the loop for real. Six grade narration and one is a negative control. The split is
+the loop for real. The rest grade narration, apart from the negative control. The split is
 deliberate.
 
 `green-gate-runs-the-four-gates-on-a-green-package` grades the calls: which tool ran each
 gate, the arguments it carried, and the order. Everything the mock set can produce is
 green, so the only loop it can exercise is the skill's one-pass no-op path.
 
-The six narration cases cover what green runs cannot reach — a red gate, a weakened
+The narration cases cover what green runs cannot reach — a red gate, a weakened
 target, a stalled fingerprint, a monorepo — and they grade the decisions the skill
 narrates: which tool it says it would call, the arguments it would pass, the order, what
-it refuses to weaken, and when it stops and escalates. In those six, never assert that a
+it refuses to weaken, and when it stops and escalates. In those, never assert that a
 response *called* a tool: their prompts ask for a plan or a verdict, so a call would be
-wrong. The seventh, `green-gate-stays-out-of-plain-function-work`, is the negative control
-and asks for a Dart function rather than either.
+wrong. `green-gate-stays-out-of-plain-function-work` is the negative control and asks for a
+Dart function rather than either.
 
 Every narration prompt therefore ends by asking for a plan or a verdict rather than for a
 run, and every scenario is stated in the prompt rather than left on disk. Prompts
@@ -26,8 +26,8 @@ on what it cannot find. Note that the fixture now has source in it, so the older
 still needs to say they are not there.
 
 **Read that case's with-arm score, never Δ** — `evals/README.md`, "Mocking the MCP
-servers", has the reason. Seven of its eleven graders need a mocked tool, so its Δ will be
-the largest here while mostly measuring that the plugin supplied the server.
+servers", has the reason. Most of its graders need a mocked tool, so its Δ will be the
+largest here while mostly measuring that the plugin supplied the server.
 
 **`analyze-before-test` is this suite's first `tool_order` grader.** Nothing else uses the
 type, so the `before`/`after` direction is asserted rather than demonstrated: a reversed
@@ -36,7 +36,7 @@ inverting the two fields locally and checking the case goes red, then delete thi
 
 **The coverage parse has nowhere to go.** `SKILL.md` sends the loop to read
 `coverage/lcov.info` through Bash after the test gate, and the mocked test tool writes no
-such file. Expect one wasted turn there; `max_turns: 20` absorbs it. Seeding a token
+such file. Expect one wasted turn there, which the case's caps absorb. Seeding a token
 lcov.info would fix it at the cost of putting coverage data in every case's workspace.
 
 Routing is the dominant failure mode here. On a full run before the tool-driving case
@@ -115,15 +115,14 @@ comparison that makes "no progress" decidable.
 **The only case here that calls anything.** An already-green package, all four gates run,
 green confirmed from the numbers observed that round, nothing edited.
 
-**Grader notes.** `calls-analyze-with-fixes` carries `weight: 5` and is the case's point:
-`input_match` on `"applyFixes": true` is an argument prose cannot satisfy, where the
-narration case's `names-apply-fixes` regex passes on the word alone. The weight is 5 rather
-than 3 because 3 was not enough — against nine unweighted graders a miss scored exactly
-0.8000, the threshold, so the case passed with its own point missing. Check that
-arithmetic whenever a grader is added here.
+**Grader notes.** `calls-analyze-with-fixes` is the case's point: `input_match` on
+`"applyFixes": true` is an argument prose cannot satisfy, where the narration case's
+`names-apply-fixes` regex passes on the word alone. It is weighted so that a miss on it
+alone sinks the case. Recompute that when adding a grader here — an earlier weighting let
+the case score exactly at the threshold with its own point missing.
 
 `analyze-before-test` and `format-after-analyze` prove gate precedence by `tool_order`
-rather than by a judge reading a plan. The four `test-call-*` graders split the arguments
+rather than by a judge reading a plan. The `test-call-*` graders split the arguments
 the test gate must carry, so a partial miss says which one was dropped, and each asserts a
 value rather than the bare key — `"min_coverage": "1000"` and an empty `exclude_coverage`
 both passed the first versions.

@@ -7,8 +7,7 @@
 template it carried and where it put the package, and
 `ui-package-stays-out-of-plain-dart-work` asserts the tool did not fire. Read the with-arm score on the scaffolding case, never Δ: a mocked tool
 is absent in the no-plugin arm, so its graders fail for free. `evals/README.md`, "Mocking
-the MCP servers", has the detail. That case measured 11 to 15 turns, which is why every
-tool-driving case carries `max_turns: 20` and `timeout_seconds: 900`.
+the MCP servers", has the detail.
 
 The file-mutation half of the widget workflow is still unmeasurable. The skill's
 `allowed-tools` includes `Edit`, and the fixture seeds only a plain `Counter` class, so

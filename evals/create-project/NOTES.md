@@ -2,11 +2,10 @@
 
 ## Grading
 
-`create` is mocked, so the cases assert the call itself. Two grade that it fired with the
-right arguments — `create-project-does-not-over-ask` and
-`create-project-plans-dependency-install` — and three grade that it did *not* fire while
-the organization was missing, the template was ambiguous, or the work belonged to an
-existing project. Those three are `min: 0, max: 0` on the mocked tool, which is a real
+`create` is mocked, so the cases assert the call itself. `create-project-does-not-over-ask`
+and `create-project-plans-dependency-install` grade that it fired with the right arguments.
+The cases for a missing organization, an ambiguous template, and work inside an existing
+project grade that it did *not* fire — `min: 0, max: 0` on the mocked tool, which is a real
 assertion only because the tool is present to call.
 
 The mock carries an `expect` guard on `subcommand` and `name`, the two fields the real
