@@ -2,6 +2,15 @@
 type: llm
 ---
 
-PASS if the response states that one coverage target applies to every package, with no per-package override available, and calls that out as the reason the 62% package needs an explicit decision, either a lowered shared target or that package handled separately.
+PASS if the response states that the test tool takes a single `min_coverage` with no
+per-package parameter, and resolves the 62% package explicitly rather than silently: either
+by lowering the shared target, or by running that package on its own invocation with its
+own target.
 
-FAIL if it silently applies two different targets, if it offers a per-package override, or if it states the shared target without calling out that the 62% package needs an explicit decision between a lowered shared target and handling that package separately.
+Running each package as a separate invocation is the documented way to give one package a
+different target, so choosing it passes. What fails is claiming the tool itself accepts a
+per-package value inside one recursive run.
+
+FAIL if it applies two different targets without saying so, if it claims a per-package
+`min_coverage` parameter or a per-package override within a single recursive run, or if it
+states the shared target without ever resolving what happens to the 62% package.
