@@ -92,7 +92,7 @@ threshold is `1.0`, so **pass `--threshold 0.8` or every imperfect case exits 1*
 | ------------- | ------------------------------------- | ------------------------------------------------------------------------ |
 | `tool_used`   | `tool`, `input_match`, `min`, `max`   | Routing. The defaults are wrong for this suite, see below                |
 | `regex`       | `pattern`, `flags`, `match`, `target` | `match: not_contains` for absence. Case-insensitivity goes in `flags: i` |
-| `tool_order`  | `before`, `after`                     | Gate ordering in `green-gate`; nowhere else                              |
+| `tool_order`  | `before`, `after`                     | `before` runs first, `after` second. Gate ordering in `green-gate` only  |
 | `file_exists` | `path`, `exists`                      | Unused here: cases are graded on the reply, not on files                 |
 | `llm`         | `criteria`, `focus`                   | Frontmatter is just `type: llm`; the file body is the rubric             |
 | `baseline`    | `baseline_file`, `criteria`           | Unused here                                                              |
@@ -297,11 +297,13 @@ licenses, so a case has something real to flag.
 
 **The mock set is green everywhere else**, so a case can drive every gate and reach an
 exit. `analyze_files` returns no errors, `dart_format` reports `0 changed`, and `test`
-passes at 100%. Only `dart_format` is true of the workspace as well — `dart format` on the
-seeded package really does print `Formatted 2 files (0 changed)`. The `test` body still
-describes a larger package than the fixture holds, which no grader reads and no case
-compares. A failure-path case supplies its own `mocks/` override rather than reddening the
-shared set.
+passes at 100%. **Keep those numbers consistent with the fixture on disk.** `dart format`
+on the seeded package really does print `Formatted 2 files (0 changed)`, and the test body
+reports the one test and three executable lines the fixture actually holds. An earlier
+version claimed 38 tests and 378 lines; the model read the workspace, caught the mock
+lying, and refused to call the package green — so a mock that contradicts the fixture does
+not merely go unread, it fails the case. A failure-path case supplies its own `mocks/`
+override rather than reddening the shared set.
 
 One body is deliberately lossy. Real `dart_format` output opens with
 `dart format in <absolute root>:`, which a fixed body cannot know, so the mock drops that
