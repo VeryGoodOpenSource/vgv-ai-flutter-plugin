@@ -16,7 +16,9 @@ properties, and `TestTag` constants over raw tag strings.
 Not measurable here: nothing runs the tests, so a green suite is never proven, and the
 syntax check the previous harness carried is gone. The two MCP `test` tool standards
 (`directory` for monorepos, `timeout_seconds` against a hanging `pumpAndSettle`) are
-unmeasured because the harness configures no MCP servers.
+unmeasured because no case here asks for a run — the tool is mocked and reachable, so a
+case that wanted them could assert both with a `regex` against `mock_calls`, the way
+`green-gate-runs-the-four-gates-on-a-green-package` asserts the coverage arguments.
 
 Rubrics are graded blind. The judge sees the response text and the criterion, never the
 prompt. Task success is therefore graded with a regex, never a rubric.

@@ -115,17 +115,32 @@ comparison that makes "no progress" decidable.
 **The only case here that calls anything.** An already-green package, all four gates run,
 green confirmed from the numbers observed that round, nothing edited.
 
-**Grader notes.** `calls-analyze-with-fixes` carries `weight: 3` and is the case's point:
+**Grader notes.** `calls-analyze-with-fixes` carries `weight: 5` and is the case's point:
 `input_match` on `"applyFixes": true` is an argument prose cannot satisfy, where the
-narration case's `names-apply-fixes` regex passes on the word alone. `analyze-before-test`
-proves gate precedence by `tool_order` rather than by a judge reading a plan. The three
-`test-call-*` graders split the coverage triple so a partial miss says which parameter was
-dropped.
+narration case's `names-apply-fixes` regex passes on the word alone. The weight is 5 rather
+than 3 because 3 was not enough — against nine unweighted graders a miss scored exactly
+0.8000, the threshold, so the case passed with its own point missing. Check that
+arithmetic whenever a grader is added here.
+
+`analyze-before-test` and `format-after-analyze` prove gate precedence by `tool_order`
+rather than by a judge reading a plan. The four `test-call-*` graders split the arguments
+the test gate must carry, so a partial miss says which one was dropped, and each asserts a
+value rather than the bare key — `"min_coverage": "1000"` and an empty `exclude_coverage`
+both passed the first versions.
+
+`calls-the-format-gate` carries `max: 1`. That is the one-pass no-op path's only
+enforcement: on an already-green package each gate runs once, and without a cap a model
+that loops the gates pointlessly still scores full marks.
 
 `edits-nothing` and `writes-nothing` are why `Edit` and `Write` are granted in
 `allowed_tools` at all. A `max: 0` grader on a tool the run never granted passes
 unconditionally forever; granting them makes "exits without editing a single file" a claim
-the run can actually break.
+the run can actually break. `Bash` is deliberately **not** granted, which is a departure
+from the skill's own tool set: the skill reserves Bash for parsing `coverage/lcov.info`,
+the mocked test tool writes no such file, so Bash has no legitimate work in this case and
+granting it would let `cat >` write files behind the two `max: 0` graders. The
+"`green-gate` must declare `Bash`" invariant in `evals/README.md` governs the skill's
+frontmatter, not a case's `allowed_tools`.
 
 ### green-gate-budgets-per-package-across-a-monorepo
 

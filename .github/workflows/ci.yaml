@@ -74,12 +74,18 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           status=0
-          for manifest in evals/mocks/*/_tools.json; do
-            dir=$(dirname "$manifest")
+          for dir in evals/mocks/*/; do
+            dir=${dir%/}
+            manifest="$dir/_tools.json"
+            if [ ! -f "$manifest" ]; then
+              echo "::error::$dir has no _tools.json, so nothing in it is served to the model"
+              status=1
+              continue
+            fi
             # Assigned on its own line so a malformed manifest trips set -e. Inside a
             # process substitution the parser's exit status is discarded and the step
             # would pass with nothing checked.
-            tools=$(python3 -c "import json,sys; print('\n'.join(t['name'] for t in json.load(open(sys.argv[1]))['tools']))" "$manifest")
+            tools=$(jq -r '.tools[].name' "$manifest")
             for tool in $tools; do
               if [ ! -f "$dir/$tool.md" ]; then
                 echo "::error::$manifest lists '$tool' but $dir/$tool.md is missing"
@@ -88,6 +94,8 @@ jobs:
             done
             for body in "$dir"/*.md; do
               name=$(basename "$body" .md)
+              # _server.md and friends are documented mock forms, not tool bodies.
+              case "$name" in _*) continue ;; esac
               if ! printf '%s\n' "$tools" | grep -qxF "$name"; then
                 echo "::error::$body has no '$name' entry in $manifest, so the model never sees it"
                 status=1
