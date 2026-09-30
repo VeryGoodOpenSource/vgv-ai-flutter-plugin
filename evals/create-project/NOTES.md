@@ -2,18 +2,24 @@
 
 ## Grading
 
-No MCP server is available to these runs, so the cases grade the decisions the skill
-drives — template inference, name normalization, what it declines — not the create call.
-Only assert template names that `SKILL.md` teaches, never ones the MCP server supplies at
-run time.
+`create` is mocked, so the cases assert the call itself. Two grade that it fired with the
+right arguments — `create-project-does-not-over-ask` and
+`create-project-plans-dependency-install` — and three grade that it did *not* fire while
+the organization was missing, the template was ambiguous, or the work belonged to an
+existing project. Those three are `min: 0, max: 0` on the mocked tool, which is a real
+assertion only because the tool is present to call.
 
-Consequence worth knowing before writing a case here: with no `create` tool the skill
-cannot execute, and every response says so and hands the user a command to run instead.
-Do not assert that the response *uses* the MCP tools — that is unsatisfiable in this
-environment, and asserting it measured the harness rather than the skill. Wiring the real
-server in is not the fix either: `create` would scaffold a project into the fixture on
-every run. Mocking the server in the native harness is a separate, later piece of work,
-and none of these cases assume it.
+The mock carries an `expect` guard on `subcommand` and `name`, the two fields the real
+schema requires. A violation aborts the run at score 0 with no failing grader to read, so
+when a case here scores 0 with nothing red, suspect the arguments before the content.
+
+Only assert template names that `SKILL.md` teaches. The mock's `_tools.json` also carries
+the enum, but a case that leans on it is grading the manifest rather than the skill.
+
+Read the with-arm score, never Δ: a mocked tool is absent in the no-plugin arm, so its
+graders fail for free. `evals/README.md`, "Mocking the MCP servers", has the detail. The
+skill also pins `model: haiku`, so its with-arm answers on a weaker model than its
+baseline — a second reason Δ understates it.
 
 `create-project-infers-dart-package-for-api-client` carries no routing grader, and that is
 deliberate: a one-word template question does not activate the skill, measured at 0/2 with

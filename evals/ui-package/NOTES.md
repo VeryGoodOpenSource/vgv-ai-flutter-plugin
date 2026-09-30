@@ -2,15 +2,18 @@
 
 ## Grading
 
-No MCP server is available to these cases, so the scaffolding half of this skill cannot
-execute: `mcp__very-good-cli__create` is unreachable, and the response says so and hands
-the user a command instead. Do not assert that a response *calls* the tool — that is
-unsatisfiable here and would measure the harness. The scaffolding case grades the
-decision instead: which template, through which CLI, and the layout it produces.
+`create` is mocked, so the scaffolding half executes.
+`ui-package-scaffolds-with-app-ui-package-template` calls the tool and asserts both the
+template it carried and where it put the package, and
+`ui-package-stays-out-of-plain-dart-work` asserts the tool did not fire. Read the with-arm score on the scaffolding case, never Δ: a mocked tool
+is absent in the no-plugin arm, so its graders fail for free. `evals/README.md`, "Mocking
+the MCP servers", has the detail. That case measured 11 to 15 turns, which is why every
+tool-driving case carries `max_turns: 20` and `timeout_seconds: 900`.
 
-The file-mutation half of the widget workflow is unmeasurable for the same reason. The
-skill's `allowed-tools` includes `Edit`, but the fixture has no UI package to edit, so
-these cases ask the model to list the files and paths it would create and grade those.
+The file-mutation half of the widget workflow is still unmeasurable. The skill's
+`allowed-tools` includes `Edit`, and the fixture seeds only a plain `Counter` class, so
+there is no UI package on disk to edit; those cases ask the model to list the files and
+paths it would create and grade those.
 
 Every prompt names the UI package explicitly. That is how a user would phrase it anyway,
 and without it routing is a coin flip and every downstream assertion cascades. The
