@@ -128,9 +128,11 @@ the test gate must carry, so a partial miss says which one was dropped, and each
 value rather than the bare key — `"min_coverage": "1000"` and an empty `exclude_coverage`
 both passed the first versions.
 
-`calls-the-format-gate` carries `max: 1`. That is the one-pass no-op path's only
-enforcement: on an already-green package each gate runs once, and without a cap a model
-that loops the gates pointlessly still scores full marks.
+`calls-the-format-gate` carries `max: 2`. Some cap is the one-pass no-op path's only
+enforcement — without one, a model that loops the gates pointlessly still scores full
+marks. It was `max: 1` and that was wrong: `SKILL.md` says a round that rewrites files is
+confirmed green on the next round, so a second format call is correct, and a run
+that made one scored a false red.
 
 `edits-nothing` and `writes-nothing` are why `Edit` and `Write` are granted in
 `allowed_tools` at all. A `max: 0` grader on a tool the run never granted passes
