@@ -416,9 +416,9 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
   is passed. `report.html` does show the judged text.
 - **Judge calibration.** Most graders are `llm` with no human-labelled gold set.
 - **Tool execution, partly.** Six cases assert a call to a mocked tool, across
-  `create-project`, `green-gate`, `license-compliance` and `ui-package`; each skill's
-  `NOTES.md` names its own. Every other tool-driven case is still graded on the calls it
-  narrates.
+  `create-project`, `green-gate`, `license-compliance` and `ui-package` — find them by
+  grepping the graders for `mcp__plugin`. Every other tool-driven case is still graded on
+  the calls it narrates.
 - **Stable routing.** Whether a skill activates is nondeterministic, which is why routing
   is a `tool_used` grader rather than inferred from content.
 - **Prose in a `SKILL.md`.** Deliberate: an earlier version asserted a hundred `contains`
