@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.1.0](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.0.5...v0.1.0) (2026-10-01)
+
+
+### Features
+
+* add Dart 3.13 primary constructor guidance to skills ([#167](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/167)) ([9ce1d96](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/9ce1d96a2648e6640e53fd52b1a2b36802f3678d))
+* adopt the AGENTS.md standard ([#129](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/129)) ([7b09f0e](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/7b09f0e9662084413dcde976f1c83bb927fd144d))
+* **evals:** add local promptfoo skill-eval harness covering all 15 skills ([#133](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/133)) ([4c19eea](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/4c19eeac0b0c33b216bc3684d45dae54a5c543d1))
+* **evals:** add MCP server mocks and fix the cases that measured nothing ([#159](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/159)) ([5e8518c](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/5e8518c6c53449db91107b7ef628e4e59bb2ff89))
+* make skills portable across agent harnesses ([#128](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/128)) ([8998e55](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/8998e5515cd3573e8b8c448ded14d1914f6c2b2f))
+* replace promptfoo with claude plugin eval, and fix skill routing ([#157](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/157)) ([6f910bc](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/6f910bc2324eae5aeafde02be752a205de53a46f))
+
+
+### Bug Fixes
+
+* close flutter-reviewer read-only hook bypasses ([#162](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/162)) ([7bf5ce4](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/7bf5ce4fa1c9867842da06a9f55aeb0d9ebcb351))
+* close the nine eval failures on main and unmask routing misses ([#136](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/136)) ([d9907b8](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/d9907b80efbf951147e9732b42b7a9685b3be14a))
+* correct typos in issue templates ([#144](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/144)) ([0ff3681](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/0ff3681cfeb01060f05b42e7f1f90ff91e01492d))
+* scope PreToolUse hooks to their own tools ([#155](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/155)) ([614fba2](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/614fba2069e9d373a74c2613cfb4865c6270d62f))
+* **skills:** repair the green-gate format gate and make buried guidance reachable ([#132](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/132)) ([cc1550e](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/cc1550e8e2639f8bce47162b0c2d1c9ae979afc1))
+
+
+### Refactors
+
+* prep skills for claude 5gen models ([#152](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/152)) ([2330900](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/23309000d34343340cf2b159c90854ee2845d2da))
+
+
+### Miscellaneous Chores
+
+* update contact email to tools@verygood.ventures ([#153](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/153)) ([a8776f5](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/a8776f520dfa8bbeeece6939ca8a0fe2a9363c49))
+* use standard 0.x versioning ([#163](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/163)) ([90bc439](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/90bc43968254e859ea748761931ff2fe67c43f77))
+
+
+### Docs
+
+* note PR titles must follow conventional commits ([#169](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/169)) ([c4dec49](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/c4dec496db0dfbf7d48686d4f38099760a23b3a9))
+
 ## [0.0.5](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.0.4...v0.0.5) (2026-07-07)
 
 
