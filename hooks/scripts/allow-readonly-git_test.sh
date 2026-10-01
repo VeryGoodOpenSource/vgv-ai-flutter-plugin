@@ -63,6 +63,10 @@ assert_allowed "git status -s"
 assert_allowed "git diff --stat"
 assert_allowed "git diff main...HEAD"
 assert_allowed "  git diff HEAD~1"
+assert_allowed "git diff --no-ext-diff"
+assert_allowed "git diff --output-indicator-new=+"
+assert_allowed "git diff -- lib/src/foo.dart"
+assert_allowed "git diff -- 'lib/**/*.dart'"
 
 echo ""
 echo "--- Should be BLOCKED ---"
@@ -78,6 +82,29 @@ assert_blocked "rm -rf /"
 assert_blocked "sed -i s/a/b/ file"
 assert_blocked "echo hi > file"
 assert_blocked "diff a b"
+
+echo ""
+echo "--- Multi-line commands: BLOCKED ---"
+assert_blocked $'git status\nrm -rf x'
+assert_blocked $'git diff\ntouch x'
+assert_blocked $'git status\r\nrm -rf x'
+assert_blocked $'rm -rf x\ngit status'
+
+echo ""
+echo "--- File-writing and program-running options: BLOCKED ---"
+assert_blocked "git diff --output=out.txt"
+assert_blocked "git diff --output out.txt"
+assert_blocked "git diff HEAD --output=out.txt"
+assert_blocked 'git diff "--output=out.txt"'
+assert_blocked "git diff '--output'=out.txt"
+assert_blocked 'git diff --out\put=out.txt'
+assert_blocked "git diff --ext-diff"
+assert_blocked 'git diff "--ext-diff"'
+
+echo ""
+echo "--- Shell expansion: BLOCKED ---"
+assert_blocked 'git diff ${X:---output=out.txt}'
+assert_blocked 'git diff $OUT'
 
 echo ""
 echo "=== Results: $PASSED passed, $FAILED failed ==="
