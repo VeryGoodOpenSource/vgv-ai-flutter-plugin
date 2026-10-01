@@ -15,16 +15,11 @@ import 'package:flutter/material.dart';
 
 /// A rating bar that provides a single semantic description
 /// instead of exposing individual star icons.
-class AccessibleRatingBar extends StatelessWidget {
-  const AccessibleRatingBar({
-    required this.rating,
-    required this.maxRating,
-    super.key,
-  });
-
-  final int rating;
-  final int maxRating;
-
+class const AccessibleRatingBar({
+  required final int rating,
+  required final int maxRating,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -53,18 +48,12 @@ Cupertino widgets ship with weaker semantic defaults than their Material equival
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class AccessibleCupertinoSwitch extends StatelessWidget {
-  const AccessibleCupertinoSwitch({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    super.key,
-  });
-
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
+class const AccessibleCupertinoSwitch({
+  required final String label,
+  required final bool value,
+  required final ValueChanged<bool> onChanged,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -78,22 +67,14 @@ class AccessibleCupertinoSwitch extends StatelessWidget {
   }
 }
 
-class AccessibleCupertinoSlider extends StatelessWidget {
-  const AccessibleCupertinoSlider({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-    super.key,
-  });
-
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-
+class const AccessibleCupertinoSlider({
+  required final String label,
+  required final double value,
+  required final double min,
+  required final double max,
+  required final ValueChanged<double> onChanged,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -173,11 +154,8 @@ import 'package:flutter/material.dart';
 
 enum UploadStatus { idle, uploading, success, error }
 
-class UploadStatusIndicator extends StatelessWidget {
-  const UploadStatusIndicator({required this.status, super.key});
-
-  final UploadStatus status;
-
+class const UploadStatusIndicator({required final UploadStatus status, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final icon = switch (status) {
@@ -226,18 +204,12 @@ import 'package:flutter/material.dart';
 
 /// Wraps any small widget in a minimum 48x48 touch target.
 /// 48 is the VGV recommended minimum. The WCAG 2.2 AA floor (2.5.8) is 24.
-class AccessibleTapTarget extends StatelessWidget {
-  const AccessibleTapTarget({
-    required this.onTap,
-    required this.semanticLabel,
-    required this.child,
-    super.key,
-  });
-
-  final VoidCallback onTap;
-  final String semanticLabel;
-  final Widget child;
-
+class const AccessibleTapTarget({
+  required final VoidCallback onTap,
+  required final String semanticLabel,
+  required final Widget child,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -265,16 +237,11 @@ AccessibleTapTarget(
 ### Dismissible With a Non-Drag Alternative (WCAG 2.2 2.5.7)
 
 ```dart
-class AccessibleDismissibleListItem extends StatelessWidget {
-  const AccessibleDismissibleListItem({
-    required this.item,
-    required this.onDelete,
-    super.key,
-  });
-
-  final Item item;
-  final ValueChanged<Item> onDelete;
-
+class const AccessibleDismissibleListItem({
+  required final Item item,
+  required final ValueChanged<Item> onDelete,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -298,16 +265,11 @@ class AccessibleDismissibleListItem extends StatelessWidget {
 ### Reorderable List With Up/Down Buttons (WCAG 2.2 2.5.7)
 
 ```dart
-class AccessibleReorderableList extends StatelessWidget {
-  const AccessibleReorderableList({
-    required this.items,
-    required this.onReorder,
-    super.key,
-  });
-
-  final List<Item> items;
-  final void Function(int oldIndex, int newIndex) onReorder;
-
+class const AccessibleReorderableList({
+  required final List<Item> items,
+  required final void Function(int oldIndex, int newIndex) onReorder,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ReorderableListView.builder(
@@ -349,24 +311,15 @@ class AccessibleReorderableList extends StatelessWidget {
 Material's `Slider` already responds to arrow keys. Custom slider widgets must do the same.
 
 ```dart
-class AccessibleSlider extends StatelessWidget {
-  const AccessibleSlider({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-    this.min = 0,
-    this.max = 100,
-    this.step = 1,
-    super.key,
-  });
-
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final double step;
-  final ValueChanged<double> onChanged;
-
+class const AccessibleSlider({
+  required final String label,
+  required final double value,
+  required final ValueChanged<double> onChanged,
+  final double min = 0,
+  final double max = 100,
+  final double step = 1,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -450,16 +403,11 @@ class AccessibleForm extends StatelessWidget {
 ### Focus Not Obscured: ensureVisible on Sticky-Header Layouts (WCAG 2.2 2.4.11)
 
 ```dart
-class FocusEnsureVisibleField extends StatefulWidget {
-  const FocusEnsureVisibleField({
-    required this.label,
-    required this.stickyHeaderHeight,
-    super.key,
-  });
-
-  final String label;
-  final double stickyHeaderHeight;
-
+class const FocusEnsureVisibleField({
+  required final String label,
+  required final double stickyHeaderHeight,
+  super.key,
+}) extends StatefulWidget {
   @override
   State<FocusEnsureVisibleField> createState() => _FocusEnsureVisibleFieldState();
 }
@@ -507,16 +455,11 @@ class _FocusEnsureVisibleFieldState extends State<FocusEnsureVisibleField> {
 ### Focus Appearance at AAA (WCAG 2.2 2.4.13)
 
 ```dart
-class FocusAppearanceWrap extends StatefulWidget {
-  const FocusAppearanceWrap({
-    required this.onPressed,
-    required this.child,
-    super.key,
-  });
-
-  final VoidCallback onPressed;
-  final Widget child;
-
+class const FocusAppearanceWrap({
+  required final VoidCallback onPressed,
+  required final Widget child,
+  super.key,
+}) extends StatefulWidget {
   @override
   State<FocusAppearanceWrap> createState() => _FocusAppearanceWrapState();
 }
@@ -592,10 +535,8 @@ ThemeData buildAccessibleTheme() {
 ### Status Indicators Without Color Dependency
 
 ```dart
-class AccessibleStatusBadge extends StatelessWidget {
-  const AccessibleStatusBadge({required this.status, super.key});
-  final TaskStatus status;
-
+class const AccessibleStatusBadge({required final TaskStatus status, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, label, color) = switch (status) {
@@ -627,16 +568,11 @@ enum TaskStatus { pending, active, complete, error }
 ### Adaptive Card Layout (Holds at 2x Android, 3x iOS)
 
 ```dart
-class AdaptiveInfoCard extends StatelessWidget {
-  const AdaptiveInfoCard({
-    required this.title,
-    required this.description,
-    super.key,
-  });
-
-  final String title;
-  final String description;
-
+class const AdaptiveInfoCard({
+  required final String title,
+  required final String description,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -694,12 +630,8 @@ class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
 ### Hero Animation With Reduced-Motion Support
 
 ```dart
-class AccessibleHero extends StatelessWidget {
-  const AccessibleHero({required this.tag, required this.child, super.key});
-
-  final Object tag;
-  final Widget child;
-
+class const AccessibleHero({required final Object tag, required final Widget child, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (MediaQuery.of(context).disableAnimations) {
@@ -741,10 +673,8 @@ class CheckoutEmailField extends StatelessWidget {
 ### Accessible Authentication: Allow Paste, Support Password Managers (WCAG 2.2 3.3.8)
 
 ```dart
-class AccessiblePasswordField extends StatelessWidget {
-  const AccessiblePasswordField({required this.controller, super.key});
-  final TextEditingController controller;
-
+class const AccessiblePasswordField({required final TextEditingController controller, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(

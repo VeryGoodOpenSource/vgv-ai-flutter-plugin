@@ -16,14 +16,12 @@ Add a named factory on the domain model to transform from the response model:
 import 'package:equatable/equatable.dart';
 import 'package:user_api_client/user_api_client.dart' show UserResponse;
 
-class User extends Equatable {
-  const User({
-    required this.id,
-    required this.email,
-    required this.displayName,
-    this.avatarUrl,
-  });
-
+class const User({
+  required final String id,
+  required final String email,
+  required final String displayName,
+  final String? avatarUrl,
+}) extends Equatable {
   /// Creates a [User] from a [UserResponse].
   factory User.fromResponse(UserResponse response) {
     return User(
@@ -33,11 +31,6 @@ class User extends Equatable {
       avatarUrl: response.avatarUrl,
     );
   }
-
-  final String id;
-  final String email;
-  final String displayName;
-  final String? avatarUrl;
 
   @override
   List<Object?> get props => [id, email, displayName, avatarUrl];

@@ -80,17 +80,11 @@ Use one state class with a status enum when every state shares the same data sha
 ```dart
 enum TodoListStatus { initial, loading, success, failure }
 
-class TodoListState extends Equatable {
-  const TodoListState({
-    this.status = TodoListStatus.initial,
-    this.todos = const [],
-    this.error,
-  });
-
-  final TodoListStatus status;
-  final List<Todo> todos;
-  final String? error;
-
+class const TodoListState({
+  final TodoListStatus status = TodoListStatus.initial,
+  final List<Todo> todos = const [],
+  final String? error,
+}) extends Equatable {
   TodoListState copyWith({
     TodoListStatus? status,
     List<Todo>? todos,

@@ -10,11 +10,8 @@ Use path parameters to identify specific resources:
   path: 'article/:id',
 )
 @immutable
-class FlutterArticlePageRoute extends GoRouteData {
-  const FlutterArticlePageRoute({required this.id});
-
-  final String id;
-
+class const FlutterArticlePageRoute({required final String id})
+    extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return FlutterArticlePage(id: id);
@@ -34,15 +31,10 @@ Use query parameters for optional filtering or sorting criteria:
   path: 'articles',
 )
 @immutable
-class FlutterArticlesPageRoute extends GoRouteData {
-  const FlutterArticlesPageRoute({
-    this.date,
-    this.category,
-  });
-
-  final String? date;
-  final String? category;
-
+class const FlutterArticlesPageRoute({
+  final String? date,
+  final String? category,
+}) extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return FlutterArticlesPage(
