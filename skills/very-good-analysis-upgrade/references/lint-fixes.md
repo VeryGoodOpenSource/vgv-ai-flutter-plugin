@@ -30,20 +30,23 @@ constructor rules. All four are style-only (no behavior risk), but each only has
 the package targets Dart 3.13 or newer — below that SDK, leave the classic form and raise any SDK
 bump as its own change.
 
-- `use_declaring_parameters` — a constructor taking initializing formals (`this.field`) plus
-  matching `final` fields should instead use primary-constructor **declaring parameters**. This is
-  the rule that flags most existing widget, model, event, and state code.
-- `unnecessary_type_name_in_constructor` — inside a primary constructor body, refer to the instance
-  with `this` rather than by repeating the class name.
+- `unnecessary_type_name_in_constructor` — a class-body constructor that repeats the class name
+  (`const ProfileCard(...)`) should name the unnamed constructor `new` instead. **This is the rule
+  that flags most existing widget, model, event, and state code**, and its minimal fix is one word:
+  rename `ProfileCard(...)` to `new(...)`. It does not force a primary constructor on anyone.
+- `use_declaring_parameters` — inside a **primary constructor**, a parameter written as an
+  initializing formal (`this.field`) should instead be a declaring parameter (`final Type field`).
+  It only fires once the class already uses a primary-constructor header, so it never touches a
+  classic class-body constructor.
 - `unnecessary_primary_constructor_body` — drop an empty `{}` body on a primary constructor and end
   the header with `;`.
 - `empty_container_bodies` — replace an empty `{}` body (class, mixin, or extension type) with `;`.
 
-The `use_declaring_parameters` fix moves the fields into the class header. `const` sits between
-`class` and the class name:
+The minimal fix for `unnecessary_type_name_in_constructor` leaves the class shape untouched — it
+only renames the unnamed constructor to `new`:
 
 ```dart
-// Before — flagged by use_declaring_parameters on Dart 3.13+
+// Before — flagged by unnecessary_type_name_in_constructor on Dart 3.13+
 class ProfileCard extends StatelessWidget {
   const ProfileCard({required this.userId, super.key});
 
@@ -53,7 +56,24 @@ class ProfileCard extends StatelessWidget {
   Widget build(BuildContext context) => Text(userId);
 }
 
-// After — primary constructor with a declaring parameter
+// Minimal fix — name the unnamed constructor `new`
+class ProfileCard extends StatelessWidget {
+  const new({required this.userId, super.key});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context) => Text(userId);
+}
+```
+
+To modernize further, promote the fields to primary-constructor **declaring parameters**. `const`
+sits between `class` and the class name, and the inheritance clause follows the parameter list.
+This form clears both rules at once and is what the widget, model, event, and state skills show on
+the Dart 3.13 baseline:
+
+```dart
+// Modernized — a primary constructor with a declaring parameter
 class const ProfileCard({required final String userId, super.key})
     extends StatelessWidget {
   @override
@@ -61,7 +81,8 @@ class const ProfileCard({required final String userId, super.key})
 }
 ```
 
-`use_declaring_parameters` can touch a large share of a codebase — every widget, model, event, and
-state constructor is a candidate — but it is a new warning the bump introduced, so it belongs in
-the upgrade PR. Apply it only when the package already targets Dart 3.13; if the bump also forces
-an SDK-constraint change, that belongs in its own PR.
+`unnecessary_type_name_in_constructor` can touch a large share of a codebase — every unnamed
+class-body constructor is a candidate — but it is a new warning the bump introduced, so it belongs
+in the upgrade PR. Promoting to declaring parameters is a further modernization, not a forced fix;
+`new` alone satisfies the lint. Apply either form only when the package already targets Dart 3.13;
+if the bump also forces an SDK-constraint change, that belongs in its own PR.

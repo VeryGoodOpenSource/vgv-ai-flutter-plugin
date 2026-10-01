@@ -30,7 +30,7 @@ Apply these standards to ALL animation work:
 - **Use `SingleTickerProviderStateMixin` for one controller** — use `TickerProviderStateMixin` only when the widget owns multiple controllers
 - **Keep animated subtrees small** — wrap only the widgets that change inside the animation builder, not entire widget trees
 - **Never animate a layout-triggering property** — `width`, `height`, `padding` and `SizedBox` dimensions force a fresh layout pass on every frame, in a one-child tree as much as in a deep one. Animate a `Transform` instead, `Transform.scale` for size and `Transform.translate` for position, or `Opacity` for fade, since those run on the compositing layer and skip layout
-- **Use Dart 3.13 primary constructors on the VGV baseline** — on Dart 3.13+ (`very_good_core` 1.6 / `very_good_analysis` 11), declare widget fields as primary-constructor declaring parameters, e.g. `class const LabelChip({required final String label, super.key}) extends StatelessWidget`, not `const LabelChip({required this.label, super.key})` plus a separate `final String label`. `use_declaring_parameters` flags the classic form; keep it only below Dart 3.13
+- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare widget fields as primary-constructor declaring parameters (`class const LabelChip({required final String label, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
 
 ---
 
@@ -119,11 +119,8 @@ Use implicit animations when the widget rebuilds with new target values. The fra
 Compose one `AnimatedFoo` per property when several move together. This is the entry-animation shape — a widget hidden until its data arrives, then fading in and sliding into place:
 
 ```dart
-class SummaryCard extends StatelessWidget {
-  const SummaryCard({required this.summary, super.key});
-
-  final Summary? summary;
-
+class const SummaryCard({required final Summary? summary, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasData = summary != null;

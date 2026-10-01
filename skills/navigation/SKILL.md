@@ -31,7 +31,6 @@ Apply these standards to ALL navigation work:
 - **Hyphens for URL word separation** — never underscores or camelCase in URL paths
 - **Navigate by route name, not raw path strings** — use named route navigation to decouple from path changes
 - **Use `BuildContext` extensions for navigation** — prefer `context.goNamed()` over `GoRouter.of(context).goNamed()`
-- **Use Dart 3.13 primary constructors on the VGV baseline** — on Dart 3.13+ (`very_good_core` 1.6 / `very_good_analysis` 11), declare `GoRouteData` route fields as primary-constructor declaring parameters, e.g. `class const ProductRoute({required final String id}) extends GoRouteData`, not `const ProductRoute({required this.id})` plus a separate `final String id`. `use_declaring_parameters` flags the classic form; keep it only below Dart 3.13
 
 ## Route Organization
 

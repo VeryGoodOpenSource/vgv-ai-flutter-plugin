@@ -78,20 +78,13 @@ class _StaggeredEntryState extends State<StaggeredEntry>
 Animate list items sequentially by offsetting each item's delay:
 
 ```dart
-class StaggeredListItem extends StatefulWidget {
-  const StaggeredListItem({
-    required this.index,
-    required this.itemCount,
-    required this.animation,
-    required this.child,
-    super.key,
-  });
-
-  final int index;
-  final int itemCount;
-  final Animation<double> animation;
-  final Widget child;
-
+class const StaggeredListItem({
+  required final int index,
+  required final int itemCount,
+  required final Animation<double> animation,
+  required final Widget child,
+  super.key,
+}) extends StatefulWidget {
   @override
   State<StaggeredListItem> createState() => _StaggeredListItemState();
 }

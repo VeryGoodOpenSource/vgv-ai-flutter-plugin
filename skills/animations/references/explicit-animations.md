@@ -127,18 +127,11 @@ Do not start animations in `build()`. Use `initState` for initial playback and `
 Expose an optional controller parameter to allow tests to drive the animation directly:
 
 ```dart
-class PulsingDot extends StatefulWidget {
-  const PulsingDot({
-    required this.isActive,
-    super.key,
-    @visibleForTesting this.controller,
-  });
-
-  final bool isActive;
-
-  @visibleForTesting
-  final AnimationController? controller;
-
+class const PulsingDot({
+  required final bool isActive,
+  super.key,
+  @visibleForTesting final AnimationController? controller,
+}) extends StatefulWidget {
   @override
   State<PulsingDot> createState() => _PulsingDotState();
 }

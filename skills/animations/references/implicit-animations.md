@@ -17,11 +17,8 @@ entry-animation shape — a widget hidden until its data arrives, then fading in
 into place:
 
 ```dart
-class SummaryCard extends StatelessWidget {
-  const SummaryCard({required this.summary, super.key});
-
-  final Summary? summary;
-
+class const SummaryCard({required final Summary? summary, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasData = summary != null;

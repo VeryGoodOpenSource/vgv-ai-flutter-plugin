@@ -38,7 +38,7 @@ Apply these standards to ALL layered architecture work:
 - **Barrel exports at every package boundary** — `src/` is never imported directly by consumers
 - **Repositories accept data layer dependencies via constructor injection** — never instantiate clients internally
 - **App bootstrap wires all layers** — `main_<flavor>.dart` creates clients and repositories, provides them via `RepositoryProvider`
-- **Use Dart 3.13 primary constructors on the VGV baseline** — on Dart 3.13+ (`very_good_core` 1.6 / `very_good_analysis` 11), declare model and widget fields as primary-constructor declaring parameters, e.g. `class const User(final String id, final String name) extends Equatable`, not `const User(this.id, this.name)` plus separate `final` fields. `use_declaring_parameters` flags the classic form; keep it only below Dart 3.13
+- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare model and widget fields as primary-constructor declaring parameters (`class const User(final String id, final String name) extends Equatable`) rather than `this.field`; keep the classic form only below 3.13
 
 > **Cross-harness fallback.** This skill scaffolds and tests packages via the Very Good CLI MCP server. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create dart_package …`, `very_good packages get`, and `very_good test` commands directly.
 
@@ -188,19 +188,12 @@ Domain models extend `Equatable` and represent the app's internal data shape —
 ```dart
 /// Domain model — lives in the repository package, NOT the data package.
 /// Fields match the app's needs, not the API schema.
-class User extends Equatable {
-  const User({
-    required this.id,
-    required this.email,
-    required this.displayName,
-    this.avatarUrl,
-  });
-
-  final String id;
-  final String email;
-  final String displayName;
-  final String? avatarUrl;
-
+class const User({
+  required final String id,
+  required final String email,
+  required final String displayName,
+  final String? avatarUrl,
+}) extends Equatable {
   @override
   List<Object?> get props => [id, email, displayName, avatarUrl];
 }
