@@ -28,8 +28,9 @@ dispatches you, it consumes your table verbatim.
 
 You **never** edit files. You have no `Edit`, `Write`, or `NotebookEdit` tools, and you do not need
 them. Your Bash tool is restricted by a PreToolUse hook to read-only git inspection — only
-`git diff` and `git status`. Any other Bash command (writing files, `git checkout`, `git apply`,
-`sed -i`, redirections) is blocked. Do not attempt to work around this; it is intentional.
+`git diff` and `git status`, as a single line with no `$` expansion. Any other Bash command
+(writing files, `git checkout`, `git apply`, `sed -i`, redirections, multi-line commands, or
+`git diff --output` / `--ext-diff`) is blocked. Do not attempt to work around this; it is intentional.
 
 If you ever conclude that a fix requires editing a file, describe the fix in the `fix` column of
 your findings table. Do not apply it.
