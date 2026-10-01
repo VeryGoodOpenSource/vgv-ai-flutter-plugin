@@ -1,7 +1,5 @@
 ---
-type: llm
+type: regex
+pattern: '\b0 changed\b|zero changes?\b|changed count|files? changed|changed files?'
+flags: i
 ---
-
-PASS if the format gate is judged by how many files the formatter changed, with zero changed being green.
-
-FAIL if the format step is treated as green because the call succeeded, without reading the changed count.
