@@ -93,11 +93,7 @@ abstract class AppPageTransitions {
   path: 'details/:id',
 )
 @immutable
-class DetailsPageRoute extends GoRouteData {
-  const DetailsPageRoute({required this.id});
-
-  final String id;
-
+class const DetailsPageRoute({required final String id}) extends GoRouteData {
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
     return AppPageTransitions.slideFade(

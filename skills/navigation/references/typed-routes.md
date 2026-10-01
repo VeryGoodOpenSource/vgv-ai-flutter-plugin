@@ -12,15 +12,10 @@ casting. `package:go_router_builder` generates the type-safe helpers at build ti
   path: '/categories',
 )
 @immutable
-class CategoriesPageRoute extends GoRouteData {
-  const CategoriesPageRoute({
-    this.size,
-    this.color,
-  });
-
-  final String? size;
-  final String? color;
-
+class const CategoriesPageRoute({
+  final String? size,
+  final String? color,
+}) extends GoRouteData {
   @override
   Widget build(BuildContext context, GoRouterState state) {
     return CategoriesPage(size: size, color: color);
