@@ -194,6 +194,27 @@ assert_blocked "flutter test"
 assert_reason_contains "dart is not on the PATH" "CLI that cannot run points at PATH, not the MCP tool"
 
 echo ""
+echo "--- Deny reason says the whole call was refused ---"
+
+# A command chained with the blocked one is refused with it. Every reason must say so,
+# or the agent assumes the chained command's side effect happened.
+stub_cli 1.5.0
+assert_blocked "python3 edit_pubspec.py && dart test"
+assert_reason_contains "none of it ran" "chained command, current CLI"
+
+stub_cli 1.2.9
+assert_blocked "python3 edit_pubspec.py && dart test"
+assert_reason_contains "none of it ran" "chained command, outdated CLI"
+
+no_cli
+assert_blocked "python3 edit_pubspec.py && dart test"
+assert_reason_contains "none of it ran" "chained command, missing CLI"
+
+stub_cli
+assert_blocked "python3 edit_pubspec.py && dart test"
+assert_reason_contains "none of it ran" "chained command, CLI that cannot run"
+
+echo ""
 echo "=== Results: $PASSED passed, $FAILED failed ==="
 
 if [ "$FAILED" -gt 0 ]; then
