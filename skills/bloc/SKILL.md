@@ -35,6 +35,7 @@ Apply these standards to ALL Bloc/Cubit work:
 - **Business logic in Bloc/Cubit only** — never in widgets, pages, or views
 - **Single responsibility** — one Bloc/Cubit per feature concern
 - **Emit only after async checks** — use `emit` only inside the handler callback
+- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare event, state, and widget fields as primary-constructor declaring parameters (`class const ProfileRequested(final String userId) extends ProfileEvent`) rather than `this.field`; keep the classic form only below 3.13
 
 ---
 
@@ -106,11 +107,8 @@ sealed class TodoListEvent extends Equatable {
 
 final class TodoListSubscriptionRequested extends TodoListEvent {}
 
-final class TodoListTodoDeleted extends TodoListEvent {
-  const TodoListTodoDeleted({required this.todo});
-
-  final Todo todo;
-
+final class const TodoListTodoDeleted({required final Todo todo})
+    extends TodoListEvent {
   @override
   List<Object> get props => [todo];
 }
@@ -139,19 +137,12 @@ sealed class LoginState extends Equatable {
 
 final class LoginInitial extends LoginState {}
 final class LoginInProgress extends LoginState {}
-final class LoginSuccess extends LoginState {
-  const LoginSuccess({required this.user});
-
-  final User user;
-
+final class const LoginSuccess({required final User user}) extends LoginState {
   @override
   List<Object> get props => [user];
 }
-final class LoginFailure extends LoginState {
-  const LoginFailure({required this.error});
-
-  final String error;
-
+final class const LoginFailure({required final String error})
+    extends LoginState {
   @override
   List<Object> get props => [error];
 }

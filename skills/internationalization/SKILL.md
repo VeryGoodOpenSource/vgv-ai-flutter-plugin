@@ -33,6 +33,7 @@ Apply these standards to ALL internationalization work:
 - **Use `EdgeInsetsDirectional` (start/end) instead of `EdgeInsets` (left/right)** — ensures correct layout in RTL languages
 - **Handle RTL layout properly** — use directional widgets for padding, positioning, and alignment
 - **Implement i18n early** — even if only one language is planned initially, the overhead is small and the long-term benefit is significant
+- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare a reusable widget's localized-string fields as primary-constructor declaring parameters (`class const ConfirmDialog({required final String title, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
 
 ## Setup Pipeline and ARB File Format
 
@@ -66,20 +67,13 @@ When someone asks to add `AppLocalizations` to a shared package, decline and say
 
 ```dart
 // Shared widget — no l10n dependency
-class ConfirmDialog extends StatelessWidget {
-  const ConfirmDialog({
-    required this.title,
-    required this.message,
-    required this.confirmLabel,
-    required this.cancelLabel,
-    super.key,
-  });
-
-  final String title;
-  final String message;
-  final String confirmLabel;
-  final String cancelLabel;
-
+class const ConfirmDialog({
+  required final String title,
+  required final String message,
+  required final String confirmLabel,
+  required final String cancelLabel,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(

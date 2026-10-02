@@ -51,23 +51,14 @@ import 'package:json_annotation/json_annotation.dart';
 part 'user_response.g.dart';
 
 @JsonSerializable()
-class UserResponse {
-  const UserResponse({
-    required this.id,
-    required this.email,
-    required this.displayName,
-    this.avatarUrl,
-  });
-
+class const UserResponse({
+  required final String id,
+  required final String email,
+  @JsonKey(name: 'display_name') required final String displayName,
+  @JsonKey(name: 'avatar_url') final String? avatarUrl,
+}) {
   factory UserResponse.fromJson(Map<String, dynamic> json) =>
       _$UserResponseFromJson(json);
-
-  final String id;
-  final String email;
-  @JsonKey(name: 'display_name')
-  final String displayName;
-  @JsonKey(name: 'avatar_url')
-  final String? avatarUrl;
 
   Map<String, dynamic> toJson() => _$UserResponseToJson(this);
 }
@@ -82,12 +73,8 @@ import 'package:http/http.dart' as http;
 import 'package:user_api_client/user_api_client.dart';
 
 /// Exception thrown when a user API request fails.
-class UserApiException implements Exception {
-  const UserApiException(this.statusCode, this.message);
-
-  final int statusCode;
-  final String message;
-}
+class const UserApiException(final int statusCode, final String message)
+    implements Exception;
 
 /// HTTP client for the User API.
 class UserApiClient {
@@ -224,19 +211,12 @@ export 'user.dart';
 import 'package:equatable/equatable.dart';
 
 /// Domain model representing a user.
-class User extends Equatable {
-  const User({
-    required this.id,
-    required this.email,
-    required this.displayName,
-    this.avatarUrl,
-  });
-
-  final String id;
-  final String email;
-  final String displayName;
-  final String? avatarUrl;
-
+class const User({
+  required final String id,
+  required final String email,
+  required final String displayName,
+  final String? avatarUrl,
+}) extends Equatable {
   @override
   List<Object?> get props => [id, email, displayName, avatarUrl];
 }
@@ -249,11 +229,7 @@ import 'package:user_api_client/user_api_client.dart';
 import 'package:user_repository/user_repository.dart';
 
 /// Exception thrown when a user is not found.
-class UserNotFoundException implements Exception {
-  const UserNotFoundException(this.userId);
-
-  final String userId;
-}
+class const UserNotFoundException(final String userId) implements Exception;
 
 /// Repository for user data.
 ///
@@ -302,11 +278,8 @@ sealed class ProfileEvent extends Equatable {
   List<Object> get props => [];
 }
 
-final class ProfileLoadRequested extends ProfileEvent {
-  const ProfileLoadRequested({required this.userId});
-
-  final String userId;
-
+final class const ProfileLoadRequested({required final String userId})
+    extends ProfileEvent {
   @override
   List<Object> get props => [userId];
 }
@@ -332,11 +305,8 @@ final class ProfileLoading extends ProfileState {
   const ProfileLoading();
 }
 
-final class ProfileSuccess extends ProfileState {
-  const ProfileSuccess({required this.user});
-
-  final User user;
-
+final class const ProfileSuccess({required final User user})
+    extends ProfileState {
   @override
   List<Object?> get props => [user];
 }
@@ -398,11 +368,8 @@ import 'package:my_app/profile/bloc/profile_bloc.dart';
 import 'package:my_app/profile/view/profile_view.dart';
 import 'package:user_repository/user_repository.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({required this.userId, super.key});
-
-  final String userId;
-
+class const ProfilePage({required final String userId, super.key})
+    extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -495,14 +462,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:user_repository/user_repository.dart';
 
-class App extends StatelessWidget {
-  const App({
-    required this.userRepository,
-    super.key,
-  });
-
-  final UserRepository userRepository;
-
+class const App({
+  required final UserRepository userRepository,
+  super.key,
+}) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider.value(
