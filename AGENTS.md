@@ -15,7 +15,7 @@ agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 docs/                  # Gitignored, local only
   plan/                # Planning and design documents
-evals/                 # `claude plugin eval` suite — all 15 skills, 100 cases
+evals/                 # `claude plugin eval` suite — all 15 skills, 101 cases
   README.md            # Case format, grader reference, how to add a case
   _fixture/
     fixture.sh         # The only copy of the neutral Flutter skeleton; every case symlinks here

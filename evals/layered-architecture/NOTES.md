@@ -63,6 +63,23 @@ sharing one definition does remove duplication.
 **Discriminates.** A bare model reaches for a service locator or a global singleton, and
 lists the repository packages as hosted pub dependencies.
 
+### layered-architecture-injects-client-the-app-pubspec-declares
+
+**Discriminates.** The prompt asks for an app pubspec that lists only the repository. A bare
+model honors that by giving `WeatherRepository` a `baseUrl` and building the client inside
+it, through a redirecting `: this._(WeatherApiClient(baseUrl: baseUrl))` or an initializer
+list, and says outright that it does so to keep `weather_api_client` out of the app. The
+skill requires the client in the constructor, constructs it in `main_development.dart`, and
+declares `weather_api_client` in the app pubspec because that entrypoint imports it.
+
+**Grader notes.** `repository-builds-no-client` and `app-pubspec-declares-client` carry the
+case and weigh 2 each. `repository-builds-no-client` catches a `??` default, an
+initializer-list construction, and a redirecting constructor, and stays clear of the
+`final weatherApiClient = WeatherApiClient(...)` line in `main`.
+`app-pubspec-declares-client` anchors on `path: packages/` so the repository pubspec's
+`path: ../weather_api_client` cannot satisfy it, and allows a leading `+` because the
+plugin arm often answers with a diff.
+
 ### layered-architecture-stays-out-of-single-file-work
 
 **Discriminates.** No `packages/`, `_api_client`, `_repository` or `RepositoryProvider`
