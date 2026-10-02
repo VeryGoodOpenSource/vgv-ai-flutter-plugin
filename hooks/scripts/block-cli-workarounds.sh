@@ -29,6 +29,11 @@ if [ -z "$COMMAND" ]; then
   exit 0
 fi
 
+# A deny refuses the whole shell call, so a command chained before or after the blocked
+# one (`edit-a-file && dart test`) never runs either. Without saying so, the agent
+# assumes the chained command's side effect happened and carries on without it.
+WHOLE_CALL_REFUSED="This whole shell call was refused, so none of it ran: run any other commands it chained in a call of their own."
+
 # Deny with an install/upgrade message when the CLI is missing or outdated, with a PATH
 # message when it is present but cannot run, and otherwise redirect to the MCP tool.
 deny_with_cli_check() {
@@ -37,19 +42,19 @@ deny_with_cli_check() {
   cli_status=$(check_vgv_cli)
   case "$cli_status" in
     not_installed)
-      deny "Very Good CLI is required but was not found. Install with: dart pub global activate very_good_cli"
+      deny "Very Good CLI is required but was not found. Install with: dart pub global activate very_good_cli. $WHOLE_CALL_REFUSED"
       ;;
     outdated:*)
       local version="${cli_status#outdated:}"
-      deny "Very Good CLI ${version} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli"
+      deny "Very Good CLI ${version} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli. $WHOLE_CALL_REFUSED"
       ;;
     unverifiable)
       # Redirecting to the MCP tool here would be a dead end: the server starts through
       # the same very_good shim, which cannot exec dart from this PATH either.
-      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session."
+      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session. $WHOLE_CALL_REFUSED"
       ;;
     *)
-      deny "$mcp_hint"
+      deny "$mcp_hint $WHOLE_CALL_REFUSED"
       ;;
   esac
 }
