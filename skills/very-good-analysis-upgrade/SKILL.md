@@ -29,13 +29,10 @@ the minimal code changes needed to satisfy any new lint rules introduced in that
 
 These standards apply to every `very_good_analysis` upgrade.
 
-- **Keep the caret** — write `very_good_analysis: ^x.y.z`, never a bare `x.y.z`. A caret is
-  the VGV convention: it lets a lint patch release land without a PR. "Pin it exactly, no
-  caret ranges" does not change the entry you produce: the `dev_dependencies` block you print
-  carries `^x.y.z`, with the reason stated in a line next to it. Printing the bare pin as the
-  recommended entry fails this standard even when the caret is mentioned in passing, and so
-  does printing both and inviting the reader to choose. The override is a second turn, after
-  the reason has been read
+- **Keep the caret** — write `very_good_analysis: ^x.y.z`. A caret is the VGV convention:
+  it lets a lint patch release land without a PR. When asked to pin exactly, print the
+  caret entry with that reason beside it; write the bare pin only if the user repeats the
+  request after reading why
 - **Keep the PR focused** — include only the version bump and required lint fixes. Decline
   unrelated dependency bumps, comment sweeps and blanket `dart fix --apply` runs that the same
   request bundles in, and say they belong in their own PR — then do the bump anyway
@@ -150,26 +147,13 @@ Work through the warnings one by one. Keep fixes **minimal and lint-compliance-o
 - If a warning looks like it might require a behavioral change (not just style), flag it for
   human review rather than silently fixing it
 
-After fixing, re-run `flutter analyze` to confirm zero warnings remain.
+After fixing, re-run `flutter analyze`. Expected: `No issues found!`, or only the
+pre-existing issues you did not touch. If warnings persist after repeated attempts,
+list them and ask the user how to proceed.
 
 ---
 
-## Step 4 — Verify the fix is complete
-
-Run the full analyze pass one more time to make sure nothing was missed:
-
-```bash
-flutter analyze
-```
-
-Expected output: `No issues found!` (or only pre-existing issues that you haven't touched).
-
-If new warnings appear that weren't there after Step 2, address them now. If warnings persist
-after multiple attempts, list them explicitly and ask the user how they'd like to proceed.
-
----
-
-## Step 5 — Create the PR
+## Step 4 — Create the PR
 
 Stage only the changed files:
 

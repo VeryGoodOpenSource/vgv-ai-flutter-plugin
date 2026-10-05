@@ -23,7 +23,7 @@ Internationalization (i18n) and localization (l10n) best practices for Flutter a
 
 ## Core Standards
 
-Apply these standards to ALL internationalization work:
+Apply these standards to all internationalization work:
 
 - **Never hardcode user-facing strings** — all text must go through the l10n system
 - **Use Flutter's built-in localization system** — `flutter_localizations` + `intl`, never third-party i18n libraries

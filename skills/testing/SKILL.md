@@ -23,7 +23,7 @@ is the house style layered on top of them.
 
 ## Core Standards
 
-Apply these standards to ALL test work:
+Apply these standards to all test work:
 
 - **Descriptive test names** — verbose, readable names that describe the behavior; never `'works'` or `'renders'`
 - **Hierarchical group/test structure that reads as natural sentences** — top-level `group` for the class, nested `group` for the method, `test` for the behavior (e.g., `UserRepository` → `getUser` → `returns User when API succeeds`)

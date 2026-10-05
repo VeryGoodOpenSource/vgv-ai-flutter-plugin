@@ -27,7 +27,7 @@ Dependency license auditor for Dart and Flutter projects — verifies that all p
 
 ## Core Standards
 
-Apply these standards to ALL license compliance work:
+Apply these standards to all license compliance work:
 
 - **Run `packages_check_licenses` MCP tool** on the target project directory with `licenses: true` to display full license information
 - **Pass `directory` to the MCP tool when the project is not at the workspace root** — monorepos with the project in a subdirectory (e.g. `mobile/`) require `directory: 'mobile'`
@@ -91,7 +91,7 @@ All other dependencies use permissive licenses (MIT, BSD, Apache 2.0).
 2. [Next action]
 ```
 
-Three ways this comes out wrong, all of which fail the format: prose paragraphs instead of the headings, flagged packages as a bulleted list instead of table rows, and a recommendation folded into the risk cell instead of standing as its own column. One row per flagged package, one recommendation per row.
+One row per flagged package, one recommendation per row.
 
 ---
 

@@ -19,7 +19,7 @@ motion guidelines. No third-party animation libraries (Lottie, Rive, etc.).
 
 ## Core Standards
 
-Apply these standards to ALL animation work:
+Apply these standards to all animation work:
 
 - **Clarify visual intent when the request is ambiguous** — when the developer says "add an animation" or "make it smoother" without specifying property, trigger, duration, or curve, ask before writing code. If the developer provides clear specs (e.g., "300ms ease-in fade on the card when it appears"), proceed directly
 - **Use the simplest animation approach that works** — follow the decision tree below; never reach for `AnimationController` when an implicit animation suffices, including when several properties animate at the same time
@@ -353,6 +353,7 @@ AnimatedBuilder(
     );
   },
 )
+```
 
 Explicit animation where implicit suffices. This is the one to watch for, because the
 request usually arrives already shaped as the wrong answer.

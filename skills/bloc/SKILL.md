@@ -23,7 +23,7 @@ State management library for Dart and Flutter using the BLoC (Business Logic Com
 
 ## Core Standards
 
-Apply these standards to ALL Bloc/Cubit work:
+Apply these standards to all Bloc/Cubit work:
 
 - **Use `blocTest()` from `package:bloc_test`** for all Bloc and Cubit tests — never raw `test()` with manual stream assertions
 - **Use `package:mocktail` for mocking** — never `package:mockito`

@@ -19,7 +19,7 @@ Flutter accessibility auditing and remediation across WCAG 2.2 conformance level
 AAA. This file is the workflow; the reference files listed under **Additional Resources** are
 loaded on demand, and each phase below names the one it needs.
 
-Load only the file the current phase names. Do not duplicate its content here.
+Load only the file the current phase names.
 
 ---
 

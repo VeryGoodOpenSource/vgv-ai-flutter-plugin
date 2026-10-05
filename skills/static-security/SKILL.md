@@ -23,7 +23,7 @@ Flutter apps compile all Dart code directly into a binary that runs on untrusted
 
 ## Core Standards
 
-Apply these standards to ALL Flutter security work:
+Apply these standards to all Flutter security work:
 
 - **Never hardcode secrets** — API keys, tokens, and passwords in source code or config files are compiled into the binary and extractable via reverse engineering; serve them from a backend service
 - **`--dart-define` is not a fix for a hardcoded secret** — neither is `String.fromEnvironment`, a `.env` file, a native config file, an obfuscated constant, or a split-up string. Every one of them still ships the value inside the binary in recoverable form, so moving a key into one is the same finding in a new location. The only remediation is fetching it from a backend at runtime
@@ -314,7 +314,7 @@ ignored_advisories:
   - GHSA-4rgh-jx4f-xxxx # Not applicable: we never construct http.Client directly
 ```
 
-An entry with no written justification is a `Warning` finding in its own right, regardless of whether the advisory turns out to apply. "Someone decided this was fine once" is not a record — the suppression silences the scanner on every future run, so the reasoning has to survive in the file rather than in memory. Requiring the reviewer to go and confirm why it was added does not close the finding: the fix is the comment.
+An entry with no written justification is a `Warning` finding in its own right, whether or not the advisory applies: the suppression silences the scanner on every future run, so the reasoning has to live in the file. The fix is the comment.
 
 Exact-pinned direct dependencies deserve a `Note`. A pin like `http: 0.13.0` means the scan only ever sees that one version, so a patch that fixes a known CVE will never resolve on its own.
 

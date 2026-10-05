@@ -25,7 +25,7 @@ Best practices for creating a Flutter UI package — a reusable widget library t
 
 ## Core Standards
 
-Apply these standards to ALL UI package work:
+Apply these standards to all UI package work:
 
 - **Scaffold from the `app_ui_package` template** — create the package with the Very Good CLI MCP tool, `subcommand: 'app_ui_package'`. Never `flutter_package`, never `dart_package`, never `flutter create --template=package`; those produce a bare package with none of the theme, barrel, test-helper, or Widgetbook scaffolding below
 - **Build on Material** — depend on `flutter/material.dart` and compose Material widgets; do not rebuild primitives that Material already provides
@@ -105,9 +105,9 @@ Scaffold with the Very Good CLI MCP `create` tool:
 | `output_directory` | the monorepo directory holding shared packages (e.g., `packages/`) |
 
 `app_ui_package` is the template that ships the `lib/src/theme` extensions, the barrel
-file, the `pumpApp` helper, and the Widgetbook catalog. Do not substitute
-`flutter_package` on the grounds that it takes no organization name — neither template
-does, and `flutter_package` gives you an empty package you then rebuild by hand.
+file, the `pumpApp` helper, and the Widgetbook catalog. Neither it nor `flutter_package`
+takes an organization name; `flutter_package` just gives you an empty package to rebuild
+by hand.
 
 > **Cross-harness fallback.** On a host without this plugin's Bash hooks and without the Very Good CLI MCP server connected, run the equivalent `very_good create app_ui_package <package_name> --output-directory <dir>` command directly.
 

@@ -34,7 +34,7 @@ coverage-pattern guidance.
 
 ## Core Standards
 
-Apply these to ALL green-gate work:
+Apply these to all green-gate work:
 
 - **MCP tools only, never the Bash equivalent** — analyze via
   `mcp__dart__analyze_files`, format via `mcp__dart__dart_format`, test and coverage
@@ -60,14 +60,12 @@ analyze` / `flutter test --coverage` for the tools the loop actually runs.
 - **Exit only on observed numbers** — the loop terminates only after a single
   final iteration in which analyze is clean, format reports zero changes, all
   tests pass, and `min_coverage` is satisfied, all observed in the same round.
-  Declaring success from memory is forbidden; confirm success only with the
-  actual numbers observed in that final round.
 - **Pass `coverage: true`, `min_coverage`, and `check_ignore: true` together** —
   omitting `coverage: true` silently produces no `lcov.info` (mimics a
   misconfiguration); omitting `check_ignore: true` makes the `// coverage:ignore`
   remedy a no-op.
 - **Defer test-writing to the `testing` skill** — when a fix requires authoring
-  tests, follow `skills/testing/SKILL.md` for structure, mocking, and naming.
+  tests, follow that skill for structure, mocking, and naming.
 - **Fix root causes, not symptoms** — never weaken a gate to pass it (do not
   delete failing assertions, lower the target to dodge work, or `// coverage:ignore`
   reachable code). Escalate genuine product/API decisions instead of guessing.
@@ -236,7 +234,7 @@ percentage and per-file fix targets.
 - **Fix only failing items** — address the diagnostics, tests, or under-covered
   files surfaced this round. Do not refactor unrelated code (YAGNI).
 - **Coverage fixes = author tests** — for each ranked under-covered `SF` file,
-  write tests following `skills/testing/SKILL.md`. Prioritize files by uncovered
+  write tests following the `testing` skill. Prioritize files by uncovered
   line count (`LF - LH`).
 - **Bound files per round** — fix a coherent batch, then re-verify. Re-running
   the gates after each batch is what makes "no progress" detectable and prevents
@@ -295,9 +293,5 @@ report, and wait.
 - [`references/coverage.md`](references/coverage.md) — green-gate's coverage-gate
   detail (default target, exclude globs, lcov fields, decision tree,
   `check_ignore`, stale lcov).
-- `skills/testing/SKILL.md` — how to write Dart unit, Flutter widget, and golden
-  tests (structure, `mocktail` mocking, naming).
-- `skills/testing/references/coverage.md` — coverage-driven test patterns
-  (`copyWith`, branches, error paths) for closing per-file gaps.
-- `hooks/scripts/block-cli-workarounds.sh` — why the Bash test path is blocked and
-  every gate runs through its MCP tool.
+- The `testing` skill — unit, widget, and golden test conventions, and its
+  coverage reference for closing per-file gaps (`copyWith`, branches, error paths).
