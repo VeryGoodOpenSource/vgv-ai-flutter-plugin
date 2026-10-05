@@ -146,9 +146,8 @@ Work through the warnings one by one. Keep fixes **minimal and lint-compliance-o
 - If a warning looks like it might require a behavioral change (not just style), flag it for
   human review rather than silently fixing it
 
-After fixing, re-run `flutter analyze`. Expected: `No issues found!`, or only the
-pre-existing issues you did not touch. If warnings persist after repeated attempts,
-list them and ask the user how to proceed.
+Re-run `flutter analyze`. Expected: `No issues found!`, or only pre-existing issues you
+did not touch. If warnings persist, list them and ask the user how to proceed.
 
 ---
 

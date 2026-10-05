@@ -289,5 +289,5 @@ report, and wait.
 - [`references/coverage.md`](references/coverage.md) — green-gate's coverage-gate
   detail (default target, exclude globs, lcov fields, decision tree,
   `check_ignore`, stale lcov).
-- The `testing` skill — unit, widget, and golden test conventions, and its
-  coverage reference for closing per-file gaps (`copyWith`, branches, error paths).
+- The `testing` skill — test conventions, plus its coverage reference for closing
+  per-file gaps.

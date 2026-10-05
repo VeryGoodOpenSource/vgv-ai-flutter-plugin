@@ -102,9 +102,8 @@ Scaffold with the Very Good CLI MCP `create` tool:
 | `output_directory` | the monorepo directory holding shared packages (e.g., `packages/`) |
 
 `app_ui_package` is the template that ships the `lib/src/theme` extensions, the barrel
-file, the `pumpApp` helper, and the Widgetbook catalog. Neither it nor `flutter_package`
-takes an organization name; `flutter_package` just gives you an empty package to rebuild
-by hand.
+file, the `pumpApp` helper, and the Widgetbook catalog. `flutter_package` gives you an
+empty package to rebuild by hand.
 
 > **Cross-harness fallback.** On a host without this plugin's Bash hooks and without the Very Good CLI MCP server connected, run the equivalent `very_good create app_ui_package <package_name> --output-directory <dir>` command directly.
 

@@ -1,5 +1,7 @@
 # WCAG 2.2 Level Criteria Reference
 
+Every criterion by level, with the Flutter check that satisfies it.
+
 Level AA includes all Level A criteria. Level AAA includes all Level A and AA criteria. The "Version" column flags whether the criterion is from WCAG 2.0, 2.1, or 2.2. WCAG 2.2 removed 4.1.1 Parsing.
 
 ## Level A

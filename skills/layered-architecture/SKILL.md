@@ -259,7 +259,9 @@ checking the import boundary, including which files count as entrypoints and boo
 
 ## Data Flow
 
-A tap in Presentation dispatches an event; the Bloc calls a repository method; the repository calls a data client and transforms the response into a domain model; state flows back up and `BlocBuilder` rebuilds. See [references/data-flow.md](references/data-flow.md) for the walkthrough with code at each layer.
+Presentation dispatches an event → Bloc calls the repository → repository calls the data client and returns a domain model → `BlocBuilder` rebuilds on the new state.
+
+See [references/data-flow.md](references/data-flow.md) for the code at each layer.
 
 ## App Bootstrap
 

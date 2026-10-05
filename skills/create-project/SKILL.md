@@ -43,7 +43,7 @@ If the intent is ambiguous, use `AskUserQuestion` to clarify with a high-level q
 
 ### Step 2: Gather Missing Parameters
 
-Use `AskUserQuestion` to collect only what you cannot infer, batched into a single call. Optional parameters (description, output directory, application ID) are left at their defaults unless the user raises them.
+Use `AskUserQuestion` for what you cannot infer, in one call. Leave optional parameters (description, output directory, application ID) at their defaults unless the user raises them.
 
 ### Step 3: Create and Set Up
 

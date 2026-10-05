@@ -377,9 +377,9 @@ Read the two arm scores, not the total. The without-arm is supposed to score bad
 - **The no-plugin arm swings between runs.** One two-arm run cannot disqualify a grader:
   `accessibility-declines-gesture-detector-tap-target` failed all three content graders
   without the plugin on one run and passed all three on the next.
-- **A `model` pin weaker than the session model lowers that skill's Δ.** Its with-arm
-  answers on the pinned model while the baseline answers on the session model. Routing is
-  decided before the switch, so a pin never explains a routing miss.
+- **A `model` pin weaker than the session model lowers that skill's Δ.** The with-arm
+  answers on the pinned model, the baseline on the session model. It never explains a
+  routing miss.
 
 Costs: **$13** for 102 cases in one arm, **$25** for both, roughly **$0.12 per run**. At
 `--runs 3` a two-arm sweep is six runs per case, so budget around **$75**. `-j` up to 8

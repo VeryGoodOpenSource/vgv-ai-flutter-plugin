@@ -313,7 +313,7 @@ ignored_advisories:
   - GHSA-4rgh-jx4f-xxxx # Not applicable: we never construct http.Client directly
 ```
 
-An entry with no written justification is a `Warning` finding in its own right, whether or not the advisory applies: the suppression silences the scanner on every future run, so the reasoning has to live in the file. The fix is the comment.
+An entry with no comment is a `Warning` finding on its own, whether or not the advisory applies: the suppression silences the scanner on every future run, so the reason has to live in the file.
 
 Exact-pinned direct dependencies deserve a `Note`. A pin like `http: 0.13.0` means the scan only ever sees that one version, so a patch that fixes a known CVE will never resolve on its own.
 

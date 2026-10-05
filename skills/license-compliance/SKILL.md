@@ -106,6 +106,6 @@ So a pasted dependency list cannot produce a verdict, no matter how well known t
 2. **Name the likely licenses if it helps.** Saying `http` and `intl` are BSD-3-Clause is useful orientation and costs nothing, as long as it is framed as what the scan is expected to confirm rather than as the finding.
 3. **Give the exact command that produces a real answer.** `packages_check_licenses` with `licenses: true`, or `very_good packages check licenses <project-directory> --dependency-type direct-main,transitive`, and offer to run it.
 
-Until the scan output exists, withhold the verdict: nothing in the reply may read as certification, such as calling the list compliant or clear.
+Until scan output exists, withhold the verdict. Do not call the list compliant or clear.
 
 The same rule covers a scan that ran but came back incomplete. A package whose license the tool could not detect is `Unknown/Missing` and stays flagged. It does not become compliant because its pub.dev page says MIT.

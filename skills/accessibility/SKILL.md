@@ -203,7 +203,7 @@ Write tests covering every fix so it cannot regress. See [`references/testing.md
 
 ## WCAG 2.2 Level Criteria Reference
 
-The per-level criterion tables (A, AA, AAA) with the Flutter check for each live in [`references/wcag-criteria.md`](references/wcag-criteria.md). Load it in Phase 3 to pick the criteria active at the selected level.
+Per-level criterion tables with the Flutter check for each: [`references/wcag-criteria.md`](references/wcag-criteria.md). Load it in Phase 3.
 
 ---
 
