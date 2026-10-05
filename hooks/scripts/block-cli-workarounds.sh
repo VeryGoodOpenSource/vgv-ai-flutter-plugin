@@ -56,38 +56,15 @@ deny_with_cli_check() {
       reason="$mcp_hint"
       ;;
   esac
-  # Every denial names what it matched, so a misfire is self-explaining, and says the
-  # whole call was refused, so a chained command is not assumed to have run.
   deny "$reason $WHOLE_CALL_REFUSED Matched: $matched"
 }
 
-# Decide whether the command runs one of the blocked CLIs.
-#
-# Quoted text is data, so every quoted span collapses to a single word and can no
-# longer look like an operator or a command. Then every adjacent pair of words in each
-# subcommand is tested, matching the first on its basename. Testing pairs is what makes
-# wrappers free: fvm, melos exec --, timeout 60, sudo -u ci, shell keywords and
-# /usr/local/bin/flutter all fall out of the one rule.
-#
-# The whole command is one record (RS is a byte no command contains), so a quoted
-# span may cross a newline. The program is a quoted heredoc so it can hold quote
-# characters; printf rather than echo, which would eat a command starting with -n.
+# Deny when the command runs a blocked CLI. Quoted text is data unless something
+# executes it. Every adjacent word pair is checked, so wrappers (fvm, melos exec --,
+# sudo, timeout, shell keywords, /path/to/flutter) need no list.
 read -r -d '' find_invocation <<'AWK' || true
-function scan(s,   n, parts, i, nw, w, j, b, pair) {
-  n = split(s, parts, /[;&|(){}`\n]+/)
-  for (i = 1; i <= n; i++) {
-    nw = split(parts[i], w, /[[:space:]]+/)
-    for (j = 1; j < nw; j++) {
-      b = w[j]
-      sub(/^.*\//, "", b)
-      pair = b " " w[j + 1]
-      if (pair in hint) return pair
-    }
-  }
-  return ""
-}
 BEGIN {
-  RS = "\001"
+  RS = "\001"   # whole command is one record
   hint["flutter test"]       = "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead."
   hint["dart test"]          = hint["flutter test"]
   hint["flutter create"]     = "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead."
@@ -96,23 +73,31 @@ BEGIN {
   hint["very_good create"]   = "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead."
   hint["very_good packages"] = "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead."
 }
-{
-  gsub(/\\["'$`]/, "_")               # an escaped quote, $ or backtick is a literal character
-  sq = $0;  gsub(/'[^']*'/, "_", sq)    # single-quoted text is data
-  dq = sq;  gsub(/"[^"]*"/, "_", dq)    # so is double-quoted text...
-  pair = scan(dq)
-  # ...unless something executes it. eval and sh -c run any quoted string; $( ) and
-  # backticks run inside double quotes but never inside single ones.
-  if (pair == "" && $0 ~ /(^|[^[:alnum:]_])(eval|sh|bash|zsh)[[:space:]]/) {
-    s = $0; gsub(/["']/, "", s); pair = scan(s)
-  } else if (pair == "" && sq ~ /\$\(|`/) {
-    s = sq; gsub(/"/, "", s); pair = scan(s)
+# First blocked "cmd sub" pair in s, or "". Extra params are awk locals.
+function scan(s,   n, w, i, b, pair) {
+  gsub(/[;&|(){}`\n]+/, " ; ", s)                # operators end a command
+  n = split(s, w, /[[:space:]]+/)
+  for (i = 1; i < n; i++) {
+    b = w[i]; sub(/^.*\//, "", b)                 # basename
+    pair = b " " w[i + 1]
+    if (pair in hint) return pair
   }
+  return ""
+}
+{
+  gsub(/\\["'$`]/, "_")                                               # escaped: literal
+  text  = $0; gsub(/'[^']*'/, "_", text); gsub(/"[^"]*"/, "_", text)  # quotes are data
+  subst = $0; gsub(/'[^']*'/, "_", subst); gsub(/"/, "", subst)       # but "$( )" runs
+  bare  = $0; gsub(/["']/, "", bare)                                  # and eval "" runs
+
+  pair = scan(text)
+  if (pair == "" && $0 ~ /\$\(|`/)                                pair = scan(subst)
+  if (pair == "" && $0 ~ /(^|[^[:alnum:]_])(eval|sh|bash|zsh) /)  pair = scan(bare)
   if (pair != "") print hint[pair] "\t" pair
 }
 AWK
 
-RESULT=$(printf '%s\n' "$COMMAND" | awk "$find_invocation")
+RESULT=$(printf '%s\n' "$COMMAND" | awk "$find_invocation")   # printf: echo eats -n
 
 if [ -n "$RESULT" ]; then
   deny_with_cli_check "${RESULT%%$'\t'*}" "${RESULT#*$'\t'}"
