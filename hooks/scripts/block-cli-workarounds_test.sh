@@ -66,8 +66,7 @@ run_hook() {
   run_hook_payload "$(jq -n --arg c "$1" '{"tool_input":{"command":$c}}')"
 }
 
-# Label a case for the output. A command may be multi-line, which would wreck the
-# aligned columns, so newlines are shown as a visible marker.
+# Show newlines as ~ so multi-line commands keep the columns aligned.
 label_of() { printf '%s' "$1" | tr '\n' '~'; }
 
 assert_blocked() {
@@ -108,8 +107,7 @@ assert_reason_contains() {
   fi
 }
 
-# The blocked commands appear literally below. Edit this file with Write/Edit, not a shell
-# heredoc: the heredoc body is part of the command, and the hook under test would deny it.
+# Edit with Write/Edit, not a heredoc: the hook reads the heredoc body and denies it.
 
 echo "=== block-cli-workarounds tests ==="
 stub_cli 1.5.0
@@ -147,12 +145,9 @@ assert_allowed ""
 assert_allowed "   "
 
 echo ""
-echo "--- Quoted arguments are arguments, not commands (issue #147) ---"
+echo "--- Quoted text is data (issue #147) ---"
 
-# The regression that prompted the issue. A `|` inside a quoted regex is not a pipe,
-# so an alternation listing the governed strings must not be chopped into subcommands.
-# Both positions matter: the bug only fired when the match was NOT the last alternative,
-# because then no closing quote attached to the token.
+# A quoted `|` is not a pipe. Both positions, since the bug only fired mid-alternation.
 assert_allowed "grep -nE \"very_good|flutter test|foo\" CLAUDE.md"
 assert_allowed "grep -nE \"very_good|flutter test\" CLAUDE.md"
 assert_allowed "grep -nE \"flutter test|very_good|foo\" AGENTS.md"
@@ -167,7 +162,7 @@ assert_allowed "git commit -m \"ban flutter test | dart test\""
 assert_allowed "echo 'say \"flutter test\" now'"
 assert_allowed "echo \"say 'flutter test' now\""
 
-# Escapes and unbalanced quotes must not throw the scanner off.
+# Escapes and unbalanced quotes.
 assert_allowed "echo \\\"flutter test\\\""
 assert_allowed "grep \"flutter test file.md"
 assert_blocked "flutter test --name \"my app\""
@@ -178,14 +173,13 @@ assert_allowed "$(printf 'echo "hello\nflutter test\nworld"')"
 echo ""
 echo "--- Command position ---"
 
-# Every unquoted separator opens a fresh command position. The quoted-alternation
-# cases above prove a quoted `|` is inert; these prove an unquoted one still works.
+# Unquoted separators open a command position.
 assert_blocked "echo hi; flutter test"
 assert_blocked "echo hi | flutter test"
 assert_blocked "echo hi & flutter test"
 assert_blocked "test -d lib || flutter test"
 
-# A prefix does not stop something from being an invocation.
+# A prefix is still an invocation.
 assert_blocked "ENV=1 flutter test"
 assert_blocked "CI=true COVERAGE=1 dart test"
 assert_blocked "(flutter test)"
@@ -193,9 +187,7 @@ assert_blocked "\$(flutter test)"
 assert_blocked "\`flutter test\`"
 assert_blocked "echo start && (very_good test)"
 
-# Any wrapper passes through to the command it runs. There is no wrapper list: pass 2
-# tests every adjacent token pair, so a wrapper this suite never names is covered too,
-# whatever options it takes.
+# Wrappers need no list: every adjacent word pair is checked.
 assert_blocked "fvm flutter test"
 assert_blocked "command flutter test"
 assert_blocked "env flutter test"
@@ -210,17 +202,17 @@ assert_blocked "timeout 60 flutter test"
 assert_blocked "nice -n 10 flutter test"
 assert_blocked "xargs flutter test"
 
-# melos is how a VGV monorepo runs anything across its packages, options and all.
+# melos runs commands across a VGV monorepo.
 assert_blocked "melos exec -- flutter test"
 assert_blocked "melos exec --concurrency 1 -- dart test"
 
-# Shell keywords and brace groups open a command position like any other separator.
+# Shell keywords and brace groups are separators.
 assert_blocked "if true; then flutter test; fi"
 assert_blocked "for f in a; do flutter test; done"
 assert_blocked "{ flutter test; }"
 assert_blocked "while :; do dart test; done"
 
-# A path-qualified binary is the same command, so match on the basename.
+# Match on the basename.
 assert_blocked "/usr/local/bin/flutter test"
 assert_blocked "./flutter test"
 assert_blocked "\$FLUTTER_ROOT/bin/flutter test"
@@ -239,22 +231,19 @@ assert_allowed "fvm"
 assert_allowed "env -i"
 assert_allowed "ENV=1"
 
-# A path whose basename only resembles the command must not match.
+# A basename that only resembles the command.
 assert_allowed "git add lib/router.dart test/router_test.dart"
 assert_allowed "cp foo.dart test/"
 assert_allowed "ls bin/flutter_tools"
 
-# Comments are not modelled. A blocked command on a line after a comment is still
-# caught, and an apostrophe in a comment does not swallow the following lines. The cost
-# is that `; dart test` inside a comment is denied -- an accepted false positive, since
-# a `#` comment inside a tool call is not something the agent writes.
+# Comments are not modelled. `; dart test` inside one is denied: accepted, since the
+# agent does not write comments in tool calls.
 assert_blocked "$(printf '# a comment\nflutter test')"
 assert_blocked "$(printf 'ls # note\ncd pkg\nflutter test')"
 assert_allowed "$(printf '# it%ss broken\nls -la' "'")"
 assert_blocked "ls # fix; dart test"
 
-# `$( )` and backticks execute inside double quotes, so a blocked command there is
-# caught. Single quotes and a backslash-escaped `$` really are inert and stay allowed.
+# `$( )` and backticks run inside double quotes. Single quotes and `\$` are inert.
 assert_blocked "OUT=\"\$(flutter test)\""
 assert_blocked "echo \"\$(flutter test)\""
 assert_blocked "echo \"\`flutter test\`\""
@@ -264,8 +253,7 @@ assert_allowed "echo '\$(flutter test)'"
 assert_allowed "echo \"\$(date) building\""
 assert_allowed "VAR=\"\$(ls)\"; dart analyze"
 
-# A quoted string handed to eval or sh -c is executed, so there the quotes are
-# delimiters, not data.
+# eval and sh -c run their string.
 assert_blocked "eval \"flutter test\""
 assert_blocked "bash -c 'flutter test'"
 assert_blocked "sh -c \"flutter test\""
@@ -274,17 +262,14 @@ assert_blocked "zsh -c \"cd pkg && dart test\""
 echo ""
 echo "--- Documented non-goals ---"
 #
-# These are allowed on purpose, and asserted so that changing one is a visible decision.
-# A variable cannot be resolved without executing the command. The other three are forms
-# nobody types; catching them would need a character-level shell lexer in place of the
-# three substitutions, and the agent has never produced any of them.
+# Allowed on purpose and pinned. A variable needs execution to resolve; the rest are
+# forms nobody types.
 assert_allowed "F=flutter; \$F test"
 assert_allowed "\"flutter\" test"
 assert_allowed "'dart' test"
 assert_allowed "$(printf 'flutter \\\ntest --coverage')"
 
-# A heredoc body is text, not a command position, but the scanner does not model
-# heredocs and denies it. Pinned as the known limitation it is.
+# Heredoc bodies are not modelled; denied as a known limitation.
 assert_blocked "$(printf 'cat <<EOF\nflutter test\nEOF')"
 
 echo ""
@@ -329,14 +314,13 @@ stub_cli 1.5.0
 assert_blocked "flutter test"
 assert_reason_contains "MCP 'test' tool" "current CLI redirects to the MCP tool"
 
-# The reason names what the hook actually matched, so a future misfire is self-
-# explaining rather than describing an action the operator never attempted.
+# The reason names the match.
 assert_reason_contains "Matched: flutter test" "deny reason quotes the matched command"
 
 assert_blocked "fvm dart create my_app"
 assert_reason_contains "Matched: dart create" "wrapper is skipped in the matched command"
 
-# The very_good hits populate MATCHED through the same path; check one of them too.
+# very_good hits name the match too.
 assert_blocked "very_good packages check licenses"
 assert_reason_contains "Matched: very_good packages" "very_good hits name the matched command"
 
