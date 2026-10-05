@@ -38,42 +38,116 @@ WHOLE_CALL_REFUSED="This whole shell call was refused, so none of it ran: run an
 # message when it is present but cannot run, and otherwise redirect to the MCP tool.
 deny_with_cli_check() {
   local mcp_hint="$1"
-  local cli_status
+  local cli_status reason
   cli_status=$(check_vgv_cli)
   case "$cli_status" in
     not_installed)
-      deny "Very Good CLI is required but was not found. Install with: dart pub global activate very_good_cli. $WHOLE_CALL_REFUSED"
+      reason="Very Good CLI is required but was not found. Install with: dart pub global activate very_good_cli."
       ;;
     outdated:*)
-      local version="${cli_status#outdated:}"
-      deny "Very Good CLI ${version} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli. $WHOLE_CALL_REFUSED"
+      reason="Very Good CLI ${cli_status#outdated:} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli."
       ;;
     unverifiable)
       # Redirecting to the MCP tool here would be a dead end: the server starts through
       # the same very_good shim, which cannot exec dart from this PATH either.
-      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session. $WHOLE_CALL_REFUSED"
+      reason="Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session."
       ;;
     *)
-      deny "$mcp_hint $WHOLE_CALL_REFUSED"
+      reason="$mcp_hint"
       ;;
   esac
+  # Every denial names what it matched, so a misfire is self-explaining, and says the
+  # whole call was refused, so a chained command is not assumed to have run.
+  deny "$reason $WHOLE_CALL_REFUSED Matched: $MATCHED"
 }
 
-# Split on shell operators and check the first two tokens of each subcommand.
-# This avoids false positives from file paths (.dart) or quoted strings.
-BLOCKED=$(echo "$COMMAND" | awk '{
-  n = split($0, parts, /[;&|]+/)
+# Decide whether the command actually *runs* one of the blocked CLIs, in two awk passes.
+#
+# Pass 1 makes quoting inert: quote delimiters are dropped and shell-significant
+# characters inside quotes become `_`, so a quoted `|` is not a pipe and a quoted phrase
+# is one word. `$( )` and backticks are the exception -- the shell runs those even inside
+# double quotes -- so they reopen an unquoted region. An unquoted `#` ends the line.
+#
+# Pass 2 splits on the operators that open a command position and tests every adjacent
+# token pair, matching the first on its basename. Testing pairs rather than the first
+# word is what removes the wrapper list: `fvm`, `melos exec --`, `timeout 60`, `sudo -u
+# ci`, `xargs`, shell keywords and `/usr/local/bin/flutter` all fall out of the one rule.
+#
+# Consequences worth knowing, each pinned by a test:
+#   - an unquoted `echo flutter test` is denied; text naming a command belongs in quotes
+#   - `eval "..."` and `F=flutter; $F test` pass, since catching them means reading
+#     inside quotes, which is the issue #147 bug, or executing the command
+#
+# `printf` not `echo`, which eats a command starting with `-n`. The quote characters
+# arrive via -v because a literal `'` cannot appear inside this single-quoted program.
+RESULT=$(printf '%s\n' "$COMMAND" | awk -v SQ="'" -v DQ='"' '
+function neutral(c) {
+  if (c ~ /[;&|(){}`]/ || c ~ /[[:space:]]/) return "_"
+  return c
+}
+BEGIN { sq = 0; dq = 0; esc = 0; bt = 0; depth = 0; acc = "" }
+{
+  out = ""
+  len = length($0)
+  for (i = 1; i <= len; i++) {
+    c = substr($0, i, 1)
+    if (esc)              { out = out neutral(c); esc = 0; continue }
+    if (!sq && c == "\\") { esc = 1; continue }
+    if (!dq && c == SQ)   { sq = !sq; continue }
+    if (!sq && c == DQ)   { dq = !dq; continue }
+    # `$(` and backticks run a command even inside double quotes, so they reopen an
+    # unquoted region; the matching `)` or backtick restores the quote state.
+    if (!sq && c == "$" && substr($0, i + 1, 1) == "(") {
+      depth++; saved[depth] = dq; dq = 0; out = out "("; i++; continue
+    }
+    if (!sq && !dq && depth > 0 && c == ")") {
+      dq = saved[depth]; depth--; out = out ")"; continue
+    }
+    if (!sq && c == "`") {
+      if (bt) { dq = bt_dq; bt = 0 } else { bt_dq = dq; dq = 0; bt = 1 }
+      out = out "`"; continue
+    }
+    # An unquoted `#` starting a word comments out the rest of the line. Stopping here
+    # rather than scanning on keeps a `;` in a comment from opening a command position,
+    # and keeps an apostrophe in a comment ("# it'"'"'s") from opening quote state that
+    # would swallow every following line.
+    if (!sq && !dq && c == "#" &&
+        (out == "" || substr(out, length(out), 1) ~ /[[:space:]]/)) break
+    if (sq || dq)         { out = out neutral(c); continue }
+    out = out c
+  }
+  acc = acc out
+  # A trailing backslash is a line continuation, and an unterminated quote swallows the
+  # line break. Neither ends a command, so neither may end the record pass 2 reads.
+  if (esc) next
+  if (sq || dq) { acc = acc "_"; next }
+  print acc; acc = ""
+}
+END { if (acc != "") print acc }' | awk '
+{
+  n = split($0, parts, /[;&|(){}`]+/)
   for (i = 1; i <= n; i++) {
+    # Without this a fragment following an operator starts with a space, and the split
+    # below yields an empty leading token.
     gsub(/^[[:space:]]+/, "", parts[i])
-    split(parts[i], w, /[[:space:]]+/)
-    b = w[1]; s = w[2]
-    if ((b == "flutter" || b == "dart") && s == "create")   { print "create";      exit }
-    if ((b == "flutter" || b == "dart") && s == "test")     { print "test";         exit }
-    if (b == "very_good" && s == "create")                  { print "vg_create";    exit }
-    if (b == "very_good" && s == "test")                    { print "vg_test";      exit }
-    if (b == "very_good" && s == "packages")                { print "vg_packages";  exit }
+    nw = split(parts[i], w, /[[:space:]]+/)
+    for (j = 1; j < nw; j++) {
+      b = w[j]; s = w[j + 1]
+      # Match on the basename, so a path-qualified binary is still the same command.
+      sub(/^.*\//, "", b)
+      hit = ""
+      if ((b == "flutter" || b == "dart") && s == "create") hit = "create"
+      else if ((b == "flutter" || b == "dart") && s == "test") hit = "test"
+      else if (b == "very_good" && s == "create")   hit = "vg_create"
+      else if (b == "very_good" && s == "test")     hit = "vg_test"
+      else if (b == "very_good" && s == "packages") hit = "vg_packages"
+      if (hit != "") { printf "%s\t%s %s\n", hit, b, s; exit }
+    }
   }
 }')
+
+BLOCKED="${RESULT%%$'\t'*}"
+MATCHED="${RESULT#*$'\t'}"
 
 case "$BLOCKED" in
   create)      deny_with_cli_check "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead." ;;
