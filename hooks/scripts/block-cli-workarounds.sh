@@ -1,7 +1,6 @@
 #!/bin/bash
-# PreToolUse hook: deny shell calls to CLI commands the Very Good CLI MCP tools cover.
-# The hint table below is the list. To block another command, add a line there and a
-# case in block-cli-workarounds_test.sh.
+# PreToolUse hook: deny shell calls to CLI commands the MCP tools cover.
+# To block another command, add a hint line below and a test case.
 
 if ! command -v jq &>/dev/null; then
   echo "jq is required for block-cli-workarounds hook but not found" >&2
@@ -34,8 +33,7 @@ fi
 # assumes the chained command's side effect happened and carries on without it.
 WHOLE_CALL_REFUSED="This whole shell call was refused, so none of it ran: run any other commands it chained in a call of their own."
 
-# Deny with an install/upgrade message when the CLI is missing or outdated, with a PATH
-# message when it is present but cannot run, and otherwise redirect to the MCP tool.
+# Deny with a reason that fits the CLI status.
 deny_with_cli_check() {
   local mcp_hint="$1" matched="$2"
   local cli_status reason
@@ -59,9 +57,8 @@ deny_with_cli_check() {
   deny "$reason $WHOLE_CALL_REFUSED Matched: $matched"
 }
 
-# Deny when the command runs a blocked CLI. Quoted text is data unless something
-# executes it. Every adjacent word pair is checked, so wrappers (fvm, melos exec --,
-# sudo, timeout, shell keywords, /path/to/flutter) need no list.
+# Quoted text is data unless eval, sh -c or $( ) runs it. Every adjacent word pair is
+# checked, so wrappers (fvm, melos, sudo, timeout) and /path/to/flutter need no list.
 read -r -d '' find_invocation <<'AWK' || true   # read, not $(cat): unbalanced parens inside
 BEGIN {
   RS = "\001"   # whole command is one record
