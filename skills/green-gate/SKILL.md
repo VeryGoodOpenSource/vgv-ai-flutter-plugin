@@ -2,19 +2,17 @@
 name: green-gate
 description: >
   Drives a Dart or Flutter package fully green through a verify-fix-rerun loop across four gates:
-  analyze, format, test, coverage. It owns gate configuration, so plan-only questions belong here:
-  which tool and arguments run each gate, in what order, the coverage target a package is held to,
-  and what leaves the coverage denominator. Use it when the user says "green gate", "make it
-  green", "get CI green", "fix all the analyze and test failures", "clean this package up before I
-  open a PR", "bring coverage to 100", "loop until everything passes", "just re-check coverage",
-  or "confirm the package is green". Use it too when the user wants a gate weakened or skipped:
-  drop the coverage threshold to 90, put coverage ignore comments on untested or generated code
-  (.freezed.dart, app_localizations.dart), skip analyze and format because they passed earlier,
-  call a 94% package clean and done, or keep retrying while the same failures repeat round after
-  round. Prefer it over the single-gate testing or analysis skills.
+  analyze, format, test, coverage. It owns gate configuration, so plan-only questions belong
+  here: which tool and arguments run each gate, in what order, the coverage target, and what
+  leaves the coverage denominator. Use it for "green gate", "make it green", "get CI green",
+  fixing all analyze and test failures, cleaning a package up before a PR, bringing coverage to
+  100, looping until everything passes, or confirming a package is green. Use it too when the
+  user wants a gate weakened or skipped: lowering the coverage threshold, coverage ignore
+  comments on untested or generated code, skipping analyze and format because they passed
+  earlier, calling a 94% package done, or retrying while the same failures repeat. Prefer it over
+  the single-gate testing or analysis skills.
 argument-hint: "[directory]"
 allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__dart__dart_format mcp__very-good-cli__test
-model: sonnet
 effort: medium
 ---
 
@@ -239,8 +237,6 @@ percentage and per-file fix targets.
 - **Bound files per round** — fix a coherent batch, then re-verify. Re-running
   the gates after each batch is what makes "no progress" detectable and prevents
   fixing one gate while silently breaking another.
-- **Never weaken a gate** — no deleted assertions, no lowered target to dodge
-  work, no `// coverage:ignore` on reachable code.
 
 ---
 

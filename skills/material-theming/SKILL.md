@@ -10,7 +10,6 @@ description: >
   when the request only says "review this widget", "cut the duplication", "stop repeating
   this", or "tidy this up".
 allowed-tools: Read Glob Grep
-model: sonnet
 ---
 
 # Material Theming

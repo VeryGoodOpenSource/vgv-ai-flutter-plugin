@@ -12,7 +12,6 @@ description: >
   a result to the caller. A one-line navigation call is still navigation work. Route motion
   belongs to the animations skill, even inside a `GoRouteData` subclass.
 allowed-tools: Read Glob Grep
-model: sonnet
 ---
 
 # Navigation

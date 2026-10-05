@@ -1,20 +1,17 @@
 ---
 name: ui-package
 description: >
-  Best practices for building a Flutter UI package on Material: custom components,
-  ThemeExtension theming, consistent APIs, widget tests, app_ui_package scaffolding. Use when
-  creating a UI package, working inside one, or in an app that consumes one: adding or
-  reviewing a widget, wiring design tokens, exporting through the barrel file, or writing
-  tests for a widget that lives in a UI package. Those tests pump through the package's
-  pumpApp helper, so prefer this over general test guidance for a widget under
-  lib/src/widgets, even when the ask is only "write its tests". Also use it when asked to
-  approve what this skill forbids: importing package:<name>/src/... per file, skipping the
-  barrel to "only pull in what I use", or a parallel theme system. Triggers on "create a ui
-  package", "add a widget to our ui package", "add a design token", "export it from the
-  barrel", "write tests for this widget in my ui package", "is it fine to import from src",
-  and any request naming a package of shared widgets and design tokens.
+  Best practices for building a Flutter UI package on Material: custom components, ThemeExtension
+  theming, consistent APIs, widget tests, app_ui_package scaffolding. Use when creating a UI
+  package, working inside one, or in an app that consumes one: adding or reviewing a widget,
+  wiring design tokens, exporting through the barrel file, or writing tests for a widget under
+  lib/src/widgets, which pump through the package's pumpApp helper, so prefer this over general
+  test guidance even when the ask is only "write its tests". Also use it when asked to approve
+  what this skill forbids: importing package:<name>/src/... per file, skipping the barrel to
+  "only pull in what I use", or a parallel theme system. Triggers on any request naming a package
+  of shared widgets and design tokens, such as "create a ui package", "add a design token", or
+  "is it fine to import from src".
 allowed-tools: Read Glob Grep Edit Write mcp__very-good-cli__create
-model: sonnet
 ---
 
 # UI Package

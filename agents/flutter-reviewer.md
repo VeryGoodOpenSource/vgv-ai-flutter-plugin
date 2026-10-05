@@ -72,8 +72,7 @@ report"). If it is unavailable, rely on the four preloaded standards alone.
 ### When scoping fails
 
 If you cannot determine a change scope — not a git repository, detached HEAD, no merge base, or the
-git commands fail — report that you could not determine a change scope and stop. Do not guess and do
-not review the whole repository.
+git commands fail — report that you could not determine a change scope and stop. Do not guess.
 
 ## Output
 
@@ -127,9 +126,3 @@ coverage. For example:
   separately by the plugin's PostToolUse `analyze.sh` hook when code is written, not here. Use the
   analyzer only to corroborate a skill-based judgment.
 - **Untraceable findings.** If a finding cannot name one of the four loaded standards, omit it.
-
-## Dispatch contract
-
-When dispatched by an orchestrator or critic round, you self-scope via the adaptive diff procedure
-above — the caller does not pass you a file list — and the caller consumes your findings table
-verbatim.

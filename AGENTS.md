@@ -57,6 +57,7 @@ skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (C
     platforms/web.md
     platforms/windows.md
     testing.md
+    wcag-criteria.md
     widget-mapping.md
   animations/SKILL.md
   animations/references/
@@ -137,7 +138,7 @@ Every `SKILL.md` follows this structure:
    - `argument-hint` _(optional)_ — placeholder hint shown to the user (e.g., `"[file-or-directory]"`)
    - `model` _(optional)_ — model to use **while the skill is active**. The override applies for
      the rest of the current turn and is not saved to settings, so a user on Opus who triggers a
-     skill pinned to `sonnet` stays on sonnet until their next prompt. Eight skills here set it.
+     skill pinned to `sonnet` stays on sonnet until their next prompt. No skill here sets it.
      Note the eval consequence: a skill pinned to a weaker model than the session answers its
      with-plugin arm on that weaker model, which understates its measured lift. Routing is
      decided before the switch, so a pin never explains a routing miss

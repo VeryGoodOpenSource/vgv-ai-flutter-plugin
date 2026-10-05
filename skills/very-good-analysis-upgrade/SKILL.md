@@ -13,7 +13,6 @@ description: >
   upgrade instead, even when very_good_analysis is the package blocking resolution.
 argument-hint: "[version]"
 allowed-tools: Read Glob Grep Bash
-model: sonnet
 effort: medium
 ---
 

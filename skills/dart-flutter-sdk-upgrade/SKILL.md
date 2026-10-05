@@ -13,7 +13,6 @@ description: >
   when the blocking package has a skill of its own.
 argument-hint: "[flutter-version]"
 allowed-tools: Read Glob Grep Edit Write Bash
-model: sonnet
 effort: medium
 ---
 

@@ -14,7 +14,6 @@ description: >
   including mirroring padding, alignment, icons, or images, and replacing `EdgeInsets`
   left/right.
 allowed-tools: Read Glob Grep
-model: sonnet
 ---
 
 # Internationalization
@@ -33,7 +32,7 @@ Apply these standards to all internationalization work:
 - **Use `EdgeInsetsDirectional` (start/end) instead of `EdgeInsets` (left/right)** — ensures correct layout in RTL languages
 - **Handle RTL layout properly** — use directional widgets for padding, positioning, and alignment
 - **Implement i18n early** — even if only one language is planned initially, the overhead is small and the long-term benefit is significant
-- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare a reusable widget's localized-string fields as primary-constructor declaring parameters (`class const ConfirmDialog({required final String title, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
+- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare a reusable widget's localized-string fields as primary-constructor declaring parameters (`class const ConfirmDialog({required final String title, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
 
 ## Setup Pipeline and ARB File Format
 
