@@ -4,7 +4,7 @@ Does Claude route to the skill, and does the output follow it? Cases run through
 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) against real models.
 
 ```bash
-claude plugin eval . --scaffold                       # all 100 cases, both arms
+claude plugin eval . --scaffold                       # all 101 cases, both arms
 claude plugin eval . --scaffold --tag bloc            # one skill
 claude plugin eval . --scaffold --ablation none       # with-plugin arm only, half the cost
 ```
@@ -105,7 +105,7 @@ made to a [mocked MCP tool](#mocking-the-mcp-servers).
 
 ### Routing graders
 
-Ninety-nine of the hundred cases carry one:
+A hundred of the 101 cases carry one:
 
 ```markdown
 ---
@@ -305,7 +305,7 @@ plugin and 0.00 without, on three runs each.
 
 ```bash
 E="claude plugin eval . --scaffold"
-$E                                             # all 100, both arms
+$E                                             # all 101, both arms
 $E --tag bloc --tag testing                    # two skills
 $E --case bloc-writes-sealed-events-and-states # one case
 $E --ablation none                             # with-plugin arm only, half the cost
