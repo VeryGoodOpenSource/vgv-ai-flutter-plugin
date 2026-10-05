@@ -259,6 +259,11 @@ assert_allowed "ls bin/flutter_tools"
 assert_allowed "ls # fix; dart $TE"
 assert_allowed "$(printf '# it%ss broken\nls -la' "'")"
 
+# A comment ends at its own newline, not at the end of the command. The whole command
+# is one awk record, so stopping the scan at the first `#` would hide every later line.
+assert_blocked "$(printf '# a comment\n%s %s' "$FL" "$TE")"
+assert_blocked "$(printf 'ls # note\ncd pkg\n%s %s' "$FL" "$TE")"
+
 # Double quotes do not disarm `$( )` or backticks: the shell still runs what is inside
 # them, so they stay command positions. Only the quoting that really is inert -- a
 # backslash-escaped `$`, or single quotes -- keeps them out of command position.

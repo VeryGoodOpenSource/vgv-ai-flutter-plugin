@@ -61,90 +61,98 @@ deny_with_cli_check() {
   deny "$reason $WHOLE_CALL_REFUSED Matched: $MATCHED"
 }
 
-# Decide whether the command actually *runs* one of the blocked CLIs, in two awk passes.
+# Decide whether the command actually *runs* one of the blocked CLIs: neutralize quoting,
+# then look for a governed invocation in what is left.
 #
-# Pass 1 makes quoting inert: quote delimiters are dropped and shell-significant
-# characters inside quotes become `_`, so a quoted `|` is not a pipe and a quoted phrase
-# is one word. `$( )` and backticks are the exception -- the shell runs those even inside
-# double quotes -- so they reopen an unquoted region. An unquoted `#` ends the line.
-#
-# Pass 2 splits on the operators that open a command position and tests every adjacent
-# token pair, matching the first on its basename. Testing pairs rather than the first
-# word is what removes the wrapper list: `fvm`, `melos exec --`, `timeout 60`, `sudo -u
-# ci`, `xargs`, shell keywords and `/usr/local/bin/flutter` all fall out of the one rule.
-#
-# Consequences worth knowing, each pinned by a test:
+# Testing every adjacent token pair, rather than only the first word of a subcommand, is
+# what removes the wrapper list. `fvm`, `melos exec --`, `timeout 60`, `sudo -u ci`,
+# `xargs`, shell keywords and `/usr/local/bin/flutter` all fall out of the one rule, and
+# a new wrapper costs nothing. Two consequences, each pinned by a test:
 #   - an unquoted `echo flutter test` is denied; text naming a command belongs in quotes
 #   - `eval "..."` and `F=flutter; $F test` pass, since catching them means reading
 #     inside quotes, which is the issue #147 bug, or executing the command
 #
 # `printf` not `echo`, which eats a command starting with `-n`. The quote characters
-# arrive via -v because a literal `'` cannot appear inside this single-quoted program.
-RESULT=$(printf '%s\n' "$COMMAND" | awk -v SQ="'" -v DQ='"' '
+# arrive via -v because a literal `'` cannot appear inside a single-quoted program.
+# RS is a byte no shell command contains, so the whole command is one record. Quoting
+# then spans newlines for free, and a newline is just another character to classify.
+# If a command ever did contain a 0x01 byte it would split into two records, and a
+# token pair straddling that split would not be seen as adjacent.
+sanitize_quoting='
 function neutral(c) {
   if (c ~ /[;&|(){}`]/ || c ~ /[[:space:]]/) return "_"
   return c
 }
-BEGIN { sq = 0; dq = 0; esc = 0; bt = 0; depth = 0; acc = "" }
+BEGIN { RS = "\001" }
 {
   out = ""
   len = length($0)
   for (i = 1; i <= len; i++) {
     c = substr($0, i, 1)
-    if (esc)              { out = out neutral(c); esc = 0; continue }
+    # A backslash escapes the next character. Before a newline it continues the line,
+    # so the pair vanishes and the two lines become one command.
+    if (esc) { if (c != "\n") out = out neutral(c); esc = 0; continue }
     if (!sq && c == "\\") { esc = 1; continue }
     if (!dq && c == SQ)   { sq = !sq; continue }
     if (!sq && c == DQ)   { dq = !dq; continue }
-    # `$(` and backticks run a command even inside double quotes, so they reopen an
-    # unquoted region; the matching `)` or backtick restores the quote state.
+    # A command substitution runs even inside double quotes, so it reopens a live
+    # region that the matching ) or backtick closes again.
     if (!sq && c == "$" && substr($0, i + 1, 1) == "(") {
       depth++; saved[depth] = dq; dq = 0; out = out "("; i++; continue
     }
     if (!sq && !dq && depth > 0 && c == ")") {
       dq = saved[depth]; depth--; out = out ")"; continue
     }
+    # A backtick is one toggle rather than a stack because backticks do not nest the
+    # way $( ) does.
     if (!sq && c == "`") {
       if (bt) { dq = bt_dq; bt = 0 } else { bt_dq = dq; dq = 0; bt = 1 }
       out = out "`"; continue
     }
-    # An unquoted `#` starting a word comments out the rest of the line. Stopping here
-    # rather than scanning on keeps a `;` in a comment from opening a command position,
-    # and keeps an apostrophe in a comment ("# it'"'"'s") from opening quote state that
-    # would swallow every following line.
-    if (!sq && !dq && c == "#" &&
-        (out == "" || substr(out, length(out), 1) ~ /[[:space:]]/)) break
-    if (sq || dq)         { out = out neutral(c); continue }
+    # Must stay below the substitution and backtick branches, which suspend dq for the
+    # live region; above them it would neutralize what the shell actually runs.
+    if (sq || dq) { out = out neutral(c); continue }
+    # Outside quotes a newline ends a command just as a semicolon does, and a # that
+    # starts a word comments out the rest of its line. Skipping only to the newline
+    # matters: the record holds every line, so stopping here would hide the rest.
+    if (c == "\n") { out = out ";"; continue }
+    if (c == "#" && (out == "" || substr(out, length(out), 1) ~ /[[:space:];]/)) {
+      while (i < len && substr($0, i + 1, 1) != "\n") i++
+      continue
+    }
     out = out c
   }
-  acc = acc out
-  # A trailing backslash is a line continuation, and an unterminated quote swallows the
-  # line break. Neither ends a command, so neither may end the record pass 2 reads.
-  if (esc) next
-  if (sq || dq) { acc = acc "_"; next }
-  print acc; acc = ""
+  print out
+}'
+
+# Every quoted operator is inert by now, so each remaining one opens a command position.
+find_invocation='
+BEGIN {
+  kind["flutter create"]     = "create"
+  kind["dart create"]        = "create"
+  kind["flutter test"]       = "test"
+  kind["dart test"]          = "test"
+  kind["very_good create"]   = "vg_create"
+  kind["very_good test"]     = "vg_test"
+  kind["very_good packages"] = "vg_packages"
 }
-END { if (acc != "") print acc }' | awk '
 {
   n = split($0, parts, /[;&|(){}`]+/)
   for (i = 1; i <= n; i++) {
-    # Without this a fragment following an operator starts with a space, and the split
-    # below yields an empty leading token.
-    gsub(/^[[:space:]]+/, "", parts[i])
     nw = split(parts[i], w, /[[:space:]]+/)
     for (j = 1; j < nw; j++) {
-      b = w[j]; s = w[j + 1]
-      # Match on the basename, so a path-qualified binary is still the same command.
+      b = w[j]
+      # Match on the basename, so a path-qualified binary is the same command.
       sub(/^.*\//, "", b)
-      hit = ""
-      if ((b == "flutter" || b == "dart") && s == "create") hit = "create"
-      else if ((b == "flutter" || b == "dart") && s == "test") hit = "test"
-      else if (b == "very_good" && s == "create")   hit = "vg_create"
-      else if (b == "very_good" && s == "test")     hit = "vg_test"
-      else if (b == "very_good" && s == "packages") hit = "vg_packages"
-      if (hit != "") { printf "%s\t%s %s\n", hit, b, s; exit }
+      k = kind[b " " w[j + 1]]
+      if (k != "") { printf "%s\t%s %s\n", k, b, w[j + 1]; exit }
     }
   }
-}')
+}'
+
+RESULT=$(printf '%s\n' "$COMMAND" \
+  | awk -v SQ="'" -v DQ='"' "$sanitize_quoting" \
+  | awk "$find_invocation")
 
 BLOCKED="${RESULT%%$'\t'*}"
 MATCHED="${RESULT#*$'\t'}"
