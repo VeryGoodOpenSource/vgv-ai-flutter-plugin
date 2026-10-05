@@ -168,10 +168,6 @@ assert_allowed "echo \"$FL $TE\""
 assert_allowed "echo '$FL $TE'"
 assert_allowed "git commit -m \"ban $FL $TE | dart $TE\""
 
-# Quoting the command name still runs the command, so this stays denied.
-assert_blocked "\"$FL\" $TE"
-assert_blocked "'dart' $TE"
-
 # One quote type does not toggle state inside the other.
 assert_allowed "echo 'say \"$FL $TE\" now'"
 assert_allowed "echo \"say '$FL $TE' now\""
@@ -254,19 +250,17 @@ assert_allowed "git add lib/router.dart $TE/router_${TE}.dart"
 assert_allowed "cp foo.dart $TE/"
 assert_allowed "ls bin/flutter_tools"
 
-# An unquoted `#` starts a comment: a `;` inside it opens no command position, and an
-# apostrophe inside it opens no quote state that would swallow the following lines.
-assert_allowed "ls # fix; dart $TE"
-assert_allowed "$(printf '# it%ss broken\nls -la' "'")"
-
-# A comment ends at its own newline, not at the end of the command. The whole command
-# is one awk record, so stopping the scan at the first `#` would hide every later line.
+# Comments are not modelled. A blocked command on a line after a comment is still
+# caught, and an apostrophe in a comment does not swallow the following lines. The cost
+# is that `; dart test` inside a comment is denied -- an accepted false positive, since
+# a `#` comment inside a tool call is not something the agent writes.
 assert_blocked "$(printf '# a comment\n%s %s' "$FL" "$TE")"
 assert_blocked "$(printf 'ls # note\ncd pkg\n%s %s' "$FL" "$TE")"
+assert_allowed "$(printf '# it%ss broken\nls -la' "'")"
+assert_blocked "ls # fix; dart $TE"
 
-# Double quotes do not disarm `$( )` or backticks: the shell still runs what is inside
-# them, so they stay command positions. Only the quoting that really is inert -- a
-# backslash-escaped `$`, or single quotes -- keeps them out of command position.
+# `$( )` and backticks execute inside double quotes, so a blocked command there is
+# caught. Single quotes and a backslash-escaped `$` really are inert and stay allowed.
 assert_blocked "OUT=\"\$($FL $TE)\""
 assert_blocked "echo \"\$($FL $TE)\""
 assert_blocked "echo \"\`$FL $TE\`\""
@@ -276,21 +270,24 @@ assert_allowed "echo '\$($FL $TE)'"
 assert_allowed "echo \"\$(date) building\""
 assert_allowed "VAR=\"\$(ls)\"; dart analyze"
 
-# A trailing backslash continues the line, so the command word and its subcommand can
-# be split across two lines and still be one invocation.
-assert_blocked "$(printf '%s \\\n%s --coverage' "$FL" "$TE")"
+# A quoted string handed to eval or sh -c is executed, so there the quotes are
+# delimiters, not data.
+assert_blocked "eval \"$FL $TE\""
+assert_blocked "bash -c '$FL $TE'"
+assert_blocked "sh -c \"$FL $TE\""
+assert_blocked "zsh -c \"cd pkg && dart $TE\""
 
 echo ""
 echo "--- Documented non-goals ---"
 #
-# These are allowed because catching them would cost more than it buys. Each hides the
-# command inside a quoted string or behind a variable, so matching it means reading
-# inside quotes -- which is precisely the issue #147 bug -- or executing the command.
-# They are asserted so that changing any of them is a visible decision, not an accident.
-assert_allowed "eval \"$FL $TE\""
+# These are allowed on purpose, and asserted so that changing one is a visible decision.
+# A variable cannot be resolved without executing the command. The other three are forms
+# nobody types; catching them would need a character-level shell lexer in place of the
+# three substitutions, and the agent has never produced any of them.
 assert_allowed "F=$FL; \$F $TE"
-assert_allowed "bash -c '$FL $TE'"
-assert_allowed "sh -c \"$FL $TE\""
+assert_allowed "\"$FL\" $TE"
+assert_allowed "'dart' $TE"
+assert_allowed "$(printf '%s \\\n%s --coverage' "$FL" "$TE")"
 
 # A heredoc body is text, not a command position, but the scanner does not model
 # heredocs and denies it. Pinned as the known limitation it is.
