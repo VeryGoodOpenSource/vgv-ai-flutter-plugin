@@ -381,7 +381,7 @@ Read the two arm scores, not the total. The without-arm is supposed to score bad
   baseline, so its Δ reads low. Routing is decided before the switch, so the pin never
   explains a routing miss.
 
-Costs: **$13** for 101 cases in one arm, **$25** for both, roughly **$0.12 per run**. At
+Costs: **$13** for 102 cases in one arm, **$25** for both, roughly **$0.12 per run**. At
 `--runs 3` a two-arm sweep is six runs per case, so budget around **$75**. `-j` up to 8
 shortens wall clock.
 
@@ -403,7 +403,7 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
 - CI needs `ANTHROPIC_API_KEY`, having no Claude Code session, and `--trust-plugin`.
 - `--ablation none` and `--ablation with-without` weight the baseline differently. Compare
   runs from one mode at a time.
-- The job has a one-hour ceiling. 101 cases in one arm measured roughly 35 minutes at
+- The job has a one-hour ceiling. 102 cases in one arm measured roughly 35 minutes at
   `-j 4`. A two-arm run at `--runs 3` is 600 runs and does not fit.
 
 ---
