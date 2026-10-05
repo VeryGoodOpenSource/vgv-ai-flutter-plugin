@@ -15,12 +15,15 @@ agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 docs/                  # Gitignored, local only
   plan/                # Planning and design documents
-evals/                 # `claude plugin eval` suite — all 15 skills, 101 cases
+evals/                 # `claude plugin eval` suite — all 15 skills, 102 cases
   README.md            # Case format, grader reference, how to add a case
   _fixture/
     fixture.sh         # The only copy of the neutral Flutter skeleton; every case symlinks here
+  mocks/               # MCP stand-ins, one directory per server name in .mcp.json
+    <server>/
+      _tools.json      # The tools/list result the model sees; may be narrower than the server
+      <tool>.md        # Frontmatter optional; the body is the tool result
   <skill>/             # One directory per skill, named for the skill it covers
-    NOTES.md           # What each case discriminates and why it exists
     <case-name>/       # One directory per case, named for the case
       prompt.md        # Frontmatter: run limits and tools. Body: the prompt
       case.yaml        # schema_version, name, and the scaffold hook
