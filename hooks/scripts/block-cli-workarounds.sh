@@ -61,79 +61,33 @@ deny_with_cli_check() {
   deny "$reason $WHOLE_CALL_REFUSED Matched: $matched"
 }
 
-# Decide whether the command actually *runs* one of the blocked CLIs: neutralize quoting,
-# then look for a governed invocation in what is left.
+# Decide whether the command runs one of the blocked CLIs.
 #
-# Testing every adjacent token pair, rather than only the first word of a subcommand, is
-# what removes the wrapper list. `fvm`, `melos exec --`, `timeout 60`, `sudo -u ci`,
-# `xargs`, shell keywords and `/usr/local/bin/flutter` all fall out of the one rule, and
-# a new wrapper costs nothing. Two consequences, each pinned by a test:
-#   - an unquoted `echo flutter test` is denied; text naming a command belongs in quotes
-#   - `eval "..."` and `F=flutter; $F test` pass, since catching them means reading
-#     inside quotes, which is the issue #147 bug, or executing the command
+# Quoted text is data, so every quoted span collapses to a single word and can no
+# longer look like an operator or a command. Then every adjacent pair of words in each
+# subcommand is tested, matching the first on its basename. Testing pairs is what makes
+# wrappers free: fvm, melos exec --, timeout 60, sudo -u ci, shell keywords and
+# /usr/local/bin/flutter all fall out of the one rule.
 #
-# `printf` not `echo`, which eats a command starting with `-n`.
-#
-# Each program is read from a quoted heredoc so it can contain quote characters directly.
-# `prog=$(cat <<'AWK' ...)` does not work here: bash scans a command substitution for its
-# closing paren, and these programs hold unbalanced parens inside strings.
-#
-# RS is a byte no shell command contains, so the whole command is one record. Quoting
-# then spans newlines for free, and a newline is just another character to classify.
-# If a command ever did contain a 0x01 byte it would split into two records, and a
-# token pair straddling that split would not be seen as adjacent.
-read -r -d '' sanitize_quoting <<'AWK' || true
-function neutral(c) {
-  if (c ~ /[;&|(){}`]/ || c ~ /[[:space:]]/) return "_"
-  return c
-}
-BEGIN { RS = "\001" }
-{
-  out = ""
-  len = length($0)
-  for (i = 1; i <= len; i++) {
-    c = substr($0, i, 1)
-    # A backslash escapes the next character. Before a newline it continues the line,
-    # so the pair vanishes and the two lines become one command.
-    if (esc) { if (c != "\n") out = out neutral(c); esc = 0; continue }
-    if (!sq && c == "\\") { esc = 1; continue }
-    if (!dq && c == "'")  { sq = !sq; continue }
-    if (!sq && c == "\"") { dq = !dq; continue }
-    # A command substitution runs even inside double quotes, so it reopens a live
-    # region that the matching ) or backtick closes again.
-    if (!sq && c == "$" && substr($0, i + 1, 1) == "(") {
-      depth++; saved[depth] = dq; dq = 0; out = out "("; i++; continue
-    }
-    if (!sq && !dq && depth > 0 && c == ")") {
-      dq = saved[depth]; depth--; out = out ")"; continue
-    }
-    # A backtick is one toggle rather than a stack because backticks do not nest the
-    # way $( ) does.
-    if (!sq && c == "`") {
-      if (bt) { dq = bt_dq; bt = 0 } else { bt_dq = dq; dq = 0; bt = 1 }
-      out = out "`"; continue
-    }
-    # Must stay below the substitution and backtick branches, which suspend dq for the
-    # live region; above them it would neutralize what the shell actually runs.
-    if (sq || dq) { out = out neutral(c); continue }
-    # Outside quotes a newline ends a command just as a semicolon does, and a # that
-    # starts a word comments out the rest of its line. Skipping only to the newline
-    # matters: the record holds every line, so stopping here would hide the rest.
-    if (c == "\n") { out = out ";"; continue }
-    if (c == "#" && (out == "" || substr(out, length(out), 1) ~ /[[:space:];]/)) {
-      while (i < len && substr($0, i + 1, 1) != "\n") i++
-      continue
-    }
-    out = out c
-  }
-  print out
-}
-AWK
-
-# Every quoted operator is inert by now, so each remaining one opens a command position.
-# The table emits the redirect itself, rather than a token the caller translates back.
+# The whole command is one record (RS is a byte no command contains), so a quoted
+# span may cross a newline. The program is a quoted heredoc so it can hold quote
+# characters; printf rather than echo, which would eat a command starting with -n.
 read -r -d '' find_invocation <<'AWK' || true
+function scan(s,   n, parts, i, nw, w, j, b, pair) {
+  n = split(s, parts, /[;&|(){}`\n]+/)
+  for (i = 1; i <= n; i++) {
+    nw = split(parts[i], w, /[[:space:]]+/)
+    for (j = 1; j < nw; j++) {
+      b = w[j]
+      sub(/^.*\//, "", b)
+      pair = b " " w[j + 1]
+      if (pair in hint) return pair
+    }
+  }
+  return ""
+}
 BEGIN {
+  RS = "\001"
   hint["flutter test"]       = "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead."
   hint["dart test"]          = hint["flutter test"]
   hint["flutter create"]     = "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead."
@@ -143,23 +97,23 @@ BEGIN {
   hint["very_good packages"] = "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead."
 }
 {
-  n = split($0, parts, /[;&|(){}`]+/)
-  for (i = 1; i <= n; i++) {
-    nw = split(parts[i], w, /[[:space:]]+/)
-    for (j = 1; j < nw; j++) {
-      b = w[j]
-      # Match on the basename, so a path-qualified binary is the same command.
-      sub(/^.*\//, "", b)
-      pair = b " " w[j + 1]
-      if (pair in hint) { print hint[pair] "\t" pair; exit }
-    }
+  gsub(/\\["'$`]/, "_")               # an escaped quote, $ or backtick is a literal character
+  sq = $0;  gsub(/'[^']*'/, "_", sq)    # single-quoted text is data
+  dq = sq;  gsub(/"[^"]*"/, "_", dq)    # so is double-quoted text...
+  pair = scan(dq)
+  # ...unless something executes it. eval and sh -c run any quoted string; $( ) and
+  # backticks run inside double quotes but never inside single ones.
+  if (pair == "" && $0 ~ /(^|[^[:alnum:]_])(eval|sh|bash|zsh)[[:space:]]/) {
+    s = $0; gsub(/["']/, "", s); pair = scan(s)
+  } else if (pair == "" && sq ~ /\$\(|`/) {
+    s = sq; gsub(/"/, "", s); pair = scan(s)
   }
+  if (pair != "") print hint[pair] "\t" pair
 }
 AWK
 
-RESULT=$(printf '%s\n' "$COMMAND" | awk "$sanitize_quoting" | awk "$find_invocation")
+RESULT=$(printf '%s\n' "$COMMAND" | awk "$find_invocation")
 
-# Empty means nothing in the command runs a blocked CLI, so stand aside.
 if [ -n "$RESULT" ]; then
   deny_with_cli_check "${RESULT%%$'\t'*}" "${RESULT#*$'\t'}"
 fi
