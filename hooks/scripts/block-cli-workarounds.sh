@@ -1,7 +1,7 @@
 #!/bin/bash
-# PreToolUse hook: block Bash commands that bypass MCP tools.
-# Denies flutter create, dart create, very_good create, very_good test,
-# very_good packages, flutter test, dart test.
+# PreToolUse hook: deny shell calls to CLI commands the Very Good CLI MCP tools cover.
+# The hint table below is the list. To block another command, add a line there and a
+# case in block-cli-workarounds_test.sh.
 
 if ! command -v jq &>/dev/null; then
   echo "jq is required for block-cli-workarounds hook but not found" >&2
@@ -62,7 +62,7 @@ deny_with_cli_check() {
 # Deny when the command runs a blocked CLI. Quoted text is data unless something
 # executes it. Every adjacent word pair is checked, so wrappers (fvm, melos exec --,
 # sudo, timeout, shell keywords, /path/to/flutter) need no list.
-read -r -d '' find_invocation <<'AWK' || true
+read -r -d '' find_invocation <<'AWK' || true   # read, not $(cat): unbalanced parens inside
 BEGIN {
   RS = "\001"   # whole command is one record
   hint["flutter test"]       = "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead."
