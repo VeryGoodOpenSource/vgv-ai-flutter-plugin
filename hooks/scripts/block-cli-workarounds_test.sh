@@ -108,29 +108,24 @@ assert_reason_contains() {
   fi
 }
 
-# The hook's own trigger strings, assembled at runtime. Writing them literally would
-# make this file's own edits and greps trip the hook it tests -- which is the exact
-# bug issue #147 reports.
-FL="fl""utter"
-TE="te""st"
-VG="very_""good"
-CR="cre""ate"
+# The blocked commands appear literally below. Edit this file with Write/Edit, not a shell
+# heredoc: the heredoc body is part of the command, and the hook under test would deny it.
 
 echo "=== block-cli-workarounds tests ==="
 stub_cli 1.5.0
 echo ""
 echo "--- Should be BLOCKED ---"
-assert_blocked "dart $TE"
-assert_blocked "$FL $TE"
-assert_blocked "dart $TE test/routing/foo_test.dart"
-assert_blocked "$FL $TE --coverage"
-assert_blocked "dart $CR my_app"
-assert_blocked "$FL create my_app"
-assert_blocked "$VG create flutter_app --project-name my_app"
-assert_blocked "$VG $TE --coverage --min-coverage 100"
-assert_blocked "$VG packages check licenses"
-assert_blocked "cd /path && dart $TE"
-assert_blocked "ENV=1 && $FL $TE --coverage"
+assert_blocked "dart test"
+assert_blocked "flutter test"
+assert_blocked "dart test test/routing/foo_test.dart"
+assert_blocked "flutter test --coverage"
+assert_blocked "dart create my_app"
+assert_blocked "flutter create my_app"
+assert_blocked "very_good create flutter_app --project-name my_app"
+assert_blocked "very_good test --coverage --min-coverage 100"
+assert_blocked "very_good packages check licenses"
+assert_blocked "cd /path && dart test"
+assert_blocked "ENV=1 && flutter test --coverage"
 
 echo ""
 echo "--- Should be ALLOWED ---"
@@ -138,14 +133,14 @@ assert_allowed "dart analyze lib/foo.dart"
 assert_allowed "dart format lib/foo.dart"
 assert_allowed "dart pub get"
 assert_allowed "dart fix --apply"
-assert_allowed "$FL pub get"
-assert_allowed "$FL analyze"
+assert_allowed "flutter pub get"
+assert_allowed "flutter analyze"
 assert_allowed "git add lib/router.dart test/router_test.dart"
 assert_allowed "dart analyze lib/foo.dart test/bar_test.dart"
-assert_allowed "git commit -m 'fix dart $TE hook'"
-assert_allowed "echo '$FL create is blocked'"
-assert_allowed "gh pr create --body 'use dart $TE instead'"
-assert_allowed "git log --grep='dart $TE'"
+assert_allowed "git commit -m 'fix dart test hook'"
+assert_allowed "echo 'flutter create is blocked'"
+assert_allowed "gh pr create --body 'use dart test instead'"
+assert_allowed "git log --grep='dart test'"
 assert_allowed "ls"
 assert_allowed "pwd"
 assert_allowed ""
@@ -158,87 +153,86 @@ echo "--- Quoted arguments are arguments, not commands (issue #147) ---"
 # so an alternation listing the governed strings must not be chopped into subcommands.
 # Both positions matter: the bug only fired when the match was NOT the last alternative,
 # because then no closing quote attached to the token.
-assert_allowed "grep -nE \"$VG|$FL $TE|foo\" CLAUDE.md"
-assert_allowed "grep -nE \"$VG|$FL $TE\" CLAUDE.md"
-assert_allowed "grep -nE \"$FL $TE|$VG|foo\" AGENTS.md"
-assert_allowed "rg '$FL $CR|dart $CR' docs/"
+assert_allowed "grep -nE \"very_good|flutter test|foo\" CLAUDE.md"
+assert_allowed "grep -nE \"very_good|flutter test\" CLAUDE.md"
+assert_allowed "grep -nE \"flutter test|very_good|foo\" AGENTS.md"
+assert_allowed "rg 'flutter create|dart create' docs/"
 
 # A quoted phrase is a single word and runs nothing.
-assert_allowed "echo \"$FL $TE\""
-assert_allowed "echo '$FL $TE'"
-assert_allowed "git commit -m \"ban $FL $TE | dart $TE\""
+assert_allowed "echo \"flutter test\""
+assert_allowed "echo 'flutter test'"
+assert_allowed "git commit -m \"ban flutter test | dart test\""
 
-# One quote type does not toggle state inside the other.
-assert_allowed "echo 'say \"$FL $TE\" now'"
-assert_allowed "echo \"say '$FL $TE' now\""
+# One quote type is inert inside the other.
+assert_allowed "echo 'say \"flutter test\" now'"
+assert_allowed "echo \"say 'flutter test' now\""
 
 # Escapes and unbalanced quotes must not throw the scanner off.
-assert_allowed "echo \\\"$FL $TE\\\""
-assert_allowed "grep \"$FL $TE file.md"
-assert_blocked "$FL $TE --name \"my app\""
+assert_allowed "echo \\\"flutter test\\\""
+assert_allowed "grep \"flutter test file.md"
+assert_blocked "flutter test --name \"my app\""
 
-# Quote state is carried across lines, because a quoted string may span newlines.
-# Without that, the second line would start unquoted and read as an invocation.
-assert_allowed "$(printf 'echo "hello\n%s %s\nworld"' "$FL" "$TE")"
+# A quoted string may span newlines and is still one word.
+assert_allowed "$(printf 'echo "hello\nflutter test\nworld"')"
 
 echo ""
 echo "--- Command position ---"
 
 # Every unquoted separator opens a fresh command position. The quoted-alternation
 # cases above prove a quoted `|` is inert; these prove an unquoted one still works.
-assert_blocked "echo hi; $FL $TE"
-assert_blocked "echo hi | $FL $TE"
-assert_blocked "echo hi & $FL $TE"
-assert_blocked "test -d lib || $FL $TE"
+assert_blocked "echo hi; flutter test"
+assert_blocked "echo hi | flutter test"
+assert_blocked "echo hi & flutter test"
+assert_blocked "test -d lib || flutter test"
 
 # A prefix does not stop something from being an invocation.
-assert_blocked "ENV=1 $FL $TE"
-assert_blocked "CI=true COVERAGE=1 dart $TE"
-assert_blocked "($FL $TE)"
-assert_blocked "\$($FL $TE)"
-assert_blocked "\`$FL $TE\`"
-assert_blocked "echo start && ($VG $TE)"
+assert_blocked "ENV=1 flutter test"
+assert_blocked "CI=true COVERAGE=1 dart test"
+assert_blocked "(flutter test)"
+assert_blocked "\$(flutter test)"
+assert_blocked "\`flutter test\`"
+assert_blocked "echo start && (very_good test)"
 
 # Any wrapper passes through to the command it runs. There is no wrapper list: pass 2
 # tests every adjacent token pair, so a wrapper this suite never names is covered too,
 # whatever options it takes.
-assert_blocked "fvm $FL $TE"
-assert_blocked "command $FL $TE"
-assert_blocked "env $FL $TE"
-assert_blocked "env FOO=1 $FL $TE"
-assert_blocked "env -i $FL $TE"
-assert_blocked "sudo $FL $TE"
-assert_blocked "sudo -u ci $FL $TE"
-assert_blocked "nohup $FL $TE"
-assert_blocked "exec $FL $TE"
-assert_blocked "time $FL $TE"
-assert_blocked "timeout 60 $FL $TE"
-assert_blocked "nice -n 10 $FL $TE"
-assert_blocked "xargs $FL $TE"
+assert_blocked "fvm flutter test"
+assert_blocked "command flutter test"
+assert_blocked "env flutter test"
+assert_blocked "env FOO=1 flutter test"
+assert_blocked "env -i flutter test"
+assert_blocked "sudo flutter test"
+assert_blocked "sudo -u ci flutter test"
+assert_blocked "nohup flutter test"
+assert_blocked "exec flutter test"
+assert_blocked "time flutter test"
+assert_blocked "timeout 60 flutter test"
+assert_blocked "nice -n 10 flutter test"
+assert_blocked "xargs flutter test"
 
 # melos is how a VGV monorepo runs anything across its packages, options and all.
-assert_blocked "melos exec -- $FL $TE"
-assert_blocked "melos exec --concurrency 1 -- dart $TE"
+assert_blocked "melos exec -- flutter test"
+assert_blocked "melos exec --concurrency 1 -- dart test"
 
 # Shell keywords and brace groups open a command position like any other separator.
-assert_blocked "if true; then $FL $TE; fi"
-assert_blocked "for f in a; do $FL $TE; done"
-assert_blocked "{ $FL $TE; }"
-assert_blocked "while :; do dart $TE; done"
+assert_blocked "if true; then flutter test; fi"
+assert_blocked "for f in a; do flutter test; done"
+assert_blocked "{ flutter test; }"
+assert_blocked "while :; do dart test; done"
 
 # A path-qualified binary is the same command, so match on the basename.
-assert_blocked "/usr/local/bin/$FL $TE"
-assert_blocked "./$FL $TE"
-assert_blocked "\$FLUTTER_ROOT/bin/$FL $TE"
-assert_blocked "../sdk/bin/dart $TE"
+assert_blocked "/usr/local/bin/flutter test"
+assert_blocked "./flutter test"
+assert_blocked "\$FLUTTER_ROOT/bin/flutter test"
+assert_blocked "../sdk/bin/dart test"
 
 # ...but only when the wrapped command is itself blocked.
-assert_allowed "fvm $FL pub get"
-assert_allowed "command -v $FL"
+assert_allowed "fvm flutter pub get"
+assert_allowed "command -v flutter"
 assert_allowed "env | grep PATH"
 assert_allowed "melos exec -- dart analyze"
 assert_allowed "timeout 60 dart pub get"
-assert_allowed "/usr/local/bin/$FL analyze"
+assert_allowed "/usr/local/bin/flutter analyze"
 
 # A wrapper with nothing after it has no pair to match.
 assert_allowed "fvm"
@@ -246,36 +240,36 @@ assert_allowed "env -i"
 assert_allowed "ENV=1"
 
 # A path whose basename only resembles the command must not match.
-assert_allowed "git add lib/router.dart $TE/router_${TE}.dart"
-assert_allowed "cp foo.dart $TE/"
+assert_allowed "git add lib/router.dart test/router_test.dart"
+assert_allowed "cp foo.dart test/"
 assert_allowed "ls bin/flutter_tools"
 
 # Comments are not modelled. A blocked command on a line after a comment is still
 # caught, and an apostrophe in a comment does not swallow the following lines. The cost
 # is that `; dart test` inside a comment is denied -- an accepted false positive, since
 # a `#` comment inside a tool call is not something the agent writes.
-assert_blocked "$(printf '# a comment\n%s %s' "$FL" "$TE")"
-assert_blocked "$(printf 'ls # note\ncd pkg\n%s %s' "$FL" "$TE")"
+assert_blocked "$(printf '# a comment\nflutter test')"
+assert_blocked "$(printf 'ls # note\ncd pkg\nflutter test')"
 assert_allowed "$(printf '# it%ss broken\nls -la' "'")"
-assert_blocked "ls # fix; dart $TE"
+assert_blocked "ls # fix; dart test"
 
 # `$( )` and backticks execute inside double quotes, so a blocked command there is
 # caught. Single quotes and a backslash-escaped `$` really are inert and stay allowed.
-assert_blocked "OUT=\"\$($FL $TE)\""
-assert_blocked "echo \"\$($FL $TE)\""
-assert_blocked "echo \"\`$FL $TE\`\""
-assert_blocked "if [ -z \"\$(dart $TE)\" ]; then echo x; fi"
-assert_allowed "echo \"\\\$($FL $TE)\""
-assert_allowed "echo '\$($FL $TE)'"
+assert_blocked "OUT=\"\$(flutter test)\""
+assert_blocked "echo \"\$(flutter test)\""
+assert_blocked "echo \"\`flutter test\`\""
+assert_blocked "if [ -z \"\$(dart test)\" ]; then echo x; fi"
+assert_allowed "echo \"\\\$(flutter test)\""
+assert_allowed "echo '\$(flutter test)'"
 assert_allowed "echo \"\$(date) building\""
 assert_allowed "VAR=\"\$(ls)\"; dart analyze"
 
 # A quoted string handed to eval or sh -c is executed, so there the quotes are
 # delimiters, not data.
-assert_blocked "eval \"$FL $TE\""
-assert_blocked "bash -c '$FL $TE'"
-assert_blocked "sh -c \"$FL $TE\""
-assert_blocked "zsh -c \"cd pkg && dart $TE\""
+assert_blocked "eval \"flutter test\""
+assert_blocked "bash -c 'flutter test'"
+assert_blocked "sh -c \"flutter test\""
+assert_blocked "zsh -c \"cd pkg && dart test\""
 
 echo ""
 echo "--- Documented non-goals ---"
@@ -284,14 +278,14 @@ echo "--- Documented non-goals ---"
 # A variable cannot be resolved without executing the command. The other three are forms
 # nobody types; catching them would need a character-level shell lexer in place of the
 # three substitutions, and the agent has never produced any of them.
-assert_allowed "F=$FL; \$F $TE"
-assert_allowed "\"$FL\" $TE"
-assert_allowed "'dart' $TE"
-assert_allowed "$(printf '%s \\\n%s --coverage' "$FL" "$TE")"
+assert_allowed "F=flutter; \$F test"
+assert_allowed "\"flutter\" test"
+assert_allowed "'dart' test"
+assert_allowed "$(printf 'flutter \\\ntest --coverage')"
 
 # A heredoc body is text, not a command position, but the scanner does not model
 # heredocs and denies it. Pinned as the known limitation it is.
-assert_blocked "$(printf 'cat <<EOF\n%s %s\nEOF' "$FL" "$TE")"
+assert_blocked "$(printf 'cat <<EOF\nflutter test\nEOF')"
 
 echo ""
 echo "--- Tool scoping ---"
@@ -317,47 +311,47 @@ assert_tool_result() {
 }
 
 # The host's shell tool is this hook's business, whatever it is named.
-assert_tool_result deny  "Bash"  "$FL $TE"
-assert_tool_result deny  "Shell" "$FL $TE"
-assert_tool_result deny  "Bash"  "$VG create flutter_app"
+assert_tool_result deny  "Bash"  "flutter test"
+assert_tool_result deny  "Shell" "flutter test"
+assert_tool_result deny  "Bash"  "very_good create flutter_app"
 
 # Anything else is not. An unrelated MCP tool can carry a `command` argument of its own,
 # and reaches this hook on any host that does not apply the hooks.json matcher.
-assert_tool_result aside "MCP:run_terminal_cmd" "$FL $TE"
-assert_tool_result aside "MCP:browser_tabs"     "$FL $TE"
-assert_tool_result aside "mcp__some-server__exec" "dart $TE --coverage"
-assert_tool_result aside "Write"                "$FL $TE"
+assert_tool_result aside "MCP:run_terminal_cmd" "flutter test"
+assert_tool_result aside "MCP:browser_tabs"     "flutter test"
+assert_tool_result aside "mcp__some-server__exec" "dart test --coverage"
+assert_tool_result aside "Write"                "flutter test"
 
 echo ""
 echo "--- Deny reason follows the CLI status ---"
 
 stub_cli 1.5.0
-assert_blocked "$FL $TE"
-assert_reason_contains "MCP '$TE' tool" "current CLI redirects to the MCP tool"
+assert_blocked "flutter test"
+assert_reason_contains "MCP 'test' tool" "current CLI redirects to the MCP tool"
 
 # The reason names what the hook actually matched, so a future misfire is self-
 # explaining rather than describing an action the operator never attempted.
-assert_reason_contains "Matched: $FL $TE" "deny reason quotes the matched command"
+assert_reason_contains "Matched: flutter test" "deny reason quotes the matched command"
 
-assert_blocked "fvm dart $CR my_app"
-assert_reason_contains "Matched: dart $CR" "wrapper is skipped in the matched command"
+assert_blocked "fvm dart create my_app"
+assert_reason_contains "Matched: dart create" "wrapper is skipped in the matched command"
 
 # The very_good hits populate MATCHED through the same path; check one of them too.
-assert_blocked "$VG packages check licenses"
-assert_reason_contains "Matched: $VG packages" "very_good hits name the matched command"
+assert_blocked "very_good packages check licenses"
+assert_reason_contains "Matched: very_good packages" "very_good hits name the matched command"
 
 stub_cli 1.2.9
-assert_blocked "$FL $TE"
+assert_blocked "flutter test"
 assert_reason_contains "too old" "outdated CLI asks for an update"
 
 no_cli
-assert_blocked "$FL $TE"
+assert_blocked "flutter test"
 assert_reason_contains "not found" "missing CLI asks for an install"
 
 # The MCP server starts through the same very_good shim, so redirecting to it when the
 # shim cannot exec dart would be a dead end. The reason must point at PATH instead.
 stub_cli
-assert_blocked "$FL $TE"
+assert_blocked "flutter test"
 assert_reason_contains "dart is not on the PATH" "CLI that cannot run points at PATH, not the MCP tool"
 
 echo ""
