@@ -1,22 +1,19 @@
 #!/bin/bash
+# PostToolUse hook: run `dart format` on each edited Dart file, never blocking.
+# The files come from the arguments, or from the payload when there are none; see
+# hook_file_paths in vgv-cli-common.sh.
 set -euo pipefail
 
-# Read the hook payload from stdin
-input=$(cat)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/vgv-cli-common.sh"
 
-# Check jq availability
-if ! command -v jq &>/dev/null; then
+# Only the payload needs jq to read
+if [ "$#" -eq 0 ] && ! command -v jq &>/dev/null; then
   echo "format hook: jq not found, skipping" >&2
   exit 0
 fi
 
-# Extract file path from the tool input
-file_path=$(jq -r '.tool_input.file_path // empty' <<< "$input")
-
-# Skip if no file path or not a Dart file
-if [[ -z "$file_path" || "$file_path" != *.dart ]]; then
-  exit 0
-fi
-
-# Run dart format on the single file (auto-fix, always exit 0)
-dart format "$file_path" &>/dev/null || true
+while IFS= read -r file_path; do
+  [[ "$file_path" == *.dart ]] || continue
+  dart format "$file_path" &>/dev/null || true
+done < <(hook_file_paths "$@")

@@ -98,3 +98,15 @@ check_vgv_cli() {
   fi
   echo "ok"
 }
+
+# Print the files a PostToolUse hook should act on, one per line: its arguments when it
+# was given any, otherwise tool_input.file_path from the payload on stdin. Claude Code
+# names the edited file in the payload. A host that reports an edit some other way passes
+# the files as arguments instead, so the script never has to read a second payload shape.
+hook_file_paths() {
+  if [ "$#" -gt 0 ]; then
+    printf '%s\n' "$@"
+  else
+    jq -r '.tool_input.file_path // empty'
+  fi
+}

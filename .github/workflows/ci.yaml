@@ -82,3 +82,7 @@ jobs:
         run: bash hooks/scripts/check-vgv-cli_test.sh
       - name: Warn missing MCP hook tests
         run: bash hooks/scripts/warn-missing-mcp_test.sh
+      - name: Analyze hook tests
+        run: bash hooks/scripts/analyze_test.sh
+      - name: Format hook tests
+        run: bash hooks/scripts/format_test.sh
