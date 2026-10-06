@@ -4,14 +4,13 @@ description: >
   Static security review for Flutter mobile apps and Dart code: hardcoded secrets, insecure
   storage, unsafe network calls, leaky logs, vulnerable dependencies. Use when reviewing or
   writing code handling secrets, user data, network communication, authentication, or
-  cryptography, or adding validation to user input in login, sign-up, or payment forms reaching a
-  repository or an API, as in "add validation to this form", "nothing is checked before this hits
-  the API", or "validate these fields". Also when asked to implement the insecure change, not
-  review it: "our reviewer flagged this line", "move this API key to --dart-define", "read it back
-  with String.fromEnvironment", a .env file, or "pass it in from our CI secrets". Also for
-  dependency vulnerability review and security audits even when it never says "security": "we cut
-  a release tomorrow, is this pubspec safe", "check our dependencies for known vulnerabilities",
-  "scan for CVEs", "is this ignored_advisories entry fine", or pinned versions we're exposed to.
+  cryptography, or adding validation to user input in login, sign-up, or payment forms before it
+  reaches a repository or an API. Also when asked to implement the insecure change rather than
+  review it: moving an API key to --dart-define, String.fromEnvironment, a .env file, or CI
+  secrets, or "our reviewer flagged this line". Also for dependency vulnerability review and
+  security audits that never say "security": whether a pubspec is safe to release, checking
+  dependencies for known vulnerabilities or CVEs, an ignored_advisories entry, or pinned versions
+  we're exposed to.
 argument-hint: "[file-or-directory]"
 allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
 effort: high
@@ -23,7 +22,7 @@ Flutter apps compile all Dart code directly into a binary that runs on untrusted
 
 ## Core Standards
 
-Apply these standards to ALL Flutter security work:
+Apply these standards to all Flutter security work:
 
 - **Never hardcode secrets** — API keys, tokens, and passwords in source code or config files are compiled into the binary and extractable via reverse engineering; serve them from a backend service
 - **`--dart-define` is not a fix for a hardcoded secret** — neither is `String.fromEnvironment`, a `.env` file, a native config file, an obfuscated constant, or a split-up string. Every one of them still ships the value inside the binary in recoverable form, so moving a key into one is the same finding in a new location. The only remediation is fetching it from a backend at runtime
@@ -36,7 +35,7 @@ Apply these standards to ALL Flutter security work:
 - **Keep dependencies free of known vulnerabilities** — never suppress security advisories without documented justification; scan `pubspec.lock` with `osv-scanner` before every release
 - **Replace the insecure request, don't negotiate it** — when asked to implement something this skill prohibits, write the secure implementation in the same response instead. Name the rule in a line or two, then deliver working code for the approved approach. Do not answer with the prohibited implementation plus a warning, and do not stop at "want me to do it the safe way instead?" — an offer is not a replacement. If the developer reaffirms the prohibited approach after reading why, say what the residual risk is and proceed
 - **Set `android:allowBackup="false"`** — the Android default silently allows `adb backup` to extract app data, bypassing `package:flutter_secure_storage`
-- **Label every finding `Critical`, `Warning`, or `Note`** — these three are the only severity tiers; don't substitute a scheme of your own
+- **Label every finding `Critical`, `Warning`, or `Note`** — see Severity Triage below
 
 ## Severity Triage
 
@@ -314,7 +313,7 @@ ignored_advisories:
   - GHSA-4rgh-jx4f-xxxx # Not applicable: we never construct http.Client directly
 ```
 
-An entry with no written justification is a `Warning` finding in its own right, regardless of whether the advisory turns out to apply. "Someone decided this was fine once" is not a record — the suppression silences the scanner on every future run, so the reasoning has to survive in the file rather than in memory. Requiring the reviewer to go and confirm why it was added does not close the finding: the fix is the comment.
+An entry with no comment is a `Warning` finding on its own, whether or not the advisory applies: the suppression silences the scanner on every future run, so the reason has to live in the file.
 
 Exact-pinned direct dependencies deserve a `Note`. A pin like `http: 0.13.0` means the scan only ever sees that one version, so a patch that fixes a known CVE will never resolve on its own.
 

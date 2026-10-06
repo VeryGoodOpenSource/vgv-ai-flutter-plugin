@@ -4,14 +4,13 @@ description: >
   VGV layered monorepo architecture in Flutter: four layers Data, Repository, Business Logic, and
   Presentation, unidirectional dependency rules, and model transformation across layers. Use when
   structuring a multi-package Flutter app, creating data or repository packages, defining layer
-  boundaries, or wiring packages in app bootstrap via path dependencies in pubspec.yaml, barrel
-  exports, and RepositoryProvider. Use too when asked to put a domain model, entity, or shared
-  class in an api_client or data package so the repository and app import it from one place, or to
-  add a cross-package dependency the layers forbid. Also use for a new app, from a one-line
-  description like "I'm starting a weather app that reads from a REST API" plus a request to lay
-  out the package structure, project, folder, or directory layout, or asking how to organize an
-  app that talks to a backend, where a file or feature should live, or which package code belongs
-  in. Applies even when the user never says monorepo, layer, or architecture.
+  boundaries, or wiring packages in app bootstrap via path dependencies, barrel exports, and
+  RepositoryProvider. Use too when asked to put a domain model or shared class in an api_client
+  or data package, or to add a cross-package dependency the layers forbid. Also use for a new app
+  described in one line ("I'm starting a weather app that reads from a REST API") plus a request
+  for the package, project, folder, or directory layout, or for where a file or feature should
+  live and which package code belongs in. Applies even when the user never says monorepo, layer,
+  or architecture.
 allowed-tools: Read Glob Grep mcp__very-good-cli__create mcp__very-good-cli__packages_get mcp__very-good-cli__test
 effort: high
 ---
@@ -24,7 +23,7 @@ Layered monorepo architecture for Flutter apps — four layers organized as inde
 
 ## Core Standards
 
-Apply these standards to ALL layered architecture work:
+Apply these standards to all layered architecture work:
 
 - **Four layers** — Data, Repository, Business Logic, Presentation — a feature spans all four whenever its repository reads an external source
 - **Unidirectional dependencies** — Presentation → Business Logic → Repository → Data — never skip or invert a layer
@@ -39,7 +38,7 @@ Apply these standards to ALL layered architecture work:
 - **Repositories take every external source through the constructor** — a data client or an SDK object such as `FirebaseAuth.instance`, built in bootstrap and passed in, never constructed or defaulted inside the repository
 - **App bootstrap wires all layers** — `main_<flavor>.dart` creates clients and repositories, provides them via `RepositoryProvider`
 - **Only the app's entrypoints and bootstrap import a data package** — blocs, widgets, and app tests reach data through a repository
-- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare model and widget fields as primary-constructor declaring parameters (`class const User(final String id, final String name) extends Equatable`) rather than `this.field`; keep the classic form only below 3.13
+- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare model and widget fields as primary-constructor declaring parameters (`class const User(final String id, final String name) extends Equatable`) rather than `this.field`; keep the classic form only below 3.13
 
 > **Cross-harness fallback.** This skill scaffolds and tests packages via the Very Good CLI MCP server. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create dart_package …`, `very_good packages get`, and `very_good test` commands directly.
 
@@ -260,31 +259,9 @@ checking the import boundary, including which files count as entrypoints and boo
 
 ## Data Flow
 
-Step-by-step walkthrough: user taps "Load Profile" button.
+Presentation dispatches an event → Bloc calls the repository → repository calls the data client and returns a domain model → `BlocBuilder` rebuilds on the new state.
 
-1. **Presentation** dispatches event — `context.read<ProfileBloc>().add(ProfileLoadRequested(userId: '123'))`
-2. **Business Logic** calls repository — Bloc handler invokes `_userRepository.getUser(event.userId)` and emits state based on the result
-3. **Repository** calls data client — `UserRepository.getUser` delegates to `_userApiClient.getUser` and transforms the response into a domain `User`
-4. **Data layer** communicates with external source — `UserApiClient.getUser` makes the HTTP request and returns a typed `UserResponse`
-5. **Data flows back up** — Presentation rebuilds via `BlocBuilder` based on the new state
-
-```dart
-// lib/profile/bloc/profile_bloc.dart
-Future<void> _onLoadRequested(
-  ProfileLoadRequested event,
-  Emitter<ProfileState> emit,
-) async {
-  emit(const ProfileState.loading());
-  try {
-    final user = await _userRepository.getUser(event.userId);
-    emit(ProfileState.success(user: user));
-  } on UserNotFoundException {
-    emit(const ProfileState.notFound());
-  } catch (_) {
-    emit(const ProfileState.failure());
-  }
-}
-```
+See [references/data-flow.md](references/data-flow.md) for the code at each layer.
 
 ## App Bootstrap
 

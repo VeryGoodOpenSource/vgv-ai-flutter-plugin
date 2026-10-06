@@ -2,19 +2,17 @@
 name: green-gate
 description: >
   Drives a Dart or Flutter package fully green through a verify-fix-rerun loop across four gates:
-  analyze, format, test, coverage. It owns gate configuration, so plan-only questions belong here:
-  which tool and arguments run each gate, in what order, the coverage target a package is held to,
-  and what leaves the coverage denominator. Use it when the user says "green gate", "make it
-  green", "get CI green", "fix all the analyze and test failures", "clean this package up before I
-  open a PR", "bring coverage to 100", "loop until everything passes", "just re-check coverage",
-  or "confirm the package is green". Use it too when the user wants a gate weakened or skipped:
-  drop the coverage threshold to 90, put coverage ignore comments on untested or generated code
-  (.freezed.dart, app_localizations.dart), skip analyze and format because they passed earlier,
-  call a 94% package clean and done, or keep retrying while the same failures repeat round after
-  round. Prefer it over the single-gate testing or analysis skills.
+  analyze, format, test, coverage. It owns gate configuration, so plan-only questions belong
+  here: which tool and arguments run each gate, in what order, the coverage target, and what
+  leaves the coverage denominator. Use it for "green gate", "make it green", "get CI green",
+  fixing all analyze and test failures, cleaning a package up before a PR, bringing coverage to
+  100, looping until everything passes, or confirming a package is green. Use it too when the
+  user wants a gate weakened or skipped: lowering the coverage threshold, coverage ignore
+  comments on untested or generated code, skipping analyze and format because they passed
+  earlier, calling a 94% package done, or retrying while the same failures repeat. Prefer it over
+  the single-gate testing or analysis skills.
 argument-hint: "[directory]"
 allowed-tools: Bash Read Glob Grep Edit Write mcp__dart__analyze_files mcp__dart__dart_format mcp__very-good-cli__test
-model: sonnet
 effort: medium
 ---
 
@@ -34,7 +32,7 @@ coverage-pattern guidance.
 
 ## Core Standards
 
-Apply these to ALL green-gate work:
+Apply these to all green-gate work:
 
 - **MCP tools only, never the Bash equivalent** — analyze via
   `mcp__dart__analyze_files`, format via `mcp__dart__dart_format`, test and coverage
@@ -60,14 +58,12 @@ analyze` / `flutter test --coverage` for the tools the loop actually runs.
 - **Exit only on observed numbers** — the loop terminates only after a single
   final iteration in which analyze is clean, format reports zero changes, all
   tests pass, and `min_coverage` is satisfied, all observed in the same round.
-  Declaring success from memory is forbidden; confirm success only with the
-  actual numbers observed in that final round.
 - **Pass `coverage: true`, `min_coverage`, and `check_ignore: true` together** —
   omitting `coverage: true` silently produces no `lcov.info` (mimics a
   misconfiguration); omitting `check_ignore: true` makes the `// coverage:ignore`
   remedy a no-op.
 - **Defer test-writing to the `testing` skill** — when a fix requires authoring
-  tests, follow `skills/testing/SKILL.md` for structure, mocking, and naming.
+  tests, follow that skill for structure, mocking, and naming.
 - **Fix root causes, not symptoms** — never weaken a gate to pass it (do not
   delete failing assertions, lower the target to dodge work, or `// coverage:ignore`
   reachable code). Escalate genuine product/API decisions instead of guessing.
@@ -236,13 +232,11 @@ percentage and per-file fix targets.
 - **Fix only failing items** — address the diagnostics, tests, or under-covered
   files surfaced this round. Do not refactor unrelated code (YAGNI).
 - **Coverage fixes = author tests** — for each ranked under-covered `SF` file,
-  write tests following `skills/testing/SKILL.md`. Prioritize files by uncovered
+  write tests following the `testing` skill. Prioritize files by uncovered
   line count (`LF - LH`).
 - **Bound files per round** — fix a coherent batch, then re-verify. Re-running
   the gates after each batch is what makes "no progress" detectable and prevents
   fixing one gate while silently breaking another.
-- **Never weaken a gate** — no deleted assertions, no lowered target to dodge
-  work, no `// coverage:ignore` on reachable code.
 
 ---
 
@@ -295,9 +289,5 @@ report, and wait.
 - [`references/coverage.md`](references/coverage.md) — green-gate's coverage-gate
   detail (default target, exclude globs, lcov fields, decision tree,
   `check_ignore`, stale lcov).
-- `skills/testing/SKILL.md` — how to write Dart unit, Flutter widget, and golden
-  tests (structure, `mocktail` mocking, naming).
-- `skills/testing/references/coverage.md` — coverage-driven test patterns
-  (`copyWith`, branches, error paths) for closing per-file gaps.
-- `hooks/scripts/block-cli-workarounds.sh` — why the Bash test path is blocked and
-  every gate runs through its MCP tool.
+- The `testing` skill — test conventions, plus its coverage reference for closing
+  per-file gaps.

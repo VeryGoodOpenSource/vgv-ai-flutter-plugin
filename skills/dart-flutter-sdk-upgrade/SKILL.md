@@ -13,7 +13,6 @@ description: >
   when the blocking package has a skill of its own.
 argument-hint: "[flutter-version]"
 allowed-tools: Read Glob Grep Edit Write Bash
-model: sonnet
 effort: medium
 ---
 
@@ -26,7 +25,7 @@ version bumps, no test changes.
 
 ## Core Standards
 
-Apply these standards to ALL SDK upgrade work:
+Apply these standards to all SDK upgrade work:
 
 - **Flutter and Dart versions differ** — a Flutter release ships a Dart SDK whose version number is unrelated to it, and the pubspec `sdk:` constraint takes the Dart number, never the Flutter one. Look the pairing up in the release archive at <https://docs.flutter.dev/install/archive>
 - **Never state a bundled Dart version from memory** — not from recall, not by inference from the Flutter number, and not from an example in this file. Either the user supplied the Dart version, or you read it off the archive, or you ask. There is no fourth source
@@ -230,4 +229,4 @@ No logic or code changes.
 ```
 
 Both numbers appear in the subject line because a reviewer scanning history needs to see which
-Dart release came with the bump. Fill them from step 0, never from recall.
+Dart release came with the bump.

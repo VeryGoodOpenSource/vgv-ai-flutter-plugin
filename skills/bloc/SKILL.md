@@ -23,7 +23,7 @@ State management library for Dart and Flutter using the BLoC (Business Logic Com
 
 ## Core Standards
 
-Apply these standards to ALL Bloc/Cubit work:
+Apply these standards to all Bloc/Cubit work:
 
 - **Use `blocTest()` from `package:bloc_test`** for all Bloc and Cubit tests — never raw `test()` with manual stream assertions
 - **Use `package:mocktail` for mocking** — never `package:mockito`
@@ -34,8 +34,8 @@ Apply these standards to ALL Bloc/Cubit work:
 - **Equatable for all states and events** — extend `Equatable` and override `props` for value equality
 - **Business logic in Bloc/Cubit only** — never in widgets, pages, or views
 - **Single responsibility** — one Bloc/Cubit per feature concern
-- **Emit only after async checks** — use `emit` only inside the handler callback
-- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare event, state, and widget fields as primary-constructor declaring parameters (`class const ProfileRequested(final String userId) extends ProfileEvent`) rather than `this.field`; keep the classic form only below 3.13
+- **`emit` only inside the handler** — call `emit` from the `on<Event>` callback or Cubit method that owns it, never from a stream subscription or callback that outlives the handler
+- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare event, state, and widget fields as primary-constructor declaring parameters (`class const ProfileRequested(final String userId) extends ProfileEvent`) rather than `this.field`; keep the classic form only below 3.13
 
 ---
 
