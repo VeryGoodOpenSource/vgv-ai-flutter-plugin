@@ -13,6 +13,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK="$SCRIPT_DIR/format.sh"
 
+# Invoked by absolute path: `env -i PATH=...` resolves the command it runs with the PATH
+# it was just given, and the no-jq PATH below deliberately holds almost nothing.
+BASH_BIN="$(command -v bash)"
+
 PASSED=0
 FAILED=0
 
@@ -43,7 +47,7 @@ run_hook() {
   local payload="$1" path="${2:-$STUB_DIR:$BASE_PATH}"
   : > "$STUB_DIR/dart.log"
   LAST_STATUS=0
-  printf '%s' "$payload" | env -i PATH="$path" bash "$HOOK" >/dev/null 2>&1 || LAST_STATUS=$?
+  printf '%s' "$payload" | env -i PATH="$path" "$BASH_BIN" "$HOOK" >/dev/null 2>&1 || LAST_STATUS=$?
   LAST_CALLS=$(cat "$STUB_DIR/dart.log")
 }
 
