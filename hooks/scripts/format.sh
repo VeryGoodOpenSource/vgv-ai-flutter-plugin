@@ -10,13 +10,11 @@ if ! command -v jq &>/dev/null; then
   exit 0
 fi
 
-# Extract file path from the tool input
-file_path=$(jq -r '.tool_input.file_path // empty' <<< "$input")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/vgv-cli-common.sh"
 
-# Skip if no file path or not a Dart file
-if [[ -z "$file_path" || "$file_path" != *.dart ]]; then
-  exit 0
-fi
-
-# Run dart format on the single file (auto-fix, always exit 0)
-dart format "$file_path" &>/dev/null || true
+# Run dart format on each modified Dart file (auto-fix, always exit 0)
+while IFS= read -r file_path; do
+  [[ "$file_path" == *.dart ]] || continue
+  dart format "$file_path" &>/dev/null || true
+done < <(payload_file_paths <<< "$input")

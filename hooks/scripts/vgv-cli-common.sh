@@ -98,3 +98,28 @@ check_vgv_cli() {
   fi
   echo "ok"
 }
+
+# The files a tool call touched, one absolute path per line.
+#
+# Claude Code's Edit and Write name the one file in tool_input.file_path. Codex edits
+# through apply_patch instead: it sends the whole patch as text and names each file only
+# in tool_response, so only after the tool has run, as "A path" for an added file or
+# "M path" for a modified one. A
+# rename reports its new name as "M". A deleted file reports "D path" and is left out,
+# since there is nothing on disk to analyze or format. Those paths are relative to cwd
+# when the model wrote them that way, so each is resolved against the payload's cwd.
+#
+# tool_response is an object on Claude Code and a string on Codex. `strings` keeps only
+# the latter, so the scan never runs against an object.
+payload_file_paths() {
+  jq -r '
+    (.cwd // ".") as $cwd
+    | def absolute: if startswith("/") then . else $cwd + "/" + . end;
+    [
+      (.tool_input.file_path // empty | absolute),
+      ((.tool_response | strings) // "" | [scan("(?m)^[AM] (.+)$")[]] | .[] | absolute)
+    ]
+    | unique
+    | .[]
+  '
+}

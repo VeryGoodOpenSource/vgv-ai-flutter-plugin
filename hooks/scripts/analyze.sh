@@ -10,16 +10,18 @@ if ! command -v jq &>/dev/null; then
   exit 0
 fi
 
-# Extract file path from the tool input
-file_path=$(jq -r '.tool_input.file_path // empty' <<< "$input")
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/vgv-cli-common.sh"
 
-# Skip if no file path or not a Dart file
-if [[ -z "$file_path" || "$file_path" != *.dart ]]; then
-  exit 0
-fi
+# Run dart analyze on each modified Dart file. A failure on any file blocks, but every
+# file is still analyzed so the agent sees all of the issues at once.
+status=0
+while IFS= read -r file_path; do
+  [[ "$file_path" == *.dart ]] || continue
+  output=$(dart analyze "$file_path" 2>&1) || {
+    echo "$output" >&2
+    status=2
+  }
+done < <(payload_file_paths <<< "$input")
 
-# Run dart analyze on the single file
-output=$(dart analyze "$file_path" 2>&1) || {
-  echo "$output" >&2
-  exit 2
-}
+exit "$status"
