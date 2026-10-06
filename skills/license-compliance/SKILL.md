@@ -13,7 +13,6 @@ description: >
   trigger, not a substitute for the audit.
 argument-hint: "[project-directory]"
 allowed-tools: Read Glob Grep mcp__very-good-cli__packages_check_licenses
-model: sonnet
 effort: medium
 ---
 
@@ -27,7 +26,7 @@ Dependency license auditor for Dart and Flutter projects — verifies that all p
 
 ## Core Standards
 
-Apply these standards to ALL license compliance work:
+Apply these standards to all license compliance work:
 
 - **Run `packages_check_licenses` MCP tool** on the target project directory with `licenses: true` to display full license information
 - **Pass `directory` to the MCP tool when the project is not at the workspace root** — monorepos with the project in a subdirectory (e.g. `mobile/`) require `directory: 'mobile'`
@@ -91,7 +90,7 @@ All other dependencies use permissive licenses (MIT, BSD, Apache 2.0).
 2. [Next action]
 ```
 
-Three ways this comes out wrong, all of which fail the format: prose paragraphs instead of the headings, flagged packages as a bulleted list instead of table rows, and a recommendation folded into the risk cell instead of standing as its own column. One row per flagged package, one recommendation per row.
+One row per flagged package, one recommendation per row.
 
 ---
 
@@ -107,6 +106,6 @@ So a pasted dependency list cannot produce a verdict, no matter how well known t
 2. **Name the likely licenses if it helps.** Saying `http` and `intl` are BSD-3-Clause is useful orientation and costs nothing, as long as it is framed as what the scan is expected to confirm rather than as the finding.
 3. **Give the exact command that produces a real answer.** `packages_check_licenses` with `licenses: true`, or `very_good packages check licenses <project-directory> --dependency-type direct-main,transitive`, and offer to run it.
 
-Two phrasings to avoid, because both read as certification: "your dependency list looks compliant" and "these are all permissive, so you're clear." Withhold the verdict entirely until the scan output exists.
+Until scan output exists, withhold the verdict. Do not call the list compliant or clear.
 
 The same rule covers a scan that ran but came back incomplete. A package whose license the tool could not detect is `Unknown/Missing` and stays flagged. It does not become compliant because its pub.dev page says MIT.

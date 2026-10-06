@@ -10,7 +10,6 @@ description: >
   when the request only says "review this widget", "cut the duplication", "stop repeating
   this", or "tidy this up".
 allowed-tools: Read Glob Grep
-model: sonnet
 ---
 
 # Material Theming
@@ -19,7 +18,7 @@ Material 3 theming best practices for Flutter applications using `ThemeData` as 
 
 ## Core Standards
 
-Apply these standards to ALL theming work:
+Apply these standards to all theming work:
 
 - **Use `ThemeData` as the single source of truth** — never inline colors or text styles in widgets
 - **Reference colors via `Theme.of(context).colorScheme`** — never `Colors.blue`, `Colors.red`, or any hardcoded `Color` values

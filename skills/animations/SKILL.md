@@ -19,7 +19,7 @@ motion guidelines. No third-party animation libraries (Lottie, Rive, etc.).
 
 ## Core Standards
 
-Apply these standards to ALL animation work:
+Apply these standards to all animation work:
 
 - **Clarify visual intent when the request is ambiguous** — when the developer says "add an animation" or "make it smoother" without specifying property, trigger, duration, or curve, ask before writing code. If the developer provides clear specs (e.g., "300ms ease-in fade on the card when it appears"), proceed directly
 - **Use the simplest animation approach that works** — follow the decision tree below; never reach for `AnimationController` when an implicit animation suffices, including when several properties animate at the same time
@@ -30,7 +30,7 @@ Apply these standards to ALL animation work:
 - **Use `SingleTickerProviderStateMixin` for one controller** — use `TickerProviderStateMixin` only when the widget owns multiple controllers
 - **Keep animated subtrees small** — wrap only the widgets that change inside the animation builder, not entire widget trees
 - **Never animate a layout-triggering property** — `width`, `height`, `padding` and `SizedBox` dimensions force a fresh layout pass on every frame, in a one-child tree as much as in a deep one. Animate a `Transform` instead, `Transform.scale` for size and `Transform.translate` for position, or `Opacity` for fade, since those run on the compositing layer and skip layout
-- **Dart 3.13 primary constructors** — on the Dart 3.13+ baseline (`very_good_core` 1.6 / `very_good_analysis` 11), declare widget fields as primary-constructor declaring parameters (`class const LabelChip({required final String label, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
+- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare widget fields as primary-constructor declaring parameters (`class const LabelChip({required final String label, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
 
 ---
 
@@ -266,48 +266,12 @@ wiring, and `Hero` shared-element transitions.
 
 ### Do Not
 
-- **Do not animate `width`, `height`, or `padding`** — each frame forces a new layout pass over the subtree, and the cost is the layout pass itself, not the depth of the tree, so a single `SizedBox` around one child is no exception. Replace a growing width with `Transform.scale` and a moving offset with `Transform.translate`
 - **Do not wrap entire screens in `AnimatedBuilder`** — only wrap the subtree that changes
-- **Do not create multiple `AnimationController` instances for animations that share timing** — use `Interval` on a single controller. This applies once the animation already needs a controller; properties that animate to a target on the same rebuild are composed implicit widgets, not one controller with intervals
+- **Do not create multiple `AnimationController` instances for animations that share timing** — use `Interval` on a single controller
 
 ---
 
 ## Anti-Patterns
-
-### Hardcoded magic values
-
-```dart
-// Bad — arbitrary values with no semantic meaning
-AnimatedContainer(
-  duration: Duration(milliseconds: 375),
-  curve: Curves.easeInOutCubic,
-  // ...
-)
-
-// Good — M3 tokens with clear intent
-AnimatedContainer(
-  duration: Durations.medium2,
-  curve: Easing.standard,
-  // ...
-)
-```
-
-### Missing controller disposal
-
-```dart
-// Bad — memory leak
-@override
-void dispose() {
-  super.dispose();
-}
-
-// Good — dispose before super.dispose()
-@override
-void dispose() {
-  _controller.dispose();
-  super.dispose();
-}
-```
 
 ### Animating a width instead of a Transform
 
@@ -353,6 +317,7 @@ AnimatedBuilder(
     );
   },
 )
+```
 
 Explicit animation where implicit suffices. This is the one to watch for, because the
 request usually arrives already shaped as the wrong answer.

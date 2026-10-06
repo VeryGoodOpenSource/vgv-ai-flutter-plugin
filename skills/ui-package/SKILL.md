@@ -1,20 +1,17 @@
 ---
 name: ui-package
 description: >
-  Best practices for building a Flutter UI package on Material: custom components,
-  ThemeExtension theming, consistent APIs, widget tests, app_ui_package scaffolding. Use when
-  creating a UI package, working inside one, or in an app that consumes one: adding or
-  reviewing a widget, wiring design tokens, exporting through the barrel file, or writing
-  tests for a widget that lives in a UI package. Those tests pump through the package's
-  pumpApp helper, so prefer this over general test guidance for a widget under
-  lib/src/widgets, even when the ask is only "write its tests". Also use it when asked to
-  approve what this skill forbids: importing package:<name>/src/... per file, skipping the
-  barrel to "only pull in what I use", or a parallel theme system. Triggers on "create a ui
-  package", "add a widget to our ui package", "add a design token", "export it from the
-  barrel", "write tests for this widget in my ui package", "is it fine to import from src",
-  and any request naming a package of shared widgets and design tokens.
+  Best practices for building a Flutter UI package on Material: custom components, ThemeExtension
+  theming, consistent APIs, widget tests, app_ui_package scaffolding. Use when creating a UI
+  package, working inside one, or in an app that consumes one: adding or reviewing a widget,
+  wiring design tokens, exporting through the barrel file, or writing tests for a widget under
+  lib/src/widgets, which pump through the package's pumpApp helper, so prefer this over general
+  test guidance even when the ask is only "write its tests". Also use it when asked to approve
+  what this skill forbids: importing package:<name>/src/... per file, skipping the barrel to
+  "only pull in what I use", or a parallel theme system. Triggers on any request naming a package
+  of shared widgets and design tokens, such as "create a ui package", "add a design token", or
+  "is it fine to import from src".
 allowed-tools: Read Glob Grep Edit Write mcp__very-good-cli__create
-model: sonnet
 ---
 
 # UI Package
@@ -25,7 +22,7 @@ Best practices for creating a Flutter UI package — a reusable widget library t
 
 ## Core Standards
 
-Apply these standards to ALL UI package work:
+Apply these standards to all UI package work:
 
 - **Scaffold from the `app_ui_package` template** — create the package with the Very Good CLI MCP tool, `subcommand: 'app_ui_package'`. Never `flutter_package`, never `dart_package`, never `flutter create --template=package`; those produce a bare package with none of the theme, barrel, test-helper, or Widgetbook scaffolding below
 - **Build on Material** — depend on `flutter/material.dart` and compose Material widgets; do not rebuild primitives that Material already provides
@@ -105,9 +102,8 @@ Scaffold with the Very Good CLI MCP `create` tool:
 | `output_directory` | the monorepo directory holding shared packages (e.g., `packages/`) |
 
 `app_ui_package` is the template that ships the `lib/src/theme` extensions, the barrel
-file, the `pumpApp` helper, and the Widgetbook catalog. Do not substitute
-`flutter_package` on the grounds that it takes no organization name — neither template
-does, and `flutter_package` gives you an empty package you then rebuild by hand.
+file, the `pumpApp` helper, and the Widgetbook catalog. `flutter_package` gives you an
+empty package to rebuild by hand.
 
 > **Cross-harness fallback.** On a host without this plugin's Bash hooks and without the Very Good CLI MCP server connected, run the equivalent `very_good create app_ui_package <package_name> --output-directory <dir>` command directly.
 
