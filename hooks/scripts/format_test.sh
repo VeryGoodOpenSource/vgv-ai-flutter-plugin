@@ -30,6 +30,13 @@ chmod +x "$STUB_DIR/dart"
 
 dart_exits() { echo "$1" > "$STUB_DIR/dart.exit"; }
 
+# A PATH with cat, the one coreutil the hook uses before its jq check, and nothing else.
+# Built from a symlink rather than named as /bin, because on a merged-/usr Linux /bin is
+# /usr/bin and so still has jq on it.
+NOJQ_DIR="$STUB_DIR/nojq"
+mkdir -p "$NOJQ_DIR" && ln -s "$(command -v cat)" "$NOJQ_DIR/cat"
+NOJQ_PATH="$STUB_DIR:$NOJQ_DIR"
+
 LAST_STATUS=0
 LAST_CALLS=""
 run_hook() {
@@ -81,7 +88,7 @@ dart_exits 0
 
 echo ""
 echo "--- Without jq ---"
-run_hook "$(jq -n '{tool_input:{file_path:"/w/lib/a.dart"}}')" "$STUB_DIR:/bin"
+run_hook "$(jq -n '{tool_input:{file_path:"/w/lib/a.dart"}}')" "$NOJQ_PATH"
 assert_calls  "runs nothing when jq is missing"                  ""
 assert_status "exits 0 when jq is missing"                       0
 

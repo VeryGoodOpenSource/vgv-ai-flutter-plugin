@@ -35,6 +35,13 @@ chmod +x "$STUB_DIR/dart"
 
 dart_exits() { echo "$1" > "$STUB_DIR/dart.exit"; }
 
+# A PATH with cat, the one coreutil the hook uses before its jq check, and nothing else.
+# Built from a symlink rather than named as /bin, because on a merged-/usr Linux /bin is
+# /usr/bin and so still has jq on it.
+NOJQ_DIR="$STUB_DIR/nojq"
+mkdir -p "$NOJQ_DIR" && ln -s "$(command -v cat)" "$NOJQ_DIR/cat"
+NOJQ_PATH="$STUB_DIR:$NOJQ_DIR"
+
 # Run the hook on a payload. Leaves the exit status in LAST_STATUS, stderr in LAST_STDERR,
 # and every `dart` invocation (one per line, e.g. "analyze /w/lib/a.dart") in LAST_CALLS.
 LAST_STATUS=0
@@ -112,9 +119,7 @@ dart_exits 0
 
 echo ""
 echo "--- Without jq ---"
-# /bin has cat but not jq on both macOS and Ubuntu, so the hook reaches its jq check and
-# stands aside there rather than failing on a missing coreutil first.
-run_hook "$(jq -n '{tool_input:{file_path:"/w/lib/a.dart"}}')" "$STUB_DIR:/bin"
+run_hook "$(jq -n '{tool_input:{file_path:"/w/lib/a.dart"}}')" "$NOJQ_PATH"
 assert_calls  "runs nothing when jq is missing"                  ""
 assert_status "exits 0 when jq is missing"                       0
 if [[ "$LAST_STDERR" == *"jq not found, skipping"* ]]; then pass "says why it skipped"; else fail "says why it skipped" "stderr was: $LAST_STDERR"; fi
