@@ -66,14 +66,17 @@ run_hook() {
   run_hook_payload "$(jq -n --arg c "$1" '{"tool_input":{"command":$c}}')"
 }
 
+# Show newlines as ~ so multi-line commands keep the columns aligned.
+label_of() { printf '%s' "$1" | tr '\n' '~'; }
+
 assert_blocked() {
   local cmd="$1"
   run_hook "$cmd"
   if [ "$LAST_RESULT" = "deny" ]; then
-    printf "  \033[32mPASS\033[0m  blocked:  %s\n" "$cmd"
+    printf "  \033[32mPASS\033[0m  blocked:  %s\n" "$(label_of "$cmd")"
     PASSED=$((PASSED + 1))
   else
-    printf "  \033[31mFAIL\033[0m  expected deny but got %s:  %s\n" "$LAST_RESULT" "$cmd"
+    printf "  \033[31mFAIL\033[0m  expected deny but got %s:  %s\n" "$LAST_RESULT" "$(label_of "$cmd")"
     FAILED=$((FAILED + 1))
   fi
 }
@@ -82,10 +85,10 @@ assert_allowed() {
   local cmd="$1"
   run_hook "$cmd"
   if [ "$LAST_RESULT" = "aside" ]; then
-    printf "  \033[32mPASS\033[0m  allowed:  %s\n" "$cmd"
+    printf "  \033[32mPASS\033[0m  allowed:  %s\n" "$(label_of "$cmd")"
     PASSED=$((PASSED + 1))
   else
-    printf "  \033[31mFAIL\033[0m  expected aside but got %s:  %s\n" "$LAST_RESULT" "$cmd"
+    printf "  \033[31mFAIL\033[0m  expected aside but got %s:  %s\n" "$LAST_RESULT" "$(label_of "$cmd")"
     FAILED=$((FAILED + 1))
   fi
 }
@@ -103,6 +106,8 @@ assert_reason_contains() {
     FAILED=$((FAILED + 1))
   fi
 }
+
+# Edit with Write/Edit, not a heredoc: the hook reads the heredoc body and denies it.
 
 echo "=== block-cli-workarounds tests ==="
 stub_cli 1.5.0
@@ -136,6 +141,136 @@ assert_allowed "gh pr create --body 'use dart test instead'"
 assert_allowed "git log --grep='dart test'"
 assert_allowed "ls"
 assert_allowed "pwd"
+assert_allowed ""
+assert_allowed "   "
+
+echo ""
+echo "--- Quoted text is data (issue #147) ---"
+
+# A quoted `|` is not a pipe. Both positions, since the bug only fired mid-alternation.
+assert_allowed "grep -nE \"very_good|flutter test|foo\" CLAUDE.md"
+assert_allowed "grep -nE \"very_good|flutter test\" CLAUDE.md"
+assert_allowed "grep -nE \"flutter test|very_good|foo\" AGENTS.md"
+assert_allowed "rg 'flutter create|dart create' docs/"
+
+# A quoted phrase is a single word and runs nothing.
+assert_allowed "echo \"flutter test\""
+assert_allowed "echo 'flutter test'"
+assert_allowed "git commit -m \"ban flutter test | dart test\""
+
+# One quote type is inert inside the other.
+assert_allowed "echo 'say \"flutter test\" now'"
+assert_allowed "echo \"say 'flutter test' now\""
+
+# Escapes and unbalanced quotes.
+assert_allowed "echo \\\"flutter test\\\""
+assert_allowed "grep \"flutter test file.md"
+assert_blocked "flutter test --name \"my app\""
+
+# A quoted string may span newlines and is still one word.
+assert_allowed "$(printf 'echo "hello\nflutter test\nworld"')"
+
+echo ""
+echo "--- Command position ---"
+
+# Unquoted separators open a command position.
+assert_blocked "echo hi; flutter test"
+assert_blocked "echo hi | flutter test"
+assert_blocked "echo hi & flutter test"
+assert_blocked "test -d lib || flutter test"
+
+# A prefix is still an invocation.
+assert_blocked "ENV=1 flutter test"
+assert_blocked "CI=true COVERAGE=1 dart test"
+assert_blocked "(flutter test)"
+assert_blocked "\$(flutter test)"
+assert_blocked "\`flutter test\`"
+assert_blocked "echo start && (very_good test)"
+
+# Wrappers need no list: every adjacent word pair is checked.
+assert_blocked "fvm flutter test"
+assert_blocked "command flutter test"
+assert_blocked "env flutter test"
+assert_blocked "env FOO=1 flutter test"
+assert_blocked "env -i flutter test"
+assert_blocked "sudo flutter test"
+assert_blocked "sudo -u ci flutter test"
+assert_blocked "nohup flutter test"
+assert_blocked "exec flutter test"
+assert_blocked "time flutter test"
+assert_blocked "timeout 60 flutter test"
+assert_blocked "nice -n 10 flutter test"
+assert_blocked "xargs flutter test"
+
+# melos runs commands across a VGV monorepo.
+assert_blocked "melos exec -- flutter test"
+assert_blocked "melos exec --concurrency 1 -- dart test"
+
+# Shell keywords and brace groups are separators.
+assert_blocked "if true; then flutter test; fi"
+assert_blocked "for f in a; do flutter test; done"
+assert_blocked "{ flutter test; }"
+assert_blocked "while :; do dart test; done"
+
+# Match on the basename.
+assert_blocked "/usr/local/bin/flutter test"
+assert_blocked "./flutter test"
+assert_blocked "\$FLUTTER_ROOT/bin/flutter test"
+assert_blocked "../sdk/bin/dart test"
+
+# ...but only when the wrapped command is itself blocked.
+assert_allowed "fvm flutter pub get"
+assert_allowed "command -v flutter"
+assert_allowed "env | grep PATH"
+assert_allowed "melos exec -- dart analyze"
+assert_allowed "timeout 60 dart pub get"
+assert_allowed "/usr/local/bin/flutter analyze"
+
+# A wrapper with nothing after it has no pair to match.
+assert_allowed "fvm"
+assert_allowed "env -i"
+assert_allowed "ENV=1"
+
+# A basename that only resembles the command.
+assert_allowed "git add lib/router.dart test/router_test.dart"
+assert_allowed "cp foo.dart test/"
+assert_allowed "ls bin/flutter_tools"
+
+# Comments are not modelled. `; dart test` inside one is denied: accepted, since the
+# agent does not write comments in tool calls.
+assert_blocked "$(printf '# a comment\nflutter test')"
+assert_blocked "$(printf 'ls # note\ncd pkg\nflutter test')"
+assert_allowed "$(printf '# it%ss broken\nls -la' "'")"
+assert_blocked "ls # fix; dart test"
+
+# `$( )` and backticks run inside double quotes. Single quotes and `\$` are inert.
+assert_blocked "OUT=\"\$(flutter test)\""
+assert_blocked "echo \"\$(flutter test)\""
+assert_blocked "echo \"\`flutter test\`\""
+assert_blocked "if [ -z \"\$(dart test)\" ]; then echo x; fi"
+assert_allowed "echo \"\\\$(flutter test)\""
+assert_allowed "echo '\$(flutter test)'"
+assert_allowed "echo \"\$(date) building\""
+assert_allowed "VAR=\"\$(ls)\"; dart analyze"
+
+# eval and sh -c run their string.
+assert_blocked "eval \"flutter test\""
+assert_blocked "bash -c 'flutter test'"
+assert_blocked "sh -c \"flutter test\""
+assert_blocked "zsh -c \"cd pkg && dart test\""
+
+echo ""
+echo "--- Documented non-goals ---"
+#
+# Allowed on purpose and pinned. A variable needs execution to resolve; the rest are
+# forms nobody types.
+assert_allowed "F=flutter; \$F test"
+assert_allowed "\"flutter\" test"
+assert_allowed "'dart' test"
+assert_allowed "$(printf 'flutter \\\ntest --coverage')"
+
+# Heredoc bodies are not modelled; denied as a known limitation.
+assert_blocked "$(printf 'cat <<EOF\nflutter test\nEOF')"
 
 echo ""
 echo "--- Tool scoping ---"
@@ -178,6 +313,16 @@ echo "--- Deny reason follows the CLI status ---"
 stub_cli 1.5.0
 assert_blocked "flutter test"
 assert_reason_contains "MCP 'test' tool" "current CLI redirects to the MCP tool"
+
+# The reason names the match.
+assert_reason_contains "Matched: flutter test" "deny reason quotes the matched command"
+
+assert_blocked "fvm dart create my_app"
+assert_reason_contains "Matched: dart create" "wrapper is skipped in the matched command"
+
+# very_good hits name the match too.
+assert_blocked "very_good packages check licenses"
+assert_reason_contains "Matched: very_good packages" "very_good hits name the matched command"
 
 stub_cli 1.2.9
 assert_blocked "flutter test"
