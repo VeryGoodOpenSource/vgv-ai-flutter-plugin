@@ -44,6 +44,12 @@ stub_cli() {
 
 no_cli() { rm -rf "$STUB_DIR/pub-cache" "$STUB_DIR/very_good"; }
 
+# Install or remove a stubbed dart. The hooks only probe for its presence, so the stub
+# needs no behavior: it is what separates "dart is off this PATH" from "dart runs and
+# the version is still unreadable", which carry different diagnoses.
+stub_dart() { printf '#!/bin/sh\nexit 0\n' > "$STUB_DIR/dart"; chmod +x "$STUB_DIR/dart"; }
+no_dart() { rm -f "$STUB_DIR/dart"; }
+
 # Prints the permissionDecision ("allow"/"deny"), "aside" when the hook exited 0 with
 # no decision, or "exit:<status>" on a non-zero exit, so a crashing hook cannot pass
 # as having stood aside.
@@ -114,9 +120,14 @@ stub_cli 1.6.0 --in-pub-cache
 assert_decision allow "resolved from PUB_CACHE, not PATH" "$VGV_TOOL"
 
 echo ""
-echo "--- Version unreadable (shim present, dart missing) ---"
+echo "--- Version unreadable, either cause (inconclusive, never a deny) ---"
+no_dart
 stub_cli
-assert_decision aside "inconclusive check does not deny"  "$VGV_TOOL"
+assert_decision aside "dart missing does not deny"        "$VGV_TOOL"
+stub_dart
+stub_cli
+assert_decision aside "stale snapshot does not deny"      "$VGV_TOOL"
+no_dart
 
 echo ""
 echo "=== Results: $PASSED passed, $FAILED failed ==="

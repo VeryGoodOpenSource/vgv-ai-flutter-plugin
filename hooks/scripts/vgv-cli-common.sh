@@ -72,11 +72,19 @@ resolve_vgv_bin() {
 }
 
 # Check Very Good CLI availability and version.
-# Returns: "ok", "not_installed", "outdated:<version>", or "unverifiable".
+# Returns: "ok", "not_installed", "outdated:<version>", "dart_missing", or "unverifiable".
 #
-# "unverifiable" means the binary was found but its version could not be read. The
-# installed very_good is a shell shim that execs `dart`, so a PATH without dart on it
-# makes the check inconclusive. Callers must not report that as "not installed".
+# The last two both mean the binary was found but its version could not be read, so
+# callers must not report either as "not installed". They differ in why, and the two
+# fixes have nothing in common:
+#
+#   dart_missing - `dart` is absent from the PATH this process inherits. The installed
+#                  very_good is a shell shim that execs `dart`, so it cannot run at all.
+#   unverifiable - `dart` resolves and the version still came back empty. The usual
+#                  cause is a Dart SDK upgrade: the shim runs a snapshot built for the
+#                  old SDK, the VM rejects it with exit code 253, and the fallback
+#                  `dart pub global run` recompiles the CLI. The version stays
+#                  unreadable here until that rebuild lands. PATH is not the problem.
 check_vgv_cli() {
   local vgv_bin
   if ! vgv_bin=$(resolve_vgv_bin); then
@@ -86,7 +94,13 @@ check_vgv_cli() {
   RAW=$("$vgv_bin" --version 2>/dev/null)
   VERSION=$(echo "$RAW" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
   if [ -z "$VERSION" ]; then
-    echo "unverifiable"
+    # Only call it a PATH problem when dart really is absent. Blaming PATH for every
+    # unreadable version sends users to edit shell profiles that were never at fault.
+    if command -v dart &>/dev/null; then
+      echo "unverifiable"
+    else
+      echo "dart_missing"
+    fi
     return
   fi
   IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
