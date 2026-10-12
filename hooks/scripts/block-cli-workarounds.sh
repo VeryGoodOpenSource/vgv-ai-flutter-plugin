@@ -52,15 +52,18 @@ deny_with_cli_check() {
       # Redirecting to the MCP tool here would be a dead end: the server starts through
       # the same very_good shim, which cannot exec dart from this PATH either. The advice
       # names no shell, since which startup file exports PATH differs per shell.
-      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Put the Dart SDK bin directory on the PATH your login shell always exports, or start Claude Code from a shell where dart already resolves, then begin a new session. $WHOLE_CALL_REFUSED"
+      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. $DART_PATH_HINT $WHOLE_CALL_REFUSED"
       ;;
     unverifiable)
       # dart resolves, so the shim can run and the MCP server is not a dead end: the
       # version is just unreadable, which after a Dart SDK upgrade means a snapshot built
       # for the old SDK. Redirect as usual and say how to clear that if the tool fails.
-      deny "$mcp_hint If that tool fails (for example with 'Invalid SDK hash'), the Dart SDK changed under the installed Very Good CLI: run 'very_good --version' once in a terminal to rebuild it, then reconnect the server with /mcp. $WHOLE_CALL_REFUSED"
+      deny "$mcp_hint If that tool fails (for example with 'Invalid SDK hash'), $REBUILD_HINT $WHOLE_CALL_REFUSED"
       ;;
-    *)
+    ok | *)
+      # "ok" and any state added later: the command is still a bypass of the MCP tool,
+      # and this hook exists to refuse it. Redirecting is the conservative default here,
+      # because falling through to allow would drop the guard on an unknown state.
       deny "$mcp_hint $WHOLE_CALL_REFUSED"
       ;;
   esac

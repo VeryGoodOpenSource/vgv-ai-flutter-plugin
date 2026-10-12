@@ -39,9 +39,15 @@ case "$cli_status" in
     # permission handling applies.
     exit 0
     ;;
+  ok)
+    # Auto-approve so the Very Good CLI MCP tool is always allowed, even under
+    # skipAutoPermissionPrompt where a non-allowlisted tool would otherwise fail
+    # closed and silently.
+    allow "Very Good CLI >= ${MIN_VERSION} verified; auto-approving Very Good CLI MCP tool call."
+    ;;
+  *)
+    # A state this hook does not know. Auto-approving on it would widen permissions on
+    # a check that said nothing, so stand aside and let normal handling decide.
+    exit 0
+    ;;
 esac
-
-# Version OK — auto-approve so the Very Good CLI MCP tool is always allowed,
-# even under skipAutoPermissionPrompt where a non-allowlisted tool would
-# otherwise fail closed and silently.
-allow "Very Good CLI >= ${MIN_VERSION} verified; auto-approving Very Good CLI MCP tool call."

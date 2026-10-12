@@ -22,15 +22,16 @@ case "$cli_status" in
     # what is known, not what it implies, or a session spends its answer on a false blocker.
     # The advice names no shell: which startup file exports PATH differs per shell, and
     # the usual fix is launching Claude Code from a shell that already has dart.
-    echo "ℹ️ Very Good CLI is installed but its version could not be verified here: dart is not on the PATH this hook inherits, so ${MIN_VERSION}+ could not be confirmed. If the Very Good CLI MCP tools answer, disregard this and carry on. If they do not, this is the likely cause — put the Dart SDK bin directory on the PATH your login shell always exports, or start Claude Code from a shell where dart already resolves, then begin a new session."
+    echo "ℹ️ Very Good CLI is installed but its version could not be verified here: dart is not on the PATH this hook inherits, so ${MIN_VERSION}+ could not be confirmed. If the Very Good CLI MCP tools answer, disregard this and carry on. If they do not, this is the likely cause. ${DART_PATH_HINT}"
     ;;
   unverifiable)
     # dart resolves, so PATH is not the problem and saying it is sends the session to
     # edit shell profiles that were never at fault. The version is unreadable for some
     # other reason, and after a Dart SDK upgrade that reason is a snapshot built for the
-    # old SDK. Same rule as above: state what is known and tell the session to carry on
-    # if the tools answer, because a mocked server under `claude plugin eval` does.
-    echo "ℹ️ Very Good CLI is installed and dart is on the PATH, but the CLI did not report a version, so ${MIN_VERSION}+ could not be confirmed. A Dart SDK upgrade leaves the installed CLI holding a snapshot built for the old SDK until it is rebuilt, and an MCP server that started before the upgrade keeps running on the old Dart VM. If the Very Good CLI MCP tools answer, disregard this and carry on. If they fail (for example with 'Invalid SDK hash'), run 'very_good --version' once in a terminal to rebuild the CLI, then reconnect the server with /mcp or start a new session."
+    # old SDK, which also leaves a server started before the upgrade on the old Dart VM.
+    # Same rule as above: state what is known and tell the session to carry on if the
+    # tools answer, because a mocked server under `claude plugin eval` does.
+    echo "ℹ️ Very Good CLI is installed and dart is on the PATH, but the CLI did not report a version, so ${MIN_VERSION}+ could not be confirmed. If the Very Good CLI MCP tools answer, disregard this and carry on. If they fail (for example with 'Invalid SDK hash'), ${REBUILD_HINT}"
     ;;
 esac
 

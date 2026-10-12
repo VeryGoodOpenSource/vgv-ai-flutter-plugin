@@ -2,9 +2,21 @@
 # Shared helpers for Very Good CLI version checks and hook deny responses.
 
 MIN_VERSION="1.5.0"
-MIN_MAJOR=1
-MIN_MINOR=5
-MIN_PATCH=0
+
+# Advice shared by the hooks, kept here so one wording reaches every caller. Each is a
+# sentence the caller appends to its own first line.
+DART_PATH_HINT="Put the Dart SDK bin directory on the PATH your login shell always exports, or start Claude Code from a shell where dart already resolves, then begin a new session."
+REBUILD_HINT="Most often the Dart SDK changed under the installed CLI, leaving it with a snapshot built for the old SDK: run 'very_good --version' once in a terminal to rebuild it, then reconnect the server with /mcp or start a new session."
+
+# One comparable integer from a dotted version, so a three-part comparison is a single
+# test. Each part gets six digits, which no Dart package version comes near. The 10#
+# prefix keeps a zero-padded part such as the 08 in 1.08.0 out of octal, which bash
+# arithmetic rejects outright.
+version_rank() {
+  local major minor patch
+  IFS='.' read -r major minor patch <<< "$1"
+  echo $(( 10#$major * 10**12 + 10#$minor * 10**6 + 10#$patch ))
+}
 
 deny() {
   jq -n \
@@ -91,9 +103,10 @@ check_vgv_cli() {
     echo "not_installed"
     return
   fi
-  RAW=$("$vgv_bin" --version 2>/dev/null)
-  VERSION=$(echo "$RAW" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-  if [ -z "$VERSION" ]; then
+  local raw version
+  raw=$("$vgv_bin" --version 2>/dev/null)
+  version=$(echo "$raw" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  if [ -z "$version" ]; then
     # Only call it a PATH problem when dart really is absent. Blaming PATH for every
     # unreadable version sends users to edit shell profiles that were never at fault.
     if command -v dart &>/dev/null; then
@@ -103,11 +116,9 @@ check_vgv_cli() {
     fi
     return
   fi
-  IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-  if [ "$MAJOR" -lt "$MIN_MAJOR" ] 2>/dev/null ||
-     { [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -lt "$MIN_MINOR" ]; } 2>/dev/null ||
-     { [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -eq "$MIN_MINOR" ] && [ "$PATCH" -lt "$MIN_PATCH" ]; } 2>/dev/null; then
-    echo "outdated:$VERSION"
+  # The grep above matched three runs of digits, so both ranks are always numeric.
+  if [ "$(version_rank "$version")" -lt "$(version_rank "$MIN_VERSION")" ]; then
+    echo "outdated:$version"
     return
   fi
   echo "ok"
