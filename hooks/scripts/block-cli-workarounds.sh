@@ -50,20 +50,17 @@ deny_with_cli_check() {
       ;;
     dart_missing)
       # Redirecting to the MCP tool here would be a dead end: the server starts through
-      # the same very_good shim, which cannot exec dart from this PATH either. The advice
-      # names no shell, since which startup file exports PATH differs per shell.
+      # the same very_good shim, which cannot exec dart from this PATH either.
       deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. $DART_PATH_HINT $WHOLE_CALL_REFUSED"
       ;;
     unverifiable)
-      # dart resolves, so the shim can run and the MCP server is not a dead end: the
-      # version is just unreadable, which after a Dart SDK upgrade means a snapshot built
-      # for the old SDK. Redirect as usual and say how to clear that if the tool fails.
+      # dart resolves, so the server is not a dead end. Redirect as usual, and say how
+      # to clear a stale snapshot if the tool does turn out to be the thing failing.
       deny "$mcp_hint If that tool fails (for example with 'Invalid SDK hash'), $REBUILD_HINT $WHOLE_CALL_REFUSED"
       ;;
     ok | *)
-      # "ok" and any state added later: the command is still a bypass of the MCP tool,
-      # and this hook exists to refuse it. Redirecting is the conservative default here,
-      # because falling through to allow would drop the guard on an unknown state.
+      # "ok" and any state added later: still a bypass, and refusing it is this hook's
+      # job, so redirecting is the conservative default for an unknown state.
       deny "$mcp_hint $WHOLE_CALL_REFUSED"
       ;;
   esac

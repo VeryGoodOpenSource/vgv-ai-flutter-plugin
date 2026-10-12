@@ -33,10 +33,8 @@ case "$cli_status" in
     deny "Very Good CLI ${version} is too old. This tool requires Very Good CLI >= ${MIN_VERSION}. Update with: dart pub global activate very_good_cli"
     ;;
   dart_missing | unverifiable)
-    # The CLI is present but its version could not be read, whether because dart is off
-    # this PATH or because a Dart SDK change left a snapshot the VM rejects. Stand aside
-    # either way rather than deny a genuine call on an inconclusive check; normal
-    # permission handling applies.
+    # Inconclusive, for either reason. Stand aside rather than deny a genuine call;
+    # normal permission handling applies.
     exit 0
     ;;
   ok)
@@ -46,8 +44,8 @@ case "$cli_status" in
     allow "Very Good CLI >= ${MIN_VERSION} verified; auto-approving Very Good CLI MCP tool call."
     ;;
   *)
-    # A state this hook does not know. Auto-approving on it would widen permissions on
-    # a check that said nothing, so stand aside and let normal handling decide.
+    # Auto-approving an unknown state would widen permissions on a check that said
+    # nothing, so stand aside.
     exit 0
     ;;
 esac

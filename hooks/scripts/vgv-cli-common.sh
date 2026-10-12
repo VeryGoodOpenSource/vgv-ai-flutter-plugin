@@ -3,15 +3,12 @@
 
 MIN_VERSION="1.5.0"
 
-# Advice shared by the hooks, kept here so one wording reaches every caller. Each is a
-# sentence the caller appends to its own first line.
+# Advice shared by the hooks, so one wording reaches every caller.
 DART_PATH_HINT="Put the Dart SDK bin directory on the PATH your login shell always exports, or start Claude Code from a shell where dart already resolves, then begin a new session."
 REBUILD_HINT="Most often the Dart SDK changed under the installed CLI, leaving it with a snapshot built for the old SDK: run 'very_good --version' once in a terminal to rebuild it, then reconnect the server with /mcp or start a new session."
 
-# One comparable integer from a dotted version, so a three-part comparison is a single
-# test. Each part gets six digits, which no Dart package version comes near. The 10#
-# prefix keeps a zero-padded part such as the 08 in 1.08.0 out of octal, which bash
-# arithmetic rejects outright.
+# One comparable integer from a dotted version, six digits per part. The 10# prefix keeps
+# a zero-padded part such as the 08 in 1.08.0 out of octal, which bash arithmetic rejects.
 version_rank() {
   local major minor patch
   IFS='.' read -r major minor patch <<< "$1"
@@ -86,17 +83,11 @@ resolve_vgv_bin() {
 # Check Very Good CLI availability and version.
 # Returns: "ok", "not_installed", "outdated:<version>", "dart_missing", or "unverifiable".
 #
-# The last two both mean the binary was found but its version could not be read, so
-# callers must not report either as "not installed". They differ in why, and the two
-# fixes have nothing in common:
-#
-#   dart_missing - `dart` is absent from the PATH this process inherits. The installed
-#                  very_good is a shell shim that execs `dart`, so it cannot run at all.
-#   unverifiable - `dart` resolves and the version still came back empty. The usual
-#                  cause is a Dart SDK upgrade: the shim runs a snapshot built for the
-#                  old SDK, the VM rejects it with exit code 253, and the fallback
-#                  `dart pub global run` recompiles the CLI. The version stays
-#                  unreadable here until that rebuild lands. PATH is not the problem.
+# The last two both mean the version could not be read, so callers must not report
+# either as "not installed". They differ in why, and the fixes have nothing in common:
+# dart_missing is a PATH without dart, which the very_good shim needs to exec at all;
+# unverifiable is dart present and the version still empty, which after a Dart SDK
+# upgrade means a snapshot the VM rejects until `very_good --version` rebuilds it.
 check_vgv_cli() {
   local vgv_bin
   if ! vgv_bin=$(resolve_vgv_bin); then
@@ -107,8 +98,8 @@ check_vgv_cli() {
   raw=$("$vgv_bin" --version 2>/dev/null)
   version=$(echo "$raw" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
   if [ -z "$version" ]; then
-    # Only call it a PATH problem when dart really is absent. Blaming PATH for every
-    # unreadable version sends users to edit shell profiles that were never at fault.
+    # Blaming PATH for every unreadable version sends users to edit profiles that were
+    # never at fault, so only say that when dart really is absent.
     if command -v dart &>/dev/null; then
       echo "unverifiable"
     else
@@ -116,7 +107,7 @@ check_vgv_cli() {
     fi
     return
   fi
-  # The grep above matched three runs of digits, so both ranks are always numeric.
+  # The grep above matched digits only, so both ranks are numeric by construction.
   if [ "$(version_rank "$version")" -lt "$(version_rank "$MIN_VERSION")" ]; then
     echo "outdated:$version"
     return
