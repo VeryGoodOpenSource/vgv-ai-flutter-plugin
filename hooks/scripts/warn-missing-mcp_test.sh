@@ -80,19 +80,19 @@ assert_warns() {
 echo "=== warn-missing-mcp tests ==="
 echo ""
 echo "--- CLI present and current (no warning) ---"
-stub_cli 1.5.0
+stub_cli 1.6.0
 assert_silent "version above minimum"
-stub_cli 1.3.0
+stub_cli 1.5.0
 assert_silent "version exactly at minimum"
-stub_cli 1.5.0 --in-pub-cache
+stub_cli 1.6.0 --in-pub-cache
 assert_silent "resolved from PUB_CACHE, not PATH"
 
 echo ""
 echo "--- CLI missing or outdated ---"
 no_cli
 assert_warns "not installed" "CLI not installed"
-stub_cli 1.2.9
-assert_warns "1.2.9 is too old" "version below minimum"
+stub_cli 1.4.9
+assert_warns "1.4.9 is too old" "version below minimum"
 
 echo ""
 echo "--- Version unreadable (shim present, dart missing) ---"

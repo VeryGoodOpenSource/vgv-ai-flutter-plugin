@@ -205,7 +205,7 @@ session and exercise it before you commit.
 
 - **Claude Code CLI** installed (`npm install -g @anthropic-ai/claude-code`).
 - **Dart SDK** and **jq** on your `PATH` — the hooks need both.
-- **Very Good CLI** ≥ 1.3.0 (`dart pub global activate very_good_cli`) for the
+- **Very Good CLI** ≥ 1.5.0 (`dart pub global activate very_good_cli`) for the
   Very Good CLI MCP server tools.
 
 See the README [Hooks](README.md#hooks) and [MCP Integration](README.md#mcp-integration)

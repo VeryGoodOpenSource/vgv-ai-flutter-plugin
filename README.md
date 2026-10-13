@@ -69,8 +69,8 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 
 | Hook | Trigger | Behavior |
 | ---- | ------- | -------- |
-| **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing, older than 1.3.0, or present but unable to run because `dart` is not on the `PATH` hooks inherit; non-blocking |
-| **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__.*very-good-cli__.*`) | Verifies from the payload that the caller is a Very Good CLI tool and stands aside otherwise, so the decision never lands on an unrelated tool; for its own tools, auto-approves the call in every run mode via a PreToolUse `allow` decision, so they never dead-end when the tool isn't on `permissions.allow` (including under `skipAutoPermissionPrompt`); denies with an install/upgrade message if the CLI is missing or < 1.3.0 |
+| **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing, older than 1.5.0, or present but unable to run because `dart` is not on the `PATH` hooks inherit; non-blocking |
+| **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__.*very-good-cli__.*`) | Verifies from the payload that the caller is a Very Good CLI tool and stands aside otherwise, so the decision never lands on an unrelated tool; for its own tools, auto-approves the call in every run mode via a PreToolUse `allow` decision, so they never dead-end when the tool isn't on `permissions.allow` (including under `skipAutoPermissionPrompt`); denies with an install/upgrade message if the CLI is missing or < 1.5.0 |
 | **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Blocks direct CLI bypass of Very Good CLI commands through the host's shell tool; inspects the command only when the payload identifies a shell call, so an unrelated tool carrying a `command` argument is left alone; when the CLI is present but cannot run because `dart` is missing from `PATH`, the denial says so instead of redirecting to an MCP server that cannot start; exits 2 on failure (blocking) |
 | **Allow Read-only Git** (`allow-readonly-git.sh`) | PreToolUse (`Bash`, `flutter-reviewer` agent only) | Restricts the `flutter-reviewer` agent's Bash to single-line `git diff`/`git status`, without the `--output` or `--ext-diff` options, and denies anything else (blocking). Scoped via the agent's frontmatter, not `hooks.json` |
 | **Analyze** (`analyze.sh`) | PostToolUse (`Edit`/`Write`) | Runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix issues before continuing) |
@@ -186,7 +186,7 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 **Prerequisites:**
 
-- Very Good CLI v1.3.0+ installed: `dart pub global activate very_good_cli`
+- Very Good CLI v1.5.0+ installed: `dart pub global activate very_good_cli`
 - `very_good` must be on your PATH
 
 **How it works:**
