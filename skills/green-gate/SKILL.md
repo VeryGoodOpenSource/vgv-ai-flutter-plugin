@@ -40,7 +40,8 @@ Apply these to all green-gate work:
   through a shell command. The Bash test path (`very_good test`, `flutter test`,
   `dart test`) is hook-blocked by `block-cli-workarounds.sh` and will be denied, and
   `dart analyze` / `dart format` via Bash are redundant with the MCP tools.
-  **Bash is reserved for parsing `coverage/lcov.info` — nothing else.** This MCP-only
+  **The only Bash the loop runs is the fallback `coverage/lcov.info` parse**, and
+  only when the test result carries no `Lines not covered:` block. This MCP-only
   rule is a Claude Code constraint enforced by that hook; the hook does not run on
   other hosts. **Cross-harness fallback:** on a host without the hook and without the
   MCP servers connected, run the equivalent `dart analyze`, `dart format`, and
@@ -49,7 +50,7 @@ Apply these to all green-gate work:
   tools, which arguments, or what order the gates run in and does not want a run
   yet, answer from this skill: the same tool calls (`mcp__dart__analyze_files`
   with `applyFixes: true`, `mcp__dart__dart_format`, `mcp__very-good-cli__test`
-  with the coverage triple), in gate order, with the precedence rule that makes
+  with the coverage parameters), in gate order, with the precedence rule that makes
   the order matter. Never substitute an improvised shell plan of `flutter
 analyze` / `flutter test --coverage` for the tools the loop actually runs.
 - **Never cache green** — re-evaluate every gate every round. Fixing analyze or
@@ -58,10 +59,13 @@ analyze` / `flutter test --coverage` for the tools the loop actually runs.
 - **Exit only on observed numbers** — the loop terminates only after a single
   final iteration in which analyze is clean, format reports zero changes, all
   tests pass, and `min_coverage` is satisfied, all observed in the same round.
-- **Pass `coverage: true`, `min_coverage`, and `check_ignore: true` together** —
-  omitting `coverage: true` silently produces no `lcov.info` (mimics a
-  misconfiguration); omitting `check_ignore: true` makes the `// coverage:ignore`
-  remedy a no-op.
+- **Pass `coverage: true`, `min_coverage`, `check_ignore: true`, and
+  `show_uncovered: true` together** — omitting `coverage: true` silently produces
+  no `lcov.info` (mimics a misconfiguration); omitting `check_ignore: true` makes
+  the `// coverage:ignore` remedy a no-op; omitting `show_uncovered: true` drops
+  the per-file uncovered lines from the result and sends the loop to the lcov file
+  for what the tool would have handed back. `show_uncovered` arrived in
+  `very_good_cli` 1.5.0, the plugin's minimum.
 - **Defer test-writing to the `testing` skill** — when a fix requires authoring
   tests, follow that skill for structure, mocking, and naming.
 - **Fix root causes, not symptoms** — never weaken a gate to pass it (do not
@@ -89,9 +93,10 @@ For each package root (see **Recursive / Monorepo**), run this algorithm:
    with the coverage parameters from **Test Gate**. If tests fail, fix, record
    the fingerprint, go to step 7.
 5. **Coverage** — only if tests pass this round. The MCP `min_coverage` result is
-   authoritative pass/fail. Parse `coverage/lcov.info` for the displayed
-   percentage and per-file fix targets (advisory). If below target, author tests
-   for the ranked under-covered files (via the `testing` skill), go to step 7.
+   authoritative pass/fail, and its `Lines not covered:` block gives the per-file
+   fix targets; parse `coverage/lcov.info` only when that block is absent. If
+   below target, author tests for the ranked under-covered files (via the
+   `testing` skill), go to step 7.
 6. **Exit** — if all four gates are green in _this same iteration_, confirm
    success with the observed numbers and stop. This is the only exit-green path.
 7. **Re-verify** — increment the iteration counter, recompute the failure
@@ -123,7 +128,7 @@ Fingerprint keys per gate:
 | **Analyze**  | Sorted set of `diagnosticCode @ file:line`                   |
 | **Format**   | Set of files the format gate rewrote (empty = green)         |
 | **Test**     | Set of failing test IDs / names                              |
-| **Coverage** | Observed percentage + sorted set of under-covered `SF` files |
+| **Coverage** | Observed percentage + sorted set of under-covered file paths |
 
 Definitions:
 
@@ -141,7 +146,7 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
 
 1. **A downstream gate is not assessed until the upstream gate is green this
    round.** A red analyzer can make tests fail to compile; coverage is
-   meaningless when tests do not pass — never parse `lcov.info` after a compile
+   meaningless when tests do not pass — never diagnose coverage after a compile
    failure. Format runs after analyze so its reformatting does not churn over
    code that analyze's `applyFixes` is about to rewrite.
 2. **Every gate is re-evaluated every round; green is never cached.** Exit
@@ -188,7 +193,8 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
 ## Test Gate
 
 - Run `mcp__very-good-cli__test` with `coverage: true`, `min_coverage: <target>`,
-  `check_ignore: true`, and the `exclude_coverage` glob (below).
+  `check_ignore: true`, `show_uncovered: true`, and the `exclude_coverage` glob
+  (below).
 - **Dart vs Flutter** — omit `dart` to let the tool auto-detect (Flutter is run
   when a Flutter project is detected). Pass `dart: true` only for a pure Dart
   package the tool would otherwise misclassify.
@@ -206,9 +212,18 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
 
 ## Coverage Gate
 
-The MCP `min_coverage` result is **authoritative** for pass/fail. The
-`coverage/lcov.info` parse is **advisory** — it supplies the displayed
-percentage and per-file fix targets.
+The MCP `min_coverage` result is **authoritative** for pass/fail, and with
+`show_uncovered: true` it also carries the per-file fix targets:
+
+```text
+Expected coverage >= 100.00% but actual is 33.33%.
+Lines not covered:
+  - lib/src/weather_repository.dart: 4, 5
+```
+
+Rank the files from that block. The `coverage/lcov.info` parse is the
+**fallback**, for a result that has no such block: lcov is left behind by a run
+that may not be the one being diagnosed, while the result cannot be stale.
 
 - **Default target is `100`** (VGV's house standard), **overridable per
   invocation** (e.g. `80`) for legacy or non-template packages. Generated files
@@ -217,13 +232,13 @@ percentage and per-file fix targets.
 - **Default `exclude_coverage`** — `**/*.{g,freezed,gen}.dart` plus generated and
   l10n directories. One glob string (brace expansion; fall back to `**/*.g.dart`
   if a CLI build does not honor it).
-- **Pass `coverage: true`, `min_coverage`, and `check_ignore: true` together** —
-  see **Core Standards**.
-- **When `coverage/lcov.info` is missing or below target**, follow the decision
-  tree and parsing rules in [`references/coverage.md`](references/coverage.md) —
-  it covers the three absence causes, stale-lcov handling, the lcov record fields
-  (`SF`/`LF`/`LH`/`DA`), the advisory-mirrors-the-gate rule, and the
-  `check_ignore` Dart-only limitation.
+- **Pass `coverage: true`, `min_coverage`, `check_ignore: true`, and
+  `show_uncovered: true` together** — see **Core Standards**.
+- **When the result carries no `Lines not covered:` block**, fall back to
+  `coverage/lcov.info` per [`references/coverage.md`](references/coverage.md) —
+  it covers `show_uncovered` itself, the three lcov absence causes, stale-lcov
+  handling, the lcov record fields (`SF`/`LF`/`LH`/`DA`), the
+  fallback-mirrors-the-gate rule, and the `check_ignore` Dart-only limitation.
 
 ---
 
@@ -231,9 +246,10 @@ percentage and per-file fix targets.
 
 - **Fix only failing items** — address the diagnostics, tests, or under-covered
   files surfaced this round. Do not refactor unrelated code (YAGNI).
-- **Coverage fixes = author tests** — for each ranked under-covered `SF` file,
-  write tests following the `testing` skill. Prioritize files by uncovered
-  line count (`LF - LH`).
+- **Coverage fixes = author tests** — for each ranked under-covered file, write
+  tests following the `testing` skill. Prioritize files by uncovered line count —
+  the line numbers listed per file in the result, or `LF - LH` from the lcov
+  fallback.
 - **Bound files per round** — fix a coherent batch, then re-verify. Re-running
   the gates after each batch is what makes "no progress" detectable and prevents
   fixing one gate while silently breaking another.
@@ -257,7 +273,7 @@ Stop and surface to the user when:
 
 When escalating, name the gate that is red — analyze, format, test, or coverage —
 then give its fingerprint entries verbatim (`diagnosticCode @ file:line` for
-analyze, failing test names for test, under-covered `SF` paths for coverage),
+analyze, failing test names for test, under-covered file paths for coverage),
 the files touched, the iteration count, and the one decision the user must make.
 A summary count ("4 errors remain") is not a report; the user cannot act on it.
 
@@ -277,7 +293,8 @@ report, and wait.
 - **Shared package-root discovery** — walk for `pubspec.yaml` files. The
   `analyze_files` `roots` set must match the package set
   `mcp__very-good-cli__test --recursive` (`recursive: true`) covers.
-- **lcov path is `<package>/coverage/lcov.info`** — resolved per discovered root.
+- **Fallback lcov path is `<package>/coverage/lcov.info`** — resolved per
+  discovered root.
 - **Single `min_coverage` applies to all packages** — documented limitation: the
   tool schema has no per-package coverage override. State the shared target when
   confirming coverage.
@@ -287,7 +304,7 @@ report, and wait.
 ## Additional Resources
 
 - [`references/coverage.md`](references/coverage.md) — green-gate's coverage-gate
-  detail (default target, exclude globs, lcov fields, decision tree,
-  `check_ignore`, stale lcov).
+  detail (default target, exclude globs, `show_uncovered`, the lcov fallback and
+  its fields, decision tree, `check_ignore`, stale lcov).
 - The `testing` skill — test conventions, plus its coverage reference for closing
   per-file gaps.
