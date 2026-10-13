@@ -1,9 +1,9 @@
 #!/bin/bash
 # Shared helpers for Very Good CLI version checks and hook deny responses.
 
-MIN_VERSION="1.3.0"
+MIN_VERSION="1.5.0"
 MIN_MAJOR=1
-MIN_MINOR=3
+MIN_MINOR=5
 MIN_PATCH=0
 
 deny() {
