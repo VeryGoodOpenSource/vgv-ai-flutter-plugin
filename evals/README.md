@@ -142,13 +142,15 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
 - **Check both arms answered.** A no-plugin arm that asks a clarifying question instead of
   doing the work makes every grader look discriminating. That is a prompt that is not
   self-contained, not a result.
-- **The plugin's SessionStart hook fires inside every run.** `check_vgv_cli` returns
-  `unverifiable` there — `very_good` resolves on PATH but `very_good --version` answers
-  nothing, because it is a shim that execs `dart` under a throwaway `$HOME`. That does not
-  keep the hook quiet; it emits a notice, and an earlier wording of it asserted the MCP
-  server "will not start", which is false under mocks. Cases then opened with that blocker
-  instead of the answer and their rubrics failed. The notice now states only what is known
-  and says to carry on if the tools answer. Re-read it before blaming a case. Two prompts still say the session cannot reach a
+- **The plugin's SessionStart hook fires inside every run.** `check_vgv_cli` comes back
+  inconclusive there — `very_good` resolves on PATH but `very_good --version` answers
+  nothing, because it is a shim that execs `dart` under a throwaway `$HOME`. Which of its
+  two inconclusive states you get (`dart_missing` or `unverifiable`) depends on whether
+  `dart` resolves in the run, and each prints a different notice. Neither keeps the hook
+  quiet, and an earlier wording of one asserted the MCP server "will not start", which is
+  false under mocks. Cases then opened with that blocker
+  instead of the answer and their rubrics failed. Both notices now state only what is known
+  and say to carry on if the tools answer. Re-read the one you got before blaming a case. Two prompts still say the session cannot reach a
   real toolchain, which is a different problem and true regardless.
 
 - **A FAIL clause can punish a better answer than the PASS clause asked for.** Three
@@ -299,10 +301,11 @@ Four things that are not obvious:
   keeps `roots` out of reach — a separate tool whose real handshake a mock cannot perform.
   Adding one later is additive: capture it from the same probe, drop in a `<tool>.md`.
 
-The mocks are reachable only when `check_vgv_cli` returns `unverifiable`. In a run
-`very_good` resolves on PATH but `very_good --version` answers nothing, because it is a
-shim that execs `dart` under a throwaway `$HOME`. Read as `not_installed`, the PreToolUse
-hook denies the call and the model gets the hook's text as the tool result.
+The mocks are reachable only when `check_vgv_cli` comes back inconclusive — either
+`dart_missing` or `unverifiable`, both of which stand aside. In a run `very_good` resolves
+on PATH but `very_good --version` answers nothing, because it is a shim that execs `dart`
+under a throwaway `$HOME`. Read as `not_installed`, the PreToolUse hook would deny the call
+and the model would get the hook's text as the tool result.
 
 Every mock here is `type: fixed`. An `agent` mock answers through the judge model, so it
 costs money, varies run to run, and needs a recording adopted from

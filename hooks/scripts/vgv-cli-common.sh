@@ -2,9 +2,18 @@
 # Shared helpers for Very Good CLI version checks and hook deny responses.
 
 MIN_VERSION="1.5.0"
-MIN_MAJOR=1
-MIN_MINOR=5
-MIN_PATCH=0
+
+# Advice shared by the hooks, so one wording reaches every caller.
+DART_PATH_HINT="Put the Dart SDK bin directory on the PATH your login shell always exports, or start Claude Code from a shell where dart already resolves, then begin a new session."
+REBUILD_HINT="Most often the Dart SDK changed under the installed CLI, leaving it with a snapshot built for the old SDK: run 'very_good --version' once in a terminal to rebuild it, then reconnect the server with /mcp or start a new session."
+
+# One comparable integer from a dotted version, six digits per part. The 10# prefix keeps
+# a zero-padded part such as the 08 in 1.08.0 out of octal, which bash arithmetic rejects.
+version_rank() {
+  local major minor patch
+  IFS='.' read -r major minor patch <<< "$1"
+  echo $(( 10#$major * 10**12 + 10#$minor * 10**6 + 10#$patch ))
+}
 
 deny() {
   jq -n \
@@ -72,28 +81,35 @@ resolve_vgv_bin() {
 }
 
 # Check Very Good CLI availability and version.
-# Returns: "ok", "not_installed", "outdated:<version>", or "unverifiable".
+# Returns: "ok", "not_installed", "outdated:<version>", "dart_missing", or "unverifiable".
 #
-# "unverifiable" means the binary was found but its version could not be read. The
-# installed very_good is a shell shim that execs `dart`, so a PATH without dart on it
-# makes the check inconclusive. Callers must not report that as "not installed".
+# The last two both mean the version could not be read, so callers must not report
+# either as "not installed". They differ in why, and the fixes have nothing in common:
+# dart_missing is a PATH without dart, which the very_good shim needs to exec at all;
+# unverifiable is dart present and the version still empty, which after a Dart SDK
+# upgrade means a snapshot the VM rejects until `very_good --version` rebuilds it.
 check_vgv_cli() {
   local vgv_bin
   if ! vgv_bin=$(resolve_vgv_bin); then
     echo "not_installed"
     return
   fi
-  RAW=$("$vgv_bin" --version 2>/dev/null)
-  VERSION=$(echo "$RAW" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-  if [ -z "$VERSION" ]; then
-    echo "unverifiable"
+  local raw version
+  raw=$("$vgv_bin" --version 2>/dev/null)
+  version=$(echo "$raw" | head -1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+  if [ -z "$version" ]; then
+    # Blaming PATH for every unreadable version sends users to edit profiles that were
+    # never at fault, so only say that when dart really is absent.
+    if command -v dart &>/dev/null; then
+      echo "unverifiable"
+    else
+      echo "dart_missing"
+    fi
     return
   fi
-  IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
-  if [ "$MAJOR" -lt "$MIN_MAJOR" ] 2>/dev/null ||
-     { [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -lt "$MIN_MINOR" ]; } 2>/dev/null ||
-     { [ "$MAJOR" -eq "$MIN_MAJOR" ] && [ "$MINOR" -eq "$MIN_MINOR" ] && [ "$PATCH" -lt "$MIN_PATCH" ]; } 2>/dev/null; then
-    echo "outdated:$VERSION"
+  # The grep above matched digits only, so both ranks are numeric by construction.
+  if [ "$(version_rank "$version")" -lt "$(version_rank "$MIN_VERSION")" ]; then
+    echo "outdated:$version"
     return
   fi
   echo "ok"

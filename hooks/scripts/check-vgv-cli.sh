@@ -32,14 +32,20 @@ case "$cli_status" in
     version="${cli_status#outdated:}"
     deny "Very Good CLI ${version} is too old. This tool requires Very Good CLI >= ${MIN_VERSION}. Update with: dart pub global activate very_good_cli"
     ;;
-  unverifiable)
-    # The CLI is present but its version could not be read. Stand aside rather than
-    # deny a genuine call on an inconclusive check; normal permission handling applies.
+  dart_missing | unverifiable)
+    # Inconclusive, for either reason. Stand aside rather than deny a genuine call;
+    # normal permission handling applies.
+    exit 0
+    ;;
+  ok)
+    # Auto-approve so the Very Good CLI MCP tool is always allowed, even under
+    # skipAutoPermissionPrompt where a non-allowlisted tool would otherwise fail
+    # closed and silently.
+    allow "Very Good CLI >= ${MIN_VERSION} verified; auto-approving Very Good CLI MCP tool call."
+    ;;
+  *)
+    # Auto-approving an unknown state would widen permissions on a check that said
+    # nothing, so stand aside.
     exit 0
     ;;
 esac
-
-# Version OK — auto-approve so the Very Good CLI MCP tool is always allowed,
-# even under skipAutoPermissionPrompt where a non-allowlisted tool would
-# otherwise fail closed and silently.
-allow "Very Good CLI >= ${MIN_VERSION} verified; auto-approving Very Good CLI MCP tool call."

@@ -39,6 +39,12 @@ stub_cli() {
 
 no_cli() { rm -f "$STUB_DIR/very_good"; }
 
+# Install or remove a stubbed dart. The hooks only probe for its presence, so the stub
+# needs no behavior: it is what separates "dart is off this PATH" from "dart runs and
+# the version is still unreadable", which carry different diagnoses.
+stub_dart() { printf '#!/bin/sh\nexit 0\n' > "$STUB_DIR/dart"; chmod +x "$STUB_DIR/dart"; }
+no_dart() { rm -f "$STUB_DIR/dart"; }
+
 # Run the hook on a payload. Sets LAST_RESULT to the permissionDecision ("deny"/"allow"),
 # "aside" when the hook exited 0 with no decision, or "exit:<status>" on a non-zero exit.
 # The full stdout is left in LAST_OUTPUT for reason assertions. These are globals rather
@@ -189,9 +195,20 @@ assert_reason_contains "not found" "missing CLI asks for an install"
 
 # The MCP server starts through the same very_good shim, so redirecting to it when the
 # shim cannot exec dart would be a dead end. The reason must point at PATH instead.
+no_dart
 stub_cli
 assert_blocked "flutter test"
 assert_reason_contains "dart is not on the PATH" "CLI that cannot run points at PATH, not the MCP tool"
+
+# With dart on PATH the shim runs, so the MCP server is not a dead end and the reason
+# must still redirect to it. Blaming PATH here is the bug: the cause is a snapshot built
+# for an older SDK, which the reason has to name instead.
+stub_dart
+stub_cli
+assert_blocked "flutter test"
+assert_reason_contains "MCP 'test' tool" "unreadable version with dart present still redirects to the MCP tool"
+assert_reason_contains "very_good --version" "unreadable version with dart present asks for a rebuild"
+no_dart
 
 echo ""
 echo "--- Deny reason says the whole call was refused ---"

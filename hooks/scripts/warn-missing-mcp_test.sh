@@ -43,6 +43,12 @@ stub_cli() {
 
 no_cli() { rm -rf "$STUB_DIR/pub-cache" "$STUB_DIR/very_good"; }
 
+# Install or remove a stubbed dart. The hooks only probe for its presence, so the stub
+# needs no behavior: it is what separates "dart is off this PATH" from "dart runs and
+# the version is still unreadable", which carry different diagnoses.
+stub_dart() { printf '#!/bin/sh\nexit 0\n' > "$STUB_DIR/dart"; chmod +x "$STUB_DIR/dart"; }
+no_dart() { rm -f "$STUB_DIR/dart"; }
+
 # Runs the hook. Leaves stdout in LAST_OUTPUT and the exit status in LAST_STATUS.
 LAST_OUTPUT=""
 LAST_STATUS=0
@@ -77,6 +83,17 @@ assert_warns() {
   fi
 }
 
+assert_omits() {
+  local needle="$1" label="$2"
+  run_hook
+  assert_exit_zero "$label"
+  if [[ "$LAST_OUTPUT" != *"$needle"* ]]; then
+    pass "omits '$needle':  $label"
+  else
+    fail "expected no mention of '$needle':  $label"
+  fi
+}
+
 echo "=== warn-missing-mcp tests ==="
 echo ""
 echo "--- CLI present and current (no warning) ---"
@@ -95,10 +112,23 @@ stub_cli 1.4.9
 assert_warns "1.4.9 is too old" "version below minimum"
 
 echo ""
-echo "--- Version unreadable (shim present, dart missing) ---"
+echo "--- Version unreadable, dart missing (a PATH problem) ---"
 # Not "not installed": the binary is there. The warning must point at dart and PATH.
+no_dart
 stub_cli
 assert_warns "dart is not on the PATH" "CLI that cannot run points at PATH"
+
+echo ""
+echo "--- Version unreadable, dart present (not a PATH problem) ---"
+# dart resolves, so PATH is not at fault. Blaming it here is the bug this split fixes:
+# it sends users to edit shell profiles when the real cause is a snapshot built for an
+# older SDK, cleared by running very_good once.
+stub_dart
+stub_cli
+assert_warns "very_good --version" "unreadable version with dart present asks for a rebuild"
+assert_warns "/mcp" "unreadable version with dart present says to reconnect the server"
+assert_omits "dart is not on the PATH" "unreadable version with dart present never blames PATH"
+no_dart
 
 echo ""
 echo "=== Results: $PASSED passed, $FAILED failed ==="

@@ -35,7 +35,7 @@ fi
 WHOLE_CALL_REFUSED="This whole shell call was refused, so none of it ran: run any other commands it chained in a call of their own."
 
 # Deny with an install/upgrade message when the CLI is missing or outdated, with a PATH
-# message when it is present but cannot run, and otherwise redirect to the MCP tool.
+# message when dart is not there to run it, and otherwise redirect to the MCP tool.
 deny_with_cli_check() {
   local mcp_hint="$1"
   local cli_status
@@ -48,12 +48,19 @@ deny_with_cli_check() {
       local version="${cli_status#outdated:}"
       deny "Very Good CLI ${version} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli. $WHOLE_CALL_REFUSED"
       ;;
-    unverifiable)
+    dart_missing)
       # Redirecting to the MCP tool here would be a dead end: the server starts through
       # the same very_good shim, which cannot exec dart from this PATH either.
-      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session. $WHOLE_CALL_REFUSED"
+      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. $DART_PATH_HINT $WHOLE_CALL_REFUSED"
       ;;
-    *)
+    unverifiable)
+      # dart resolves, so the server is not a dead end. Redirect as usual, and say how
+      # to clear a stale snapshot if the tool does turn out to be the thing failing.
+      deny "$mcp_hint If that tool fails (for example with 'Invalid SDK hash'), $REBUILD_HINT $WHOLE_CALL_REFUSED"
+      ;;
+    ok | *)
+      # "ok" and any state added later: still a bypass, and refusing it is this hook's
+      # job, so redirecting is the conservative default for an unknown state.
       deny "$mcp_hint $WHOLE_CALL_REFUSED"
       ;;
   esac
