@@ -1,7 +1,6 @@
 #!/bin/bash
-# PreToolUse hook: block Bash commands that bypass MCP tools.
-# Denies flutter create, dart create, very_good create, very_good test,
-# very_good packages, flutter test, dart test.
+# PreToolUse hook: deny shell calls to CLI commands the MCP tools cover.
+# To block another command, add a hint line below and a test case.
 
 if ! command -v jq &>/dev/null; then
   echo "jq is required for block-cli-workarounds hook but not found" >&2
@@ -34,54 +33,111 @@ fi
 # assumes the chained command's side effect happened and carries on without it.
 WHOLE_CALL_REFUSED="This whole shell call was refused, so none of it ran: run any other commands it chained in a call of their own."
 
-# Deny with an install/upgrade message when the CLI is missing or outdated, with a PATH
-# message when it is present but cannot run, and otherwise redirect to the MCP tool.
+# Deny with a reason that fits the CLI status.
 deny_with_cli_check() {
-  local mcp_hint="$1"
-  local cli_status
+  local mcp_hint="$1" matched="$2"
+  local cli_status reason
   cli_status=$(check_vgv_cli)
   case "$cli_status" in
     not_installed)
-      deny "Very Good CLI is required but was not found. Install with: dart pub global activate very_good_cli. $WHOLE_CALL_REFUSED"
+      reason="Very Good CLI is required but was not found. Install with: dart pub global activate very_good_cli."
       ;;
     outdated:*)
-      local version="${cli_status#outdated:}"
-      deny "Very Good CLI ${version} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli. $WHOLE_CALL_REFUSED"
+      reason="Very Good CLI ${cli_status#outdated:} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli."
       ;;
     unverifiable)
       # Redirecting to the MCP tool here would be a dead end: the server starts through
       # the same very_good shim, which cannot exec dart from this PATH either.
-      deny "Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session. $WHOLE_CALL_REFUSED"
+      reason="Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session."
       ;;
     *)
-      deny "$mcp_hint $WHOLE_CALL_REFUSED"
+      reason="$mcp_hint"
       ;;
   esac
+  deny "$reason $WHOLE_CALL_REFUSED Matched: $matched"
 }
 
-# Split on shell operators and check the first two tokens of each subcommand.
-# This avoids false positives from file paths (.dart) or quoted strings.
-BLOCKED=$(echo "$COMMAND" | awk '{
-  n = split($0, parts, /[;&|]+/)
+# Quoted text is data unless eval, sh -c or $( ) runs it. Every adjacent word pair is
+# checked, so wrappers (fvm, melos, sudo, timeout) and /path/to/flutter need no list.
+read -r -d '' find_invocation <<'AWK' || true   # read, not $(cat): unbalanced parens inside
+BEGIN {
+  RS = "\001"   # whole command is one record
+  hint["flutter test"]       = "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead."
+  hint["dart test"]          = hint["flutter test"]
+  hint["flutter create"]     = "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead."
+  hint["dart create"]        = hint["flutter create"]
+  hint["very_good test"]     = "Do not use 'very_good test' via shell. Use the very_good_cli MCP 'test' tool instead."
+  hint["very_good create"]   = "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead."
+  hint["very_good packages"] = "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead."
+}
+# Drop heredoc bodies written with a quoted delimiter (<<'X', <<-"X"). The shell
+# expands nothing inside them, so they are data, not commands. An unquoted <<X does
+# expand $( ), so its body is left in place and still scanned.
+function strip_heredocs(s,   n, lines, i, out, delim, line) {
+  n = split(s, lines, "\n")
+  out = ""
   for (i = 1; i <= n; i++) {
-    gsub(/^[[:space:]]+/, "", parts[i])
-    split(parts[i], w, /[[:space:]]+/)
-    b = w[1]; s = w[2]
-    if ((b == "flutter" || b == "dart") && s == "create")   { print "create";      exit }
-    if ((b == "flutter" || b == "dart") && s == "test")     { print "test";         exit }
-    if (b == "very_good" && s == "create")                  { print "vg_create";    exit }
-    if (b == "very_good" && s == "test")                    { print "vg_test";      exit }
-    if (b == "very_good" && s == "packages")                { print "vg_packages";  exit }
+    line = lines[i]
+    if (delim != "") {                             # inside a body: drop the line
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+      if (line == delim) delim = ""                # <<- may indent the terminator
+      continue
+    }
+    out = out line "\n"
+    if (match(line, /<<-?[[:space:]]*('[^']+'|"[^"]+")/)) {
+      delim = substr(line, RSTART, RLENGTH)
+      sub(/^<<-?[[:space:]]*/, "", delim)
+      gsub(/["']/, "", delim)                      # compared literally, never as a regex
+    }
   }
-}')
+  return out
+}
 
-case "$BLOCKED" in
-  create)      deny_with_cli_check "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead." ;;
-  test)        deny_with_cli_check "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead." ;;
-  vg_create)   deny_with_cli_check "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead." ;;
-  vg_test)     deny_with_cli_check "Do not use 'very_good test' via shell. Use the very_good_cli MCP 'test' tool instead." ;;
-  vg_packages) deny_with_cli_check "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead." ;;
-esac
+# Collapse quoted spans, consuming s left to right so an apostrophe inside "..." can
+# never open a span of its own. A span becomes "_" where the shell treats it as data,
+# and keeps its contents where the shell would still run what is inside it.
+function dequote(s, mode,   out, q, body) {
+  out = ""
+  while (match(s, /'[^']*'|"[^"]*"/)) {
+    q    = substr(s, RSTART, 1)
+    body = substr(s, RSTART + 1, RLENGTH - 2)
+    out  = out substr(s, 1, RSTART - 1)
+    out  = out ((mode == "bare" || (mode == "subst" && q == "\"")) ? body : "_")
+    s    = substr(s, RSTART + RLENGTH)
+  }
+  return out s                                     # an unbalanced quote collapses nothing
+}
 
-# Not a blocked command — allow
+# First blocked "cmd sub" pair in s, or "". Extra params are awk locals.
+function scan(s,   n, w, i, b, pair) {
+  gsub(/[;&|(){}`\n]+/, " ; ", s)                # operators end a command
+  n = split(s, w, /[[:space:]]+/)
+  for (i = 1; i < n; i++) {
+    b = w[i]; sub(/^.*\//, "", b)                 # basename
+    pair = b " " w[i + 1]
+    if (pair in hint) return pair
+  }
+  return ""
+}
+{
+  gsub(/\\["'$`]/, "_")              # escaped: literal
+  src = strip_heredocs($0)            # a quoted-delimiter heredoc body is data
+
+  text  = dequote(src, "data")        # quotes are data
+  subst = dequote(src, "subst")       # but "$( )" runs
+  bare  = dequote(src, "bare")        # and eval "" runs
+
+  pair = scan(text)
+  if (pair == "" && src ~ /\$\(|`/)                                pair = scan(subst)
+  if (pair == "" && src ~ /(^|[^[:alnum:]_])(eval|sh|bash|zsh) /)  pair = scan(bare)
+  if (pair != "") print hint[pair] "\t" pair
+}
+AWK
+
+RESULT=$(printf '%s\n' "$COMMAND" | awk "$find_invocation")   # printf: echo eats -n
+
+if [ -n "$RESULT" ]; then
+  deny_with_cli_check "${RESULT%%$'\t'*}" "${RESULT#*$'\t'}"
+fi
+
 exit 0
