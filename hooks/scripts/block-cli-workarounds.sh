@@ -70,6 +70,44 @@ BEGIN {
   hint["very_good create"]   = "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead."
   hint["very_good packages"] = "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead."
 }
+# Drop heredoc bodies written with a quoted delimiter (<<'X', <<-"X"). The shell
+# expands nothing inside them, so they are data, not commands. An unquoted <<X does
+# expand $( ), so its body is left in place and still scanned.
+function strip_heredocs(s,   n, lines, i, out, delim, line) {
+  n = split(s, lines, "\n")
+  out = ""
+  for (i = 1; i <= n; i++) {
+    line = lines[i]
+    if (delim != "") {                             # inside a body: drop the line
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+      if (line == delim) delim = ""                # <<- may indent the terminator
+      continue
+    }
+    out = out line "\n"
+    if (match(line, /<<-?[[:space:]]*('[^']+'|"[^"]+")/)) {
+      delim = substr(line, RSTART, RLENGTH)
+      sub(/^<<-?[[:space:]]*/, "", delim)
+      gsub(/["']/, "", delim)                      # compared literally, never as a regex
+    }
+  }
+  return out
+}
+
+# Collapse quoted spans, consuming s left to right so an apostrophe inside "..." can
+# never open a span of its own. A span becomes "_" where the shell treats it as data,
+# and keeps its contents where the shell would still run what is inside it.
+function dequote(s, mode,   out, q, body) {
+  out = ""
+  while (match(s, /'[^']*'|"[^"]*"/)) {
+    q    = substr(s, RSTART, 1)
+    body = substr(s, RSTART + 1, RLENGTH - 2)
+    out  = out substr(s, 1, RSTART - 1)
+    out  = out ((mode == "bare" || (mode == "subst" && q == "\"")) ? body : "_")
+    s    = substr(s, RSTART + RLENGTH)
+  }
+  return out s                                     # an unbalanced quote collapses nothing
+}
+
 # First blocked "cmd sub" pair in s, or "". Extra params are awk locals.
 function scan(s,   n, w, i, b, pair) {
   gsub(/[;&|(){}`\n]+/, " ; ", s)                # operators end a command
@@ -82,14 +120,16 @@ function scan(s,   n, w, i, b, pair) {
   return ""
 }
 {
-  gsub(/\\["'$`]/, "_")                                               # escaped: literal
-  text  = $0; gsub(/'[^']*'/, "_", text); gsub(/"[^"]*"/, "_", text)  # quotes are data
-  subst = $0; gsub(/'[^']*'/, "_", subst); gsub(/"/, "", subst)       # but "$( )" runs
-  bare  = $0; gsub(/["']/, "", bare)                                  # and eval "" runs
+  gsub(/\\["'$`]/, "_")              # escaped: literal
+  src = strip_heredocs($0)            # a quoted-delimiter heredoc body is data
+
+  text  = dequote(src, "data")        # quotes are data
+  subst = dequote(src, "subst")       # but "$( )" runs
+  bare  = dequote(src, "bare")        # and eval "" runs
 
   pair = scan(text)
-  if (pair == "" && $0 ~ /\$\(|`/)                                pair = scan(subst)
-  if (pair == "" && $0 ~ /(^|[^[:alnum:]_])(eval|sh|bash|zsh) /)  pair = scan(bare)
+  if (pair == "" && src ~ /\$\(|`/)                                pair = scan(subst)
+  if (pair == "" && src ~ /(^|[^[:alnum:]_])(eval|sh|bash|zsh) /)  pair = scan(bare)
   if (pair != "") print hint[pair] "\t" pair
 }
 AWK

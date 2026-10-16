@@ -253,6 +253,13 @@ assert_allowed "echo '\$(flutter test)'"
 assert_allowed "echo \"\$(date) building\""
 assert_allowed "VAR=\"\$(ls)\"; dart analyze"
 
+# Quoted spans are consumed left to right, so an apostrophe inside "..." cannot open
+# a span of its own and hide what follows it.
+assert_blocked "echo \"don't\" && flutter test && echo 'x'"
+assert_blocked "git commit -m \"it's\" && flutter test && git commit -m \"don't\""
+assert_blocked "echo \"it's fine\"; dart test"
+assert_allowed "echo \"don't\" && ls && echo 'x'"
+
 # eval and sh -c run their string.
 assert_blocked "eval \"flutter test\""
 assert_blocked "bash -c 'flutter test'"
@@ -269,7 +276,12 @@ assert_allowed "\"flutter\" test"
 assert_allowed "'dart' test"
 assert_allowed "$(printf 'flutter \\\ntest --coverage')"
 
-# Heredoc bodies are not modelled; denied as a known limitation.
+# A quoted delimiter stops the shell expanding the body, so it is data even inside
+# "$( )", the usual way a commit message or PR body is passed.
+assert_allowed $'git commit -m "$(cat <<\'EOF\'\nfix: stop running flutter test by hand\nEOF\n)"'
+assert_allowed $'gh pr create --body "$(cat <<\'EOF\'\nThis PR makes flutter test unnecessary.\nEOF\n)"'
+
+# An unquoted delimiter does expand $( ), so its body is still scanned and denied.
 assert_blocked "$(printf 'cat <<EOF\nflutter test\nEOF')"
 
 echo ""
