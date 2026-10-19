@@ -57,84 +57,16 @@ deny_with_cli_check() {
   deny "$reason $WHOLE_CALL_REFUSED Matched: $matched"
 }
 
-# Quoted text is data unless eval, sh -c or $( ) runs it. Every adjacent word pair is
-# checked, so wrappers (fvm, melos, sudo, timeout) and /path/to/flutter need no list.
-read -r -d '' find_invocation <<'AWK' || true   # read, not $(cat): unbalanced parens inside
-BEGIN {
-  RS = "\001"   # whole command is one record
-  hint["flutter test"]       = "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead."
-  hint["dart test"]          = hint["flutter test"]
-  hint["flutter create"]     = "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead."
-  hint["dart create"]        = hint["flutter create"]
-  hint["very_good test"]     = "Do not use 'very_good test' via shell. Use the very_good_cli MCP 'test' tool instead."
-  hint["very_good create"]   = "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead."
-  hint["very_good packages"] = "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead."
-}
-# Drop heredoc bodies written with a quoted delimiter (<<'X', <<-"X"). The shell
-# expands nothing inside them, so they are data, not commands. An unquoted <<X does
-# expand $( ), so its body is left in place and still scanned.
-function strip_heredocs(s,   n, lines, i, out, delim, line) {
-  n = split(s, lines, "\n")
-  out = ""
-  for (i = 1; i <= n; i++) {
-    line = lines[i]
-    if (delim != "") {                             # inside a body: drop the line
-      gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
-      if (line == delim) delim = ""                # <<- may indent the terminator
-      continue
-    }
-    out = out line "\n"
-    if (match(line, /<<-?[[:space:]]*('[^']+'|"[^"]+")/)) {
-      delim = substr(line, RSTART, RLENGTH)
-      sub(/^<<-?[[:space:]]*/, "", delim)
-      gsub(/["']/, "", delim)                      # compared literally, never as a regex
-    }
-  }
-  return out
-}
+# The matcher lives in its own file so it reads, highlights and lints as awk rather
+# than as a string embedded in this script.
+MATCHER="$SCRIPT_DIR/find-blocked-invocation.awk"
 
-# Collapse quoted spans, consuming s left to right so an apostrophe inside "..." can
-# never open a span of its own. A span becomes "_" where the shell treats it as data,
-# and keeps its contents where the shell would still run what is inside it.
-function dequote(s, mode,   out, q, body) {
-  out = ""
-  while (match(s, /'[^']*'|"[^"]*"/)) {
-    q    = substr(s, RSTART, 1)
-    body = substr(s, RSTART + 1, RLENGTH - 2)
-    out  = out substr(s, 1, RSTART - 1)
-    out  = out ((mode == "bare" || (mode == "subst" && q == "\"")) ? body : "_")
-    s    = substr(s, RSTART + RLENGTH)
-  }
-  return out s                                     # an unbalanced quote collapses nothing
-}
+if [ ! -f "$MATCHER" ]; then
+  echo "block-cli-workarounds hook cannot find $MATCHER" >&2
+  exit 1
+fi
 
-# First blocked "cmd sub" pair in s, or "". Extra params are awk locals.
-function scan(s,   n, w, i, b, pair) {
-  gsub(/[;&|(){}`\n]+/, " ; ", s)                # operators end a command
-  n = split(s, w, /[[:space:]]+/)
-  for (i = 1; i < n; i++) {
-    b = w[i]; sub(/^.*\//, "", b)                 # basename
-    pair = b " " w[i + 1]
-    if (pair in hint) return pair
-  }
-  return ""
-}
-{
-  gsub(/\\["'$`]/, "_")              # escaped: literal
-  src = strip_heredocs($0)            # a quoted-delimiter heredoc body is data
-
-  text  = dequote(src, "data")        # quotes are data
-  subst = dequote(src, "subst")       # but "$( )" runs
-  bare  = dequote(src, "bare")        # and eval "" runs
-
-  pair = scan(text)
-  if (pair == "" && src ~ /\$\(|`/)                                pair = scan(subst)
-  if (pair == "" && src ~ /(^|[^[:alnum:]_])(eval|sh|bash|zsh) /)  pair = scan(bare)
-  if (pair != "") print hint[pair] "\t" pair
-}
-AWK
-
-RESULT=$(printf '%s\n' "$COMMAND" | awk "$find_invocation")   # printf: echo eats -n
+RESULT=$(printf '%s\n' "$COMMAND" | awk -f "$MATCHER")   # printf: echo eats -n
 
 if [ -n "$RESULT" ]; then
   deny_with_cli_check "${RESULT%%$'\t'*}" "${RESULT#*$'\t'}"
