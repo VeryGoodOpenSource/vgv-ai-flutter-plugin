@@ -39,7 +39,7 @@ jobs:
           config: 'config/cspell.json'
   skills-lint:
     name: 🔍 Skills Lint
-    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/skills_lint.yml@v2.0.1
+    uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/skills_lint.yml@v2
     with:
       skills_directories: 'skills'
   plugin-validate:
