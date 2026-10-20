@@ -32,9 +32,9 @@ case "$cli_status" in
     version="${cli_status#outdated:}"
     deny "Very Good CLI ${version} is too old. This tool requires Very Good CLI >= ${MIN_VERSION}. Update with: dart pub global activate very_good_cli"
     ;;
-  unverifiable)
-    # The CLI is present but its version could not be read. Stand aside rather than
-    # deny a genuine call on an inconclusive check; normal permission handling applies.
+  dart_missing | unverifiable)
+    # Inconclusive, for either reason. Stand aside rather than deny a genuine call on an
+    # inconclusive check; normal permission handling applies.
     exit 0
     ;;
 esac

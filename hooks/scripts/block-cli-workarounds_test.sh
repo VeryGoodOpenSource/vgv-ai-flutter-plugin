@@ -21,7 +21,19 @@ FAILED=0
 STUB_DIR="$(mktemp -d)"
 trap 'rm -rf "$STUB_DIR"' EXIT
 
-BASE_PATH="$(dirname "$(command -v jq)"):/usr/bin:/bin:/usr/sbin:/sbin"
+# jq reaches the hook through a directory holding nothing but jq. Putting jq's own
+# directory on PATH drags its neighbours in with it, and on a Homebrew machine those
+# include dart, which no_dart then cannot make disappear.
+mkdir -p "$STUB_DIR/jq-bin"
+ln -s "$(command -v jq)" "$STUB_DIR/jq-bin/jq"
+BASE_PATH="$STUB_DIR/jq-bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+# The dart_missing cases need a PATH on which dart does not resolve. Say so outright
+# rather than quietly exercise the other branch.
+if PATH="$BASE_PATH" command -v dart >/dev/null 2>&1; then
+  echo "BASE_PATH resolves dart; the dart_missing cases cannot run here" >&2
+  exit 1
+fi
 
 # Install a stubbed very_good. With a version argument the stub reports that version;
 # with no argument it fails the way the real shim does when `dart` is missing from PATH.
@@ -32,12 +44,18 @@ stub_cli() {
   if [ -z "$version" ]; then
     printf '#!/bin/sh\necho "very_good: dart: command not found" >&2\nexit 127\n' > "$target"
   else
-    printf '#!/bin/sh\necho "very_good %s"\n' "$version" > "$target"
+    printf '#!/bin/sh\necho "%s"\n' "$version" > "$target"
   fi
   chmod +x "$target"
 }
 
 no_cli() { rm -f "$STUB_DIR/very_good"; }
+
+# Install or remove a stubbed dart. The hooks only probe for its presence, so the stub
+# needs no behavior: it is what separates "dart is off this PATH" from "dart runs and
+# the version is still unreadable", which carry different diagnoses.
+stub_dart() { printf '#!/bin/sh\nexit 0\n' > "$STUB_DIR/dart"; chmod +x "$STUB_DIR/dart"; }
+no_dart() { rm -f "$STUB_DIR/dart"; }
 
 # Run the hook on a payload. Sets LAST_RESULT to the permissionDecision ("deny"/"allow"),
 # "aside" when the hook exited 0 with no decision, or "exit:<status>" on a non-zero exit.
@@ -380,6 +398,15 @@ assert_reason_contains "not found" "missing CLI asks for an install"
 stub_cli
 assert_blocked "flutter test"
 assert_reason_contains "dart is not on the PATH" "CLI that cannot run points at PATH, not the MCP tool"
+
+# With dart on PATH the shim runs, so the MCP server is not a dead end and the reason
+# must still redirect to it rather than blame PATH.
+stub_dart
+stub_cli
+assert_blocked "flutter test"
+assert_reason_contains "MCP 'test' tool" "unreadable version with dart present still redirects"
+assert_reason_contains "very_good --version" "unreadable version with dart present asks for a rebuild"
+no_dart
 
 echo ""
 echo "--- Deny reason says the whole call was refused ---"

@@ -20,7 +20,19 @@ FAILED=0
 STUB_DIR="$(mktemp -d)"
 trap 'rm -rf "$STUB_DIR"' EXIT
 
-BASE_PATH="$(dirname "$(command -v jq)"):/usr/bin:/bin:/usr/sbin:/sbin"
+# jq reaches the hook through a directory holding nothing but jq. Putting jq's own
+# directory on PATH drags its neighbours in with it, and on a Homebrew machine those
+# include dart, which no_dart then cannot make disappear.
+mkdir -p "$STUB_DIR/jq-bin"
+ln -s "$(command -v jq)" "$STUB_DIR/jq-bin/jq"
+BASE_PATH="$STUB_DIR/jq-bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+# The dart_missing cases need a PATH on which dart does not resolve. Say so outright
+# rather than quietly exercise the other branch.
+if PATH="$BASE_PATH" command -v dart >/dev/null 2>&1; then
+  echo "BASE_PATH resolves dart; the dart_missing cases cannot run here" >&2
+  exit 1
+fi
 
 # Install a stubbed very_good. With a version argument the stub reports that version;
 # with no argument it fails the way the real shim does when `dart` is missing from PATH.
@@ -37,7 +49,7 @@ stub_cli() {
   if [ -z "$version" ]; then
     printf '#!/bin/sh\necho "very_good: dart: command not found" >&2\nexit 127\n' > "$target"
   else
-    printf '#!/bin/sh\necho "very_good %s"\n' "$version" > "$target"
+    printf '#!/bin/sh\necho "%s"\n' "$version" > "$target"
   fi
   chmod +x "$target"
 }
