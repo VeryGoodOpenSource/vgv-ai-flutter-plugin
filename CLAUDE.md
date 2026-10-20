@@ -17,7 +17,7 @@ These run **when a session begins**:
 These run **before** a tool call is executed:
 
 - `mcp__.*very-good-cli__.*` matcher → `check-vgv-cli.sh` — reads `tool_name` from the payload and exits 0 unless the caller is a Very Good CLI tool, so a host that does not apply the matcher cannot have the decision land on an unrelated tool; for its own tools it auto-approves the call by returning a PreToolUse `allow` decision, so it is always permitted regardless of run mode (interactive, headless, or `skipAutoPermissionPrompt`) and never dead-ends when the tool isn't on `permissions.allow`; denies with an install/upgrade message if the CLI is missing or < 1.5.0, and stands aside when the CLI is present but its version cannot be read (`dart` missing from `PATH`), leaving normal permission handling to apply. The `.*` in the matcher covers both the bare `mcp__very-good-cli__*` server (repo-root `.mcp.json`) and the plugin-namespaced `mcp__plugin_<plugin>_very-good-cli__*` form used when installed from a marketplace
-- `Bash` matcher → `block-cli-workarounds.sh` — prevents direct CLI bypass of VGV CLI commands through the host's shell tool (`Bash`, or `Shell` on other hosts); exits 0 when the payload names a non-shell tool, so an unrelated tool carrying a `command` argument is never inspected; when the CLI is present but cannot run because `dart` is missing from `PATH`, the denial says so rather than redirecting to an MCP server that cannot start; every denial also says the whole shell call was refused, so the agent re-runs any command chained with the blocked one instead of assuming it ran; exits 2 on failure (blocking)
+- `Bash` matcher → `block-cli-workarounds.sh` — denies `flutter`/`dart` `test`/`create` and `very_good test`/`create`/`packages` in the shell and points to the MCP tool. Quoted text is data unless `eval`, `sh -c` or `$( )` runs it. A heredoc body with a quoted delimiter (`<<'EOF'`) is data too, unless the opening line feeds it to a shell (`bash <<'EOF'`, `cat <<'EOF' | sh`), which runs it; an unquoted `<<EOF` expands, so its body is always scanned. Every adjacent word pair is checked, so wrappers (`fvm`, `melos`, `sudo`, `timeout`) and `/path/to/flutter` need no list. The denial names the match and says the whole call was refused. Pinned gaps: `"flutter" test` and `$F test` pass; an unquoted pair is denied wherever it sits, including as an argument (`echo flutter test`, `man flutter test`); narrowing the match to a command position would need the wrapper list the pair rule exists to avoid
 
 The first two PreToolUse hooks are plugin-level (defined in `hooks.json`) and share common utilities
 from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is declared in the
@@ -35,7 +35,7 @@ These run **after** a tool call completes:
 - `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue)
 - `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
 
-All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed).
+All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed). `block-cli-workarounds.sh` also requires **tr**, and exits 1 without either, since standing aside would drop enforcement silently.
 
 ### Hook scoping
 
