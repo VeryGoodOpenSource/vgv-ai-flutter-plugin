@@ -181,7 +181,8 @@ blocked_pair() {
       pair="${words[i]##*/} ${words[i + 1]}"
 
       case "$pair" in
-        "flutter test" | "dart test" | "flutter create" | "dart create" | "very_good test" | "very_good create" | "very_good packages")
+        "flutter test" | "dart test" | "flutter create" | "dart create" | \
+        "very_good dart" | "very_good test" | "very_good create" | "very_good packages")
           printf '%s' "$pair"
           return 0
           ;;
@@ -198,6 +199,10 @@ hint_for() {
       printf '%s' "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead." ;;
     "flutter create" | "dart create")
       printf '%s' "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead." ;;
+    # Scanning left to right reaches this before the `dart test` inside it, so the
+    # denial names the command that was actually run. `very_good dart` has one subcommand.
+    "very_good dart")
+      printf '%s' "Do not use 'very_good dart test' via shell. Use the very_good_cli MCP 'test' tool instead." ;;
     "very_good test")
       printf '%s' "Do not use 'very_good test' via shell. Use the very_good_cli MCP 'test' tool instead." ;;
     "very_good create")

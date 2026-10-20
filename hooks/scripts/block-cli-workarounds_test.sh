@@ -121,6 +121,10 @@ assert_blocked "dart create my_app"
 assert_blocked "flutter create my_app"
 assert_blocked "very_good create flutter_app --project-name my_app"
 assert_blocked "very_good test --coverage --min-coverage 100"
+# `very_good dart` runs the Dart test suite: `very_good --help` describes it, and the
+# `very_good test` entry points at it. Issue #147 lists it as allowed, which is an error
+# in that table -- allowing it is a bypass, and the old script had one here.
+assert_blocked "very_good dart test --coverage"
 assert_blocked "very_good packages check licenses"
 assert_blocked "cd /path && dart test"
 assert_blocked "ENV=1 && flutter test --coverage"
@@ -274,12 +278,10 @@ echo "--- Documented non-goals ---"
 # Denied on purpose and pinned. The pair is matched anywhere in the call, so a command
 # taking flutter or dart as an argument is refused too. Narrowing the match to a command
 # position would need a list of wrappers, and fvm and melos are exactly what has to stay
-# caught, so the false positive is the cheaper side of the trade. Issue #147 lists
-# `very_good dart test --coverage` as allowed; this is a deliberate deviation from that row.
+# caught, so this is the cheaper side of the trade.
 assert_blocked "echo flutter test"
 assert_blocked "man flutter test"
 assert_blocked "which flutter test"
-assert_blocked "very_good dart test --coverage"
 
 # Allowed on purpose and pinned. A variable needs execution to resolve; the rest are
 # forms nobody types.
@@ -349,6 +351,10 @@ assert_reason_contains "Matched: dart create" "wrapper is skipped in the matched
 # very_good hits name the match too.
 assert_blocked "very_good packages check licenses"
 assert_reason_contains "Matched: very_good packages" "very_good hits name the matched command"
+
+assert_blocked "very_good dart test --coverage"
+assert_reason_contains "'very_good dart test' via shell" \
+  "very_good dart is named as itself, not as the dart test inside it"
 
 stub_cli 1.2.9
 assert_blocked "flutter test"
