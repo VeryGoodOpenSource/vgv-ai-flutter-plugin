@@ -295,6 +295,17 @@ assert_allowed "$(printf 'flutter \\\ntest --coverage')"
 assert_allowed $'git commit -m "$(cat <<\'EOF\'\nfix: stop running flutter test by hand\nEOF\n)"'
 assert_allowed $'gh pr create --body "$(cat <<\'EOF\'\nThis PR makes flutter test unnecessary.\nEOF\n)"'
 
+# A quoted delimiter stops expansion, not execution. When the body is fed to a shell it
+# is a script, so it stays in place and is scanned.
+assert_blocked $'bash <<\'EOF\'\nflutter test\nEOF'
+assert_blocked $'cat <<\'EOF\' | sh\nflutter test\nEOF'
+assert_blocked $'sh <<\'X\'\nflutter test\nX'
+assert_blocked $'bash <<-\'EOF\'\n\tflutter test\n\tEOF'
+assert_blocked $'/bin/bash <<\'EOF\'\nflutter test\nEOF'
+
+# ...but only a shell runs the body. `push` is not `sh`.
+assert_allowed $'git push <<\'EOF\'\nflutter test\nEOF'
+
 # An unquoted delimiter does expand $( ), so its body is still scanned and denied.
 assert_blocked "$(printf 'cat <<EOF\nflutter test\nEOF')"
 

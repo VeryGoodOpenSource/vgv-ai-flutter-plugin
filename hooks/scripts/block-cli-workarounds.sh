@@ -83,8 +83,13 @@ escape_literals() {
 
 # A heredoc whose delimiter is quoted (<<'X', <<-"X") expands nothing, so its body is
 # data. An unquoted <<X does expand $( ), so that body is left in place to be scanned.
+#
+# A quoted delimiter stops expansion, not execution: `bash <<'X'` and `cat <<'X' | sh`
+# feed the body to a shell, which runs it line by line. When the opening line invokes a
+# shell the body is a script, so it stays in place and is scanned like any other command.
 strip_quoted_heredocs() {
   local quoted_delimiter='<<-?[[:space:]]*('"'"'[^'"'"']+'"'"'|"[^"]+")'
+  local feeds_a_shell='(^|[^[:alnum:]_])(eval|sh|bash|zsh)([^[:alnum:]_]|$)'
   local kept="" delimiter="" line trimmed
 
   while IFS= read -r line || [ -n "$line" ]; do
@@ -99,7 +104,9 @@ strip_quoted_heredocs() {
 
     kept+="$line"$'\n'
 
-    if [[ $line =~ $quoted_delimiter ]]; then
+    # The shell test runs first on purpose: BASH_REMATCH holds the last match, so the
+    # delimiter has to be captured by the test that runs last.
+    if ! [[ $line =~ $feeds_a_shell ]] && [[ $line =~ $quoted_delimiter ]]; then
       delimiter=${BASH_REMATCH[1]}
       delimiter=${delimiter//\'/}
       delimiter=${delimiter//\"/}
