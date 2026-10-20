@@ -142,9 +142,11 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
 - **Check both arms answered.** A no-plugin arm that asks a clarifying question instead of
   doing the work makes every grader look discriminating. That is a prompt that is not
   self-contained, not a result.
-- **The plugin's SessionStart hook fires inside every run.** `check_vgv_cli` returns
-  `unverifiable` there — `very_good` resolves on PATH but `very_good --version` answers
-  nothing, because it is a shim that execs `dart` under a throwaway `$HOME`. That does not
+- **The plugin's SessionStart hook fires inside every run.** `check_vgv_cli` comes back
+  inconclusive there — `very_good` resolves on PATH but `very_good --version` answers
+  nothing, because it is a shim that execs `dart` under a throwaway `$HOME`. Which of its
+  two inconclusive states you get (`dart_missing` or `unverifiable`) depends on whether
+  `dart` resolves in the run, and each prints a different notice. That does not
   keep the hook quiet; it emits a notice, and an earlier wording of it asserted the MCP
   server "will not start", which is false under mocks. Cases then opened with that blocker
   instead of the answer and their rubrics failed. The notice now states only what is known
@@ -299,7 +301,8 @@ Four things that are not obvious:
   keeps `roots` out of reach — a separate tool whose real handshake a mock cannot perform.
   Adding one later is additive: capture it from the same probe, drop in a `<tool>.md`.
 
-The mocks are reachable only when `check_vgv_cli` returns `unverifiable`. In a run
+The mocks are reachable only when `check_vgv_cli` comes back inconclusive, in either
+state. In a run
 `very_good` resolves on PATH but `very_good --version` answers nothing, because it is a
 shim that execs `dart` under a throwaway `$HOME`. Read as `not_installed`, the PreToolUse
 hook denies the call and the model gets the hook's text as the tool result.

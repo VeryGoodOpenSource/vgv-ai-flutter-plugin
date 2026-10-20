@@ -6,6 +6,9 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/vgv-cli-common.sh"
 
+# Neither unreadable-version notice may imply the server is down: hooks and the MCP client
+# do not share a PATH, and under `claude plugin eval` the server is mocked and answers
+# anyway. Say what is known and tell the session to carry on. See evals/README.md.
 cli_status=$(check_vgv_cli)
 case "$cli_status" in
   not_installed)
@@ -15,12 +18,11 @@ case "$cli_status" in
     version="${cli_status#outdated:}"
     echo "⚠️ Very Good CLI ${version} is too old. The Very Good CLI MCP server requires >= ${MIN_VERSION}. Update with: dart pub global activate very_good_cli"
     ;;
+  dart_missing)
+    echo "ℹ️ Very Good CLI is installed but its version could not be verified here: dart is not on the PATH this hook inherits, so ${MIN_VERSION}+ could not be confirmed. If the Very Good CLI MCP tools answer, disregard this and carry on. If they do not, this is the likely cause. Put the Dart SDK bin directory on the PATH your login shell always exports, or start Claude Code from a shell where dart already resolves, then begin a new session."
+    ;;
   unverifiable)
-    # The very_good shim execs dart, so a PATH without dart hides the version from this
-    # hook. That does not prove the server is down: hooks and the MCP client do not share
-    # a PATH, and under `claude plugin eval` the server is mocked and always answers. Say
-    # what is known, not what it implies, or a session spends its answer on a false blocker.
-    echo "ℹ️ Very Good CLI is installed but its version could not be verified here: dart is not on the PATH this hook inherits, so ${MIN_VERSION}+ could not be confirmed. If the Very Good CLI MCP tools answer, disregard this and carry on. If they do not, this is the likely cause — add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session."
+    echo "ℹ️ Very Good CLI is installed and dart is on the PATH, but the CLI did not report a version, so ${MIN_VERSION}+ could not be confirmed. If the Very Good CLI MCP tools answer, disregard this and carry on. If they fail (for example with 'Invalid SDK hash'), the Dart SDK most likely changed under the installed CLI: run 'very_good --version' once in a terminal to rebuild it, then reconnect the server with /mcp or start a new session."
     ;;
 esac
 

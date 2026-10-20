@@ -55,10 +55,15 @@ deny_with_cli_check() {
     outdated:*)
       reason="Very Good CLI ${cli_status#outdated:} is too old (requires >= ${MIN_VERSION}). Update with: dart pub global activate very_good_cli."
       ;;
-    unverifiable)
+    dart_missing)
       # Redirecting to the MCP tool here would be a dead end: the server starts through
       # the same very_good shim, which cannot exec dart from this PATH either.
-      reason="Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Add the Dart SDK bin directory to PATH for non-interactive shells (e.g. in ~/.zprofile) and start a new session."
+      reason="Very Good CLI was found but could not run: dart is not on the PATH available to hooks, so the very_good_cli MCP server cannot start either. Put the Dart SDK bin directory on the PATH your login shell always exports, or start Claude Code from a shell where dart already resolves, then begin a new session."
+      ;;
+    unverifiable)
+      # dart resolves, so the server is not a dead end. Redirect as usual, and say how
+      # to clear a stale snapshot if the tool does turn out to be the thing failing.
+      reason="$mcp_hint If that tool fails (for example with 'Invalid SDK hash'), the Dart SDK most likely changed under the installed Very Good CLI: run 'very_good --version' once in a terminal to rebuild it, then reconnect the server with /mcp."
       ;;
     *)
       reason="$mcp_hint"
