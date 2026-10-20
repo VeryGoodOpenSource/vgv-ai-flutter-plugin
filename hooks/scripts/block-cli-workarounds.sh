@@ -37,6 +37,12 @@ fi
 # assumes the chained command's side effect happened and carries on without it.
 WHOLE_CALL_REFUSED="This whole shell call was refused, so none of it ran: run any other commands it chained in a call of their own."
 
+# #60 and #147 were both reports of a denial naming an action the operator never took.
+# Saying where the match can come from turns a surprising denial into a legible one.
+# Deliberately not phrased as "quote it and it will pass": `"flutter" test` still runs
+# the command, so printing that remedy would hand out a bypass with every denial.
+PAIR_MAY_BE_AN_ARGUMENT="The match is on an adjacent command and subcommand anywhere in the call, so an argument that reads like one is refused too."
+
 # Deny with a reason that fits the CLI status.
 deny_with_cli_check() {
   local mcp_hint="$1" matched="$2"
@@ -58,7 +64,7 @@ deny_with_cli_check() {
       reason="$mcp_hint"
       ;;
   esac
-  deny "$reason $WHOLE_CALL_REFUSED Matched: $matched"
+  deny "$reason $WHOLE_CALL_REFUSED Matched: $matched. $PAIR_MAY_BE_AN_ARGUMENT"
 }
 
 # --- what the shell would treat as a command ---------------------------------
@@ -140,6 +146,11 @@ collapse_quotes() {
   printf '%s' "$out"
 }
 
+# The three readings of one call, in the order they are tried.
+as_written()      { collapse_quotes "$1" 0 0; }   # quotes are data
+as_substitution() { collapse_quotes "$1" 0 1; }   # but "$( )" runs
+as_eval_target()  { collapse_quotes "$1" 1 1; }   # and eval "" runs
+
 runs_substitution() {
   case "$1" in *'$('* | *'`'*) return 0 ;; esac
   return 1
@@ -199,14 +210,14 @@ hint_for() {
 CALL=$(escape_literals "$COMMAND")
 CALL=$(strip_quoted_heredocs "$CALL")
 
-PAIR=$(blocked_pair "$(collapse_quotes "$CALL" 0 0)")                  # quotes are data
+PAIR=$(blocked_pair "$(as_written "$CALL")")
 
 if [ -z "$PAIR" ] && runs_substitution "$CALL"; then
-  PAIR=$(blocked_pair "$(collapse_quotes "$CALL" 0 1)")                # but "$( )" runs
+  PAIR=$(blocked_pair "$(as_substitution "$CALL")")
 fi
 
 if [ -z "$PAIR" ] && runs_its_argument "$CALL"; then
-  PAIR=$(blocked_pair "$(collapse_quotes "$CALL" 1 1)")                # and eval "" runs
+  PAIR=$(blocked_pair "$(as_eval_target "$CALL")")
 fi
 
 if [ -n "$PAIR" ]; then

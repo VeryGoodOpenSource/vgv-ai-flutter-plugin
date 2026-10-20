@@ -133,8 +133,10 @@ assert_allowed "dart pub get"
 assert_allowed "dart fix --apply"
 assert_allowed "flutter pub get"
 assert_allowed "flutter analyze"
+# The three repro commands from issue #60: a .dart path followed by a test/ path.
 assert_allowed "git add lib/router.dart test/router_test.dart"
 assert_allowed "dart analyze lib/foo.dart test/bar_test.dart"
+assert_allowed "git commit -- lib/foo.dart test/bar.dart"
 assert_allowed "git commit -m 'fix dart test hook'"
 assert_allowed "echo 'flutter create is blocked'"
 assert_allowed "gh pr create --body 'use dart test instead'"
@@ -269,6 +271,16 @@ assert_blocked "zsh -c \"cd pkg && dart test\""
 echo ""
 echo "--- Documented non-goals ---"
 #
+# Denied on purpose and pinned. The pair is matched anywhere in the call, so a command
+# taking flutter or dart as an argument is refused too. Narrowing the match to a command
+# position would need a list of wrappers, and fvm and melos are exactly what has to stay
+# caught, so the false positive is the cheaper side of the trade. Issue #147 lists
+# `very_good dart test --coverage` as allowed; this is a deliberate deviation from that row.
+assert_blocked "echo flutter test"
+assert_blocked "man flutter test"
+assert_blocked "which flutter test"
+assert_blocked "very_good dart test --coverage"
+
 # Allowed on purpose and pinned. A variable needs execution to resolve; the rest are
 # forms nobody types.
 assert_allowed "F=flutter; \$F test"
@@ -328,6 +340,8 @@ assert_reason_contains "MCP 'test' tool" "current CLI redirects to the MCP tool"
 
 # The reason names the match.
 assert_reason_contains "Matched: flutter test" "deny reason quotes the matched command"
+assert_reason_contains "an argument that reads like one is refused too" \
+  "deny reason says an argument can trigger the match"
 
 assert_blocked "fvm dart create my_app"
 assert_reason_contains "Matched: dart create" "wrapper is skipped in the matched command"
