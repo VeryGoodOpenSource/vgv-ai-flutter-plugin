@@ -2,10 +2,14 @@
 # PreToolUse hook: deny shell calls to CLI commands the MCP tools cover.
 # To block another command, add a hint line below and a test case.
 
-if ! command -v jq &>/dev/null; then
-  echo "jq is required for block-cli-workarounds hook but not found" >&2
-  exit 1
-fi
+# Fail loudly rather than stand aside: a missing tool here would let every shell call
+# through unchecked, and silently.
+for tool in jq tr; do
+  if ! command -v "$tool" &>/dev/null; then
+    echo "$tool is required for block-cli-workarounds hook but not found" >&2
+    exit 1
+  fi
+done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/vgv-cli-common.sh"
@@ -57,19 +61,156 @@ deny_with_cli_check() {
   deny "$reason $WHOLE_CALL_REFUSED Matched: $matched"
 }
 
-# The matcher lives in its own file so it reads, highlights and lints as awk rather
-# than as a string embedded in this script.
-MATCHER="$SCRIPT_DIR/find-blocked-invocation.awk"
+# --- what the shell would treat as a command ---------------------------------
+#
+# No lexer, and no list of wrappers to maintain. Quoted text counts as data, except
+# where the shell would still run what is inside it, and every adjacent word pair is
+# tested against its basename.
 
-if [ ! -f "$MATCHER" ]; then
-  echo "block-cli-workarounds hook cannot find $MATCHER" >&2
-  exit 1
+INERT="_"                      # stands in for text the shell will not run
+ANY_QUOTE="[\"']"
+
+# A backslash-escaped quote, $ or ` is literal text, not a quote or an expansion.
+escape_literals() {
+  printf '%s' "${1//\\[\"\'\$\`]/$INERT}"
+}
+
+# A heredoc whose delimiter is quoted (<<'X', <<-"X") expands nothing, so its body is
+# data. An unquoted <<X does expand $( ), so that body is left in place to be scanned.
+strip_quoted_heredocs() {
+  local quoted_delimiter='<<-?[[:space:]]*('"'"'[^'"'"']+'"'"'|"[^"]+")'
+  local kept="" delimiter="" line trimmed
+
+  while IFS= read -r line || [ -n "$line" ]; do
+    if [ -n "$delimiter" ]; then
+      # Drop the body. <<- may indent the terminator, and the delimiter is compared
+      # as text so nothing in it is ever read as a pattern.
+      trimmed=${line#"${line%%[![:space:]]*}"}
+      trimmed=${trimmed%"${trimmed##*[![:space:]]}"}
+      [ "$trimmed" = "$delimiter" ] && delimiter=""
+      continue
+    fi
+
+    kept+="$line"$'\n'
+
+    if [[ $line =~ $quoted_delimiter ]]; then
+      delimiter=${BASH_REMATCH[1]}
+      delimiter=${delimiter//\'/}
+      delimiter=${delimiter//\"/}
+    fi
+  done <<< "$1"
+
+  printf '%s' "$kept"
+}
+
+# Replaces every quoted span, walking the call from left to right. Taking the first
+# quote and then its partner is the shell's own rule, so an apostrophe inside "..."
+# can never open a span of its own and hide everything after it.
+#
+# Usage: collapse_quotes <text> <keep-single> <keep-double>. A kept span keeps its
+# contents, because the shell would still run them; every other span becomes INERT.
+collapse_quotes() {
+  local rest=$1 keep_single=$2 keep_double=$3
+  local out="" before quote body keep
+
+  while [ -n "$rest" ]; do
+    before=${rest%%$ANY_QUOTE*}
+    if [ "$before" = "$rest" ]; then      # nothing quoted is left
+      out+=$rest
+      break
+    fi
+
+    out+=$before
+    rest=${rest#"$before"}
+    quote=${rest:0:1}
+    rest=${rest:1}
+
+    if [[ $rest != *"$quote"* ]]; then    # unbalanced: leave the remainder alone
+      out+="$quote$rest"
+      break
+    fi
+
+    body=${rest%%"$quote"*}
+    rest=${rest#"$body$quote"}
+
+    if [ "$quote" = "'" ]; then keep=$keep_single; else keep=$keep_double; fi
+    if [ "$keep" = 1 ]; then out+=$body; else out+=$INERT; fi
+  done
+
+  printf '%s' "$out"
+}
+
+runs_substitution() {
+  case "$1" in *'$('* | *'`'*) return 0 ;; esac
+  return 1
+}
+
+runs_its_argument() {
+  local re='(^|[^[:alnum:]_])(eval|sh|bash|zsh) '
+  [[ $1 =~ $re ]]
+}
+
+# --- matching ----------------------------------------------------------------
+
+# Prints the first "<command> <subcommand>" pair the MCP tools cover, or nothing.
+# The command is matched on its basename, so /usr/local/bin/flutter counts as flutter
+# and wrappers (fvm, melos, sudo, timeout) need no list of their own.
+blocked_pair() {
+  local -a words
+  local line i pair
+
+  # tr, not ${1//$OPERATOR/ }: bash 3.2 runs a bracket-class // over a long string in
+  # quadratic time, which costs seconds on a command a few kilobytes long. Operators
+  # become line breaks, and a pair is only ever read within one line, so no pair can
+  # bridge the operator that separates two commands.
+  while IFS= read -r line || [ -n "$line" ]; do   # the last line carries no newline
+    read -ra words <<< "$line"
+
+    for ((i = 0; i < ${#words[@]} - 1; i++)); do
+      pair="${words[i]##*/} ${words[i + 1]}"
+
+      case "$pair" in
+        "flutter test" | "dart test" | "flutter create" | "dart create" | "very_good test" | "very_good create" | "very_good packages")
+          printf '%s' "$pair"
+          return 0
+          ;;
+      esac
+    done
+  done < <(printf '%s' "$1" | tr ';&|(){}`' '\n')
+
+  return 1
+}
+
+hint_for() {
+  case "$1" in
+    "flutter test" | "dart test")
+      printf '%s' "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead." ;;
+    "flutter create" | "dart create")
+      printf '%s' "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead." ;;
+    "very_good test")
+      printf '%s' "Do not use 'very_good test' via shell. Use the very_good_cli MCP 'test' tool instead." ;;
+    "very_good create")
+      printf '%s' "Do not use 'very_good create' via shell. Use the very_good_cli MCP 'create' tool instead." ;;
+    "very_good packages")
+      printf '%s' "Do not use 'very_good packages' via shell. Use the very_good_cli MCP 'packages_get' or 'packages_check_licenses' tool instead." ;;
+  esac
+}
+
+CALL=$(escape_literals "$COMMAND")
+CALL=$(strip_quoted_heredocs "$CALL")
+
+PAIR=$(blocked_pair "$(collapse_quotes "$CALL" 0 0)")                  # quotes are data
+
+if [ -z "$PAIR" ] && runs_substitution "$CALL"; then
+  PAIR=$(blocked_pair "$(collapse_quotes "$CALL" 0 1)")                # but "$( )" runs
 fi
 
-RESULT=$(printf '%s\n' "$COMMAND" | awk -f "$MATCHER")   # printf: echo eats -n
+if [ -z "$PAIR" ] && runs_its_argument "$CALL"; then
+  PAIR=$(blocked_pair "$(collapse_quotes "$CALL" 1 1)")                # and eval "" runs
+fi
 
-if [ -n "$RESULT" ]; then
-  deny_with_cli_check "${RESULT%%$'\t'*}" "${RESULT#*$'\t'}"
+if [ -n "$PAIR" ]; then
+  deny_with_cli_check "$(hint_for "$PAIR")" "$PAIR"
 fi
 
 exit 0

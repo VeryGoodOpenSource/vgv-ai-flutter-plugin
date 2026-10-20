@@ -41,7 +41,6 @@ hooks/
     block-cli-workarounds_test.sh  # Tests for block-cli-workarounds.sh
     check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.5.0
     check-vgv-cli_test.sh  # Tests for check-vgv-cli.sh
-    find-blocked-invocation.awk  # The matcher block-cli-workarounds.sh runs
     format.sh          # Runs dart format on modified .dart files
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated

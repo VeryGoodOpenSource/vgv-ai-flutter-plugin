@@ -80,6 +80,7 @@ This plugin includes SessionStart, PreToolUse, and PostToolUse hooks that valida
 
 - **Dart SDK** — must be available on your `PATH`
 - **jq** — used to parse the hook payload; hooks are skipped gracefully if `jq` is not installed
+- **tr** — used by `block-cli-workarounds.sh` to split a command on shell operators; the hook refuses to run without it, rather than letting every shell call through unchecked
 
 The Very Good CLI is resolved from `PATH`, falling back to `$PUB_CACHE/bin` (default
 `~/.pub-cache/bin`) for hosts that launch hooks without an interactive shell's `PATH`. The
