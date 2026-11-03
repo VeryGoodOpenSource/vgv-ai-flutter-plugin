@@ -200,8 +200,6 @@ blocked_pair() {
           ;;
       esac
 
-      # `dart run test` runs package:test just like `dart test`. Only this triple, so
-      # `dart run build_runner` and `npm run test` still pass.
       if [ "$pair" = "dart run" ]; then
         case "${words[i + 2]}" in
           test | test/*)
