@@ -146,6 +146,9 @@ assert_blocked "very_good dart test --coverage"
 assert_blocked "very_good packages check licenses"
 assert_blocked "cd /path && dart test"
 assert_blocked "ENV=1 && flutter test --coverage"
+# `dart run test` runs package:test exactly like `dart test` (issue #179).
+assert_blocked "dart run test"
+assert_blocked "dart run test/foo_test.dart"
 
 echo ""
 echo "--- Should be ALLOWED ---"
@@ -155,6 +158,8 @@ assert_allowed "dart pub get"
 assert_allowed "dart fix --apply"
 assert_allowed "flutter pub get"
 assert_allowed "flutter analyze"
+assert_allowed "dart run build_runner build"
+assert_allowed "npm run test"
 # The three repro commands from issue #60: a .dart path followed by a test/ path.
 assert_allowed "git add lib/router.dart test/router_test.dart"
 assert_allowed "dart analyze lib/foo.dart test/bar_test.dart"
