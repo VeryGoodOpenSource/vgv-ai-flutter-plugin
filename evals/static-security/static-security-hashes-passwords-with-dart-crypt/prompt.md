@@ -3,7 +3,7 @@ max_turns: 12
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [static-security]
-description: Password storage is rewritten onto package:dart_crypt with SHA-512-crypt and verified through `.match(`.
+description: Password storage is rewritten onto package:crypt (dart-crypt) with SHA-512-crypt and verified through `.match(`.
 ---
 
 Here is the password handling in our Dart auth package:

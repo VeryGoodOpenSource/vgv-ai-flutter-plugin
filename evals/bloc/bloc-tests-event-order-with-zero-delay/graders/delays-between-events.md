@@ -1,5 +1,5 @@
 ---
 type: regex
-pattern: 'Future<void>\.delayed\(\s*Duration\.zero\s*\)'
+pattern: 'Future(<void>)?\.delayed\(\s*(const\s+)?Duration(\.zero|\(\))\s*\)'
 weight: 3
 ---

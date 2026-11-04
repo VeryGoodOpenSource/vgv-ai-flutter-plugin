@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'header:.*coverage:ignore-file'
+pattern: 'header:[\s\S]{0,80}coverage:ignore-file'
 ---

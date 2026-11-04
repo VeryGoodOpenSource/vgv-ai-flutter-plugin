@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'final String \w+;'
+pattern: 'final String \w+\s*[;,)}]'
 ---

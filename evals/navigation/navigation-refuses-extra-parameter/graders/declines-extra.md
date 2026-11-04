@@ -1,5 +1,6 @@
 ---
 type: llm
+weight: 3
 ---
 
 PASS if the response declines to use GoRouter's extra parameter.
