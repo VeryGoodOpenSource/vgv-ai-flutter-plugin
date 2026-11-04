@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'dart_crypt'
+pattern: 'package:crypt/crypt\.dart'
 ---

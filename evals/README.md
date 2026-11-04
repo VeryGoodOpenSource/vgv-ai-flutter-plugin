@@ -128,6 +128,26 @@ When one grader carries a case's whole point, weight that grader too.
 
 Negative controls use the same grader with `min: 0` and `max: 0`.
 
+### Cases that read the VGE standards
+
+A skill with a **VGE Standards** section takes its detailed guidance from the Very Good
+Engineering docs that `sync-vge-standards.sh` downloads at session start. The hook runs
+inside every with-plugin run too, so the throwaway home gets a fresh copy, which needs
+network. Each such skill has one case that grades both halves:
+
+```markdown
+---
+type: tool_used
+tool: Read
+input_match: 'very_good_engineering/bundles/1/development/testing/testing_golden_file\.md'
+weight: 3
+---
+```
+
+Next to it sits a `regex` on a rule that only the VGE doc states. The no-plugin arm has no
+hook and no cache, so it fails both graders for free. Read the with-arm score. When a VGE
+release changes the rule, the case fails, and the fix is the grader.
+
 ### Traps that have each cost a false result
 
 - **Rubrics are graded blind.** The judge sees the response and the criterion, not the

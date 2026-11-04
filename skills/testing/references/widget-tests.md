@@ -112,9 +112,7 @@ extension PumpApp on WidgetTester {
 
 | Finder                          | Use case                              | Example                                                                  |
 | ------------------------------- | ------------------------------------- | ------------------------------------------------------------------------ |
-| `find.byType(T)`                | Find widgets by type (default choice) | `find.byType(ElevatedButton)`                                            |
 | `find.text('x')`                | Find text content visible to users    | `find.text('Submit')`                                                    |
-| `find.byKey(Key)`               | Find by explicit key (last resort)    | `find.byKey(Key('submit_button'))`                                       |
 | `find.byWidget(w)`              | Find an exact widget instance         | `find.byWidget(myWidget)`                                                |
 | `find.descendant(of, matching)` | Scoped search within a subtree        | `find.descendant(of: find.byType(AppBar), matching: find.text('Title'))` |
 

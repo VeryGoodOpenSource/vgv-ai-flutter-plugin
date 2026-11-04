@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: bloc-tests-event-order-with-zero-delay
+context:
+  scaffold_script: fixture.sh

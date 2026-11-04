@@ -5,9 +5,6 @@ and no `build_runner` step.
 
 ## Creating Mocks
 
-Declare mocks as **private** classes in the test file that uses them, so no other test
-file can import and depend on them:
-
 ```dart
 class _MockUserRepository extends Mock implements UserRepository {}
 

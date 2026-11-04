@@ -71,21 +71,3 @@ class TodosView extends StatelessWidget {
   }
 }
 ```
-
-## BlocListener for Side Effects
-
-```dart
-BlocListener<LoginBloc, LoginState>(
-  listener: (context, state) {
-    if (state is LoginFailure) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(state.error)),
-      );
-    }
-    if (state is LoginSuccess) {
-      Navigator.of(context).pushReplacement(HomePage.route());
-    }
-  },
-  child: const LoginForm(),
-)
-```

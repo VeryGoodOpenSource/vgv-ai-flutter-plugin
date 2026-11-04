@@ -159,16 +159,11 @@ This recursively finds and runs tests in every package (data clients, repositori
 
 ## Key Testing Rules
 
-- **Test each layer in isolation** -- data client tests mock the HTTP client, repository tests mock the data client, Bloc tests mock the repository
-- **Mock only the immediate dependency** -- never mock two layers deep (e.g., don't mock the HTTP client when testing a repository)
 - **Test model transformations explicitly** -- verify that `User.fromResponse` (or equivalent) correctly maps every field, including nullable fields and edge cases
 - **Mirror `lib/` structure in `test/`** -- `packages/user_api_client/lib/src/user_api_client.dart` -> `packages/user_api_client/test/src/user_api_client_test.dart`
 
 ## Testing Anti-Patterns
 
-| Anti-Pattern                               | Problem                                                                                                        | Correct Approach                                                           |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Testing repository with a real HTTP client | Crosses layer boundary -- test becomes slow, flaky, and tests two layers at once                               | Mock the data client (`_MockUserApiClient`) and test repository logic only |
-| Mocking two layers deep                    | Repository test mocks `http.Client` instead of `UserApiClient` -- tightly couples test to data layer internals | Each test mocks only its direct dependency                                 |
-| Skipping model transformation tests        | `User.fromResponse` bugs go undetected -- wrong fields mapped, nulls mishandled                                | Write explicit tests for every factory/transformation method               |
-| Sharing mutable test state across packages | Global variables or static mocks leak between test files -- causes intermittent failures                       | Use `late` + `setUp` in every test group for fresh instances               |
+| Anti-Pattern                        | Problem                                                                         | Correct Approach                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Skipping model transformation tests | `User.fromResponse` bugs go undetected -- wrong fields mapped, nulls mishandled | Write explicit tests for every factory/transformation method |
