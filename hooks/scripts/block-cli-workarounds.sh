@@ -199,6 +199,15 @@ blocked_pair() {
           return 0
           ;;
       esac
+
+      if [ "$pair" = "dart run" ]; then
+        case "${words[i + 2]}" in
+          test | test/*)
+            printf '%s' "dart run test"
+            return 0
+            ;;
+        esac
+      fi
     done
   done < <(printf '%s' "$1" | tr ';&|(){}`' '\n')
 
@@ -207,7 +216,7 @@ blocked_pair() {
 
 hint_for() {
   case "$1" in
-    "flutter test" | "dart test")
+    "flutter test" | "dart test" | "dart run test")
       printf '%s' "Do not use 'flutter test' or 'dart test'. Use the very_good_cli MCP 'test' tool instead." ;;
     "flutter create" | "dart create")
       printf '%s' "Do not use 'flutter create' or 'dart create'. Use the very_good_cli MCP 'create' tool instead." ;;
