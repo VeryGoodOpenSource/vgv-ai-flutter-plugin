@@ -15,7 +15,7 @@ agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 docs/                  # Gitignored, local only
   plan/                # Planning and design documents
-evals/                 # `claude plugin eval` suite — all 15 skills, 102 cases
+evals/                 # `claude plugin eval` suite — all 15 skills, 110 cases
   README.md            # Case format, grader reference, how to add a case
   _fixture/
     fixture.sh         # The only copy of the neutral Flutter skeleton; every case symlinks here
@@ -94,7 +94,6 @@ skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (C
   material-theming/SKILL.md
   material-theming/references/
     color-scheme.md
-    spacing.md
   navigation/SKILL.md
   navigation/references/
     testing.md

@@ -29,7 +29,7 @@ Apply these standards to all Flutter security work:
 - **Use `package:flutter_secure_storage` for sensitive on-device data** — `SharedPreferences` is plaintext and unencrypted; never store tokens, PII, or session data there
 - **All network calls over HTTPS** — plain HTTP transmits data in cleartext; never disable certificate validation (the only exception is during development with a local test server)
 - **Use `Random.secure()` for security-sensitive randomness** — `dart:math`'s `Random()` is a pseudo-random number generator, not cryptographically secure
-- **Use established crypto packages** — never implement custom cryptography; use `package:crypto` or `package:dart_crypt`
+- **Use established crypto packages** — never implement custom cryptography; use `package:crypto` or `package:crypt` (dart-crypt)
 - **Enforce auth at the repository layer** — widget-only auth checks are client-side and bypassable by anyone with access to the device
 - **No sensitive data in logs** — `print()`, `log()`, and `debugPrint()` output is readable on-device and in crash reporting tools
 - **Keep dependencies free of known vulnerabilities** — never suppress security advisories without documented justification; scan `pubspec.lock` with `osv-scanner` before every release
