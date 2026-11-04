@@ -162,14 +162,18 @@ fail() {
 check() { local name=$1; shift; if "$@"; then pass "$name"; else fail "$name"; fi; }
 
 silent_ok() { [ "$LAST_STATUS" -eq 0 ] && [ -z "$LAST_OUTPUT" ]; }
+# Exit 0 and exactly one line: the notice naming the absolute path of the local copy.
+announces_only() {
+  [ "$LAST_STATUS" -eq 0 ] && [ "$(printf '%s\n' "$LAST_OUTPUT" | wc -l | tr -d ' ')" = 1 ] \
+    && [[ "$LAST_OUTPUT" == *"synced at $ROOT/1/"* ]] && [[ "$LAST_OUTPUT" == *"Read tool"* ]]
+}
 cached() { [ "$(cat "$ROOT/1/$1" 2>/dev/null)" = "$2" ]; }
 
 echo "sync-vge-standards"
 
 echo "  first sync"
 reset; baseline; run_hook
-check "cold cache downloads every document silently" \
-  bash -c '[ "$1" = 0 ] && [ -z "$2" ]' _ "$LAST_STATUS" "$LAST_OUTPUT"
+check "cold cache downloads every document and announces the path" announces_only
 check "documents land at their index path" \
   bash -c '[ "$(cat "$1/1/development/testing.md")" = "# Testing" ] && [ -f "$1/1/architecture/layers.md" ]' _ "$ROOT"
 check "manifest and index ETags are stored next to the content" \
@@ -180,7 +184,7 @@ check "no lock or staging directory is left behind" \
 echo "  nothing changed"
 run_hook
 check "two 304s cost exactly two requests" bash -c '[ "$1" = 2 ]' _ "$(requests)"
-check "and print nothing" silent_ok
+check "and only announce the path" announces_only
 
 echo "  minor release"
 put_doc development/testing.md "# Testing v2"
@@ -247,6 +251,8 @@ check "a newer major stops the sync and says so" \
 check "without requesting the index" bash -c '[ "$1" = 1 ]' _ "$(requests)"
 check "and the local copy is kept" cached development/testing.md "# Testing"
 run_hook
+check "the local copy is still announced next to the notice" \
+  bash -c '[[ "$1" == *"synced at $2/1/"* ]]' _ "$LAST_OUTPUT" "$ROOT"
 check "the message repeats when the manifest answers 304" \
   bash -c '[[ "$1" == *"major 2"* ]]' _ "$LAST_OUTPUT"
 
@@ -264,7 +270,7 @@ reset; touch "$SERVER/offline"; run_hook
 check "offline with no cache exits 0 silently" silent_ok
 
 reset; baseline; run_hook; touch "$SERVER/offline"; run_hook
-check "offline with a cache exits 0 silently" silent_ok
+check "offline with a cache still announces the path" announces_only
 check "and keeps the cache" cached development/testing.md "# Testing"
 
 reset; baseline; run_hook
@@ -273,7 +279,7 @@ printf '"portal"' > "$SERVER/bundles/manifest.json.etag"
 run_hook
 check "a captive portal page is not taken for the manifest" \
   bash -c '[ "$(cat "$1/manifest.etag")" = "\"m1\"" ] && jq -e .major "$1/manifest.json" >/dev/null' _ "$ROOT"
-check "and the session carries on silently" silent_ok
+check "and the session carries on with the cached copy" announces_only
 
 reset; baseline; run_hook
 printf '<html>portal</html>' > "$SERVER/bundles/1/index.json"
