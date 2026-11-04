@@ -1,5 +1,5 @@
 ---
 type: regex
-pattern: 'filledButtonTheme\s*:\s*(const\s+)?FilledButtonThemeData\('
+pattern: 'filledButtonTheme\s*:[\s\S]*FilledButtonThemeData\(|FilledButtonThemeData\([\s\S]*filledButtonTheme\s*:'
 weight: 3
 ---

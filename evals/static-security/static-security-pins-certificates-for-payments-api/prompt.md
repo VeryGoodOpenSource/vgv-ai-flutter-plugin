@@ -3,7 +3,7 @@ max_turns: 12
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [static-security]
-description: "Stopping a proxy-CA interception follows the synced VGE Insecure Communication standard: certificate pinning through package:http_certificate_pinning with allowed SHA fingerprints."
+description: "Stopping a proxy-CA interception follows the synced VGE Insecure Communication standard: the client pins certificates, with package:http_certificate_pinning or a SecurityContext that trusts only pinned certificates."
 ---
 
 A pentester installed their own proxy CA on a test phone and read every request our app sends to https://api.acme-pay.com, card tokens included. This is our whole payments client:

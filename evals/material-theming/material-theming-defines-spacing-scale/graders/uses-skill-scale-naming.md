@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'xxlg'
+pattern: 'AppSpacing\.(xs|sm|md|lg)\b'
 ---

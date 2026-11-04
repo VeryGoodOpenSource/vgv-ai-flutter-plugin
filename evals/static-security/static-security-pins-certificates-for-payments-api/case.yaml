@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: static-security-pins-certificates-for-payments-api
+context:
+  scaffold_script: fixture.sh
