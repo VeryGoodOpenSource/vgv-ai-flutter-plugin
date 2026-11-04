@@ -151,6 +151,14 @@ run_hook() {
     bash "$HOOK" 2>&1) || LAST_STATUS=$?
 }
 
+# run_subagent PAYLOAD — the SubagentStart mode, payload on stdin.
+run_subagent() {
+  : > "$REQUESTS"
+  LAST_STATUS=0
+  LAST_OUTPUT=$(printf '%s' "$1" | env -i PATH="$STUB_BIN:$BASE_PATH" HOME="$WORK" \
+    XDG_CACHE_HOME="$CACHE_HOME" bash "$HOOK" --subagent 2>&1) || LAST_STATUS=$?
+}
+
 requests() { wc -l < "$REQUESTS" | tr -d ' '; }
 
 pass() { printf "  \033[32mPASS\033[0m  %s\n" "$1"; PASSED=$((PASSED + 1)); }
@@ -292,6 +300,20 @@ reset; baseline; run_hook; rm -f "$ROOT/1/index.json"
 run_hook
 check "a missing index.json is refetched rather than trusted to its ETag" \
   bash -c '[ -f "$1/1/index.json" ]' _ "$ROOT"
+
+echo "  subagent start"
+REVIEWER='{"hook_event_name":"SubagentStart","agent_type":"vgv-ai-flutter-plugin:flutter-reviewer"}'
+reset; baseline; run_hook; run_subagent "$REVIEWER"
+check "flutter-reviewer gets the path as additionalContext, without a request" \
+  bash -c '[ "$1" = 0 ] && printf "%s" "$2" | jq -e --arg p "synced at $3/1/" \
+    ".hookSpecificOutput.hookEventName == \"SubagentStart\"
+     and (.hookSpecificOutput.additionalContext | contains(\$p))" >/dev/null' \
+  _ "$(requests)" "$LAST_OUTPUT" "$ROOT"
+run_subagent '{"hook_event_name":"SubagentStart","agent_type":"Explore"}'
+check "other subagents get nothing" silent_ok
+reset; baseline; run_subagent "$REVIEWER"
+check "flutter-reviewer gets nothing before a local copy exists" \
+  bash -c '[ "$1" = 0 ] && [ -z "$2" ] && [ ! -e "$3/1" ]' _ "$(requests)" "$LAST_OUTPUT" "$ROOT"
 
 echo "  concurrency"
 reset; baseline; mkdir -p "$ROOT/.lock"; run_hook

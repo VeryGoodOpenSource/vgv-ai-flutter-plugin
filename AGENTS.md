@@ -32,7 +32,7 @@ evals/                 # `claude plugin eval` suite — all 15 skills, 102 cases
         <name>.md      # One grader per file; frontmatter is its type and options
   results/             # Written by each run — gitignored
 hooks/
-  hooks.json           # Hook definitions (PreToolUse and PostToolUse)
+  hooks.json           # Hook definitions (SessionStart, SubagentStart, PreToolUse, PostToolUse)
   scripts/
     allow-readonly-git.sh  # Restricts flutter-reviewer Bash to git diff/status
     allow-readonly-git_test.sh  # Tests for allow-readonly-git.sh

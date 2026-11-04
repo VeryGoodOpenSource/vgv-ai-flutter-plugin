@@ -17,6 +17,18 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "matcher": "^vgv-ai-flutter-plugin:flutter-reviewer$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sync-vge-standards.sh --subagent",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "mcp__.*very-good-cli__.*",
