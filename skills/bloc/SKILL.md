@@ -41,9 +41,9 @@ Apply these standards to all Bloc/Cubit work:
 
 ## VGE Standards
 
-Detailed guidance for this skill is Very Good Engineering's published standards, synced by a session
-hook to `~/.cache/very_good_engineering/bundles/1/` (`$XDG_CACHE_HOME/very_good_engineering/bundles/1/`
-when set). Read these before applying the skill:
+Detailed guidance for this skill is Very Good Engineering's published standards. A session hook
+syncs them and names their absolute path in a session start notice ("Very Good Engineering
+standards … are synced at …"). Read these files under that path before applying the skill:
 
 - `development/state_management/bloc_state_handling.md` — single class with a status enum versus sealed state classes, `copyWith`, consuming each in the UI
 - `development/state_management/bloc_event_transformers.md` — `bloc_concurrency` transformers, when to use each, ordering events in `blocTest`

@@ -33,9 +33,9 @@ Apply these standards to all navigation work:
 
 ## VGE Standards
 
-Detailed guidance for this skill is Very Good Engineering's published standards, synced by a session
-hook to `~/.cache/very_good_engineering/bundles/1/` (`$XDG_CACHE_HOME/very_good_engineering/bundles/1/`
-when set). Read these before applying the skill:
+Detailed guidance for this skill is Very Good Engineering's published standards. A session hook
+syncs them and names their absolute path in a session start notice ("Very Good Engineering
+standards … are synced at …"). Read these files under that path before applying the skill:
 
 - `development/ui/navigation.md` — GoRouter, hierarchical sub-routes, type-safe routes, `go` vs `push`, hyphenated URLs, navigating by name, `BuildContext` extensions, path and query parameters versus `extra`, and root- and route-level redirects
 

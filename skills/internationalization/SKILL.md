@@ -36,9 +36,9 @@ Apply these standards to all internationalization work:
 
 ## VGE Standards
 
-Detailed guidance for this skill is Very Good Engineering's published standards, synced by a session
-hook to `~/.cache/very_good_engineering/bundles/1/` (`$XDG_CACHE_HOME/very_good_engineering/bundles/1/`
-when set). Read these before applying the skill:
+Detailed guidance for this skill is Very Good Engineering's published standards. A session hook
+syncs them and names their absolute path in a session start notice ("Very Good Engineering
+standards … are synced at …"). Read these files under that path before applying the skill:
 
 - `development/internationalization/localization.md` — setup pipeline (`pubspec.yaml`, `l10n.yaml`, ARB files, `flutter gen-l10n`, `MaterialApp` wiring), the `context.l10n` extension, strings as parameters for UI libraries, backend content and error message localization
 - `development/internationalization/text_directionality.md` — `Directionality`, visual vs directional widgets, `EdgeInsetsDirectional`, icon and image mirroring, bidirectional mirroring standards

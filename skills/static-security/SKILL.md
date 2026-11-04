@@ -39,9 +39,9 @@ Apply these standards to all Flutter security work:
 
 ## VGE Standards
 
-Detailed guidance for this skill is Very Good Engineering's published standards, synced by a session
-hook to `~/.cache/very_good_engineering/bundles/1/` (`$XDG_CACHE_HOME/very_good_engineering/bundles/1/`
-when set). Read these before applying the skill:
+Detailed guidance for this skill is Very Good Engineering's published standards. A session hook
+syncs them and names their absolute path in a session start notice ("Very Good Engineering
+standards … are synced at …"). Read these files under that path before applying the skill:
 
 - `general-practices/security_in_mobile_apps.md` — OWASP Mobile Top 10 mapped to mobile apps: backend-held API keys, Keychain/Keystore and `flutter_secure_storage`, TLS and certificate pinning, server-side auth and `local_auth`, `formz` validation, strong crypto and `dart_crypt`, obfuscation, backups, permissions, and supply chain
 

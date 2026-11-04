@@ -38,9 +38,9 @@ Apply these standards to all UI package work:
 
 ## VGE Standards
 
-Detailed guidance for this skill is Very Good Engineering's published standards, synced by a session
-hook to `~/.cache/very_good_engineering/bundles/1/` (`$XDG_CACHE_HOME/very_good_engineering/bundles/1/`
-when set). Read these before applying the skill:
+Detailed guidance for this skill is Very Good Engineering's published standards. A session hook
+syncs them and names their absolute path in a session start notice ("Very Good Engineering
+standards … are synced at …"). Read these files under that path before applying the skill:
 
 - `development/ui/widgets.md` — Page/View split, standalone widgets over helper methods
 - `development/ui/theming.md` — `ThemeData`, no theming conditionals, typography, `ColorScheme` over hardcoded colors, component theming, spacing

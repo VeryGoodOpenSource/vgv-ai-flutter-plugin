@@ -133,7 +133,8 @@ Negative controls use the same grader with `min: 0` and `max: 0`.
 A skill with a **VGE Standards** section takes its detailed guidance from the Very Good
 Engineering docs that `sync-vge-standards.sh` downloads at session start. The hook runs
 inside every with-plugin run too, so the throwaway home gets a fresh copy, which needs
-network. Each such skill has one case that grades both halves:
+network. The hook then prints the copy's absolute path. Without it the model guesses `~`
+from the plugin path and reads your real home, which the sandbox denies. Each such skill has one case that grades both halves:
 
 ```markdown
 ---
