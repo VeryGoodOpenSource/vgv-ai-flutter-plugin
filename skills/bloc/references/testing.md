@@ -22,7 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_app/counter/counter.dart';
 
 void main() {
-  group('CounterCubit', () {
+  group(CounterCubit, () {
     test('initial state is 0', () {
       expect(CounterCubit().state, equals(0));
     });
@@ -54,16 +54,16 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:my_app/todos/todos.dart';
 
-class MockTodoRepository extends Mock implements TodoRepository {}
+class _MockTodoRepository extends Mock implements TodoRepository {}
 
 void main() {
-  late TodoRepository todoRepository;
+  group(TodosBloc, () {
+    late TodoRepository todoRepository;
 
-  setUp(() {
-    todoRepository = MockTodoRepository();
-  });
+    setUp(() {
+      todoRepository = _MockTodoRepository();
+    });
 
-  group('TodosBloc', () {
     blocTest<TodosBloc, TodosState>(
       'emits [loading, success] when subscription is requested',
       setUp: () {
@@ -103,60 +103,84 @@ void main() {
 ## Mocking Dependencies
 
 ```dart
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// Create mock
-class MockTodoRepository extends Mock implements TodoRepository {}
+import 'package:my_app/todos/todos.dart';
 
-// Stub methods
-when(() => repository.getTodos()).thenAnswer((_) async => []);
-when(() => repository.addTodo(any())).thenAnswer((_) async {});
+// Private mock, one per test file
+class _MockTodoRepository extends Mock implements TodoRepository {}
 
-// Verify calls
-verify(() => repository.getTodos()).called(1);
-verifyNever(() => repository.deleteTodo(any()));
+void main() {
+  group(TodosBloc, () {
+    late TodoRepository repository;
 
-// Register fallback for custom types
-setUpAll(() {
-  registerFallbackValue(Todo(id: '', title: ''));
-});
+    // Register fallback for custom types
+    setUpAll(() {
+      registerFallbackValue(Todo(id: '', title: ''));
+    });
+
+    setUp(() {
+      repository = _MockTodoRepository();
+
+      // Stub methods
+      when(() => repository.getTodos()).thenAnswer((_) async => []);
+      when(() => repository.addTodo(any())).thenAnswer((_) async {});
+    });
+
+    blocTest<TodosBloc, TodosState>(
+      'loads todos without deleting any',
+      build: () => TodosBloc(todoRepository: repository),
+      act: (bloc) => bloc.add(const TodosSubscriptionRequested()),
+      verify: (_) {
+        // Verify calls
+        verify(() => repository.getTodos()).called(1);
+        verifyNever(() => repository.deleteTodo(any()));
+      },
+    );
+  });
+}
 ```
 
 ## Testing Widget Integration
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:my_app/todos/todos.dart';
 
-class MockTodosBloc extends MockBloc<TodosEvent, TodosState>
+import '../../helpers/helpers.dart';
+
+class _MockTodosBloc extends MockBloc<TodosEvent, TodosState>
     implements TodosBloc {}
 
 void main() {
-  late TodosBloc todosBloc;
+  group(TodosView, () {
+    late TodosBloc todosBloc;
 
-  setUp(() {
-    todosBloc = MockTodosBloc();
-  });
+    setUp(() {
+      todosBloc = _MockTodosBloc();
+    });
 
-  group('TodosView', () {
+    Widget buildSubject() {
+      return BlocProvider.value(
+        value: todosBloc,
+        child: const TodosView(),
+      );
+    }
+
     testWidgets('renders loading indicator when status is loading',
         (tester) async {
       when(() => todosBloc.state).thenReturn(
         const TodosState(status: TodosStatus.loading),
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: BlocProvider.value(
-            value: todosBloc,
-            child: const TodosView(),
-          ),
-        ),
-      );
+      await tester.pumpApp(buildSubject());
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
@@ -167,15 +191,9 @@ void main() {
         TodosState(status: TodosStatus.success, todos: todos),
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: BlocProvider.value(
-            value: todosBloc,
-            child: const TodosView(),
-          ),
-        ),
-      );
+      await tester.pumpApp(buildSubject());
 
+      // Todo titles are data, not UI copy, so they are found as literals.
       expect(find.text('Test Todo'), findsOneWidget);
     });
   });

@@ -131,7 +131,8 @@ final class const TodoListTodoDeleted({required final Todo todo})
 
 ### States
 
-#### Subclass Approach (multiple state types)
+Whether to model state as sealed subclasses or as one class with a status enum is decided in
+VGE `bloc_state_handling.md`. When you use subclasses, name each one `BlocSubject` + status:
 
 | State class name  | Meaning                 |
 | ----------------- | ----------------------- |

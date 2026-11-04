@@ -88,6 +88,10 @@ class UserApiClient {
   final http.Client _httpClient;
 
   /// Fetches the user with the given [userId].
+  ///
+  /// Throws:
+  ///
+  /// * [UserApiException] if the response status code is not 200.
   Future<UserResponse> getUser(String userId) async {
     final response = await _httpClient.get(
       Uri.parse('$_baseUrl/users/$userId'),
@@ -244,7 +248,10 @@ class UserRepository {
 
   /// Returns the [User] with the given [userId].
   ///
-  /// Throws [UserNotFoundException] if the user is not found.
+  /// Throws:
+  ///
+  /// * [UserNotFoundException] if the API responds with a 404.
+  /// * [UserApiException] if the API responds with any other error status.
   Future<User> getUser(String userId) async {
     try {
       final response = await _userApiClient.getUser(userId);
@@ -350,7 +357,8 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileSuccess(user: user));
     } on UserNotFoundException {
       emit(const ProfileNotFound());
-    } catch (_) {
+    } catch (error, stackTrace) {
+      addError(error, stackTrace);
       emit(const ProfileFailure());
     }
   }
@@ -359,13 +367,29 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
 ## Presentation Layer: Page and View
 
+The feature exposes one barrel. `profile_bloc.dart` already exports its event and state files
+through `part of`, so the `bloc/` folder gets no barrel of its own.
+
+**`lib/profile/profile.dart`**
+
+```dart
+export 'bloc/profile_bloc.dart';
+export 'view/view.dart';
+```
+
+**`lib/profile/view/view.dart`**
+
+```dart
+export 'profile_page.dart';
+export 'profile_view.dart';
+```
+
 **`lib/profile/view/profile_page.dart`**
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:my_app/profile/bloc/profile_bloc.dart';
-import 'package:my_app/profile/view/profile_view.dart';
+import 'package:my_app/profile/profile.dart';
 import 'package:user_repository/user_repository.dart';
 
 class const ProfilePage({required final String userId, super.key})
@@ -387,7 +411,7 @@ class const ProfilePage({required final String userId, super.key})
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:my_app/profile/bloc/profile_bloc.dart';
+import 'package:my_app/profile/profile.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});

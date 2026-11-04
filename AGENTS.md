@@ -100,9 +100,6 @@ skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (C
     typed-routes.md
   static-security/SKILL.md
   static-security/references/
-    binary-protection.md
-    crypto.md
-    packages.md
     supply-chain.md
   testing/SKILL.md
   testing/references/

@@ -48,7 +48,8 @@ copy, apply the Core Standards above.
 
 ## ARB File Format
 
-ARB files support simple strings, placeholders, and ICU plural syntax.
+ARB files support simple strings, placeholders, and ICU plural syntax. See
+[references/setup.md](references/setup.md) for an example of each.
 
 ## Reusable Widget Strategy
 

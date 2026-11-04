@@ -159,8 +159,9 @@ This recursively finds and runs tests in every package (data clients, repositori
 
 ## Key Testing Rules
 
+- **Mock only the immediate dependency** -- never mock two layers deep: a repository test mocks `UserApiClient`, never `http.Client`
 - **Test model transformations explicitly** -- verify that `User.fromResponse` (or equivalent) correctly maps every field, including nullable fields and edge cases
-- **Mirror `lib/` structure in `test/`** -- `packages/user_api_client/lib/src/user_api_client.dart` -> `packages/user_api_client/test/src/user_api_client_test.dart`
+- **Mirror `lib/src/` in `test/`, without the `src/` segment** -- `packages/user_api_client/lib/src/user_api_client.dart` -> `packages/user_api_client/test/user_api_client_test.dart`, and `lib/src/models/user.dart` -> `test/models/user_test.dart`
 
 ## Testing Anti-Patterns
 

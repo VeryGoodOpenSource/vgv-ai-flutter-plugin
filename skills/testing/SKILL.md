@@ -55,9 +55,8 @@ copy, apply the Core Standards above.
 
 ## File Organization
 
-| Convention           | Rule                                                                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------- |
-| **Helpers**          | Shared test utilities go in `test/helpers/` (e.g., `pump_app.dart`, `fakes.dart`)              |
+Shared test utilities go in `test/helpers/` (e.g., `pump_app.dart`, `l10n.dart`, `fakes.dart`),
+exported from `test/helpers/helpers.dart`.
 
 ## Testing Private Logic
 
@@ -87,14 +86,21 @@ test('normalizes email to lowercase before saving', () async {
 ### pumpApp Helper
 
 Every widget test wraps the widget under test through one shared helper, so no test
-inlines its own `MaterialApp`:
+inlines its own `MaterialApp`. The helper wires the app's localization delegates, which the
+`tester.l10n` helper from the VGE standards needs to resolve on-screen text:
 
 ```dart
 // test/helpers/pump_app.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_app/l10n/l10n.dart';
+
 extension PumpApp on WidgetTester {
   Future<void> pumpApp(Widget widget) {
     return pumpWidget(
       MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: widget,
       ),
     );
@@ -102,17 +108,27 @@ extension PumpApp on WidgetTester {
 }
 ```
 
-Export it from `test/helpers/helpers.dart` so every test imports it with one line:
+Export it, together with the `tester.l10n` extension in `test/helpers/l10n.dart`, from
+`test/helpers/helpers.dart` so every test imports both with one line:
 
 ```dart
+// test/helpers/helpers.dart
+export 'l10n.dart';
+export 'pump_app.dart';
+```
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_app/greeting/greeting.dart';
+
 import '../helpers/helpers.dart';
 
 void main() {
-  group(MyWidget, () {
+  group(GreetingView, () {
     testWidgets('renders greeting text', (tester) async {
-      await tester.pumpApp(const MyWidget());
+      await tester.pumpApp(const GreetingView());
 
-      expect(find.text('Hello'), findsOneWidget);
+      expect(find.text(tester.l10n.greeting), findsOneWidget);
     });
   });
 }

@@ -102,7 +102,7 @@ When the same decoration or style appears on many widget instances, move it into
 ThemeData(
   inputDecorationTheme: InputDecorationTheme(
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppSpacing.sm),
     ),
     contentPadding: EdgeInsets.symmetric(
       horizontal: AppSpacing.lg,
@@ -122,7 +122,7 @@ TextFormField(
 
 ## Spacing System
 
-Whenever you introduce the scale or hand someone the convention, write the class out. Listing the step names and their pixel values in prose is not the convention — the class is, because it is what stops the next arbitrary number from being typed.
+The convention is the `AppSpacing` class in VGE `development/ui/theming.md`: one `spaceUnit` base constant and named steps (`xs`, `sm`, `md`, `lg`) each declared as a multiple of it. Whenever you introduce the scale or hand someone the convention, write that class out in code. Listing the step names and their pixel values in prose is not the convention — the class is, because it is what stops the next arbitrary number from being typed.
 
 ## Common Patterns
 

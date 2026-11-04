@@ -30,7 +30,7 @@ Apply these standards to all layered architecture work:
 - **Data and Repository layers live in `packages/`** — each is an independent Dart package with its own `pubspec.yaml`
 - **Business Logic and Presentation live in `lib/`** — organized by feature within the app
 - **Data layer packages contain zero domain/business logic** — they must be reusable in unrelated projects
-- **No inter-repository dependencies** — repositories never import other repositories
+- **No inter-repository dependencies** — repositories never import other repositories; combine data from several repositories in the Bloc
 - **No Flutter SDK in data or repository packages** — scaffold with the `very_good_cli` MCP server `create dart_package` tool
 - **One repository per domain** — `user_repository`, `weather_repository`, `auth_repository`
 - **Path dependencies for local packages** — never `git:` or pub version references for packages in the same repo

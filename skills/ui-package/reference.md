@@ -13,7 +13,8 @@ Concrete examples and step-by-step workflows for the UI Package skill.
 | `AppTheme`                                      | Composes `ThemeData` with `ColorScheme.fromSeed` + custom extensions, for light and dark variants |
 | `AppThemeBuildContext` extension                | Shorthand `context.appColors` and `context.appSpacing`                                            |
 
-Every `ThemeExtension` must implement `copyWith` and `lerp` for theme animation support.
+Every `ThemeExtension` must implement `copyWith` and `lerp` for theme animation support. These are `ThemeExtension`s rather than the app-level `abstract class` statics in VGE
+`development/ui/theming.md` on purpose: a reusable UI package needs tokens that swap per theme and lerp.
 
 An extension that is not registered on `ThemeData.extensions` is invisible to
 `Theme.of(context)`, so registration and the accessor are one step, not two:

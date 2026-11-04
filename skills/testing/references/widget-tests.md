@@ -34,7 +34,7 @@ void main() {
       testWidgets('displays welcome text', (tester) async {
         await tester.pumpApp(buildSubject());
 
-        expect(find.text('Welcome'), findsOneWidget);
+        expect(find.text(tester.l10n.homeWelcome), findsOneWidget);
       });
 
       testWidgets('displays loading indicator when status is loading',
@@ -80,9 +80,15 @@ void main() {
 
 ## Testing Themes and Localization
 
-Extend `pumpApp` to inject theme and localizations when needed:
+Extend the canonical `pumpApp` with a `theme` parameter when a test needs one. Keep the
+localization delegates, which `tester.l10n` depends on:
 
 ```dart
+// test/helpers/pump_app.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_app/l10n/l10n.dart';
+
 extension PumpApp on WidgetTester {
   Future<void> pumpApp(
     Widget widget, {
@@ -92,6 +98,7 @@ extension PumpApp on WidgetTester {
       MaterialApp(
         theme: theme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: widget,
       ),
     );
