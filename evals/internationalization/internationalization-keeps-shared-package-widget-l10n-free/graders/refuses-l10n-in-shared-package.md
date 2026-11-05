@@ -1,5 +1,6 @@
 ---
 type: llm
+weight: 3
 ---
 
 PASS if the response refuses to make the shared design-system package depend on AppLocalizations.

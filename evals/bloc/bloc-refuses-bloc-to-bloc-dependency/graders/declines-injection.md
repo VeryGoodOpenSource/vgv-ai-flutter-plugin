@@ -1,5 +1,6 @@
 ---
 type: llm
+weight: 3
 ---
 
 PASS if the response declines to inject one bloc into another and says bloc-to-bloc dependencies are not allowed.

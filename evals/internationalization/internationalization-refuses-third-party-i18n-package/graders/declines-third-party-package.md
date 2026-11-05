@@ -1,5 +1,6 @@
 ---
 type: llm
+weight: 3
 ---
 
 PASS if the response declines to add a third-party localization package and says Flutter's built-in localization system should be used instead.

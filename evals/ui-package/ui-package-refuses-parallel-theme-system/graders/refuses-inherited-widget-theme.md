@@ -1,5 +1,6 @@
 ---
 type: llm
+weight: 3
 ---
 
 PASS if the solution the response recommends is a ThemeExtension read off Material's ThemeData, not a custom InheritedWidget theme, and it says a parallel theme system built on InheritedWidget is the wrong approach.

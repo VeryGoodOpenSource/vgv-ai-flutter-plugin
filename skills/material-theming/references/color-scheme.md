@@ -1,24 +1,5 @@
 # ColorScheme Configuration
 
-`ColorScheme` carries 45 color roles based on the Material 3 specification. Configure it
-inside `ThemeData`:
-
-```dart
-ThemeData(
-  colorScheme: ColorScheme(
-    brightness: Brightness.light,
-    primary: AppColors.primaryColor,
-    secondary: AppColors.secondaryColor,
-    error: AppColors.errorColor,
-    surface: AppColors.surfaceColor,
-    onPrimary: Colors.white,
-    onSecondary: Colors.white,
-    onError: Colors.white,
-    onSurface: Colors.black,
-  ),
-)
-```
-
 For quick prototyping, use `ColorScheme.fromSeed()`:
 
 ```dart
@@ -57,20 +38,3 @@ class AppTheme {
 ```
 
 Pass both to `MaterialApp` as `theme` and `darkTheme`.
-
-## Accessing Colors in Widgets
-
-```dart
-@override
-Widget build(BuildContext context) {
-  final colorScheme = Theme.of(context).colorScheme;
-
-  return ColoredBox(
-    color: colorScheme.surface,
-    child: Text(
-      'Hello',
-      style: TextStyle(color: colorScheme.onSurface),
-    ),
-  );
-}
-```

@@ -9,8 +9,6 @@
 | `setUpAll`    | Once before **all** tests in the group | Registering fallback values, expensive one-time initialization |
 | `tearDownAll` | Once after **all** tests in the group  | Releasing shared resources (e.g., database connections)        |
 
-All of them live inside a `group`, never at the top level of `main()`.
-
 ## Testing Async Methods
 
 ```dart

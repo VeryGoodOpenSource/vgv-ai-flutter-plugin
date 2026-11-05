@@ -4,7 +4,7 @@ Does Claude route to the skill, and does the output follow it? Cases run through
 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) against real models.
 
 ```bash
-claude plugin eval . --scaffold                       # all 102 cases, both arms
+claude plugin eval . --scaffold                       # all 110 cases, both arms
 claude plugin eval . --scaffold --tag bloc            # one skill
 claude plugin eval . --scaffold --ablation none       # with-plugin arm only, half the cost
 ```
@@ -105,7 +105,7 @@ made to a [mocked MCP tool](#mocking-the-mcp-servers).
 
 ### Routing graders
 
-All but one of the 102 cases carry one:
+All but one of the 110 cases carry one:
 
 ```markdown
 ---
@@ -127,6 +127,27 @@ miss alone. It does not protect the content graders: against `n` content graders
 When one grader carries a case's whole point, weight that grader too.
 
 Negative controls use the same grader with `min: 0` and `max: 0`.
+
+### Cases that read the VGE standards
+
+A skill with a **VGE Standards** section takes its detailed guidance from the Very Good
+Engineering docs that `sync-vge-standards.sh` downloads at session start. The hook runs
+inside every with-plugin run too, so the throwaway home gets a fresh copy, which needs
+network. The hook then prints the copy's absolute path. Without it the model guesses `~`
+from the plugin path and reads your real home, which the sandbox denies. Each such skill has one case that grades both halves:
+
+```markdown
+---
+type: tool_used
+tool: Read
+input_match: 'very_good_engineering/bundles/[0-9]+/development/testing/testing_golden_file\.md'
+weight: 3
+---
+```
+
+Next to it sits a `regex` on a rule that only the VGE doc states. The no-plugin arm has no
+hook and no cache, so it fails both graders for free. Read the with-arm score. When a VGE
+release changes the rule, the case fails, and the fix is the grader.
 
 ### Traps that have each cost a false result
 
@@ -358,7 +379,7 @@ plugin and 0.00 without, on three runs each.
 
 ```bash
 E="claude plugin eval . --scaffold"
-$E                                             # all 102, both arms
+$E                                             # all 110, both arms
 $E --tag bloc --tag testing                    # two skills
 $E --case bloc-writes-sealed-events-and-states # one case
 $E --ablation none                             # with-plugin arm only, half the cost

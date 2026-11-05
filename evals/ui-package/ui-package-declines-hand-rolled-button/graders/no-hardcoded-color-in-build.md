@@ -18,6 +18,11 @@ from any package-level constant or palette class. Each of these satisfies both:
 - the hex appears only outside the widget, as a `ColorScheme` seed, as the constant a seed
   reads from, or in prose saying where the color belongs
 
+`Colors.transparent` used to switch off the ripple or the overlay (for example
+`overlayColor: WidgetStatePropertyAll(Colors.transparent)`) is not a color token and does
+not fail. A colors class that only the theme setup code reads, and the widget never
+references, is theme setup and does not fail either.
+
 FAIL if either half is missing: a color literal is written inside the widget class, or the
 widget's colors are read from a package-level color constant or palette class instead of
 the ambient theme. Hoisting the hex to a top-level or static constant and reading that

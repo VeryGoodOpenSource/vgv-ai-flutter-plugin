@@ -36,17 +36,6 @@ override_platforms:
 
 ## Using Tags
 
-Define tag constants in a shared file:
-
-```dart
-// test/helpers/test_tags.dart
-abstract class TestTag {
-  static const unit = 'unit';
-  static const integration = 'integration';
-  static const golden = 'golden';
-}
-```
-
 Apply tags to tests using the `@Tags` annotation:
 
 ```dart
@@ -60,14 +49,6 @@ void main() {
     // ...
   });
 }
-```
-
-Or on individual tests:
-
-```dart
-test('renders correctly', tags: TestTag.golden, () {
-  // ...
-});
 ```
 
 ## Running Tests

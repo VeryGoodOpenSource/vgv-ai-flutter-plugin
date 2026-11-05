@@ -1,6 +1,7 @@
 # Animation Testing
 
 Testing patterns specific to Flutter animations. See the `animations` skill for core animation standards and the decision tree.
+Pump every widget through the shared `pumpApp` helper from `test/helpers/helpers.dart`.
 
 ## Testing Implicit Animations
 
@@ -8,11 +9,7 @@ Use `pump` with specific durations to verify intermediate and final states:
 
 ```dart
 testWidgets('card fades in when visible', (tester) async {
-  await tester.pumpWidget(
-    const MaterialApp(
-      home: FadingCard(isVisible: false),
-    ),
-  );
+  await tester.pumpApp(const FadingCard(isVisible: false));
 
   // Verify initial state
   final opacity = tester.widget<AnimatedOpacity>(
@@ -21,11 +18,7 @@ testWidgets('card fades in when visible', (tester) async {
   expect(opacity.opacity, 0.0);
 
   // Trigger animation
-  await tester.pumpWidget(
-    const MaterialApp(
-      home: FadingCard(isVisible: true),
-    ),
-  );
+  await tester.pumpApp(const FadingCard(isVisible: true));
 
   // Verify target is set
   final updatedOpacity = tester.widget<AnimatedOpacity>(
@@ -50,9 +43,7 @@ Use `pump` with frame durations to verify animation progress:
 
 ```dart
 testWidgets('spinner rotates continuously', (tester) async {
-  await tester.pumpWidget(
-    const MaterialApp(home: Spinner()),
-  );
+  await tester.pumpApp(const Spinner());
 
   // Capture initial transform
   final initialTransform = tester.widget<Transform>(
@@ -74,19 +65,11 @@ testWidgets('spinner rotates continuously', (tester) async {
 
 ```dart
 testWidgets('content cross-fades on state change', (tester) async {
-  await tester.pumpWidget(
-    const MaterialApp(
-      home: CounterDisplay(count: 0),
-    ),
-  );
+  await tester.pumpApp(const CounterDisplay(count: 0));
 
   expect(find.text('0'), findsOneWidget);
 
-  await tester.pumpWidget(
-    const MaterialApp(
-      home: CounterDisplay(count: 1),
-    ),
-  );
+  await tester.pumpApp(const CounterDisplay(count: 1));
 
   // During cross-fade, both widgets exist
   await tester.pump(Durations.medium2 ~/ 2);
@@ -121,6 +104,8 @@ testWidgets('details page slides in from right', (tester) async {
     ],
   );
 
+  // The real router is the subject here, so this test pumps `MaterialApp.router`
+  // itself instead of going through `pumpApp`.
   await tester.pumpWidget(
     MaterialApp.router(routerConfig: router),
   );
@@ -150,12 +135,10 @@ testWidgets('pulsing dot scales when active', (tester) async {
   );
   addTearDown(controller.dispose);
 
-  await tester.pumpWidget(
-    MaterialApp(
-      home: PulsingDot(
-        isActive: true,
-        controller: controller,
-      ),
+  await tester.pumpApp(
+    PulsingDot(
+      isActive: true,
+      controller: controller,
     ),
   );
 
@@ -179,31 +162,34 @@ testWidgets('pulsing dot scales when active', (tester) async {
 Verify calls on the controller using `mocktail` when you need to assert `forward()`, `reverse()`, or `repeat()` were called:
 
 ```dart
-class MockAnimationController extends Mock implements AnimationController {}
+class _MockAnimationController extends Mock implements AnimationController {}
 
-testWidgets('stops animation when isActive becomes false', (tester) async {
-  final controller = MockAnimationController();
-  when(() => controller.repeat(reverse: true)).thenReturn();
-  when(() => controller.stop()).thenReturn();
-  when(() => controller.reset()).thenReturn();
-  when(() => controller.value).thenReturn(0.0);
-  when(() => controller.status).thenReturn(AnimationStatus.dismissed);
+void main() {
+  group(PulsingDot, () {
+    late AnimationController controller;
 
-  await tester.pumpWidget(
-    MaterialApp(
-      home: PulsingDot(isActive: true, controller: controller),
-    ),
-  );
-  verify(() => controller.repeat(reverse: true)).called(1);
+    setUp(() {
+      controller = _MockAnimationController();
+      when(() => controller.repeat(reverse: true))
+          .thenAnswer((_) => TickerFuture.complete());
+      when(() => controller.value).thenReturn(0.0);
+      when(() => controller.status).thenReturn(AnimationStatus.dismissed);
+    });
 
-  await tester.pumpWidget(
-    MaterialApp(
-      home: PulsingDot(isActive: false, controller: controller),
-    ),
-  );
-  verify(() => controller.stop()).called(1);
-  verify(() => controller.reset()).called(1);
-});
+    testWidgets('stops animation when isActive becomes false', (tester) async {
+      await tester.pumpApp(
+        PulsingDot(isActive: true, controller: controller),
+      );
+      verify(() => controller.repeat(reverse: true)).called(1);
+
+      await tester.pumpApp(
+        PulsingDot(isActive: false, controller: controller),
+      );
+      verify(() => controller.stop()).called(1);
+      verify(() => controller.reset()).called(1);
+    });
+  });
+}
 ```
 
 ## Animation Testing Tips

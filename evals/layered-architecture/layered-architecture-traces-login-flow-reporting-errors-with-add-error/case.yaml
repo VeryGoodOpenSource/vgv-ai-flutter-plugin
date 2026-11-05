@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: layered-architecture-traces-login-flow-reporting-errors-with-add-error
+context:
+  scaffold_script: fixture.sh

@@ -1,5 +1,6 @@
 ---
 type: llm
+weight: 3
 ---
 
 PASS if the response says importing individual files from under a package's `src/` directory is wrong because everything under `src/` is private to the package, and tells the consumer to import the package's single public barrel file instead.
