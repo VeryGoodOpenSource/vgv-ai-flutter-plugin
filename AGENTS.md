@@ -32,7 +32,7 @@ evals/                 # `claude plugin eval` suite — all 15 skills, 102 cases
         <name>.md      # One grader per file; frontmatter is its type and options
   results/             # Written by each run — gitignored
 hooks/
-  hooks.json           # Hook definitions (PreToolUse and PostToolUse)
+  hooks.json           # Hook definitions (SessionStart, SubagentStart, PreToolUse, PostToolUse)
   scripts/
     allow-readonly-git.sh  # Restricts flutter-reviewer Bash to git diff/status
     allow-readonly-git_test.sh  # Tests for allow-readonly-git.sh
@@ -42,6 +42,8 @@ hooks/
     check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.5.0
     check-vgv-cli_test.sh  # Tests for check-vgv-cli.sh
     format.sh          # Runs dart format on modified .dart files
+    sync-vge-standards.sh  # Syncs Very Good Engineering standards into a shared cache
+    sync-vge-standards_test.sh  # Tests for sync-vge-standards.sh
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
     warn-missing-mcp_test.sh  # Tests for warn-missing-mcp.sh

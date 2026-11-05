@@ -4,13 +4,20 @@
 
 ## Hooks
 
-The `hooks/` directory contains SessionStart, PreToolUse, and PostToolUse hooks defined in `hooks.json`.
+The `hooks/` directory contains SessionStart, SubagentStart, PreToolUse, and PostToolUse hooks defined in `hooks.json`.
 
 ### SessionStart Hooks
 
 These run **when a session begins**:
 
 - `warn-missing-mcp.sh` — checks if Very Good CLI is installed and >= 1.5.0; outputs a warning to Claude's context if missing, outdated, or silent about its version (non-blocking). It names which of the two causes it is: `dart` is not on the `PATH` hooks inherit, or a Dart SDK upgrade left a stale snapshot that `very_good --version` rebuilds
+- `sync-vge-standards.sh` — syncs Very Good Engineering's published standards into the shared cache `${XDG_CACHE_HOME:-~/.cache}/very_good_engineering/bundles/` (local paths mirror `/bundles/` on the host, ETags sit next to the content, a `mkdir` lock serializes concurrent runs). Conditional GET on the manifest, then on the index, then a parallel download of only the documents whose sha256 differs; each is verified against its `sha256` and `bytes` before it is moved into place. The index ETag is saved only after every document landed, so an interrupted run resumes. `VGE_TARGET_MAJOR` at the top of the script is the major the skills are written against: a newer published major, or the target missing from `majors`, pauses the sync and prints one notice. Whenever a local copy exists it prints one line with that copy's absolute path and tells the session to open listed files with the Read tool, since skills cannot resolve `$XDG_CACHE_HOME` or the eval sandbox's `$HOME` themselves; it never prints document content. Otherwise silent, and exit 0 on every failure. Needs `curl` and `sha256sum` or `shasum`
+
+### SubagentStart Hooks
+
+These run **when a subagent is spawned**:
+
+- `^vgv-ai-flutter-plugin:flutter-reviewer$` matcher → `sync-vge-standards.sh --subagent` — a subagent starts with a fresh context and never sees the session start notice, so this hands `flutter-reviewer` the same path line as `hookSpecificOutput.additionalContext`. It confirms `agent_type` from the payload, prints nothing until a local copy exists, and never touches the network or the cache
 
 ### PreToolUse Hooks
 
