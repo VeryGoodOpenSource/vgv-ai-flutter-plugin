@@ -194,9 +194,9 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
 ## Test Gate
 
 - Run `mcp__very-good-cli__test` with `coverage: true`, `min_coverage: <target>`,
-  `show_uncovered: true`, `timeout_seconds` (e.g. `120`, on either runner), the
-  `exclude_coverage` glob (below), and the runner-specific arguments from the
-  table below.
+  `show_uncovered: true`, `timeout_seconds` (e.g. `120`, on either runner, and
+  below the client's MCP tool timeout when it has one), the `exclude_coverage`
+  glob (below), and the runner-specific arguments from the table below.
 - **Pick the runner from `pubspec.yaml`** — a package that depends on the
   `flutter` SDK runs on the Flutter runner: omit `dart`. A pure Dart package
   passes `dart: true`. The tool turns `dart: true` into `very_good dart test` and
@@ -220,11 +220,13 @@ with exit 64 and `Could not find an option named "--…"`.
 Either error is the loop's own wrong call, not a test failure and not an
 escalation: fix the arguments and re-run in the same round.
 
-**A `timeout` failure is a hang to find, not a call to retry** — the same suite
-hangs again. Look in the test files, starting with the ones the loop edited: a
+**A `timeout` failure is a hang to find, not a call to retry** — and so is a
+`test` call the client cuts off before the server answers. The same suite hangs
+again. Look in the test files, starting with the ones the loop edited: a
 `pumpAndSettle()` over an endless animation, an un-awaited `Future`, a stream or
-`StreamController` nobody closes, a `Timer` left running. Fix it and confirm with `paths` narrowed to that file before re-running
-the full suite. If no cause turns up, escalate per the matrix.
+`StreamController` nobody closes, a `Timer` left running. Fix it and confirm
+with `paths` narrowed to that file before re-running the full suite. If no cause
+turns up, escalate per the matrix.
 
 ---
 
