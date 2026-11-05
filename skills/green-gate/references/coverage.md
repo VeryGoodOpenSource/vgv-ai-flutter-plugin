@@ -10,8 +10,8 @@ result that carries no such block.
 
 `100` is VGV's house standard — the `very_good_cli` templates ship at 100% and
 Very Good Core's CI fails below it. "100%" means 100% of _testable, hand-written_
-code: generated files leave the denominator via `exclude_coverage`, and
-`check_ignore: true` honors `// coverage:ignore` for genuinely unreachable lines,
+code: generated files leave the denominator via `exclude_coverage`, and on the
+Dart runner `check_ignore: true` honors `// coverage:ignore` for genuinely unreachable lines,
 so the target is achievable rather than a ceiling on every generated line. It is
 **overridable per invocation** (e.g. `80`) for legacy or non-template packages
 while the loop raises coverage toward it.
@@ -35,7 +35,7 @@ Lines not covered:
   the gate is red, and as informational output when the gate passes with lines
   still uncovered. A clean 100% run prints no block, which is not a fallback
   trigger.
-- It arrived in `very_good_cli` 1.5.0, the plugin's minimum. A `test` tool schema
+- It arrived in `very_good_cli` 1.5.0. A `test` tool schema
   without the parameter means an older CLI — use the lcov fallback.
 
 ## exclude_coverage
@@ -54,10 +54,11 @@ gate. Read `SF` (source file), `LF` (lines found), `LH` (lines hit) per file; us
 
 ## check_ignore is Dart-only
 
-The MCP tool honors `// coverage:ignore` comments only when `dart: true`. For
-Flutter packages the ignore remedy may not be respected; prefer
-`exclude_coverage` for generated files and escalate genuinely unreachable Flutter
-lines rather than relying on the comment.
+Pass `check_ignore: true` only with `dart: true`. The flag exists only on
+`very_good dart test`, so on a Flutter package `very_good_cli` fails the
+whole call with `Could not find an option named "--check-ignore".` For Flutter
+packages, use `exclude_coverage` for generated files and escalate genuinely
+unreachable lines rather than relying on the comment.
 
 ## Decision tree — a missing lcov.info has three distinct causes
 

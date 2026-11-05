@@ -53,7 +53,9 @@ void main() {
 
 ## Running Tests
 
-Run tests through the `very_good_cli` MCP `test` tool — never `dart test` or `flutter test` via the shell (the `block-cli-workarounds` hook denies those). Pass `timeout_seconds` to cap the run so a hung `pumpAndSettle()` cannot stall it indefinitely.
+Run tests through the `very_good_cli` MCP `test` tool — never `dart test` or `flutter test` via the shell (the `block-cli-workarounds` hook denies those). `dart: true` runs `very_good dart test` and no `dart` runs `very_good test`. The two accept different options, and an option the runner lacks fails the whole call with `Could not find an option named "--…"`, so the runner-only rows below must never be combined with the other runner.
+
+Set `timeout_seconds` on every run, Dart or Flutter. A `timeout` failure is a hang to find (an unbounded `pumpAndSettle()`, an un-awaited stream), not a run to retry.
 
 | Goal                                     | MCP `test` tool parameters               |
 | ---------------------------------------- | ---------------------------------------- |
@@ -67,4 +69,5 @@ Run tests through the `very_good_cli` MCP `test` tool — never `dart test` or `
 | Run on a specific platform               | `platform: 'chrome'`                     |
 | Randomize test execution order           | `test_randomize_ordering_seed: 'random'` |
 | Run recursively across nested packages   | `recursive: true`                        |
-| Cap runtime to avoid a hung test process | `timeout_seconds: 120`                   |
+| Honor `// coverage:ignore` (Dart only)   | `dart: true, check_ignore: true`         |
+| Kill a run that hangs past 120 s         | `timeout_seconds: 120`                   |

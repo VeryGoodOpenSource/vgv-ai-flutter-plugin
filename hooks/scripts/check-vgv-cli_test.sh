@@ -105,15 +105,15 @@ assert_decision aside "server-less MCP name"              '{"tool_name":"MCP:tes
 
 echo ""
 echo "--- Very Good CLI tools, CLI present and current ---"
-stub_cli 1.6.0
+stub_cli 1.7.0
 assert_decision allow "version above minimum"             "$VGV_TOOL"
 assert_decision allow "marketplace-namespaced tool"       "$VGV_PLUGIN_TOOL"
-stub_cli 1.5.0
+stub_cli 1.6.0
 assert_decision allow "version exactly at minimum"        "$VGV_TOOL"
 
 echo ""
 echo "--- Very Good CLI tools, CLI missing or outdated ---"
-stub_cli 1.4.9
+stub_cli 1.5.0
 assert_decision deny  "version below minimum"             "$VGV_TOOL"
 stub_cli 0.9.0
 assert_decision deny  "major version below minimum"       "$VGV_TOOL"
