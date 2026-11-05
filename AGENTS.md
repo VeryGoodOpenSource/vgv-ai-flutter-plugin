@@ -47,7 +47,7 @@ hooks/
     vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
     warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
     warn-missing-mcp_test.sh  # Tests for warn-missing-mcp.sh
-skills/                  # every <skill>/ ships SKILL.md + agents/openai.yaml (Codex sidecar)
+skills/
   accessibility/SKILL.md
   accessibility/references/
     audit-templates.md
@@ -138,7 +138,7 @@ Every `SKILL.md` follows this structure:
 3. **Core Standards** — enforced constraints, always first
 4. **Content sections** — architecture, code examples, workflows, anti-patterns
 
-Every skill also ships a Codex sidecar at `agents/openai.yaml` beside its `SKILL.md`, holding the skill-picker metadata `interface.display_name` and `interface.short_description`. Every skill in this plugin is **model-invoked** (the model may auto-activate it), so no skill sets `disable-model-invocation` or a Codex `policy` block; a user-invoked-only skill would set both, kept in sync. See `CONTRIBUTING.md` → Cross-harness portability.
+Every skill in this plugin is **model-invoked** (the model may auto-activate it), so no skill sets `disable-model-invocation`. See `CONTRIBUTING.md` → Cross-harness portability.
 
 ## Writing Conventions
 
@@ -151,8 +151,7 @@ Every skill also ships a Codex sidecar at `agents/openai.yaml` beside its `SKILL
 
 ## Adding a New Skill
 
-1. Create `skills/<skill_name>/SKILL.md` following the format above, plus the Codex sidecar
-   `skills/<skill_name>/agents/openai.yaml` (`interface.display_name` + `interface.short_description`)
+1. Create `skills/<skill_name>/SKILL.md` following the format above
 2. Create `evals/<skill_name>/<case_name>/` — one case directory per major workflow
    the skill covers, each with a routing grader, plus one negative-control case. Routing
    graders carry `weight: 3` **and** `arm: both`; without `arm: both` the runner drops
@@ -191,8 +190,7 @@ docs that describe them. When you touch any of the following, update the matchin
 documentation in the same change:
 
 - **Updating a skill's scope or description** — update the matching row in the
-  `README.md` skills table and the `interface.short_description` in the skill's
-  `agents/openai.yaml`, so all three stay in sync. Nothing checks them against
+  `README.md` skills table, so both stay in sync. Nothing checks them against
   each other. `description` also carries every trigger phrase and is capped at
   1024 characters, which `skills_lint` enforces as an error. Several are already
   within ten characters of it, so check the current length before adding a

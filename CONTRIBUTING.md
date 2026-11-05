@@ -46,15 +46,6 @@ After the frontmatter, structure the file as:
 2. **Core Standards** — enforced constraints, always first
 3. **Content sections** — architecture, code examples, workflows, anti-patterns
 
-Also create the Codex sidecar `skills/<skill-name>/agents/openai.yaml` with the skill-picker
-metadata (see [Cross-harness portability](#cross-harness-portability) → Codex sidecar):
-
-```yaml
-interface:
-  display_name: "Skill Name"
-  short_description: "One short line for the picker"
-```
-
 ### 2. Add eval cases
 
 Create one case directory per prompt under `evals/<skill-name>/` — prompts that
@@ -186,14 +177,9 @@ below keep a skill working on both.
 - **Own your references** — a skill's reference files live in its own `references/` directory.
   Do not share a reference across skills by symlink or `../other-skill/…` link; those do not
   survive every install path.
-- **Codex sidecar (`agents/openai.yaml`)** — every skill ships one beside its `SKILL.md` with
-  the picker metadata (`interface.display_name`, `interface.short_description`). The
-  `SKILL.md` body stays the source of truth. Add one for every new skill.
 - **Invocation** — every skill here is **model-invoked**; there is no `when_to_use` field
   (only Claude Code read it). To make a skill user-invoked, set
-  `disable-model-invocation: true` in the frontmatter *and*
-  `policy.allow_implicit_invocation: false` in its `agents/openai.yaml` — both harnesses or
-  neither.
+  `disable-model-invocation: true` in the frontmatter.
 
 ## Testing Locally
 

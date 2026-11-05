@@ -1,3 +1,0 @@
-interface:
-  display_name: "License Compliance"
-  short_description: "Audit dependency licenses for compliance"

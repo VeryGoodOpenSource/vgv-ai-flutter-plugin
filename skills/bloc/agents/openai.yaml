@@ -1,3 +1,0 @@
-interface:
-  display_name: "Bloc"
-  short_description: "Bloc and Cubit conventions for Flutter, including blocTest and mocktail tests"

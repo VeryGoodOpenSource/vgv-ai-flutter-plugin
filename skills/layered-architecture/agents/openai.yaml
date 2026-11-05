@@ -1,3 +1,0 @@
-interface:
-  display_name: "Layered Architecture"
-  short_description: "VGV layered monorepo architecture, package layout, and layer-boundary calls"

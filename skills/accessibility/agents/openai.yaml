@@ -1,3 +1,0 @@
-interface:
-  display_name: "Accessibility"
-  short_description: "Audit Flutter widgets for WCAG 2.2 accessibility"
