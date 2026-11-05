@@ -35,8 +35,6 @@ Lines not covered:
   the gate is red, and as informational output when the gate passes with lines
   still uncovered. A clean 100% run prints no block, which is not a fallback
   trigger.
-- It arrived in `very_good_cli` 1.5.0. A `test` tool schema
-  without the parameter means an older CLI — use the lcov fallback.
 
 ## exclude_coverage
 
@@ -54,9 +52,10 @@ gate. Read `SF` (source file), `LF` (lines found), `LH` (lines hit) per file; us
 
 ## check_ignore is Dart-only
 
-Pass `check_ignore: true` only with `dart: true`. The flag exists only on
-`very_good dart test`, so on a Flutter package `very_good_cli` fails the
-whole call with `Could not find an option named "--check-ignore".` For Flutter
+Pass `check_ignore: true` only with `dart: true`. Without it the MCP server
+rejects the whole call with a `validation` error, since only `very_good dart
+test` supports the flag. That error is a wrong call to fix, not a tool failure
+to escalate. For Flutter
 packages, use `exclude_coverage` for generated files and escalate genuinely
 unreachable lines rather than relying on the comment.
 

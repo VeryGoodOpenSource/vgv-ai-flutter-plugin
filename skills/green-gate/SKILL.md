@@ -64,7 +64,6 @@ analyze` / `flutter test --coverage` for the tools the loop actually runs.
   silently produces no `lcov.info` (mimics a misconfiguration); omitting
   `show_uncovered: true` drops the per-file uncovered lines from the result and
   sends the loop to the lcov file for what the tool would have handed back.
-  `show_uncovered` arrived in `very_good_cli` 1.5.0.
 - **Match every `test` argument to the runner** — `dart: true` and no `dart` run
   different CLI commands that accept different options, and a mismatch fails the
   whole call. See **Test Gate** for which arguments go with which runner.
@@ -208,22 +207,23 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
   autonomously unless it encodes a genuine product decision (escalate per the
   matrix).
 
-**Runner-specific arguments** — `very_good_cli` builds the CLI flags without
-checking the runner, so an argument the runner lacks fails the whole call with
-exit 64 and `Could not find an option named "--…"`:
+**Runner-specific arguments** — a mismatch fails the whole call: `check_ignore`
+without `dart: true` returns a `validation` error from the MCP server;
+`update_goldens` or `dart-define*` with `dart: true` reaches the CLI and fails
+with exit 64 and `Could not find an option named "--…"`.
 
 | Argument                                                 | Flutter runner (no `dart`) | Dart runner (`dart: true`) |
 | -------------------------------------------------------- | -------------------------- | -------------------------- |
 | `check_ignore`                                           | Never pass                 | Pass `true`                |
 | `update_goldens`, `dart-define`, `dart-define-from-file` | Allowed                    | Never pass                 |
 
-A usage error like that is the loop's own wrong call, not a test failure and not
-an escalation: fix the arguments and re-run in the same round.
+Either error is the loop's own wrong call, not a test failure and not an
+escalation: fix the arguments and re-run in the same round.
 
 **A `timeout` failure is a hang to find, not a call to retry** — the same suite
-hangs again. Look in the test files, starting with the ones the loop edited: a `pumpAndSettle()` over an endless animation, an
-un-awaited `Future`, a stream or `StreamController` nobody closes, a `Timer` left
-running. Fix it and confirm with `paths` narrowed to that file before re-running
+hangs again. Look in the test files, starting with the ones the loop edited: a
+`pumpAndSettle()` over an endless animation, an un-awaited `Future`, a stream or
+`StreamController` nobody closes, a `Timer` left running. Fix it and confirm with `paths` narrowed to that file before re-running
 the full suite. If no cause turns up, escalate per the matrix.
 
 ---
@@ -288,7 +288,7 @@ Stop and surface to the user when:
 | **Ambiguous fix**                 | Multiple valid resolutions (e.g. change the API vs suppress the lint) — prefer root-cause; escalate when it is a product/API decision                                                                                                                                                                                                                                       |
 | **Unreachable-code coverage gap** | Dart runner: suggest `// coverage:ignore` (with `check_ignore: true`) rather than chasing 100%. Flutter runner: report the lines                                                                                                                                                                                                                                            |
 | **Denominator hygiene**           | A generated file not matched by the exclude glob — widen `exclude_coverage`, not `// coverage:ignore`                                                                                                                                                                                                                                                                       |
-| **Tool / hook failure**           | a `test` `timeout` failure with no hang found (see **Test Gate**), analyzer crash, CLI-missing hook denial (escalate with the install hint `dart pub global activate very_good_cli`), or a _repeated_ `analyze.sh` rejection that still blocks a needed edit after revision — a single rejection is in-loop analyze-gate feedback (see **Analyze Gate**), not an escalation |
+| **Tool / hook failure**           | A `test` `timeout` failure with no hang found (see **Test Gate**), analyzer crash, CLI-missing hook denial (escalate with the install hint `dart pub global activate very_good_cli`), or a _repeated_ `analyze.sh` rejection that still blocks a needed edit after revision — a single rejection is in-loop analyze-gate feedback (see **Analyze Gate**), not an escalation |
 
 When escalating, name the gate that is red — analyze, format, test, or coverage —
 then give its fingerprint entries verbatim (`diagnosticCode @ file:line` for

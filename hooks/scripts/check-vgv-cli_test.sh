@@ -115,6 +115,8 @@ echo ""
 echo "--- Very Good CLI tools, CLI missing or outdated ---"
 stub_cli 1.5.0
 assert_decision deny  "version below minimum"             "$VGV_TOOL"
+stub_cli 1.5.9
+assert_decision deny  "patch release below minimum"       "$VGV_TOOL"
 stub_cli 0.9.0
 assert_decision deny  "major version below minimum"       "$VGV_TOOL"
 no_cli

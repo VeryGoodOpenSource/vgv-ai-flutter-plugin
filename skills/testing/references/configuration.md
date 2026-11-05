@@ -53,7 +53,7 @@ void main() {
 
 ## Running Tests
 
-Run tests through the `very_good_cli` MCP `test` tool — never `dart test` or `flutter test` via the shell (the `block-cli-workarounds` hook denies those). `dart: true` runs `very_good dart test` and no `dart` runs `very_good test`. The two accept different options, and an option the runner lacks fails the whole call with `Could not find an option named "--…"`, so the runner-only rows below must never be combined with the other runner.
+Run tests through the `very_good_cli` MCP `test` tool — never `dart test` or `flutter test` via the shell (the `block-cli-workarounds` hook denies those). `dart: true` runs `very_good dart test` and no `dart` runs `very_good test`. The two accept different options, so the runner-only rows below must never be combined with the other runner: `check_ignore` without `dart: true` returns a `validation` error from the MCP server, and `update_goldens` or `dart-define*` with `dart: true` fails in the CLI with `Could not find an option named "--…"`.
 
 Set `timeout_seconds` on every run, Dart or Flutter. A `timeout` failure is a hang to find (an unbounded `pumpAndSettle()`, an un-awaited stream), not a run to retry.
 
