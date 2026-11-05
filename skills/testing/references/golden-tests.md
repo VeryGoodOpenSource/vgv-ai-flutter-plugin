@@ -15,7 +15,7 @@ library;
 
 ## Running and Updating Goldens
 
-Run goldens through the `very_good_cli` MCP `test` tool — never `flutter test` via the shell (the `block-cli-workarounds` hook denies it).
+Run goldens through the `very_good_cli` MCP `test` tool — never `flutter test` via the shell (the `block-cli-workarounds` hook denies it). `update_goldens` exists only on the Flutter runner: never combine it with `dart: true`, which fails the call.
 
 | Goal                              | MCP `test` tool parameters             |
 | --------------------------------- | -------------------------------------- |

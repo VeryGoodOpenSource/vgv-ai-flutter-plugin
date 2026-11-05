@@ -115,9 +115,9 @@ assert_omits() {
 echo "=== warn-missing-mcp tests ==="
 echo ""
 echo "--- CLI present and current (no warning) ---"
-stub_cli 1.6.0
+stub_cli 1.7.0
 assert_silent "version above minimum"
-stub_cli 1.5.0
+stub_cli 1.6.0
 assert_silent "version exactly at minimum"
 
 echo ""
@@ -126,7 +126,7 @@ echo "--- Version behind pub's rebuild chatter (still current) ---"
 # chatter lands on stdout before the version. Reading only the first line turned a
 # working CLI into a warning about PATH.
 stub_dart
-stub_cli_rebuilding 1.5.0
+stub_cli_rebuilding 1.6.0
 assert_silent "version printed after rebuild chatter"
 no_dart
 stub_cli 1.6.0 --in-pub-cache
@@ -136,8 +136,8 @@ echo ""
 echo "--- CLI missing or outdated ---"
 no_cli
 assert_warns "not installed" "CLI not installed"
-stub_cli 1.4.9
-assert_warns "1.4.9 is too old" "version below minimum"
+stub_cli 1.5.0
+assert_warns "1.5.0 is too old" "version below minimum"
 
 echo ""
 echo "--- Version unreadable (shim present, dart missing) ---"

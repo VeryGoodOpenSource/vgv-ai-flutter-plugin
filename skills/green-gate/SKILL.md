@@ -59,13 +59,14 @@ analyze` / `flutter test --coverage` for the tools the loop actually runs.
 - **Exit only on observed numbers** — the loop terminates only after a single
   final iteration in which analyze is clean, format reports zero changes, all
   tests pass, and `min_coverage` is satisfied, all observed in the same round.
-- **Pass `coverage: true`, `min_coverage`, `check_ignore: true`, and
-  `show_uncovered: true` together** — omitting `coverage: true` silently produces
-  no `lcov.info` (mimics a misconfiguration); omitting `check_ignore: true` makes
-  the `// coverage:ignore` remedy a no-op; omitting `show_uncovered: true` drops
-  the per-file uncovered lines from the result and sends the loop to the lcov file
-  for what the tool would have handed back. `show_uncovered` arrived in
-  `very_good_cli` 1.5.0, the plugin's minimum.
+- **Pass `coverage: true`, `min_coverage`, and `show_uncovered: true` together,
+  plus `check_ignore: true` on the Dart runner only** — omitting `coverage: true`
+  silently produces no `lcov.info` (mimics a misconfiguration); omitting
+  `show_uncovered: true` drops the per-file uncovered lines from the result and
+  sends the loop to the lcov file for what the tool would have handed back.
+- **Match every `test` argument to the runner** — `dart: true` and no `dart` run
+  different CLI commands that accept different options, and a mismatch fails the
+  whole call. See **Test Gate** for which arguments go with which runner.
 - **Defer test-writing to the `testing` skill** — when a fix requires authoring
   tests, follow that skill for structure, mocking, and naming.
 - **Fix root causes, not symptoms** — never weaken a gate to pass it (do not
@@ -193,20 +194,39 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
 ## Test Gate
 
 - Run `mcp__very-good-cli__test` with `coverage: true`, `min_coverage: <target>`,
-  `check_ignore: true`, `show_uncovered: true`, and the `exclude_coverage` glob
-  (below).
-- **Dart vs Flutter** — omit `dart` to let the tool auto-detect (Flutter is run
-  when a Flutter project is detected). Pass `dart: true` only for a pure Dart
-  package the tool would otherwise misclassify.
+  `show_uncovered: true`, `timeout_seconds` (e.g. `120`, on either runner, and
+  below the client's MCP tool timeout when it has one), the `exclude_coverage`
+  glob (below), and the runner-specific arguments from the table below.
+- **Pick the runner from `pubspec.yaml`** — a package that depends on the
+  `flutter` SDK runs on the Flutter runner: omit `dart`. A pure Dart package
+  passes `dart: true`. The tool turns `dart: true` into `very_good dart test` and
+  its absence into `very_good test`.
 - **`directory`** — pass it when the package is not at the workspace root
   (monorepo sub-packages); omit it only when `pubspec.yaml` is at the root.
-- **`timeout_seconds`** — always set a cap (e.g. `120`). Flutter tests hang
-  indefinitely when `pumpAndSettle()` runs without a timeout; the cap kills the
-  run instead of stalling the loop. A timeout kill is a tool failure, not a test
-  failure — escalate it per the matrix.
 - The gate is green when every test passes. A failing test is fixed
   autonomously unless it encodes a genuine product decision (escalate per the
   matrix).
+
+**Runner-specific arguments** — a mismatch fails the whole call: `check_ignore`
+without `dart: true` returns a `validation` error from the MCP server;
+`update_goldens` or `dart-define*` with `dart: true` reaches the CLI and fails
+with exit 64 and `Could not find an option named "--…"`.
+
+| Argument                                                 | Flutter runner (no `dart`) | Dart runner (`dart: true`) |
+| -------------------------------------------------------- | -------------------------- | -------------------------- |
+| `check_ignore`                                           | Never pass                 | Pass `true`                |
+| `update_goldens`, `dart-define`, `dart-define-from-file` | Allowed                    | Never pass                 |
+
+Either error is the loop's own wrong call, not a test failure and not an
+escalation: fix the arguments and re-run in the same round.
+
+**A `timeout` failure is a hang to find, not a call to retry** — and so is a
+`test` call the client cuts off before the server answers. The same suite hangs
+again. Look in the test files, starting with the ones the loop edited: a
+`pumpAndSettle()` over an endless animation, an un-awaited `Future`, a stream or
+`StreamController` nobody closes, a `Timer` left running. Fix it and confirm
+with `paths` narrowed to that file before re-running the full suite. If no cause
+turns up, escalate per the matrix.
 
 ---
 
@@ -227,13 +247,14 @@ that may not be the one being diagnosed, while the result cannot be stale.
 
 - **Default target is `100`** (VGV's house standard), **overridable per
   invocation** (e.g. `80`) for legacy or non-template packages. Generated files
-  leave the denominator via `exclude_coverage` and `check_ignore: true` honors
-  `// coverage:ignore`, so 100% means 100% of testable, hand-written code.
+  leave the denominator via `exclude_coverage` and, on the Dart runner,
+  `check_ignore: true` honors `// coverage:ignore`, so 100% means 100% of
+  testable, hand-written code.
 - **Default `exclude_coverage`** — `**/*.{g,freezed,gen}.dart` plus generated and
   l10n directories. One glob string (brace expansion; fall back to `**/*.g.dart`
   if a CLI build does not honor it).
-- **Pass `coverage: true`, `min_coverage`, `check_ignore: true`, and
-  `show_uncovered: true` together** — see **Core Standards**.
+- **Pass `coverage: true`, `min_coverage`, and `show_uncovered: true` together,
+  plus `check_ignore: true` on the Dart runner only** — see **Core Standards**.
 - **When the result carries no `Lines not covered:` block**, fall back to
   `coverage/lcov.info` per [`references/coverage.md`](references/coverage.md) —
   it covers `show_uncovered` itself, the three lcov absence causes, stale-lcov
@@ -260,16 +281,16 @@ that may not be the one being diagnosed, while the result cannot be stale.
 
 Stop and surface to the user when:
 
-| Trigger                           | Detail                                                                                                                                                                                                                                                                                                                                              |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **No progress between rounds**    | Identical or non-decreasing failure fingerprint                                                                                                                                                                                                                                                                                                     |
-| **Oscillation**                   | The same two gates trade green/red across two rounds                                                                                                                                                                                                                                                                                                |
-| **Cap reached, gates still red**  | Terminal — report remaining failures per gate with their fingerprints                                                                                                                                                                                                                                                                               |
-| **Real-bug red test**             | A failure that looks like a genuine product decision rather than a coding mistake                                                                                                                                                                                                                                                                   |
-| **Ambiguous fix**                 | Multiple valid resolutions (e.g. change the API vs suppress the lint) — prefer root-cause; escalate when it is a product/API decision                                                                                                                                                                                                               |
-| **Unreachable-code coverage gap** | Suggest `// coverage:ignore` (requires `check_ignore: true`, Dart-only) rather than chasing 100%                                                                                                                                                                                                                                                    |
-| **Denominator hygiene**           | A generated file not matched by the exclude glob — widen `exclude_coverage`, not `// coverage:ignore`                                                                                                                                                                                                                                               |
-| **Tool / hook failure**           | MCP test timeout (`timeout_seconds` kill), analyzer crash, CLI-missing hook denial (escalate with the install hint `dart pub global activate very_good_cli`), or a _repeated_ `analyze.sh` rejection that still blocks a needed edit after revision — a single rejection is in-loop analyze-gate feedback (see **Analyze Gate**), not an escalation |
+| Trigger                           | Detail                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No progress between rounds**    | Identical or non-decreasing failure fingerprint                                                                                                                                                                                                                                                                                                                             |
+| **Oscillation**                   | The same two gates trade green/red across two rounds                                                                                                                                                                                                                                                                                                                        |
+| **Cap reached, gates still red**  | Terminal — report remaining failures per gate with their fingerprints                                                                                                                                                                                                                                                                                                       |
+| **Real-bug red test**             | A failure that looks like a genuine product decision rather than a coding mistake                                                                                                                                                                                                                                                                                           |
+| **Ambiguous fix**                 | Multiple valid resolutions (e.g. change the API vs suppress the lint) — prefer root-cause; escalate when it is a product/API decision                                                                                                                                                                                                                                       |
+| **Unreachable-code coverage gap** | Dart runner: suggest `// coverage:ignore` (with `check_ignore: true`) rather than chasing 100%. Flutter runner: report the lines                                                                                                                                                                                                                                            |
+| **Denominator hygiene**           | A generated file not matched by the exclude glob — widen `exclude_coverage`, not `// coverage:ignore`                                                                                                                                                                                                                                                                       |
+| **Tool / hook failure**           | A `test` `timeout` failure with no hang found (see **Test Gate**), analyzer crash, CLI-missing hook denial (escalate with the install hint `dart pub global activate very_good_cli`), or a _repeated_ `analyze.sh` rejection that still blocks a needed edit after revision — a single rejection is in-loop analyze-gate feedback (see **Analyze Gate**), not an escalation |
 
 When escalating, name the gate that is red — analyze, format, test, or coverage —
 then give its fingerprint entries verbatim (`diagnosticCode @ file:line` for

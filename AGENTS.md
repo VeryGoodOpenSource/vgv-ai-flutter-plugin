@@ -39,7 +39,7 @@ hooks/
     analyze.sh         # Runs dart analyze on modified .dart files
     block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
     block-cli-workarounds_test.sh  # Tests for block-cli-workarounds.sh
-    check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.5.0
+    check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.6.0
     check-vgv-cli_test.sh  # Tests for check-vgv-cli.sh
     format.sh          # Runs dart format on modified .dart files
     sync-vge-standards.sh  # Syncs Very Good Engineering standards into a shared cache

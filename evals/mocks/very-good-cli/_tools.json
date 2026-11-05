@@ -110,7 +110,7 @@
           },
           "exclude_coverage": {
             "type": "string",
-            "description": "A glob which will be used to exclude files that match from the coverage (e.g. '**/*.g.dart')."
+            "description": "One or more space-separated globs, relative to the package root, which will be used to exclude files that match from the coverage (e.g. '**/*.g.dart **/*.freezed.dart')."
           },
           "exclude_tags": {
             "type": "string",
@@ -158,7 +158,7 @@
           },
           "timeout_seconds": {
             "type": "integer",
-            "description": "Maximum seconds to wait for the test run before killing the Flutter test process. Flutter tests can hang indefinitely when pumpAndSettle() is called without a timeout argument. When omitted, no timeout is applied."
+            "description": "Wall-clock budget for the whole test run, in seconds. When exceeded, the MCP server signals the test runner to tear down its flutter_tester subprocess, awaits the unwind, and returns a \"timeout\" failure so the server lock is released and queued calls can proceed. Use this to bound tests that can hang indefinitely, such as a tester.pumpAndSettle() call without a timeout argument or a tester.runAsync() that awaits a future that never completes \u2014 the underlying test runner cannot catch these hangs on its own. When omitted, no timeout is applied."
           }
         }
       }

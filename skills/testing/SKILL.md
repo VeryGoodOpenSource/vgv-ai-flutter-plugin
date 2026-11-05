@@ -38,8 +38,9 @@ Apply these standards to all test work:
 - **Use `pumpApp` test helper** — wrap widgets via shared helper in `test/helpers/pump_app.dart`; never inline `pumpWidget(MaterialApp(...))`
 - **Tag all golden tests** — annotate with `TestTag.golden` so goldens can run/update independently
 - **Pass `directory` to the `test` MCP tool when the project is not at the workspace root** — monorepos with the Flutter project in a subdirectory (e.g. `mobile/`) require `directory: 'mobile'`; omit it only when `pubspec.yaml` is at the workspace root
-- **Pass `timeout_seconds` to the `test` MCP tool** — Flutter tests can hang indefinitely when `pumpAndSettle()` is called without a timeout; set a cap (e.g. `timeout_seconds: 120`) so the run is killed instead of stalling
-- **Cross-harness fallback for the `test` MCP tool** — on Claude Code use `mcp__very-good-cli__test`; on a host without this plugin's Bash hooks and without that MCP server connected, run `very_good test` (or `flutter test` / `dart test`) directly with the same coverage and timeout options — never block on a missing MCP server
+- **Match `test` MCP tool arguments to the runner** — `dart: true` runs `very_good dart test`, no `dart` runs `very_good test`, and a mismatch fails the whole call. `check_ignore` goes only with `dart: true` (without it the MCP server returns a `validation` error); `update_goldens`, `dart-define`, and `dart-define-from-file` go only without it (with it the CLI fails with `Could not find an option named "--…"`). Either error is a wrong call to fix, not a tool failure. Pass `dart: true` only for a package with no `flutter` SDK dependency
+- **Pass `timeout_seconds` to the `test` MCP tool** — set a cap (e.g. `timeout_seconds: 120`) on every run, Dart or Flutter, below the client's MCP tool timeout when it has one. A `timeout` failure, or a call the client cuts off first, is a hang to find (an unbounded `pumpAndSettle()`, an un-awaited stream), not a run to retry
+- **Cross-harness fallback for the `test` MCP tool** — on Claude Code use `mcp__very-good-cli__test`; on a host without this plugin's Bash hooks and without that MCP server connected, run `very_good test` (or `flutter test` / `dart test`) directly with the same coverage options and the same runner rules — never block on a missing MCP server
 
 ## VGE Standards
 

@@ -128,7 +128,7 @@ assert_reason_contains() {
 # Edit with Write/Edit, not a heredoc: the hook reads the heredoc body and denies it.
 
 echo "=== block-cli-workarounds tests ==="
-stub_cli 1.5.0
+stub_cli 1.6.0
 echo ""
 echo "--- Should be BLOCKED ---"
 assert_blocked "dart test"
@@ -369,7 +369,7 @@ assert_tool_result aside "Write"                "flutter test"
 echo ""
 echo "--- Deny reason follows the CLI status ---"
 
-stub_cli 1.5.0
+stub_cli 1.6.0
 assert_blocked "flutter test"
 assert_reason_contains "MCP 'test' tool" "current CLI redirects to the MCP tool"
 
@@ -417,7 +417,7 @@ echo "--- Deny reason says the whole call was refused ---"
 
 # A command chained with the blocked one is refused with it. Every reason must say so,
 # or the agent assumes the chained command's side effect happened.
-stub_cli 1.5.0
+stub_cli 1.6.0
 assert_blocked "python3 edit_pubspec.py && dart test"
 assert_reason_contains "none of it ran" "chained command, current CLI"
 
