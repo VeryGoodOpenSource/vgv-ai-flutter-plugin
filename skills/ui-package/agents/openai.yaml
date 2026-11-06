@@ -1,3 +1,0 @@
-interface:
-  display_name: "UI Package"
-  short_description: "Build a Flutter UI package, its barrel-only public API, and its pumpApp widget tests"
