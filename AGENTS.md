@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart development. It is a **documentation-only repository** — there is no Dart/Flutter source code, no `pubspec.yaml`, and no tests. All value lives in the markdown skill files.
+VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart development. There is no Dart/Flutter source code and no `pubspec.yaml`. The skills, the `flutter-reviewer` agent and the hook scripts carry the value; the only tests are the hook scripts' shell tests and the evals.
 
 ## Repository Structure
 
@@ -192,8 +192,8 @@ documentation in the same change:
 - **Updating a skill's scope or description** — update the matching row in the
   `README.md` skills table, so both stay in sync. Nothing checks them against
   each other. `description` also carries every trigger phrase and is capped at
-  1024 characters, which `skills_lint` enforces as an error. Several are already
-  within ten characters of it, so check the current length before adding a
+  1024 characters, which `skills_lint` enforces as an error. Several are close
+  to it, so check the current length before adding a
   trigger phrase. Keep it to
   triggers and scope, leaving pure teaching material to the body. Do not cut a
   sentence just because the body repeats it — routing happens before the body
