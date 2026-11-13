@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.1.0...v0.1.1) (2026-11-13)
+
+
+### Docs
+
+* correct stale facts in AGENTS.md ([#191](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/191)) ([c9165c1](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/c9165c1271f92cf085da4b8f6eb07ef7e068282f))
+
 ## [0.1.0](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.0.5...v0.1.0) (2026-11-06)
 
 
