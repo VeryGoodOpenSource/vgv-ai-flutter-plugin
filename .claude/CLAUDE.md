@@ -1,6 +1,6 @@
-@AGENTS.md
+@../AGENTS.md
 
-<!-- First line is the @AGENTS.md import (Claude Code memory), not a heading. -->
+<!-- First line is the @../AGENTS.md import (Claude Code memory), not a heading. -->
 
 ## Hooks
 

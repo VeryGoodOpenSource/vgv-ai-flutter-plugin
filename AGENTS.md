@@ -211,8 +211,8 @@ documentation in the same change:
   at a file that no longer exists (`check-relative-paths` in `skills_lint.yaml`), but it
   cannot tell you a link now points at the wrong file, so still read each one.
 - **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
-  section in `README.md` (and the `## Hooks` section in `CLAUDE.md` if behavior
-  changes).
+  section in `README.md` (and the `## Hooks` section in `.claude/CLAUDE.md` if
+  behavior changes).
 - **Adding or changing an MCP tool** — update the **MCP Integration** tools table
   in `README.md`, and check whether any skill's `allowed-tools` names a tool that
   was renamed or removed. Nothing validates those names.

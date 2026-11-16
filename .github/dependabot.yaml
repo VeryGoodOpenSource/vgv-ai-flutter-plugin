@@ -7,3 +7,10 @@ updates:
     labels:
       - "dependencies"
       - "no-auto-update"
+  - package-ecosystem: "npm"
+    directory: "/.github/tools"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "no-auto-update"
