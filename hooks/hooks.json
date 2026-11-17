@@ -6,12 +6,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/warn-missing-mcp.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/warn-missing-mcp.sh\"",
             "timeout": 10
           },
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sync-vge-standards.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sync-vge-standards.sh\"",
             "timeout": 10
           }
         ]
@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sync-vge-standards.sh --subagent",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/sync-vge-standards.sh\" --subagent",
             "timeout": 10
           }
         ]
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-vgv-cli.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/check-vgv-cli.sh\"",
             "timeout": 10
           }
         ]
@@ -45,7 +45,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-cli-workarounds.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/block-cli-workarounds.sh\"",
             "timeout": 10
           }
         ]
@@ -57,12 +57,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/analyze.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/analyze.sh\"",
             "timeout": 30
           },
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/format.sh",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/format.sh\"",
             "timeout": 30
           }
         ]

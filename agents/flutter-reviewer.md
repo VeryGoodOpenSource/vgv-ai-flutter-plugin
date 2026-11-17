@@ -15,7 +15,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/allow-readonly-git.sh"
+          command: "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/scripts/allow-readonly-git.sh\""
 ---
 
 # Flutter Reviewer Agent
