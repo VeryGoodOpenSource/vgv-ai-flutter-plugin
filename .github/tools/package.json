@@ -1,0 +1,9 @@
+{
+  "name": "vgv-ai-flutter-plugin-tools",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pins the Claude Code CLI version used by CI and evals so Dependabot can bump it.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.325"
+  }
+}

@@ -39,7 +39,6 @@ permissions:
   contents: read
 
 env:
-  CLAUDE_CODE_VERSION: '2.1.270'
   EVAL_MODEL: claude-sonnet-5
   EVAL_JUDGE_MODEL: claude-sonnet-5
 
@@ -130,10 +129,14 @@ jobs:
           node-version: '22.x'
 
       - name: Install Claude Code
+        working-directory: .github/tools
         run: |
           set -euo pipefail
-          npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
-          claude --version
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Check Claude Code is on PATH
+        run: claude --version
 
       - name: Check the API key is present
         env:

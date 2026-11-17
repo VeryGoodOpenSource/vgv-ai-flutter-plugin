@@ -5,9 +5,6 @@ on:
     branches:
       - main
 
-env:
-  CLAUDE_CODE_VERSION: '2.1.270'
-
 jobs:
   markdown:
     name: 📝 Markdown Quality
@@ -47,10 +44,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.x'
       - name: Install Claude Code
-        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+        working-directory: .github/tools
+        run: |
+          npm ci
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Validate Plugin
-        run: claude plugin validate .
+        run: claude plugin validate --strict .
       - name: Eval fixtures are symlinks
         run: |
           set -euo pipefail
