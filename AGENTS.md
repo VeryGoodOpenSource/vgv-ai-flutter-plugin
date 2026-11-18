@@ -7,115 +7,118 @@ VGV AI Flutter Plugin provides best-practices skills for Flutter and Dart develo
 ## Repository Structure
 
 ```text
-.mcp.json                # MCP server configuration (Dart and Very Good CLI)
 skills_lint.yaml         # skills_lint rule severities, read by the CI Skills Lint job
-.claude-plugin/
-  plugin.json          # Plugin manifest (name, version, keywords)
-agents/
-  flutter-reviewer.md  # Read-only Flutter code reviewer subagent
 docs/                  # Gitignored, local only
   plan/                # Planning and design documents
 evals/                 # `claude plugin eval` suite — all 15 skills, 110 cases
   README.md            # Case format, grader reference, how to add a case
   _fixture/
     fixture.sh         # The only copy of the neutral Flutter skeleton; every case symlinks here
-  mocks/               # MCP stand-ins, one directory per server name in .mcp.json
+  mocks/               # MCP stand-ins, one directory per server name in plugin/.mcp.json
     <server>/
       _tools.json      # The tools/list result the model sees; may be narrower than the server
       <tool>.md        # Frontmatter optional; the body is the tool result
   <skill>/             # One directory per skill, named for the skill it covers
     <case-name>/       # One directory per case, named for the case
       prompt.md        # Frontmatter: run limits and tools. Body: the prompt
-      case.yaml        # schema_version, name, and the scaffold hook
+      case.yaml        # schema_version, name, the plugin path, and the scaffold hook
       fixture.sh       # Symlink to _fixture/fixture.sh
       graders/
         <name>.md      # One grader per file; frontmatter is its type and options
   results/             # Written by each run — gitignored
-hooks/
-  hooks.json           # Hook definitions (SessionStart, SubagentStart, PreToolUse, PostToolUse)
-  scripts/
-    allow-readonly-git.sh  # Restricts flutter-reviewer Bash to git diff/status
-    allow-readonly-git_test.sh  # Tests for allow-readonly-git.sh
-    analyze.sh         # Runs dart analyze on modified .dart files
-    block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
-    block-cli-workarounds_test.sh  # Tests for block-cli-workarounds.sh
-    check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.6.0
-    check-vgv-cli_test.sh  # Tests for check-vgv-cli.sh
-    format.sh          # Runs dart format on modified .dart files
-    sync-vge-standards.sh  # Syncs Very Good Engineering standards into a shared cache
-    sync-vge-standards_test.sh  # Tests for sync-vge-standards.sh
-    vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
-    warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
-    warn-missing-mcp_test.sh  # Tests for warn-missing-mcp.sh
-skills/
-  accessibility/SKILL.md
-  accessibility/references/
-    audit-templates.md
-    examples.md
-    platforms/android.md
-    platforms/ios.md
-    platforms/linux.md
-    platforms/macos.md
-    platforms/web.md
-    platforms/windows.md
-    testing.md
-    wcag-criteria.md
-    widget-mapping.md
-  animations/SKILL.md
-  animations/references/
-    explicit-animations.md
-    implicit-animations.md
-    looping-animations.md
-    page-transitions.md
-    staggered-animations.md
-  bloc/SKILL.md
-  bloc/references/
-    patterns.md
-    testing.md
-    widgets.md
-  create-project/SKILL.md
-  dart-flutter-sdk-upgrade/SKILL.md
-  dart-flutter-sdk-upgrade/references/
-    version-conflicts.md
-  green-gate/SKILL.md
-  green-gate/references/
-    coverage.md
-  internationalization/SKILL.md
-  internationalization/references/
-    directionality.md
-    setup.md
-  layered-architecture/SKILL.md
-  layered-architecture/references/
-    model-transformation.md
-    pubspec.md
-    testing.md
-    worked-example.md
-  license-compliance/SKILL.md
-  material-theming/SKILL.md
-  material-theming/references/
-    color-scheme.md
-  navigation/SKILL.md
-  navigation/references/
-    testing.md
-    typed-routes.md
-  static-security/SKILL.md
-  static-security/references/
-    supply-chain.md
-  testing/SKILL.md
-  testing/references/
-    animation-testing.md
-    configuration.md
-    coverage.md
-    golden-tests.md
-    matchers.md
-    mocktail.md
-    test-patterns.md
-    widget-tests.md
-  ui-package/SKILL.md
-  ui-package/reference.md
-  very-good-analysis-upgrade/SKILL.md
-  very-good-analysis-upgrade/references/
-    lint-fixes.md
+plugin/                # The plugin folder: everything the plugin loads, and all a user installs
+  .mcp.json            # MCP server configuration (Dart and Very Good CLI)
+  LICENSE              # Copy of the root LICENSE, shipped with the plugin
+  README.md            # Plugin README: installation, skills, hooks, MCP tools
+  .claude-plugin/
+    plugin.json          # Plugin manifest (name, version, keywords)
+  agents/
+    flutter-reviewer.md  # Read-only Flutter code reviewer subagent
+  hooks/
+    hooks.json           # Hook definitions (SessionStart, SubagentStart, PreToolUse, PostToolUse)
+    scripts/
+      allow-readonly-git.sh  # Restricts flutter-reviewer Bash to git diff/status
+      allow-readonly-git_test.sh  # Tests for allow-readonly-git.sh
+      analyze.sh         # Runs dart analyze on modified .dart files
+      block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
+      block-cli-workarounds_test.sh  # Tests for block-cli-workarounds.sh
+      check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.6.0
+      check-vgv-cli_test.sh  # Tests for check-vgv-cli.sh
+      format.sh          # Runs dart format on modified .dart files
+      sync-vge-standards.sh  # Syncs Very Good Engineering standards into a shared cache
+      sync-vge-standards_test.sh  # Tests for sync-vge-standards.sh
+      vgv-cli-common.sh  # Shared utilities for VGV CLI hook scripts
+      warn-missing-mcp.sh  # Warns at session start if VGV CLI is missing/outdated
+      warn-missing-mcp_test.sh  # Tests for warn-missing-mcp.sh
+  skills/
+    accessibility/SKILL.md
+    accessibility/references/
+      audit-templates.md
+      examples.md
+      platforms/android.md
+      platforms/ios.md
+      platforms/linux.md
+      platforms/macos.md
+      platforms/web.md
+      platforms/windows.md
+      testing.md
+      wcag-criteria.md
+      widget-mapping.md
+    animations/SKILL.md
+    animations/references/
+      explicit-animations.md
+      implicit-animations.md
+      looping-animations.md
+      page-transitions.md
+      staggered-animations.md
+    bloc/SKILL.md
+    bloc/references/
+      patterns.md
+      testing.md
+      widgets.md
+    create-project/SKILL.md
+    dart-flutter-sdk-upgrade/SKILL.md
+    dart-flutter-sdk-upgrade/references/
+      version-conflicts.md
+    green-gate/SKILL.md
+    green-gate/references/
+      coverage.md
+    internationalization/SKILL.md
+    internationalization/references/
+      directionality.md
+      setup.md
+    layered-architecture/SKILL.md
+    layered-architecture/references/
+      model-transformation.md
+      pubspec.md
+      testing.md
+      worked-example.md
+    license-compliance/SKILL.md
+    material-theming/SKILL.md
+    material-theming/references/
+      color-scheme.md
+    navigation/SKILL.md
+    navigation/references/
+      testing.md
+      typed-routes.md
+    static-security/SKILL.md
+    static-security/references/
+      supply-chain.md
+    testing/SKILL.md
+    testing/references/
+      animation-testing.md
+      configuration.md
+      coverage.md
+      golden-tests.md
+      matchers.md
+      mocktail.md
+      test-patterns.md
+      widget-tests.md
+    ui-package/SKILL.md
+    ui-package/reference.md
+    very-good-analysis-upgrade/SKILL.md
+    very-good-analysis-upgrade/references/
+      lint-fixes.md
 ```
 
 ## Skill File Format
@@ -151,26 +154,26 @@ Every skill in this plugin is **model-invoked** (the model may auto-activate it)
 
 ## Adding a New Skill
 
-1. Create `skills/<skill_name>/SKILL.md` following the format above
+1. Create `plugin/skills/<skill_name>/SKILL.md` following the format above
 2. Create `evals/<skill_name>/<case_name>/` — one case directory per major workflow
    the skill covers, each with a routing grader, plus one negative-control case. Routing
    graders carry `weight: 3` **and** `arm: both`; without `arm: both` the runner drops
    them from the score in a two-arm run and a routing failure scores 1.00. Nothing has to
-   be registered, and the fixture symlink is the only setup step. See `evals/README.md`
-3. Update `keywords` **and** the `description` (marketplace text) in `.claude-plugin/plugin.json`
-4. Update the skills table in `README.md` (skill name must link to the `SKILL.md` file)
-5. Add the skill's slash command (e.g., `/<skill-name>`) to the **Usage** list in `README.md`
+   be registered; the fixture symlink and the `plugins` line in `case.yaml` are the only setup. See `evals/README.md`
+3. Update `keywords` **and** the `description` (marketplace text) in `plugin/.claude-plugin/plugin.json`
+4. Update the skills table in `plugin/README.md` (skill name must link to the `SKILL.md` file)
+5. Add the skill's slash command (e.g., `/<skill-name>`) to the **Usage** list in `plugin/README.md`
 6. Add any new domain terms to the `words` list in `config/cspell.json`
 7. Update the repository structure in `AGENTS.md`
 
 ## Adding a New Agent
 
 Agents are subagents that Claude Code dispatches as isolated, specialized helpers (e.g., reviewers).
-They live in `agents/<name>.md` at the plugin root and are **auto-discovered** — unlike skills, no
-`.claude-plugin/plugin.json` change is required. An `agents/<name>.md` file registers as
+They live in `plugin/agents/<name>.md` at the plugin root and are **auto-discovered** — unlike skills, no
+`plugin/.claude-plugin/plugin.json` change is required. An `agents/<name>.md` file registers as
 `vgv-ai-flutter-plugin:<name>`.
 
-1. Create `agents/<agent_name>.md` with YAML frontmatter:
+1. Create `plugin/agents/<agent_name>.md` with YAML frontmatter:
    - `name` _(required)_ — must match the file name; lowercase letters, numbers, and hyphens only
    - `description` _(required)_ — when Claude should dispatch the agent
    - `tools` _(optional)_ — comma-separated bare tool names. The `tools` field cannot scope Bash by
@@ -179,13 +182,13 @@ They live in `agents/<name>.md` at the plugin root and are **auto-discovered** �
    - `skills` _(optional)_ — bare skill names to preload at startup (full skill content is injected)
    - `model` _(optional)_ — `inherit` to use the session model
    - `hooks` _(optional)_ — agent-scoped hooks, e.g. a PreToolUse `Bash` hook
-2. Add an **Agents** table row in `README.md` (agent name links to the `agents/<name>.md` file)
+2. Add an **Agents** table row in `plugin/README.md` (agent name links to the `agents/<name>.md` file)
 3. Add any new domain terms to the `words` list in `config/cspell.json`
 4. Update the repository structure in `AGENTS.md`
 
 ## Hooks
 
-The `hooks/` directory contains SessionStart, SubagentStart, PreToolUse, and PostToolUse hooks defined in `hooks.json`.
+The `plugin/hooks/` directory contains SessionStart, SubagentStart, PreToolUse, and PostToolUse hooks defined in `hooks.json`.
 
 ### SessionStart Hooks
 
@@ -204,7 +207,7 @@ These run **when a subagent is spawned**:
 
 These run **before** a tool call is executed:
 
-- `mcp__.*very-good-cli__.*` matcher → `check-vgv-cli.sh` — reads `tool_name` from the payload and exits 0 unless the caller is a Very Good CLI tool, so a host that does not apply the matcher cannot have the decision land on an unrelated tool; for its own tools it auto-approves the call by returning a PreToolUse `allow` decision, so it is always permitted regardless of run mode (interactive, headless, or `skipAutoPermissionPrompt`) and never dead-ends when the tool isn't on `permissions.allow`; denies with an install/upgrade message if the CLI is missing or < 1.6.0, and stands aside when the CLI is present but its version cannot be read, for either reason, leaving normal permission handling to apply. The `.*` in the matcher covers both the bare `mcp__very-good-cli__*` server (repo-root `.mcp.json`) and the plugin-namespaced `mcp__plugin_<plugin>_very-good-cli__*` form used when installed from a marketplace
+- `mcp__.*very-good-cli__.*` matcher → `check-vgv-cli.sh` — reads `tool_name` from the payload and exits 0 unless the caller is a Very Good CLI tool, so a host that does not apply the matcher cannot have the decision land on an unrelated tool; for its own tools it auto-approves the call by returning a PreToolUse `allow` decision, so it is always permitted regardless of run mode (interactive, headless, or `skipAutoPermissionPrompt`) and never dead-ends when the tool isn't on `permissions.allow`; denies with an install/upgrade message if the CLI is missing or < 1.6.0, and stands aside when the CLI is present but its version cannot be read, for either reason, leaving normal permission handling to apply. The `.*` in the matcher covers both the bare `mcp__very-good-cli__*` server (`plugin/.mcp.json` read as a project config, in a session started inside `plugin/`) and the plugin-namespaced `mcp__plugin_<plugin>_very-good-cli__*` form used when installed from a marketplace
 - `Bash` matcher → `block-cli-workarounds.sh` — denies `flutter`/`dart` `test`/`create`, `dart run test` and `very_good test`/`create`/`packages` in the shell and points to the MCP tool. Quoted text is data unless `eval`, `sh -c` or `$( )` runs it. A heredoc body with a quoted delimiter (`<<'EOF'`) is data too, unless the opening line feeds it to a shell (`bash <<'EOF'`, `cat <<'EOF' | sh`), which runs it; an unquoted `<<EOF` expands, so its body is always scanned. Every adjacent word pair is checked, so wrappers (`fvm`, `melos`, `sudo`, `timeout`) and `/path/to/flutter` need no list. The denial names the match and says the whole call was refused. Pinned gaps: `"flutter" test` and `$F test` pass; an unquoted pair is denied wherever it sits, including as an argument (`echo flutter test`, `man flutter test`); narrowing the match to a command position would need the wrapper list the pair rule exists to avoid
 
 The first two PreToolUse hooks are plugin-level (defined in `hooks.json`) and share common utilities
@@ -233,7 +236,7 @@ payload that the call is its business before deciding, and exits 0 when it is no
 `tool_name` rather than on the presence of a `tool_input` field, since field names such as
 `command` are not unique to one tool.
 
-`hooks/scripts/*_test.sh` covers the hook scripts and runs in CI under the **Script Tests** job.
+`plugin/hooks/scripts/*_test.sh` covers the hook scripts and runs in CI under the **Script Tests** job.
 Add cases there when changing hook behavior.
 
 ## Maintaining Existing Skills, Hooks, and MCP Tools
@@ -243,7 +246,7 @@ docs that describe them. When you touch any of the following, update the matchin
 documentation in the same change:
 
 - **Updating a skill's scope or description** — update the matching row in the
-  `README.md` skills table, so both stay in sync. Nothing checks them against
+  `plugin/README.md` skills table, so both stay in sync. Nothing checks them against
   each other. `description` also carries every trigger phrase and is capped at
   1024 characters, which `skills_lint` enforces as an error. Several are close
   to it, so check the current length before adding a
@@ -263,11 +266,11 @@ documentation in the same change:
   update every markdown link pointing at the moved file. CI catches a link that points
   at a file that no longer exists (`check-relative-paths` in `skills_lint.yaml`), but it
   cannot tell you a link now points at the wrong file, so still read each one.
-- **Adding or changing a hook** in `hooks/hooks.json` — update the **Hooks**
-  section in `README.md` (and the `## Hooks` section in `AGENTS.md` if behavior
+- **Adding or changing a hook** in `plugin/hooks/hooks.json` — update the **Hooks**
+  section in `plugin/README.md` (and the `## Hooks` section in `AGENTS.md` if behavior
   changes).
 - **Adding or changing an MCP tool** — update the **MCP Integration** tools table
-  in `README.md`, and check whether any skill's `allowed-tools` names a tool that
+  in `plugin/README.md`, and check whether any skill's `allowed-tools` names a tool that
   was renamed or removed. Nothing validates those names.
 
 ## Evals
@@ -278,9 +281,14 @@ and what makes a case worth having — read it before writing a case, and put ne
 documentation there rather than here.
 
 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals), cases under
-`evals/<skill>/<case>/`. Run with `claude plugin eval . --scaffold`. Needs Claude Code
->= 2.1.269 and uses the local session, so no API key. Read the two arm scores, not the
-total: the no-plugin arm is supposed to fail.
+`evals/<skill>/<case>/`. Run with `claude plugin eval . --scaffold` from the repository
+root. Needs Claude Code >= 2.1.269 and uses the local session, so no API key. Read the two
+arm scores, not the total: the no-plugin arm is supposed to fail.
+
+The suite stays outside `plugin/` so the submitted plugin folder stays under the
+directory's 512-file limit and holds no symbolic links. The eval runner only looks for
+cases below its target, so the target is the repository root, and every `case.yaml`
+loads the plugin with `plugins: ["../../../plugin"]`. CI fails a case that lacks it.
 
 `--scaffold` is not optional. Every run starts in an empty workspace, and without the
 flag the fixture script is skipped silently and cases fail for reasons unrelated to the

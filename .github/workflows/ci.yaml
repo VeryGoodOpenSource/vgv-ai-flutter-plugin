@@ -38,7 +38,7 @@ jobs:
     name: 🔍 Skills Lint
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/skills_lint.yml@v2
     with:
-      skills_directories: 'skills'
+      skills_directories: 'plugin/skills'
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest
@@ -53,12 +53,31 @@ jobs:
           npm ci
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Validate Plugin
-        run: claude plugin validate --strict .
-      - name: Eval fixtures are symlinks
+        run: claude plugin validate --strict plugin
+      - name: Plugin folder fits the directory limits
+        run: |
+          set -euo pipefail
+          status=0
+          count=$(find plugin -type f | wc -l | tr -d ' ')
+          if [ "$count" -gt 512 ]; then
+            echo "::error::plugin/ holds $count files, the directory allows 512"
+            status=1
+          fi
+          links=$(find plugin -type l)
+          if [ -n "$links" ]; then
+            echo "::error::plugin/ holds symbolic links: $links"
+            status=1
+          fi
+          exit $status
+      - name: Eval cases load the plugin and link the fixture
         run: |
           set -euo pipefail
           status=0
           while IFS= read -r dir; do
+            if ! grep -qxF 'plugins: ["../../../plugin"]' "$dir/case.yaml"; then
+              echo "::error::$dir/case.yaml lacks the line plugins: [\"../../../plugin\"]"
+              status=1
+            fi
             f="$dir/fixture.sh"
             if [ ! -L "$f" ]; then
               echo "::error::$f is missing or is a real file, not a symlink"
@@ -78,12 +97,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Read-only git hook tests
-        run: bash hooks/scripts/allow-readonly-git_test.sh
+        run: bash plugin/hooks/scripts/allow-readonly-git_test.sh
       - name: Block CLI workarounds hook tests
-        run: bash hooks/scripts/block-cli-workarounds_test.sh
+        run: bash plugin/hooks/scripts/block-cli-workarounds_test.sh
       - name: Check VGV CLI hook tests
-        run: bash hooks/scripts/check-vgv-cli_test.sh
+        run: bash plugin/hooks/scripts/check-vgv-cli_test.sh
       - name: Warn missing MCP hook tests
-        run: bash hooks/scripts/warn-missing-mcp_test.sh
+        run: bash plugin/hooks/scripts/warn-missing-mcp_test.sh
       - name: Sync VGE standards hook tests
-        run: bash hooks/scripts/sync-vge-standards_test.sh
+        run: bash plugin/hooks/scripts/sync-vge-standards_test.sh

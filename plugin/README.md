@@ -94,13 +94,15 @@ reporting the CLI as missing.
 
 Skill evals ask whether Claude routes to a skill and follows it. [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) runs each case with this plugin loaded and again with no plugin at all, so a grader that passes in both arms is measuring the model rather than the skill. Runs authenticate the same way your normal Claude Code sessions do, so they need no API key locally.
 
+The suite lives outside this plugin folder, in `evals/` at the repository root. Run it from there:
+
 ```bash
 claude plugin eval . --scaffold
 ```
 
-Run them locally before opening a PR that changes a skill. CI also runs them **after** a merge to `main`, scoped to the skills that changed, as an advisory signal rather than a gate — see [evals/README.md](evals/README.md#running-in-ci).
+Run them locally before opening a PR that changes a skill. CI also runs them **after** a merge to `main`, scoped to the skills that changed, as an advisory signal rather than a gate — see [evals/README.md][evals_readme_ci_link].
 
-See [evals/README.md](evals/README.md) for the case format, the grader reference, prerequisites, and what these evals deliberately do not cover.
+See [evals/README.md][evals_readme_link] for the case format, the grader reference, prerequisites, and what these evals deliberately do not cover.
 
 ## Usage
 
@@ -194,9 +196,11 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 
 **How it works:**
 
-The `.mcp.json` file at the project root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
+The `.mcp.json` file at the plugin root registers the `dart` and `very-good-cli` MCP servers using stdio transport. When Claude Code detects this configuration, it connects to both servers and gains access to the tools above. The skills continue to provide knowledge and best practices while the MCP tools handle execution.
 
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
+[evals_readme_link]: https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/blob/main/evals/README.md
+[evals_readme_ci_link]: https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/blob/main/evals/README.md#running-in-ci
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures
 [very_good_ventures_link_dark]: https://verygood.ventures#gh-dark-mode-only

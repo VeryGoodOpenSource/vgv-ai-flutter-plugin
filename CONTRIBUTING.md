@@ -12,17 +12,17 @@ First of all, thank you for taking the time to contribute! 🎉👍 Before you d
 
 | Contribution | Where |
 | ------------ | ----- |
-| **New skill** | `skills/<skill-name>/SKILL.md` |
-| **Improve an existing skill** | Edit the relevant `skills/*/SKILL.md` or `reference.md` |
+| **New skill** | `plugin/skills/<skill-name>/SKILL.md` |
+| **Improve an existing skill** | Edit the relevant `plugin/skills/*/SKILL.md` or `reference.md` |
 | **Eval cases** | `evals/<skill-name>/<case-name>/` |
-| **Hooks** | `hooks/` directory |
+| **Hooks** | `plugin/hooks/` directory |
 | **Bug reports & feature requests** | [GitHub Issues](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues) |
 
 ## Adding a New Skill
 
 ### 1. Create the skill file
 
-Create `skills/<skill-name>/SKILL.md`. The file must begin with YAML frontmatter:
+Create `plugin/skills/<skill-name>/SKILL.md`. The file must begin with YAML frontmatter:
 
 ```yaml
 ---
@@ -54,7 +54,7 @@ cases are discovered from the directory tree. See [Eval Cases](#eval-cases) belo
 
 ### 3. Update `plugin.json` tags
 
-Add relevant keywords to the `keywords` array in `.claude-plugin/plugin.json`.
+Add relevant keywords to the `keywords` array in `plugin/.claude-plugin/plugin.json`.
 
 ### 4. Update the README skills table
 
@@ -73,7 +73,8 @@ Add the new skill directory and files to the repository structure tree in `AGENT
 Evals ask one question: does Claude route to the skill, and does the output follow it?
 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) runs every case
 twice, once with this plugin loaded and once with no plugin at all, so a grader that
-passes in both arms is measuring the model rather than the skill.
+passes in both arms is measuring the model rather than the skill. Run it from the
+repository root:
 
 ```bash
 claude plugin eval . --scaffold
@@ -82,7 +83,8 @@ claude plugin eval . --scaffold
 Adding a skill means adding a `evals/<skill>/<case-name>/` directory per case, each with
 a `prompt.md`, a `case.yaml`, and one file per grader under `graders/`. There is no
 central registry to update — cases are discovered from the tree — and the new case's
-`fixture.sh` is a symlink to `evals/_fixture/fixture.sh`.
+`fixture.sh` is a symlink to `evals/_fixture/fixture.sh`. Its `case.yaml` loads the plugin
+with `plugins: ["../../../plugin"]`, because the suite lives outside `plugin/`.
 
 [evals/README.md](evals/README.md) is the single source of truth — the case format,
 the grader reference, prerequisites, what makes a case worth having, and what
@@ -164,7 +166,7 @@ below keep a skill working on both.
   and scope; leave teaching material to the body. Do not assume a sentence is redundant
   because the body repeats it — routing happens before the body is read. Re-run a skill's
   eval cases after trimming its description.
-- **MCP references** — this plugin registers `dart` and `very-good-cli` in `.mcp.json`, the
+- **MCP references** — this plugin registers `dart` and `very-good-cli` in `plugin/.mcp.json`, the
   primary execution path on Claude Code; do not weaken the hook-enforced routing there. Those
   hooks and servers may be absent on other hosts, so every skill that drives an MCP tool must
   name the equivalent `very_good` / `dart` / `flutter` CLI fallback and never block when the
@@ -194,20 +196,20 @@ session and exercise it before you commit.
 - **Very Good CLI** ≥ 1.6.0 (`dart pub global activate very_good_cli`) for the
   Very Good CLI MCP server tools.
 
-See the README [Hooks](README.md#hooks) and [MCP Integration](README.md#mcp-integration)
+See the README [Hooks](plugin/README.md#hooks) and [MCP Integration](plugin/README.md#mcp-integration)
 sections for the full prerequisite details.
 
 ### Load your local copy
 
-From the repository root, launch Claude Code pointed at this directory:
+From the repository root, launch Claude Code pointed at the plugin folder:
 
 ```bash
-claude --plugin-dir .
+claude --plugin-dir plugin
 ```
 
 `--plugin-dir` loads the plugin for that session only, needs no install or
 marketplace, and overrides any marketplace-installed copy of the same plugin.
-`${CLAUDE_PLUGIN_ROOT}` (used throughout `hooks/hooks.json`) resolves to the
+`${CLAUDE_PLUGIN_ROOT}` (used throughout `plugin/hooks/hooks.json`) resolves to the
 directory you pass, so the hook script paths resolve correctly.
 
 ### Verify each component loaded
@@ -220,9 +222,9 @@ directory you pass, so the hook script paths resolve correctly.
 
 ### Iterate on changes
 
-After editing a `SKILL.md`, a hook script, or `.mcp.json`, **restart the
-`claude --plugin-dir .` session** to guarantee the change is picked up. Changes
-to `.claude-plugin/plugin.json` always require a restart. Edits to the hook
+After editing a `SKILL.md`, a hook script, or `plugin/.mcp.json`, **restart the
+`claude --plugin-dir plugin` session** to guarantee the change is picked up. Changes
+to `plugin/.claude-plugin/plugin.json` always require a restart. Edits to the hook
 `.sh` scripts take effect on the next matching tool call with no restart, since
 each hook runs the script fresh.
 
@@ -230,7 +232,7 @@ each hook runs the script fresh.
 
 To mimic the marketplace install flow without pushing anything, register a
 throwaway local marketplace. Create `.claude-plugin/marketplace.json` in a temp
-directory with an **absolute** path to this repo:
+directory with an **absolute** path to this repo's `plugin/` folder:
 
 ```jsonc
 // /tmp/vgv-test-marketplace/.claude-plugin/marketplace.json
@@ -240,7 +242,7 @@ directory with an **absolute** path to this repo:
       "name": "vgv-ai-flutter-plugin",
       "source": {
         "type": "directory",
-        "path": "/ABSOLUTE/path/to/vgv-ai-flutter-plugin"
+        "path": "/ABSOLUTE/path/to/vgv-ai-flutter-plugin/plugin"
       }
     }
   ]
@@ -259,7 +261,7 @@ Then, inside a session:
 Run the same check CI runs, from the repository root:
 
 ```bash
-claude plugin validate .
+claude plugin validate plugin
 ```
 
 This validates the manifest, skill frontmatter, hook JSON, MCP config, and file
@@ -270,10 +272,10 @@ above.
 
 | Symptom | Likely cause | Fix |
 | --------------------------------------- | ------------------------------------------- | ------------------------------------------------------------- |
-| Skill missing from `/help` | Invalid frontmatter, or `name` doesn't match the folder | Run `claude plugin validate .` and fix the reported error |
+| Skill missing from `/help` | Invalid frontmatter, or `name` doesn't match the folder | Run `claude plugin validate plugin` and fix the reported error |
 | MCP server "executable not found" | `dart` or `very_good` not on `PATH` | Install the SDK / activate the CLI, then verify with `which` |
 | Hook never fires | `jq` not installed, or script lacks `+x` / a shebang | Install `jq`; `chmod +x` the script and add `#!/bin/bash` |
-| `${CLAUDE_PLUGIN_ROOT}` not resolving | Session not launched via `--plugin-dir` (or restart pending) | Restart with `claude --plugin-dir .` from the repo root |
+| `${CLAUDE_PLUGIN_ROOT}` not resolving | Session not launched via `--plugin-dir` (or restart pending) | Restart with `claude --plugin-dir plugin` from the repo root |
 | Local marketplace won't install | `source.path` is relative | Use an absolute path in `marketplace.json` |
 
 ## CI Checks
@@ -285,8 +287,8 @@ Every pull request runs the following checks automatically:
 | Markdown quality | Lints all `*.md` files with markdownlint-cli2 | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | Skills Lint | Validates **every** `SKILL.md`'s frontmatter, structure, and linked paths against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `skills_lint.yaml` |
-| Plugin validation | Validates and test-installs the plugin | `claude plugin validate .` |
-| Script tests | Runs the hook scripts' own test suites | `hooks/scripts/*_test.sh` |
+| Plugin validation | Validates and test-installs the plugin, checks `plugin/` holds 512 files or fewer and no symbolic links, and checks every eval case loads `plugin/` | `claude plugin validate --strict plugin` |
+| Script tests | Runs the hook scripts' own test suites | `plugin/hooks/scripts/*_test.sh` |
 
 Evals do **not** run on a pull request. They call real models, so they run after a merge
 to `main` instead, scoped to the skills that changed:

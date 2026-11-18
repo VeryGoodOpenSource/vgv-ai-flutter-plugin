@@ -1,4 +1,5 @@
 schema_version: "1.1"
 name: bloc-tests-with-bloc-test-and-mocktail
+plugins: ["../../../plugin"]
 context:
   scaffold_script: fixture.sh
