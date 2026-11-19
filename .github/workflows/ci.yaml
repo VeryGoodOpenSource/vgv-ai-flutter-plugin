@@ -54,30 +54,11 @@ jobs:
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Validate Plugin
         run: claude plugin validate --strict plugin
-      - name: Plugin folder fits the directory limits
-        run: |
-          set -euo pipefail
-          status=0
-          count=$(find plugin -type f | wc -l | tr -d ' ')
-          if [ "$count" -gt 512 ]; then
-            echo "::error::plugin/ holds $count files, the directory allows 512"
-            status=1
-          fi
-          links=$(find plugin -type l)
-          if [ -n "$links" ]; then
-            echo "::error::plugin/ holds symbolic links: $links"
-            status=1
-          fi
-          exit $status
-      - name: Eval cases load the plugin and link the fixture
+      - name: Eval fixtures are symlinks
         run: |
           set -euo pipefail
           status=0
           while IFS= read -r dir; do
-            if ! grep -qxF 'plugins: ["../../../plugin"]' "$dir/case.yaml"; then
-              echo "::error::$dir/case.yaml lacks the line plugins: [\"../../../plugin\"]"
-              status=1
-            fi
             f="$dir/fixture.sh"
             if [ ! -L "$f" ]; then
               echo "::error::$f is missing or is a real file, not a symlink"

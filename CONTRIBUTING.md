@@ -287,7 +287,7 @@ Every pull request runs the following checks automatically:
 | Markdown quality | Lints all `*.md` files with markdownlint-cli2 | `config/custom.markdownlint.jsonc` |
 | Spelling | Runs cspell on all `*.md` files | `config/cspell.json` |
 | Skills Lint | Validates **every** `SKILL.md`'s frontmatter, structure, and linked paths against the Agent Skills spec, so a malformed skill fails the build instead of silently vanishing on another host | `skills_lint.yaml` |
-| Plugin validation | Validates and test-installs the plugin, checks `plugin/` holds 512 files or fewer and no symbolic links, and checks every eval case loads `plugin/` | `claude plugin validate --strict plugin` |
+| Plugin validation | Validates and test-installs the plugin | `claude plugin validate --strict plugin` |
 | Script tests | Runs the hook scripts' own test suites | `plugin/hooks/scripts/*_test.sh` |
 
 Evals do **not** run on a pull request. They call real models, so they run after a merge

@@ -288,7 +288,7 @@ arm scores, not the total: the no-plugin arm is supposed to fail.
 The suite stays outside `plugin/` so the submitted plugin folder stays under the
 directory's 512-file limit and holds no symbolic links. The eval runner only looks for
 cases below its target, so the target is the repository root, and every `case.yaml`
-loads the plugin with `plugins: ["../../../plugin"]`. CI fails a case that lacks it.
+loads the plugin with `plugins: ["../../../plugin"]`.
 
 `--scaffold` is not optional. Every run starts in an empty workspace, and without the
 flag the fixture script is skipped silently and cases fail for reasons unrelated to the
