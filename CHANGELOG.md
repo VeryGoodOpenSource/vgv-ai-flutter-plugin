@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.2](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.1.1...v0.1.2) (2026-11-19)
+
+
+### Miscellaneous Chores
+
+* add listing metadata and README banner ([#203](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/203)) ([f9342cc](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/f9342cc338a96444c36b602b5e53de590db76f69))
+* keep the eval suite out of the plugin folder ([#205](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/205)) ([316390b](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/316390b5d95f54e692db76f2b73140324ecd79d7))
+
+
+### Docs
+
+* prepare README for the Claude plugin directory ([#204](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/issues/204)) ([0607315](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/commit/060731585719e2d358203a4560c48fc380a03de9))
+
 ## [0.1.1](https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/compare/v0.1.0...v0.1.1) (2026-11-17)
 
 
