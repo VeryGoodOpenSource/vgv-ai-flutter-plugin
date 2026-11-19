@@ -13,6 +13,9 @@ skills_lint.yaml         # skills_lint rule severities, read by the CI Skills Li
   plugin.json          # Plugin manifest (name, version, keywords)
 agents/
   flutter-reviewer.md  # Read-only Flutter code reviewer subagent
+assets/
+  icon.png             # Plugin directory listing icon, set as `icon` in plugin.json
+  readme-header.png    # README banner
 docs/                  # Gitignored, local only
   plan/                # Planning and design documents
 evals/                 # `claude plugin eval` suite — all 15 skills, 110 cases

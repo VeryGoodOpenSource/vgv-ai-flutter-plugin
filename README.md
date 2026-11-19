@@ -1,7 +1,6 @@
-# VGV AI Flutter Plugin
+![VGV AI Flutter Plugin, best-practice skills for Flutter and Dart: a blue pixel texture beside the name, with the VGV logo in the corner](assets/readme-header.png)
 
-[![Very Good Ventures][logo_white]][very_good_ventures_link_dark]
-[![Very Good Ventures][logo_black]][very_good_ventures_link_light]
+# VGV AI Flutter Plugin
 
 A [Claude Code][claude_code_link] plugin that accelerates Flutter & Dart development with best-practices skills from [Very Good Ventures][vgv_link].
 
@@ -199,7 +198,3 @@ The `.mcp.json` file at the project root registers the `dart` and `very-good-cli
 [marketplace_link]: https://github.com/VeryGoodOpenSource/very-good-claude-code-marketplace
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures
-[very_good_ventures_link_dark]: https://verygood.ventures#gh-dark-mode-only
-[very_good_ventures_link_light]: https://verygood.ventures#gh-light-mode-only
-[logo_black]: https://raw.githubusercontent.com/VGVentures/very_good_brand/main/styles/README/vgv_logo_black.png#gh-light-mode-only
-[logo_white]: https://raw.githubusercontent.com/VGVentures/very_good_brand/main/styles/README/vgv_logo_white.png#gh-dark-mode-only
