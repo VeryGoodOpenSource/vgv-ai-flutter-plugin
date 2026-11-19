@@ -1,7 +1,6 @@
-# VGV AI Flutter Plugin
+![VGV AI Flutter Plugin, best-practice skills for Flutter and Dart: a blue pixel texture beside the name, with the VGV logo in the corner](assets/readme-header.png)
 
-[![Very Good Ventures][logo_white]][very_good_ventures_link_dark]
-[![Very Good Ventures][logo_black]][very_good_ventures_link_light]
+# VGV AI Flutter Plugin
 
 A [Claude Code][claude_code_link] plugin that accelerates Flutter & Dart development with best-practices skills from [Very Good Ventures][vgv_link].
 
@@ -13,13 +12,19 @@ VGV AI Flutter Plugin is a collection of contextual best-practices skills that C
 
 ## Installation
 
+Inside a Claude Code session (2.1.275 or later):
+
+```text
+/plugin install vgv-ai-flutter-plugin --marketplace VeryGoodOpenSource/very-good-claude-code-marketplace
+```
+
 One-line install from your terminal:
 
 ```bash
 claude plugin marketplace add VeryGoodOpenSource/very-good-claude-code-marketplace && claude plugin install vgv-ai-flutter-plugin
 ```
 
-Or inside an active Claude Code session, run these as **two separate commands** (the second only after the first completes):
+On an older Claude Code, run these inside a session as **two separate commands** (the second only after the first completes):
 
 1. Add the marketplace:
 
@@ -55,6 +60,14 @@ For more details, see the [Very Good Claude Marketplace][marketplace_link].
 | [**Very Good Analysis Upgrade**](skills/very-good-analysis-upgrade/SKILL.md) | Upgrade the `very_good_analysis` lint package across Dart/Flutter projects — version bump in `pubspec.yaml`, minimal lint fixes for new rules, and PR preparation |
 | [**Green Gate**](skills/green-gate/SKILL.md) | Autonomous verify-fix-rerun loop that drives a package to green across four quality gates — analyze, format, test, and coverage — exiting only when a final iteration proves all four pass with observed numbers (default 100% coverage, overridable). Also answers how the gates are configured — tool per gate, arguments, order, coverage target and exclusions — and holds the line when asked to weaken one: no lowered threshold, no coverage ignore on reachable code, no skipping a gate that passed earlier |
 
+### Commands that reach the network or git
+
+These skills tell Claude to run these shell commands:
+
+- **Very Good Analysis Upgrade** — `curl` against the pub.dev API to find the latest version, `pub get`, and `git add` to stage the upgrade
+- **Dart/Flutter SDK Upgrade** — `pub get`, and `git diff` to check the PR scope
+- **Security** — `dart pub get`, `osv-scanner` against the OSV database, and `dart pub outdated` to check dependencies before a release
+
 ## Agents
 
 This plugin ships subagents that Claude Code can dispatch as isolated, specialized reviewers. Unlike skills, agents are **not** invoked as slash commands — Claude dispatches them automatically, or you can ask Claude to run one by name (e.g. "review my changes with the flutter-reviewer agent").
@@ -70,7 +83,7 @@ This plugin includes SessionStart, SubagentStart, PreToolUse, and PostToolUse ho
 | Hook | Trigger | Behavior |
 | ---- | ------- | -------- |
 | **Warn Missing MCP** (`warn-missing-mcp.sh`) | SessionStart | Warns if the Very Good CLI is missing, older than 1.6.0, or does not report a version. For that last case it names the cause: either `dart` is not on the `PATH` hooks inherit, or a Dart SDK upgrade left a stale snapshot that `very_good --version` rebuilds. Never blocks |
-| **Sync VGE Standards** (`sync-vge-standards.sh`) | SessionStart | Keeps a local copy of the [Very Good Engineering](https://engineering.verygood.ventures) standards in `${XDG_CACHE_HOME:-~/.cache}/very_good_engineering/bundles/`, shared with other VGV plugins. Conditional GETs on the manifest and index (two 304s when nothing changed), then downloads only changed documents and verifies each one's sha256 and size. Pauses and says so when VGE publishes a major newer than the plugin targets. Once a local copy exists, prints one line with its absolute path so skills can read it. Otherwise silent, and non-blocking on any failure |
+| **Sync VGE Standards** (`sync-vge-standards.sh`) | SessionStart | Keeps a local copy of the [Very Good Engineering](https://engineering.verygood.ventures) standards in `${XDG_CACHE_HOME:-~/.cache}/very_good_engineering/bundles/`, shared with other VGV plugins. Conditional GETs on the manifest and index (two 304s when nothing changed), then downloads only changed documents and verifies each one's sha256 and size. Pauses and says so when VGE publishes a major newer than the plugin targets. Creates a `.lock` directory and `.tmp.*` staging files under the cache, and deletes cached documents and empty folders that the index no longer lists. Once a local copy exists, prints one line with its absolute path so skills can read it. Otherwise silent, and non-blocking on any failure |
 | **VGE Standards for the reviewer** (`sync-vge-standards.sh --subagent`) | SubagentStart | Hands `flutter-reviewer` the same path line as `additionalContext`, since a subagent never sees the session start notice. No network, no cache writes |
 | **Check VGV CLI** (`check-vgv-cli.sh`) | PreToolUse (`mcp__.*very-good-cli__.*`) | Verifies from the payload that the caller is a Very Good CLI tool and stands aside otherwise, so the decision never lands on an unrelated tool; for its own tools, auto-approves the call in every run mode via a PreToolUse `allow` decision, so they never dead-end when the tool isn't on `permissions.allow` (including under `skipAutoPermissionPrompt`); denies with an install/upgrade message if the CLI is missing or < 1.6.0 |
 | **Block CLI Workarounds** (`block-cli-workarounds.sh`) | PreToolUse (`Bash`) | Denies `flutter`/`dart` `test`/`create`, `dart run test` and `very_good test`/`create`/`packages` in the shell and points to the matching MCP tool. Quoted text is not read as a command, so searching for those strings is fine. When `dart` is missing from `PATH` the denial says so instead of pointing at a server that cannot start. A denial refuses the whole shell call, so anything chained with the blocked command has to be run again |
@@ -81,8 +94,9 @@ This plugin includes SessionStart, SubagentStart, PreToolUse, and PostToolUse ho
 ### Prerequisites
 
 - **Dart SDK** — must be available on your `PATH`
-- **jq** — used to parse the hook payload; hooks are skipped gracefully if `jq` is not installed
+- **jq** — used to parse the hook payload; most hooks are skipped gracefully if `jq` is not installed, but `check-vgv-cli.sh` and `block-cli-workarounds.sh` exit 1 with an error
 - **tr** — used by `block-cli-workarounds.sh` to split a command on shell operators; the hook refuses to run without it, rather than letting every shell call through unchecked
+- **curl** and **sha256sum** or **shasum** — used by `sync-vge-standards.sh` to download the VGE standards and verify their checksums; the sync is skipped without them
 
 The Very Good CLI is resolved from `PATH`, falling back to `$PUB_CACHE/bin` (default
 `~/.pub-cache/bin`) for hosts that launch hooks without an interactive shell's `PATH`. The
@@ -172,6 +186,12 @@ advertises 13 tools with no formatter. `.mcp.json` therefore starts it as
 tool; drop the flag and the gate has nothing to call. Test execution is deliberately
 left disabled — the `test` tool from the Very Good CLI MCP server is used instead.
 
+**What it reads, writes and fetches:**
+
+- Searches pub.dev for packages
+- Edits `pubspec.yaml` when adding, removing or updating dependencies
+- Formats files in place
+
 **Prerequisites:**
 
 - Dart SDK installed with `dart` on your PATH (the MCP server is provided by `dart mcp-server`)
@@ -189,6 +209,13 @@ The Very Good CLI MCP server exposes Very Good CLI commands to Claude.
 | `packages_check_licenses` | Audit dependency licenses against an allowed list |
 | `packages_get` | Get dependencies for a single package or recursively across a monorepo |
 
+**What it reads, writes and fetches:**
+
+- Creates project folders
+- Runs tests and writes coverage reports to `coverage/`
+- Fetches packages
+- Reads the pub cache for license checks
+
 **Prerequisites:**
 
 - Very Good CLI v1.6.0+ installed: `dart pub global activate very_good_cli`
@@ -203,7 +230,3 @@ The `.mcp.json` file at the plugin root registers the `dart` and `very-good-cli`
 [evals_readme_ci_link]: https://github.com/VeryGoodOpenSource/vgv-ai-flutter-plugin/blob/main/evals/README.md#running-in-ci
 [claude_code_link]: https://claude.ai/code
 [vgv_link]: https://verygood.ventures
-[very_good_ventures_link_dark]: https://verygood.ventures#gh-dark-mode-only
-[very_good_ventures_link_light]: https://verygood.ventures#gh-light-mode-only
-[logo_black]: https://raw.githubusercontent.com/VGVentures/very_good_brand/main/styles/README/vgv_logo_black.png#gh-light-mode-only
-[logo_white]: https://raw.githubusercontent.com/VGVentures/very_good_brand/main/styles/README/vgv_logo_white.png#gh-dark-mode-only

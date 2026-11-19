@@ -34,6 +34,9 @@ plugin/                # The plugin folder: everything the plugin loads, and all
     plugin.json          # Plugin manifest (name, version, keywords)
   agents/
     flutter-reviewer.md  # Read-only Flutter code reviewer subagent
+  assets/
+    icon.png             # Plugin directory listing icon, set as `icon` in plugin.json
+    readme-header.png    # README banner
   hooks/
     hooks.json           # Hook definitions (SessionStart, SubagentStart, PreToolUse, PostToolUse)
     scripts/
