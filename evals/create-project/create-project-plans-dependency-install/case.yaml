@@ -1,4 +1,5 @@
 schema_version: "1.1"
 name: create-project-plans-dependency-install
+plugins: ["../../../plugin"]
 context:
   scaffold_script: fixture.sh

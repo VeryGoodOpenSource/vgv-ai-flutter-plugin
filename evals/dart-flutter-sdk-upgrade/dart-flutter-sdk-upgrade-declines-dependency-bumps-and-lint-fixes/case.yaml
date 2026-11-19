@@ -1,4 +1,5 @@
 schema_version: "1.1"
 name: dart-flutter-sdk-upgrade-declines-dependency-bumps-and-lint-fixes
+plugins: ["../../../plugin"]
 context:
   scaffold_script: fixture.sh

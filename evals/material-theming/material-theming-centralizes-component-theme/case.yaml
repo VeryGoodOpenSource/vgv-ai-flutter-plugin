@@ -1,4 +1,5 @@
 schema_version: "1.1"
 name: material-theming-centralizes-component-theme
+plugins: ["../../../plugin"]
 context:
   scaffold_script: fixture.sh

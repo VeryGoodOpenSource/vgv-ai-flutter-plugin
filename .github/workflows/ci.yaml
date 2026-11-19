@@ -38,7 +38,7 @@ jobs:
     name: 🔍 Skills Lint
     uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/skills_lint.yml@v2
     with:
-      skills_directories: 'skills'
+      skills_directories: 'plugin/skills'
   plugin-validate:
     name: 📦 Plugin Validation
     runs-on: ubuntu-latest
@@ -53,7 +53,7 @@ jobs:
           npm ci
           echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Validate Plugin
-        run: claude plugin validate --strict .
+        run: claude plugin validate --strict plugin
       - name: Eval fixtures are symlinks
         run: |
           set -euo pipefail
@@ -78,12 +78,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Read-only git hook tests
-        run: bash hooks/scripts/allow-readonly-git_test.sh
+        run: bash plugin/hooks/scripts/allow-readonly-git_test.sh
       - name: Block CLI workarounds hook tests
-        run: bash hooks/scripts/block-cli-workarounds_test.sh
+        run: bash plugin/hooks/scripts/block-cli-workarounds_test.sh
       - name: Check VGV CLI hook tests
-        run: bash hooks/scripts/check-vgv-cli_test.sh
+        run: bash plugin/hooks/scripts/check-vgv-cli_test.sh
       - name: Warn missing MCP hook tests
-        run: bash hooks/scripts/warn-missing-mcp_test.sh
+        run: bash plugin/hooks/scripts/warn-missing-mcp_test.sh
       - name: Sync VGE standards hook tests
-        run: bash hooks/scripts/sync-vge-standards_test.sh
+        run: bash plugin/hooks/scripts/sync-vge-standards_test.sh

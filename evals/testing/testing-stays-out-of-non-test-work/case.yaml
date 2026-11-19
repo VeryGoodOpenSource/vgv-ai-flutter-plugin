@@ -1,4 +1,5 @@
 schema_version: "1.1"
 name: testing-stays-out-of-non-test-work
+plugins: ["../../../plugin"]
 context:
   scaffold_script: fixture.sh

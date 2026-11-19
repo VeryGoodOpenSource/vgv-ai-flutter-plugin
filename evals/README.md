@@ -2,6 +2,7 @@
 
 Does Claude route to the skill, and does the output follow it? Cases run through
 [`claude plugin eval`](https://code.claude.com/docs/en/plugin-evals) against real models.
+Run them from the repository root:
 
 ```bash
 claude plugin eval . --scaffold                       # all 110 cases, both arms
@@ -41,7 +42,7 @@ A case is a directory. Nothing registers it; it is found by being there.
 ```text
 evals/<skill>/<case-name>/
 ├── prompt.md          # frontmatter: run limits; body: the prompt
-├── case.yaml          # schema_version, name, and the fixture hook
+├── case.yaml          # schema_version, name, the plugin path, and the fixture hook
 ├── fixture.sh         # symlink to ../../_fixture/fixture.sh — never a real file
 └── graders/
     ├── skill-fired.md
@@ -70,9 +71,15 @@ Every case repeats that frontmatter verbatim; there is no shared-defaults mechan
 ```yaml
 schema_version: "1.1"
 name: bloc-writes-sealed-events-and-states
+plugins: ["../../../plugin"]
 context:
   scaffold_script: fixture.sh
 ```
+
+`plugins` loads the plugin under test. The plugin lives in `plugin/`, outside this suite,
+so the submitted plugin folder stays under 512 files and holds no symbolic links. The
+runner cannot find it by walking up from the case, so copy the line verbatim. CI fails a
+case that lacks it.
 
 A grader, `graders/sealed-event-hierarchy.md`:
 
@@ -265,7 +272,7 @@ and runs fail at scaffold time. CI runs on Linux and is unaffected.
 ## Mocking the MCP servers
 
 `evals/mocks/<server>/<tool>.md` registers a stand-in under the server's own name from
-`.mcp.json`. A server with no mock directory is not started and its tools are absent, which
+`plugin/.mcp.json`. A server with no mock directory is not started and its tools are absent, which
 every run reports on a `mocked:` line. Real servers start only with `--allow-real-servers`
 or `--mocks off`, neither of which is used here.
 
@@ -451,5 +458,5 @@ scoped by `--tag` to the changed skills, with-plugin arm only, and `continue-on-
   that does not match its directory. Nothing catches a link resolving to the *wrong* file,
   or an `allowed-tools` name that does not exist. Four invariants are convention alone:
   `create-project` must not declare `Bash`, `green-gate` must declare it for parsing
-  `coverage/lcov.info`, `.mcp.json` must keep `--enable dart_format`, and
+  `coverage/lcov.info`, `plugin/.mcp.json` must keep `--enable dart_format`, and
   `flutter-reviewer` must declare no write tools.
