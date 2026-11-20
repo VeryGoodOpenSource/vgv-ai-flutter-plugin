@@ -80,7 +80,7 @@ extension PumpApp on WidgetTester {
 /// My UI — a custom Flutter widget library built on Material.
 library;
 
-export 'package:flutter/material.dart';
+export 'package:material_ui/material_ui.dart';
 
 export 'src/extensions/build_context_extensions.dart';
 export 'src/theme/app_colors.dart';

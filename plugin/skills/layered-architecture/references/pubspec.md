@@ -9,7 +9,7 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   http: ^1.4.0
@@ -32,7 +32,7 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   equatable: ^2.0.7
@@ -54,13 +54,14 @@ version: 1.0.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
-  flutter: ^3.29.0
+  sdk: ^3.14.0
+  flutter: ^3.50.0
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.0
+  material_ui: ^1.11.1
   auth_api_client:
     path: packages/auth_api_client
   auth_repository:
@@ -96,12 +97,13 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
-  flutter: ^3.29.0
+  sdk: ^3.14.0
+  flutter: ^3.50.0
 
 dependencies:
   flutter:
     sdk: flutter
+  material_ui: ^1.11.1
 
 dev_dependencies:
   flutter_test:

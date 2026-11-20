@@ -94,7 +94,7 @@ inlines its own `MaterialApp`. The helper wires the app's localization delegates
 
 ```dart
 // test/helpers/pump_app.dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_app/l10n/l10n.dart';
 

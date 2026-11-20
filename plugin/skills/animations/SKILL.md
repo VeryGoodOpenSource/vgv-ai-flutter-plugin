@@ -30,6 +30,7 @@ Apply these standards to all animation work:
 - **Use `SingleTickerProviderStateMixin` for one controller** — use `TickerProviderStateMixin` only when the widget owns multiple controllers
 - **Keep animated subtrees small** — wrap only the widgets that change inside the animation builder, not entire widget trees
 - **Never animate a layout-triggering property** — `width`, `height`, `padding` and `SizedBox` dimensions force a fresh layout pass on every frame, in a one-child tree as much as in a deep one. Animate a `Transform` instead, `Transform.scale` for size and `Transform.translate` for position, or `Opacity` for fade, since those run on the compositing layer and skip layout
+- **Respect Reduce Motion** — on Flutter 3.50+, read `MediaQuery.of(context).reduceMotion` and replace slide, scale, and parallax motion with a short fade when it is `true`; skip the animation entirely when `MediaQuery.of(context).disableAnimations` is `true`
 - **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare widget fields as primary-constructor declaring parameters (`class const LabelChip({required final String label, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
 
 ---

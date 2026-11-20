@@ -197,7 +197,7 @@ Flavors change only configuration — base URLs, API keys — never the wiring s
 // lib/main_development.dart
 import 'package:auth_api_client/auth_api_client.dart';
 import 'package:auth_repository/auth_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/app/app.dart';
 import 'package:user_api_client/user_api_client.dart';
 import 'package:user_repository/user_repository.dart';

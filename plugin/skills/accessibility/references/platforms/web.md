@@ -81,7 +81,7 @@ A known bug in Flutter 3.22+ removed `aria-label` from `<input>` semantic elemen
 
 **headingLevel fully wired on web**
 
-`Semantics(headingLevel: 1)` through `headingLevel: 6` maps to `<h1>` through `<h6>` (or `aria-level` on generic elements). Heading hierarchy works on web, unlike iOS and Android where it's binary.
+`Semantics(headingLevel: 1)` through `headingLevel: 6` maps to `<h1>` through `<h6>` (or `aria-level` on generic elements). Heading hierarchy works on web, unlike Android, where it's binary.
 
 **AccessibilityFeatures.reduceMotion added in 2025**
 

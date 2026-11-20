@@ -13,7 +13,7 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   http: ^1.4.0
@@ -119,7 +119,7 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   shared_preferences: ^2.5.0
@@ -178,7 +178,7 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   equatable: ^2.0.7
@@ -387,7 +387,7 @@ export 'profile_view.dart';
 **`lib/profile/view/profile_page.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_app/profile/profile.dart';
 import 'package:user_repository/user_repository.dart';
@@ -409,7 +409,7 @@ class const ProfilePage({required final String userId, super.key})
 **`lib/profile/view/profile_view.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_app/profile/profile.dart';
 
@@ -460,7 +460,7 @@ class ProfileView extends StatelessWidget {
 **`lib/main_development.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/app/app.dart';
 import 'package:user_api_client/user_api_client.dart';
 import 'package:user_repository/user_repository.dart';
@@ -482,7 +482,7 @@ void main() {
 **`lib/app/view/app.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:user_repository/user_repository.dart';
 
@@ -511,7 +511,7 @@ Flavors change only configuration — base URLs, API keys — never the wiring s
 // lib/main_development.dart
 import 'package:auth_api_client/auth_api_client.dart';
 import 'package:auth_repository/auth_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:local_storage_client/local_storage_client.dart';
 import 'package:my_app/app/app.dart';
 import 'package:user_api_client/user_api_client.dart';

@@ -11,7 +11,7 @@ The examples in this file cover every WCAG 2.2 criterion the skill checks. Read 
 ### Custom Semantics for Complex Widgets
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A rating bar that provides a single semantic description
 /// instead of exposing individual star icons.
@@ -45,8 +45,8 @@ class const AccessibleRatingBar({
 Cupertino widgets ship with weaker semantic defaults than their Material equivalents. Always wrap them.
 
 ```dart
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:material_ui/material_ui.dart';
 
 class const AccessibleCupertinoSwitch({
   required final String label,
@@ -150,7 +150,7 @@ Row(
 ### Live Region for Async Status Updates
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 enum UploadStatus { idle, uploading, success, error }
 
@@ -200,7 +200,7 @@ SemanticsService.announce('Item added to cart', TextDirection.ltr);
 ### Expanding Small Icons to Meet Minimum Size
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Wraps any small widget in a minimum 48x48 touch target.
 /// 48 is the VGV recommended minimum. The WCAG 2.2 AA floor (2.5.8) is 24.
@@ -355,7 +355,7 @@ class const AccessibleSlider({
 ### Custom Focus Traversal for a Form
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AccessibleForm extends StatelessWidget {
   const AccessibleForm({super.key});
@@ -507,7 +507,7 @@ class _FocusAppearanceWrapState extends State<FocusAppearanceWrap> {
 ### Contrast-Safe Theme
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 ThemeData buildAccessibleTheme() {
   const colorScheme = ColorScheme(
@@ -607,7 +607,7 @@ class const AdaptiveInfoCard({
 ### Animated Page Transition Respecting Reduced Motion
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
   AccessiblePageRoute({required super.builder, super.settings});

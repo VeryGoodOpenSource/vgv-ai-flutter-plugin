@@ -28,6 +28,7 @@ Apply these standards to all internationalization work:
 - **Never hardcode user-facing strings** — all text must go through the l10n system
 - **Use Flutter's built-in localization system** — `flutter_localizations` + `intl`, never third-party i18n libraries
 - **ARB files are the single source of truth** for all translations
+- **Material and Cupertino delegates come from `material_ui`** — on Flutter 3.50+ wire `localizationsDelegates: [AppLocalizations.delegate, ...GlobalMaterialLocalizations.delegates]` with `GlobalMaterialLocalizations` imported from `package:material_ui/material_ui.dart`. `GlobalMaterialLocalizations.delegates` already includes the Cupertino and Widgets delegates, so never list `GlobalCupertinoLocalizations.delegate` or `GlobalWidgetsLocalizations.delegate` separately
 - **`BuildContext` extension for cleaner l10n access** — use `context.l10n` instead of `AppLocalizations.of(context)`
 - **Pass localized strings as parameters to reusable widgets** — never couple shared widgets directly to `AppLocalizations`
 - **Use `EdgeInsetsDirectional` (start/end) instead of `EdgeInsets` (left/right)** — ensures correct layout in RTL languages

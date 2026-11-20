@@ -45,11 +45,11 @@ Per-platform WCAG 2.2 checks for Android apps using Flutter. Read this file duri
 
 ## Flutter-Specific Gotchas
 
-**headingLevel is binary on Android, not hierarchical**
+**Use headingLevel, not header, for headings**
 
-Flutter 3.38.0 introduced a regression in heading support. The bridge switched from `Flag.IS_HEADER` to `headingLevel > 0`, breaking apps that used the old flag. The fix wires both: `result.setHeading(hasFlag(IS_HEADER) || headingLevel > 0)`.
+Since Flutter 3.47, `Semantics(header: true)` is a no-op on Android. Declare a heading with `Semantics(headingLevel: 1)` or any value above `0`, which maps to `View.setHeading(true)`. Migrate every `header: true` to `headingLevel: 1`.
 
-On Android, TalkBack does **not support heading hierarchy** — only binary heading status. Use `Semantics(header: true)` or `Semantics(headingLevel: 1)` for binary heading. Do not use numeric `headingLevel` values expecting h1-h6 hierarchy on Android.
+TalkBack does **not support heading hierarchy** — only binary heading status. Do not use numeric `headingLevel` values expecting h1-h6 hierarchy on Android.
 
 **liveRegion works reliably on Android**
 

@@ -43,7 +43,7 @@ Apply these standards to all accessibility work:
 
 **Color Differentiation** (WCAG 1.4.1) — Never use color as the sole differentiator. Always pair color with a label, icon, or shape.
 
-**Animation and Motion** (WCAG 2.3.3) — All animations must respect `MediaQuery.disableAnimations`. Gate every `AnimationController`, `AnimatedContainer`, `Hero` transition, and `PageRouteBuilder` transition on this flag.
+**Animation and Motion** (WCAG 2.3.3) — All animations must respect `MediaQuery.disableAnimations`. Gate every `AnimationController`, `AnimatedContainer`, `Hero` transition, and `PageRouteBuilder` transition on this flag. On Flutter 3.50+, also read `MediaQuery.of(context).reduceMotion`, the OS Reduce Motion setting, and swap slide, scale, and parallax motion for a short fade when it is `true`.
 
 **Icon Buttons** (WCAG 4.1.2) — Icon-only buttons must have a `Tooltip` or `Semantics(label:)`. Screen readers have no other way to convey purpose.
 
