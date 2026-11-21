@@ -27,10 +27,11 @@ Apply these standards to all animation work:
 - **Use Material 3 motion tokens for duration and easing** — never hardcode arbitrary `Duration` or `Curve` values
 - **Extract animation constants** — durations, curves, and offsets go in named constants or a centralized `AppMotion` class, not inline
 - **Dispose controllers** — every `AnimationController` must be disposed in the `dispose()` method of the `State`, before `super.dispose()`
+- **Use `RepeatingAnimationBuilder` for a plain loop** — a spinner, pulse, or shimmer that only repeats needs no controller on Flutter 3.41+. Start and stop it with `paused`. Keep an `AnimationController` only when the loop must reverse on command or you listen to its status
 - **Use `SingleTickerProviderStateMixin` for one controller** — use `TickerProviderStateMixin` only when the widget owns multiple controllers
 - **Keep animated subtrees small** — wrap only the widgets that change inside the animation builder, not entire widget trees
 - **Never animate a layout-triggering property** — `width`, `height`, `padding` and `SizedBox` dimensions force a fresh layout pass on every frame, in a one-child tree as much as in a deep one. Animate a `Transform` instead, `Transform.scale` for size and `Transform.translate` for position, or `Opacity` for fade, since those run on the compositing layer and skip layout
-- **Respect Reduce Motion** — on Flutter 3.50+, read `MediaQuery.of(context).reduceMotion` and replace slide, scale, and parallax motion with a short fade when it is `true`; skip the animation entirely when `MediaQuery.of(context).disableAnimations` is `true`
+- **Respect Reduce Motion** — on Flutter 3.50+, read `MediaQuery.reduceMotionOf(context)` and replace slide, scale, and parallax motion with a short fade when it is `true`; skip the animation entirely when `MediaQuery.disableAnimationsOf(context)` is `true`. `AnimationController` never reads `reduceMotion`, so gate it in the widget
 - **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare widget fields as primary-constructor declaring parameters (`class const LabelChip({required final String label, super.key}) extends StatelessWidget`) rather than `this.field`; keep the classic form only below 3.13
 
 ---
@@ -49,16 +50,21 @@ Does the widget rebuild when the value changes?
   |         |
   |         NO  --> Use TweenAnimationBuilder
   |
-  NO  --> Do you need fine-grained control?
-            (repeat, reverse, sequence, listen to status)
+  NO  --> Does it only loop forever (spinner, pulse, shimmer)?
             |
-            YES --> Use AnimationController + AnimatedBuilder
+            YES --> Use RepeatingAnimationBuilder (Flutter 3.41+)
             |
-            NO  --> Use TweenAnimationBuilder
+            NO  --> Do you need fine-grained control?
+                      (reverse on command, sequence, listen to status)
+                      |
+                      YES --> Use AnimationController + AnimatedBuilder
+                      |
+                      NO  --> Use TweenAnimationBuilder
 ```
 
 **Rule of thumb:** if the animation is "set a target and let it animate there", use implicit.
-If the animation must play/pause/reverse/repeat on command, use explicit.
+If the animation must reverse or sequence on command, or you listen to its status, use explicit.
+If it only loops, use `RepeatingAnimationBuilder`, and start or stop it with `paused`.
 
 **Animating two properties at once is still implicit.** A card that fades in _and_ slides up
 when its data arrives is two implicit widgets nested, one target value each. Simultaneous is
@@ -238,12 +244,12 @@ late final Animation<Offset> _slideAnimation = Tween<Offset>(
 ).animate(
   CurvedAnimation(
     parent: _controller,
-    curve: const Interval(0.2, 0.8, curve: Easing.emphasized),
+    curve: const Interval(0.2, 0.8, curve: Easing.emphasizedDecelerate),
   ),
 );
 ```
 
-See [references/staggered-animations.md](references/staggered-animations.md) for full staggered entry and staggered list examples. See [references/looping-animations.md](references/looping-animations.md) for repeating and pulse animation patterns.
+See [references/staggered-animations.md](references/staggered-animations.md) for full staggered entry and staggered list examples. See [references/looping-animations.md](references/looping-animations.md) for `RepeatingAnimationBuilder` loops and the controller fallback.
 
 ---
 
@@ -353,4 +359,4 @@ ships the boilerplate.
 - [references/explicit-animations.md](references/explicit-animations.md) — controller setup, `Interval` staggering, `didUpdateWidget`, testable controllers, transition widgets vs `AnimatedBuilder`
 - [references/staggered-animations.md](references/staggered-animations.md) — staggered entry animations and staggered list items
 - [references/page-transitions.md](references/page-transitions.md) — reusable `AppPageTransitions` helper, GoRouter integration, and `Hero` shared-element transitions
-- [references/looping-animations.md](references/looping-animations.md) — repeating, pulsing, and continuous rotation patterns
+- [references/looping-animations.md](references/looping-animations.md) — `RepeatingAnimationBuilder` rotation and pulse loops, and the controller fallback for loops driven on command

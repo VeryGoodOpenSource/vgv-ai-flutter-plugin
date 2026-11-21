@@ -6,12 +6,15 @@ and no `build_runner` step.
 ## Creating Mocks
 
 ```dart
-class _MockUserRepository extends Mock implements UserRepository {}
+class _MockUserRepository extends Mock implements UserRepository;
 
-class _MockAnalyticsClient extends Mock implements AnalyticsClient {}
+class _MockAnalyticsClient extends Mock implements AnalyticsClient;
 
-class _FakeUser extends Fake implements User {}
+class _FakeUser extends Fake implements User;
 ```
+
+`package:very_good_analysis` 11 (Dart 3.13+) requires `;` for an empty class body through the
+`empty_container_bodies` lint. Below Dart 3.13, write `{}`.
 
 Use `Fake` when you need a concrete implementation that throws on unimplemented methods
 rather than returning null.

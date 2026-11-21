@@ -4,15 +4,15 @@ Full example testing a page that uses a Bloc:
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:my_app/home/home_page.dart';
 
 import '../helpers/helpers.dart';
 
-class _MockHomeCubit extends MockCubit<HomeState> implements HomeCubit {}
+class _MockHomeCubit extends MockCubit<HomeState> implements HomeCubit;
 
 void main() {
   group(HomePage, () {
@@ -85,8 +85,8 @@ localization delegates, which `tester.l10n` depends on:
 
 ```dart
 // test/helpers/pump_app.dart
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/l10n/l10n.dart';
 
 extension PumpApp on WidgetTester {
@@ -114,6 +114,23 @@ extension PumpApp on WidgetTester {
 | `pump()`             | Trigger a single frame rebuild (after `setState`, tap, etc.)                    |
 | `pump(Duration)`     | Advance time by a specific duration (animations, debounce)                      |
 | `pumpAndSettle()`    | Pump repeatedly until no pending frames — use for animations that must complete |
+
+## Testing Images
+
+Image decoding runs outside the test's fake-async zone, so an image test can hang. Precache
+each `ImageProvider` with `precacheTestImage` (Flutter 3.50+) before pumping, instead of a
+hand-rolled `tester.runAsync(() => precacheImage(...))`.
+
+```dart
+testWidgets('renders the avatar', (tester) async {
+  const avatar = AssetImage('assets/avatar.png');
+  await precacheTestImage(avatar);
+
+  await tester.pumpApp(const Avatar(image: avatar));
+
+  expect(find.byType(Image), findsOneWidget);
+});
+```
 
 ## Finders
 

@@ -18,7 +18,7 @@ Flutter Web renders into a Semantics-mapped DOM that works with standard screen 
 **Assistive Tech Settings (browser/OS):**
 - Zoom — browser text zoom and page zoom.
 - Forced colors — `prefers-forced-colors` media query (Windows High Contrast Mode).
-- Reduced motion — `prefers-reduced-motion` media query (added to Flutter in 2025).
+- Reduced motion — `prefers-reduced-motion` media query (honored by the web engine since Flutter 3.44).
 
 ---
 
@@ -31,9 +31,9 @@ Flutter Web renders into a Semantics-mapped DOM that works with standard screen 
 | Semantics | Page Title: `<title>` updated by router-level hook or `web` package. `SystemChrome.setApplicationSwitcherDescription` does NOT update `<title>` on Web. Flag every call | 2.4.2 A |
 | Semantics | Tooltips longer than 80 characters: announced verbatim via `aria-label`. Trim or move into the body | 1.1.1 A, 4.1.2 A |
 | Semantics | `Image.network` carries `semanticLabel` through to the DOM. Verify with `find.bySemanticsLabel` in `flutter test` | 1.1.1 A |
-| Semantics | `SemanticsRole` enum used correctly (web-only in Flutter 3.32+; do not rely on it for mobile/desktop) | 4.1.2 A |
+| Semantics | `SemanticsRole` enum used correctly. Roles map to ARIA roles on web. Custom sliders use `SemanticsRole.slider` (Flutter 3.50+) | 4.1.2 A |
 | Touch | Target size in CSS px directly. Floor: 24x24. Flag any tappable element with measured CSS size below 24 px on either axis | 2.5.8 AA |
-| Focus | Hover/focus content (tooltips, menus): dismissable (Esc), hoverable (mouse can cross to overlay), persistent (no auto-dismiss before reading) | 1.4.13 AA |
+| Focus | Hover/focus content (tooltips, menus): dismissable (Esc), hoverable (mouse can cross to overlay), persistent (no auto-dismiss before reading). `RawTooltip` and Material `Tooltip` close on Esc; custom overlays must handle Esc themselves | 1.4.13 AA |
 | Focus | Custom `HtmlElementView` next to focusable Flutter widgets: confirm it does not absorb keyboard events that should reach surrounding focusables | 2.1.1 A |
 | Layout | Reflow at 320 CSS px. `Row` with non-`Flexible` children and fixed-width `SizedBox` siblings inside a route subtree flagged | 1.4.10 AA |
 | Language | `lang` attribute on `<html>` and on inline language switches (rare, but flagged when a screen mixes languages) | 3.1.2 AA |
@@ -69,11 +69,11 @@ void main() {
 
 Without this call, users must press an invisible button with `aria-label="Enable accessibility"` that Flutter renders. Always enable it for production.
 
-**SemanticsRole enum is web-only**
+**SemanticsRole maps to ARIA roles on web**
 
-`SemanticsRole` maps directly to ARIA roles **on web only** in Flutter 3.32+. Other platforms (mobile, desktop) do not yet support `SemanticsRole`. Do not rely on it for mobile or desktop accessibility.
+`SemanticsRole` maps directly to ARIA roles on web. Its API docs say roles also map to native roles on other platforms, but per-role support there is not confirmed. Verify each role on mobile and desktop before relying on it.
 
-Supported roles include: `tab`, `tabBar`, `tabPanel`, `dialog`, `alertDialog`, `table`, `cell`, `row`, `columnHeader`, `searchBox`, `dragHandle`, `spinButton`, `comboBox`, `menuBar`, `menu`, `menuItem`, `menuItemCheckbox`, `menuItemRadio`, `list`, `listItem`, `form`, `tooltip`, `loadingSpinner`, `progressBar`, `hotKey`, `radioGroup`, `status`, `alert`, `complementary`, `contentInfo`, `main`, `navigation`, `region`.
+Supported roles include: `tab`, `tabBar`, `tabPanel`, `dialog`, `alertDialog`, `table`, `cell`, `row`, `columnHeader`, `dragHandle`, `spinButton`, `comboBox`, `menuBar`, `menu`, `menuItem`, `menuItemCheckbox`, `menuItemRadio`, `list`, `listItem`, `form`, `tooltip`, `loadingSpinner`, `progressBar`, `hotKey`, `radioGroup`, `status`, `alert`, `complementary`, `contentInfo`, `main`, `navigation`, `region`, and `slider` (Flutter 3.50+).
 
 **aria-label removed from input elements (regression)**
 
@@ -83,9 +83,9 @@ A known bug in Flutter 3.22+ removed `aria-label` from `<input>` semantic elemen
 
 `Semantics(headingLevel: 1)` through `headingLevel: 6` maps to `<h1>` through `<h6>` (or `aria-level` on generic elements). Heading hierarchy works on web, unlike Android, where it's binary.
 
-**AccessibilityFeatures.reduceMotion added in 2025**
+**prefers-reduced-motion is honored since Flutter 3.44**
 
-Web support for `prefers-reduced-motion` media query was added recently (PR #180041, 2025). Check the Flutter version to ensure the flag is available.
+Since Flutter 3.44 the web engine honors the browser `prefers-reduced-motion` setting to disable animations. App-level motion still needs the `disableAnimations` and, on Flutter 3.50+, `reduceMotion` gates. Flutter 3.44 also announces form validation errors through `aria-description`.
 
 **identifier maps to flt-semantics-identifier attribute**
 

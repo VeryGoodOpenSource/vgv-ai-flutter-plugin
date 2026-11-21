@@ -2,7 +2,16 @@
 
 `@TypedGoRoute` annotations on `GoRouteData` classes eliminate typos and manual parameter
 casting. `package:go_router_builder` generates the type-safe helpers at build time via
-`dart run build_runner build --delete-conflicting-outputs`.
+`dart run build_runner build`. Each `GoRouteData` class mixes in its generated mixin:
+
+```dart
+class HomePageRoute extends GoRouteData with $HomePageRoute {
+  const HomePageRoute();
+
+  @override
+  Widget build(BuildContext context, GoRouterState state) => const HomePage();
+}
+```
 
 ## Shell Routes
 

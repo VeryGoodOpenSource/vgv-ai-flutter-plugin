@@ -15,6 +15,7 @@ Per-platform WCAG 2.2 checks for Android apps using Flutter. Read this file duri
 - Font scale — up to 2x (system maximum; user choice in Settings > Accessibility > Display > Font size).
 - Animator duration scale — 0–10x (Settings > Developer options > Animation duration scale).
 - Color inversion — inverts on-screen colors.
+- High contrast text — reported as `MediaQuery.highContrastOf(context)` since Flutter 3.47, on Android 14+ (API 34+) only.
 
 ---
 
@@ -39,7 +40,7 @@ Per-platform WCAG 2.2 checks for Android apps using Flutter. Read this file duri
 - **Accessibility Scanner** — Google Play app. Detects missing labels, duplicate content descriptions, small targets, low contrast.
 - **Android Studio "Android Ally" plugin** — live accessibility tree alongside the running app.
 - **`androidTapTargetGuideline`** — Flutter test guideline. Validates 48x48 dp minimum (Android platform standard, exceeds WCAG 2.2 2.5.8 minimum of 24x24 CSS px).
-- **`flutter_test` semantics helpers** — `ensureSemantics()`, `getSemantics()`, `matchesSemantics()` for verifying semantic tree structure.
+- **`flutter_test` semantics helpers** — `ensureSemantics()`, `getSemantics()`, `isSemantics()` (partial match), and `matchesSemantics()` (exact match). `containsSemantics()` is deprecated since Flutter 3.41.
 
 ---
 
@@ -47,13 +48,13 @@ Per-platform WCAG 2.2 checks for Android apps using Flutter. Read this file duri
 
 **Use headingLevel, not header, for headings**
 
-Since Flutter 3.47, `Semantics(header: true)` is a no-op on Android. Declare a heading with `Semantics(headingLevel: 1)` or any value above `0`, which maps to `View.setHeading(true)`. Migrate every `header: true` to `headingLevel: 1`.
+Since Flutter 3.38, `Semantics(header: true)` is a no-op on Android (iOS followed in 3.47). Declare a heading with `Semantics(headingLevel: 1)` or any value above `0`, which maps to `AccessibilityNodeInfo.setHeading(true)`. Migrate every `header: true` to `headingLevel: 1`.
 
 TalkBack does **not support heading hierarchy** — only binary heading status. Do not use numeric `headingLevel` values expecting h1-h6 hierarchy on Android.
 
 **liveRegion works reliably on Android**
 
-`Semantics(liveRegion: true)` on Android sends an explicit `TYPE_WINDOW_CONTENT_CHANGED` event, which TalkBack respects. No additional `SemanticsService.announce()` is required (though it doesn't hurt). This differs from iOS, where `liveRegion` alone is silent.
+`Semantics(liveRegion: true)` on Android sends an explicit `TYPE_WINDOW_CONTENT_CHANGED` event, which TalkBack respects. No additional `SemanticsService.sendAnnouncement()` is required. Avoid it here: Android has deprecated announcement events, and TalkBack clears its speech queue to read them. This differs from iOS, where `liveRegion` alone is silent.
 
 **identifier maps to resource-id**
 
@@ -66,19 +67,23 @@ Semantics(
 )
 ```
 
+**highContrast and invertColors are reported since Flutter 3.47**
+
+Android high contrast text and color inversion now reach `MediaQueryData.highContrast` and `MediaQueryData.invertColors`, as they already did on iOS. `highContrast` is reported on Android 14+ (API 34+) only. Below that it stays `false`. Honor `highContrast` with `MaterialApp.highContrastTheme` on Android too.
+
 **AccessibilityFeatures.boldText requires Android 12+**
 
 `AccessibilityFeatures.boldText` is available only on Android API 31+ (Android 12+). Check the flag before applying:
 
 ```dart
-if (MediaQuery.of(context).accessibilityFeatures.boldText) {
+if (MediaQuery.boldTextOf(context)) {
   // Apply bold weight
 }
 ```
 
 **disableAnimations has a startup bug on Android 12+**
 
-The `disableAnimations` flag is not set until the user explicitly toggles the Reduce Motion setting (issue: not immediately available at app startup on Android 12+). Always gate animations, but be aware that on first run, animations may play even when the setting is enabled.
+The `disableAnimations` flag is not set until the user explicitly toggles the Remove animations setting (issue: not immediately available at app startup on Android 12+). Always gate animations, but be aware that on first run, animations may play even when the setting is enabled.
 
 **TalkBack double-tap on InkWell without onTap**
 

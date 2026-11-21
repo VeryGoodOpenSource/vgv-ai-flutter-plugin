@@ -48,9 +48,9 @@ Flutter on Linux uses GTK, which supports AT-SPI2 (Assistive Technology Service 
 
 Treat Linux as best-effort and document known limitations.
 
-**SemanticsRole is web-only**
+**SemanticsRole support is unconfirmed on Linux**
 
-`SemanticsRole` enum support is web-only in Flutter 3.32. Linux support is not confirmed. Do not rely on `SemanticsRole` for Linux accessibility.
+`SemanticsRole` is mapped to native roles on each platform according to its API docs, but support for individual roles on Linux is not confirmed. Verify a role with Orca before relying on it.
 
 **AccessibilityFeatures platform-specific flags not supported**
 

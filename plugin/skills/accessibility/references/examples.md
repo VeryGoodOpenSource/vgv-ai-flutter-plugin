@@ -187,10 +187,20 @@ class const UploadStatusIndicator({required final UploadStatus status, super.key
 }
 ```
 
-For one-shot announcements:
+For one-shot announcements, use `SemanticsService.sendAnnouncement`. `SemanticsService.announce` is deprecated since Flutter 3.38, which also added `sendAnnouncement`:
 
 ```dart
-SemanticsService.announce('Item added to cart', TextDirection.ltr);
+import 'package:flutter/semantics.dart';
+import 'package:material_ui/material_ui.dart';
+
+void announceAddedToCart(BuildContext context) {
+  if (!MediaQuery.supportsAnnounceOf(context)) return;
+  SemanticsService.sendAnnouncement(
+    View.of(context),
+    'Item added to cart',
+    Directionality.of(context),
+  );
+}
 ```
 
 ---
@@ -267,14 +277,16 @@ class const AccessibleDismissibleListItem({
 ```dart
 class const AccessibleReorderableList({
   required final List<Item> items,
-  required final void Function(int oldIndex, int newIndex) onReorder,
+  required final void Function(int oldIndex, int newIndex) onReorderItem,
   super.key,
 }) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // onReorderItem (Flutter 3.44+) replaces the deprecated onReorder.
+    // newIndex is already corrected, so drag and buttons share one handler.
     return ReorderableListView.builder(
       itemCount: items.length,
-      onReorder: onReorder,
+      onReorderItem: onReorderItem,
       itemBuilder: (context, index) {
         final item = items[index];
         final isFirst = index == 0;
@@ -288,13 +300,12 @@ class const AccessibleReorderableList({
               IconButton(
                 icon: const Icon(Icons.arrow_upward),
                 tooltip: 'Move up',
-                onPressed: isFirst ? null : () => onReorder(index, index - 1),
+                onPressed: isFirst ? null : () => onReorderItem(index, index - 1),
               ),
               IconButton(
                 icon: const Icon(Icons.arrow_downward),
                 tooltip: 'Move down',
-                // ReorderableListView's onReorder uses index + 1 when moving down
-                onPressed: isLast ? null : () => onReorder(index, index + 2),
+                onPressed: isLast ? null : () => onReorderItem(index, index + 1),
               ),
               const Icon(Icons.drag_handle),
             ],
@@ -308,7 +319,7 @@ class const AccessibleReorderableList({
 
 ### Slider With Keyboard Stepping (WCAG 2.2 2.5.7)
 
-Material's `Slider` already responds to arrow keys. Custom slider widgets must do the same.
+Material's `Slider` already responds to arrow keys. Custom slider widgets must do the same. On Flutter 3.50+, give a slider drawn from scratch `Semantics(role: SemanticsRole.slider, label:, value:)` so screen readers announce it as a range control.
 
 ```dart
 class const AccessibleSlider({
@@ -619,8 +630,12 @@ class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    if (MediaQuery.of(context).disableAnimations) {
+    if (MediaQuery.disableAnimationsOf(context)) {
       return child; // Instant page change
+    }
+    // Flutter 3.50+: Reduce Motion swaps the platform slide for a short fade.
+    if (MediaQuery.reduceMotionOf(context)) {
+      return FadeTransition(opacity: animation, child: child);
     }
     return super.buildTransitions(context, animation, secondaryAnimation, child);
   }
@@ -634,7 +649,9 @@ class const AccessibleHero({required final Object tag, required final Widget chi
     extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.of(context).disableAnimations) {
+    // Flutter 3.50+: iOS Reduce Motion sets reduceMotion, not disableAnimations.
+    if (MediaQuery.disableAnimationsOf(context) ||
+        MediaQuery.reduceMotionOf(context)) {
       return child;
     }
     return Hero(tag: tag, child: child);
@@ -718,6 +735,22 @@ class ConsistentHelpAction extends StatelessWidget {
 testWidgets('Close button announces its purpose', (tester) async {
   await tester.pumpWidget(const _Subject());
   expect(find.bySemanticsLabel('Close dialog'), findsOneWidget);
+});
+```
+
+### Asserting Semantics Properties With isSemantics
+
+`containsSemantics` is deprecated since Flutter 3.41. Use `isSemantics` to check only the properties you name, or `matchesSemantics` to check every property.
+
+```dart
+testWidgets('Close button is announced as a labelled button', (tester) async {
+  final handle = tester.ensureSemantics();
+  await tester.pumpWidget(const _Subject());
+  expect(
+    tester.getSemantics(find.bySemanticsLabel('Close dialog')),
+    isSemantics(label: 'Close dialog', isButton: true),
+  );
+  handle.dispose();
 });
 ```
 

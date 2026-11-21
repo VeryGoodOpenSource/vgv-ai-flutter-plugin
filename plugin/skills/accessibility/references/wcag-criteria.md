@@ -25,7 +25,7 @@ Level AA includes all Level A criteria. Level AAA includes all Level A and AA cr
 | 3.3.2 | 2.0 | Labels or Instructions | All form fields have visible labels |
 | 3.3.7 | 2.2 | Redundant Entry | Multi-step forms must not re-collect already-provided info unless re-entry is essential |
 | 4.1.2 | 2.0 | Name, Role, Value | `Semantics(label:, button: true)`, `Tooltip`, state via `checked`, `selected`, `enabled` |
-| 4.1.3 | 2.1 | Status Messages | `Semantics(liveRegion: true)`, `SemanticsService.announce()` |
+| 4.1.3 | 2.1 | Status Messages | `Semantics(liveRegion: true)`, `SemanticsService.sendAnnouncement()` |
 
 ## Level AA (adds these to Level A)
 
@@ -39,7 +39,7 @@ Level AA includes all Level A criteria. Level AAA includes all Level A and AA cr
 | 1.4.10 | 2.1 | Reflow | Content reflows at 320 CSS px equivalent |
 | 1.4.11 | 2.1 | Non-text Contrast | UI components and focus indicators 3:1 |
 | 1.4.12 | 2.1 | Text Spacing | Content not lost under increased spacing |
-| 1.4.13 | 2.1 | Content on Hover or Focus | Dismissable, hoverable, persistent. **Web/desktop** |
+| 1.4.13 | 2.1 | Content on Hover or Focus | Dismissable, hoverable, persistent. `RawTooltip` and Material `Tooltip` close on Esc; custom overlays must too. **Web/desktop** |
 | 2.4.5 | 2.0 | Multiple Ways | More than one way to locate a screen |
 | 2.4.6 | 2.0 | Headings and Labels | Descriptive. `Semantics(headingLevel: 1)` for sections |
 | 2.4.7 | 2.0 | Focus Visible | Keyboard focus indicator always visible |
@@ -62,7 +62,7 @@ Level AA includes all Level A criteria. Level AAA includes all Level A and AA cr
 | 2.2.3 | 2.0 | No Timing | No time limits except real-time events |
 | 2.2.6 | 2.1 | Timeouts | Inactivity warning |
 | 2.3.2 | 2.0 | Three Flashes | Zero flashing |
-| 2.3.3 | 2.1 | Animation from Interactions | Every animation gated on `disableAnimations` |
+| 2.3.3 | 2.1 | Animation from Interactions | Every animation gated on `disableAnimations`; motion swapped for a fade on `reduceMotion` (Flutter 3.50+) |
 | 2.4.8 | 2.0 | Location | Users always know where they are |
 | 2.4.9 | 2.0 | Link Purpose (Link Only) | Understandable from link text alone |
 | 2.4.12 | 2.2 | Focus Not Obscured (Enhanced) | No occlusion at all, not just total occlusion |

@@ -167,10 +167,27 @@ dependency is its own PR, not part of this one. If `analyze` surfaces new errors
 introduced by the SDK bump, report them rather than fixing them in this PR.
 
 **Crossing Flutter 3.50:** `package:flutter/material.dart` and `package:flutter/cupertino.dart`
-are deprecated in favor of `package:material_ui` and `package:cupertino_ui`, so `analyze`
-reports a deprecation on every Material and Cupertino import. That is expected. Report it and
-name the follow-up PR: `dart fix --apply --code=migrate_design_widgets`, which rewrites the
-imports and adds the two packages. Do not run it in the SDK bump PR.
+are deprecated in favor of `package:material_ui` and `package:cupertino_ui`. Both libraries
+carry `@Deprecated`, so `analyze` reports `deprecated_member_use` on every Material and
+Cupertino import. `GlobalMaterialLocalizations` and `GlobalCupertinoLocalizations` from
+`flutter_localizations` are deprecated too. That is expected. Report it and name the
+follow-up PR: `dart fix --apply --code=migrate_design_widgets`, which updates the imports, then
+`flutter pub add material_ui` / `flutter pub add cupertino_ui` when the fix does not add them,
+then a manual switch of `localizationsDelegates` to `GlobalMaterialLocalizations.delegates`
+(the breaking-change guide shows it as a manual step), then a second `dart fix --apply` for the
+remaining fixes such as import sorting. Do not run any of them in the SDK bump PR.
+
+**Crossing Dart 3.13:** `final` and `var` on ordinary parameters become errors, and `dart format`
+output changes for code at language version 3.13 or higher. Report the errors and the format
+diff as the follow-up PR. Do not fix or reformat in the SDK bump PR.
+
+**Do not use `dart migrate --apply` for the bump.** It applies code fixes along with the
+constraint change. Edit the constraints by hand. `dart migrate --dry-run` is fine for listing
+the fixes the follow-up PR needs.
+
+Crossing Flutter 3.44 to 3.50 also raises Android, iOS and macOS build minimums, and the Flutter
+tool edits some project files on its own. See
+[references/version-conflicts.md](references/version-conflicts.md#platform-minimums).
 
 See [references/version-conflicts.md](references/version-conflicts.md) for reading version
 solving output, the three shapes a conflict takes, tracing a transitive blocker, and the

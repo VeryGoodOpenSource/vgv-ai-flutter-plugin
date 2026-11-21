@@ -27,7 +27,7 @@
 
 ```dart
 class TodosPage extends StatelessWidget {
-  const TodosPage({super.key});
+  const new({super.key});
 
   static Route<void> route() {
     return MaterialPageRoute(builder: (_) => const TodosPage());
@@ -45,7 +45,7 @@ class TodosPage extends StatelessWidget {
 }
 
 class TodosView extends StatelessWidget {
-  const TodosView({super.key});
+  const new({super.key});
 
   @override
   Widget build(BuildContext context) {

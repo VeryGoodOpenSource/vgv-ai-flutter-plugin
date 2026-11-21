@@ -85,6 +85,33 @@ abstract class AppPageTransitions {
 }
 ```
 
+## Reduce Motion
+
+On Flutter 3.50+, a slide transition falls back to a plain fade when
+`MediaQuery.reduceMotionOf(context)` is `true`. Check it inside `transitionsBuilder`:
+
+```dart
+transitionsBuilder: (context, animation, secondaryAnimation, child) {
+  final curvedAnimation = CurvedAnimation(
+    parent: animation,
+    curve: Easing.emphasizedDecelerate,
+  );
+  if (MediaQuery.reduceMotionOf(context)) {
+    return FadeTransition(opacity: curvedAnimation, child: child);
+  }
+  return FadeTransition(
+    opacity: curvedAnimation,
+    child: SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0.05, 0),
+        end: Offset.zero,
+      ).animate(curvedAnimation),
+      child: child,
+    ),
+  );
+},
+```
+
 ## Using Transitions in GoRouteData
 
 ```dart
@@ -128,3 +155,4 @@ Rules for `Hero`:
 - **Tags must be unique within each route** — use meaningful identifiers, not indices
 - **Both source and destination must be visible during the transition** — `Hero` does not work with lazy lists that remove the source widget
 - **Wrap only the visual element** — not the entire card or list tile
+- **Set the flight curve from the motion tokens** — on Flutter 3.44+, `Hero` takes `curve` and `reverseCurve`. The default is `Curves.fastOutSlowIn`, so pass `curve: Easing.emphasizedDecelerate` when the flight must match the page transition. `Easing` has no plain `emphasized` constant; the full M3 emphasized curve is `Curves.easeInOutCubicEmphasized`

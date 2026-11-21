@@ -28,7 +28,7 @@ Apply these standards to all test work:
 - **Descriptive test names** — verbose, readable names that describe the behavior; never `'works'` or `'renders'`
 - **Hierarchical group/test structure that reads as natural sentences** — top-level `group` for the class, nested `group` for the method, `test` for the behavior (e.g., `UserRepository` → `getUser` → `returns User when API succeeds`)
 - **String interpolation for type references** — use `'returns $User'` not `'returns User'` so renames propagate automatically
-- **Private mocks per file** — declare `class _MockX extends Mock implements X {}` with underscore prefix to prevent cross-file coupling
+- **Private mocks per file** — declare `class _MockX extends Mock implements X;` with underscore prefix to prevent cross-file coupling (`{}` instead of `;` below Dart 3.13)
 - **Contained test setup within groups** — all `setUp`/`tearDown` calls live inside a `group`, never at the top level of `main()`
 - **Initialize mutable objects in `setUp()` with `late`** — declare `late MyDep dep;` then assign in `setUp` so each test gets a fresh instance
 - **No shared mutable state between tests** — never use static members, global variables, or top-level final instances that persist across tests
@@ -94,8 +94,8 @@ inlines its own `MaterialApp`. The helper wires the app's localization delegates
 
 ```dart
 // test/helpers/pump_app.dart
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/l10n/l10n.dart';
 
 extension PumpApp on WidgetTester {
@@ -149,9 +149,9 @@ void main() {
 
 - [references/mocktail.md](references/mocktail.md) — mocks and fakes, stubbing, argument matchers, verification, fallback values
 - [references/test-patterns.md](references/test-patterns.md) — `setUp`/`tearDown` lifecycle and patterns for async, streams, exceptions, `Equatable`, and callbacks
-- [references/widget-tests.md](references/widget-tests.md) — full Bloc-backed widget test, themes/localization in `pumpApp`, pumping methods, finders, and interactions
-- [references/golden-tests.md](references/golden-tests.md) — library-level golden tagging and running/updating goldens via the MCP `test` tool
-- [references/matchers.md](references/matchers.md) — matchers quick reference
+- [references/widget-tests.md](references/widget-tests.md) — full Bloc-backed widget test, themes/localization in `pumpApp`, pumping methods, image tests with `precacheTestImage`, finders, and interactions
+- [references/golden-tests.md](references/golden-tests.md) — library-level golden tagging, running/updating goldens via the MCP `test` tool, and golden diffs after a Flutter upgrade
+- [references/matchers.md](references/matchers.md) — matchers quick reference, including `isSemantics` over the deprecated `containsSemantics`
 - [references/configuration.md](references/configuration.md) — `dart_test.yaml` configuration (tags, platform overrides) and running tests via the MCP `test` tool
 - [references/coverage.md](references/coverage.md) — coverage patterns and package/imports reference
 - [references/animation-testing.md](references/animation-testing.md) — testing implicit/explicit animations, AnimatedSwitcher, page transitions, and injected controllers

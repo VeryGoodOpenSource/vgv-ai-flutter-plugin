@@ -92,7 +92,7 @@ testWidgets('details page slides in from right', (tester) async {
     routes: [
       GoRoute(
         path: '/',
-        builder: (_, __) => const HomePage(),
+        builder: (_, _) => const HomePage(),
       ),
       GoRoute(
         path: '/details',
@@ -162,7 +162,7 @@ testWidgets('pulsing dot scales when active', (tester) async {
 Verify calls on the controller using `mocktail` when you need to assert `forward()`, `reverse()`, or `repeat()` were called:
 
 ```dart
-class _MockAnimationController extends Mock implements AnimationController {}
+class _MockAnimationController extends Mock implements AnimationController;
 
 void main() {
   group(PulsingDot, () {
@@ -194,7 +194,7 @@ void main() {
 
 ## Animation Testing Tips
 
-- **Use `pumpAndSettle()`** to let all animations complete — but set a timeout for infinite animations: `await tester.pumpAndSettle(const Duration(seconds: 5))`
+- **Use `pumpAndSettle()`** to let finite animations complete. Its timeout does not rescue an infinite animation: once the timeout passes, `pumpAndSettle` throws `FlutterError('pumpAndSettle timed out')` and the test fails
 - **Use `pump(duration)`** to advance to a specific point in an animation for intermediate state verification
 - **Never test exact pixel values for transforms** — test direction and completion instead
 - **For repeating animations, do not use `pumpAndSettle()`** — it will time out. Use `pump` with explicit durations instead

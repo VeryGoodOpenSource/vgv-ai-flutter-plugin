@@ -36,7 +36,7 @@ Apply these standards to all Bloc/Cubit work:
 - **Business logic in Bloc/Cubit only** — never in widgets, pages, or views
 - **Single responsibility** — one Bloc/Cubit per feature concern
 - **`emit` only inside the handler** — call `emit` from the `on<Event>` callback or Cubit method that owns it, never from a stream subscription or callback that outlives the handler
-- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare event, state, and widget fields as primary-constructor declaring parameters (`class const ProfileRequested(final String userId) extends ProfileEvent`) rather than `this.field`; keep the classic form only below 3.13
+- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare event, state, and widget fields as primary-constructor declaring parameters (`class const ProfileRequested(final String userId) extends ProfileEvent`) rather than `this.field`. A class-body constructor is named `new` (`const new();`, `new() : super(0)`), and an empty class body is `;`. Keep the classic form only below 3.13
 
 ---
 
@@ -70,7 +70,7 @@ the synced copy, apply the Core Standards above.
 
 ```dart
 class CounterCubit extends Cubit<int> {
-  CounterCubit() : super(0);
+  new() : super(0);
 
   void increment() => emit(state + 1);
   void decrement() => emit(state - 1);
@@ -81,17 +81,17 @@ class CounterCubit extends Cubit<int> {
 
 ```dart
 sealed class CounterEvent extends Equatable {
-  const CounterEvent();
+  const new();
 
   @override
   List<Object> get props => [];
 }
 
-final class CounterIncrementPressed extends CounterEvent {}
-final class CounterDecrementPressed extends CounterEvent {}
+final class CounterIncrementPressed extends CounterEvent;
+final class CounterDecrementPressed extends CounterEvent;
 
 class CounterBloc extends Bloc<CounterEvent, int> {
-  CounterBloc() : super(0) {
+  new() : super(0) {
     on<CounterIncrementPressed>((event, emit) => emit(state + 1));
     on<CounterDecrementPressed>((event, emit) => emit(state - 1));
   }
@@ -116,13 +116,13 @@ class CounterBloc extends Bloc<CounterEvent, int> {
 
 ```dart
 sealed class TodoListEvent extends Equatable {
-  const TodoListEvent();
+  const new();
 
   @override
   List<Object> get props => [];
 }
 
-final class TodoListSubscriptionRequested extends TodoListEvent {}
+final class TodoListSubscriptionRequested extends TodoListEvent;
 
 final class const TodoListTodoDeleted({required final Todo todo})
     extends TodoListEvent {

@@ -10,6 +10,11 @@ ThemeData(
 )
 ```
 
+Since Flutter 3.41, `ColorScheme.fromSeed`, `ColorScheme.fromImageProvider`, and
+`ThemeData(colorSchemeSeed: ...)` generate `onPrimaryContainer`,
+`onSecondaryContainer`, `onTertiaryContainer`, and `onErrorContainer` differently. To keep the
+old colors, set those roles explicitly with `copyWith` after generation, then update goldens.
+
 ## Light and Dark Theme Variants
 
 Two `ColorScheme` instances, one `AppTheme` class. This is what makes brightness branching

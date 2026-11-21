@@ -25,11 +25,13 @@ Per-platform WCAG 2.2 checks for iOS apps using Flutter. Read this file during P
 | --- | --- | --- |
 | Semantics | VoiceOver rotor: every screen exposes at least one `Semantics(headingLevel: 1)` widget so users can navigate by heading | 2.4.6 AA |
 | Semantics | `CupertinoSwitch`, `CupertinoSlider`, `CupertinoSegmentedControl`, `CupertinoButton` wrapped in `Semantics(label:, value:, button:)` | 4.1.2 A |
-| Semantics | `liveRegion: true` paired with `SemanticsService.announce()` for async updates (see Flutter-Specific Gotchas below) | 4.1.3 A, 2.3.3 AAA |
+| Semantics | `liveRegion: true` paired with `SemanticsService.sendAnnouncement()` for async updates (see Flutter-Specific Gotchas below) | 4.1.3 A, 2.3.3 AAA |
 | Touch | Switch Control reaches every interactive widget. `CupertinoButton` with transparent hit areas confirmed reachable | 2.1.1 A |
 | Text | Run text-scaling simulation at 3x (Larger Accessibility Sizes), not 2x | 1.4.4 AA |
-| Text | `MediaQuery.boldTextOverride` honored. No hardcoded `FontWeight.w400` on copy text | 1.4.4 AA |
-| Motion | `MediaQuery.disableAnimations` reflects Reduce Motion. Gate every `AnimationController`, `AnimatedContainer`, `Hero`, `PageRouteBuilder` transition on this flag | 2.3.3 AAA |
+| Text | `MediaQuery.boldTextOf(context)` honored. No hardcoded `FontWeight.w400` on copy text | 1.4.4 AA |
+| Motion | `MediaQuery.disableAnimationsOf(context)` is Android's Remove animations. iOS Reduce Motion does not set it. Gate every `AnimationController`, `AnimatedContainer`, `Hero`, `PageRouteBuilder` transition on both flags | 2.3.3 AAA |
+| Motion | Flutter 3.50+: `MediaQuery.reduceMotionOf(context)` reflects Reduce Motion. Slide, scale, and parallax transitions swap to a short fade when it is `true` | 2.3.3 AAA |
+| Motion | Animated images and video previews pause when `accessibilityFeatures.autoPlayAnimatedImages` or `autoPlayVideos` is `false` (Flutter 3.44+) | 2.2.2 A |
 | Motion | Reduce Transparency: `BackdropFilter` and frosted-glass surfaces fall back to opaque containers when Reduce Transparency is on | 1.4.11 AA |
 | Focus | Focused fields near the home indicator are not occluded by `SafeArea` boundaries or the keyboard accessory | 2.4.11 AA |
 
@@ -47,36 +49,41 @@ Per-platform WCAG 2.2 checks for iOS apps using Flutter. Read this file during P
 
 ### liveRegion does not auto-announce
 
-`Semantics(liveRegion: true)` marks a region as frequently updated but does **not automatically announce** the change on iOS (issue #45968). You must also call `SemanticsService.announce()`:
+`Semantics(liveRegion: true)` marks a region as frequently updated but does **not automatically announce** the change on iOS (issue #45968). You must also call `SemanticsService.sendAnnouncement()`. `SemanticsService.announce()` is deprecated since Flutter 3.38, which also added `sendAnnouncement()`. Check `MediaQuery.supportsAnnounceOf(context)` first:
 
 ```dart
 Semantics(
   liveRegion: true,
   child: Text('Status: $status'),
 )
-SemanticsService.announce('Status changed to $status', TextDirection.ltr);
+if (MediaQuery.supportsAnnounceOf(context)) {
+  SemanticsService.sendAnnouncement(
+    View.of(context),
+    'Status changed to $status',
+    Directionality.of(context),
+  );
+}
 ```
 
-Without the `announce()` call, VoiceOver users will not hear the update unless they manually navigate back to the live region.
+Without the `sendAnnouncement()` call, VoiceOver users will not hear the update unless they manually navigate back to the live region.
 
-### SemanticsService.announce() gets interrupted
+### SemanticsService.sendAnnouncement() gets interrupted
 
-When a button also has semantic hints (via `Semantics(hint:)`), calling `SemanticsService.announce()` during active button interaction gets interrupted (issue #122101). Debounce frequent calls and avoid calling during touch/interaction.
+When a button also has semantic hints (via `Semantics(hint:)`), calling `SemanticsService.sendAnnouncement()` during active button interaction gets interrupted (issue #122101). Debounce frequent calls and avoid calling during touch/interaction.
 
 ### Use headingLevel, not header, for headings
 
-Since Flutter 3.47, `Semantics(header: true)` is a no-op on iOS. Declare a heading with `Semantics(headingLevel: 1)` or any value above `0`. It maps to `UIAccessibilityTraitHeader`, and on iOS 13+ also to `accessibilityHeadingLevel`. Migrate every `header: true` to `headingLevel: 1`.
+Since Flutter 3.47, `Semantics(header: true)` is a no-op on iOS. Declare a heading with `Semantics(headingLevel: 1)` or any value above `0`. It maps to `UIAccessibilityTraitHeader`. Migrate every `header: true` to `headingLevel: 1`.
 
-### AccessibilityFeatures.highContrast and invertColors are iOS-only
+### highContrast and invertColors
 
-These flags exist on iOS only. Check them before applying iOS-specific UI adjustments:
+These flags are reported on iOS. `highContrast` is also reported on Windows, Linux, and, since Flutter 3.47, on Android 14+. Read them through `MediaQuery`:
 
 ```dart
-final features = MediaQuery.of(context).accessibilityFeatures;
-if (features.highContrast) {
+if (MediaQuery.highContrastOf(context)) {
   // Apply high-contrast colors
 }
-if (features.invertColors) {
+if (MediaQuery.invertColorsOf(context)) {
   // Handle inverted colors
 }
 ```
@@ -96,6 +103,6 @@ As of Flutter 3.32, non-actionable widgets no longer receive numbered labels und
 - [Apple HIG: Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) — Apple's accessibility design principles
 - [VoiceOver User Guide](https://www.apple.com/accessibility/voiceover/) — VoiceOver features and gestures
 - [Flutter Accessibility Guide](https://docs.flutter.dev/ui/accessibility) — Flutter semantics and accessibility APIs
-- [SemanticsService.announce API](https://api.flutter.dev/flutter/services/SemanticsService/announce.html)
+- [SemanticsService.sendAnnouncement API](https://api.flutter.dev/flutter/semantics/SemanticsService/sendAnnouncement.html)
 - [AccessibilityFeatures class](https://api.flutter.dev/flutter/dart-ui/AccessibilityFeatures-class.html)
 - [WCAG 2.2 Understanding Document](https://www.w3.org/WAI/WCAG22/Understanding/)

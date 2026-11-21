@@ -74,3 +74,39 @@ packages and fail in the fifth, and the user needs the whole set rather than the
 
 If the user directs one of these anyway after reading the report, say which of the guarantees
 above it gives up, then do it.
+
+## Platform minimums
+
+`pub get` can pass and the build can still fail. Flutter 3.44 to 3.50 raised these minimums.
+The Gradle, AGP and KGP numbers are the versions below which `flutter build` errors, from
+`DependencyVersionChecker.kt` in `flutter_tools` at 3.44.0, 3.47.0 and 3.50.1.
+Each fix touches files outside `pubspec.yaml` and `.github/workflows/`, so it is a separate PR.
+Report the ones the project falls below, the same way as a version conflict.
+
+| Since | Change                                                         | Files the fix touches                         |
+| ----- | -------------------------------------------------------------- | --------------------------------------------- |
+| 3.44  | AGP 9 support; built-in Kotlin (3.47+) drops `kotlin-android`  | Android Gradle files, `gradle.properties`     |
+| 3.44  | Minimum Gradle 8.7.0, AGP 8.6.0, KGP 2.0.0                     | `settings.gradle(.kts)`, Gradle wrapper       |
+| 3.44  | SwiftPM is the iOS/macOS default; 3.50 warns when it is off    | Xcode project, `Podfile`                      |
+| 3.47  | Minimum Gradle 8.14.0, AGP 8.11.1, KGP 2.2.20                  | `settings.gradle(.kts)`, Gradle wrapper       |
+| 3.47  | Minimum iOS 15 and macOS 12                                    | iOS and macOS Xcode projects, both `Podfile`s |
+| 3.50  | Minimum Gradle 9.3.1, AGP 9.1.1, KGP 2.4.10                    | `settings.gradle(.kts)`, Gradle wrapper       |
+| 3.50  | The tool warns below Gradle 9.5.0, AGP 9.3.1, KGP 2.4.20       | `settings.gradle(.kts)`, Gradle wrapper       |
+
+On AGP 9, a plain Flutter app that applies `kotlin-android` keeps building, because the tool
+adds the `gradle.properties` flags listed below. Add-to-app host apps get no such help: their
+`gradle.properties` needs `android.builtInKotlin=false` and `android.newDsl=false` by hand. The iOS and macOS minimums are
+the `IPHONEOS_DEPLOYMENT_TARGET` and `MACOSX_DEPLOYMENT_TARGET` build settings plus the
+`platform` line in each `Podfile`.
+
+Separately, apps built with Xcode 27 (iOS 27 SDK) must use the UIScene lifecycle or they fail
+to launch. That comes from the Xcode version, not the Flutter version. Flutter supports UIScene
+since 3.38 and migrates an uncustomized `AppDelegate` since 3.41. A customized `AppDelegate`
+needs the manual migration (`AppDelegate`, `Info.plist`) as its own PR.
+
+The Flutter tool also migrates some files by itself. It adds `android.builtInKotlin=false` and
+`android.newDsl=false` to `gradle.properties` (3.44), adds `build/**` and platform-directory
+excludes to `analysis_options.yaml` (3.47), and migrates an uncustomized iOS `AppDelegate` to
+UIScene (3.41).
+When the scope check in step 5 shows these files, do not commit them in the SDK bump PR. List
+them and hand the decision back.
