@@ -41,7 +41,7 @@ Level AA includes all Level A criteria. Level AAA includes all Level A and AA cr
 | 1.4.12 | 2.1 | Text Spacing | Content not lost under increased spacing |
 | 1.4.13 | 2.1 | Content on Hover or Focus | Dismissable, hoverable, persistent. `RawTooltip` and Material `Tooltip` close on Esc; custom overlays must too. **Web/desktop** |
 | 2.4.5 | 2.0 | Multiple Ways | More than one way to locate a screen |
-| 2.4.6 | 2.0 | Headings and Labels | Descriptive. `Semantics(headingLevel: 1)` for sections |
+| 2.4.6 | 2.0 | Headings and Labels | Descriptive. `Semantics(header: true, headingLevel: 1)` for sections |
 | 2.4.7 | 2.0 | Focus Visible | Keyboard focus indicator always visible |
 | 2.4.11 | 2.2 | Focus Not Obscured (Minimum) | Focused component not entirely hidden by author-created content |
 | 2.5.7 | 2.2 | Dragging Movements | Every drag has a single-pointer alternative |

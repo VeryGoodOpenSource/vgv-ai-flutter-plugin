@@ -319,7 +319,7 @@ class const AccessibleReorderableList({
 
 ### Slider With Keyboard Stepping (WCAG 2.2 2.5.7)
 
-Material's `Slider` already responds to arrow keys. Custom slider widgets must do the same. On Flutter 3.50+, give a slider drawn from scratch `Semantics(role: SemanticsRole.slider, label:, value:)` so screen readers announce it as a range control.
+Material's `Slider` already responds to arrow keys. Custom slider widgets must do the same. Give a slider drawn from scratch `Semantics(slider: true, label:, value:)`. The `slider` flag sets the slider role on every platform. On Flutter 3.50+, add `role: SemanticsRole.slider` too: web and Android map it to their native slider role. iOS, macOS, Windows and Linux ignore `role` and use the flag.
 
 ```dart
 class const AccessibleSlider({

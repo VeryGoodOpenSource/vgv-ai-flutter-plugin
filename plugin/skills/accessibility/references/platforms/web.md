@@ -31,14 +31,14 @@ Flutter Web renders into a Semantics-mapped DOM that works with standard screen 
 | Semantics | Page Title: `<title>` updated by router-level hook or `web` package. `SystemChrome.setApplicationSwitcherDescription` does NOT update `<title>` on Web. Flag every call | 2.4.2 A |
 | Semantics | Tooltips longer than 80 characters: announced verbatim via `aria-label`. Trim or move into the body | 1.1.1 A, 4.1.2 A |
 | Semantics | `Image.network` carries `semanticLabel` through to the DOM. Verify with `find.bySemanticsLabel` in `flutter test` | 1.1.1 A |
-| Semantics | `SemanticsRole` enum used correctly. Roles map to ARIA roles on web. Custom sliders use `SemanticsRole.slider` (Flutter 3.50+) | 4.1.2 A |
+| Semantics | `SemanticsRole` enum used correctly. Only the mapped roles listed below reach ARIA. Custom sliders set `slider: true` and `role: SemanticsRole.slider` (Flutter 3.50+) | 4.1.2 A |
 | Touch | Target size in CSS px directly. Floor: 24x24. Flag any tappable element with measured CSS size below 24 px on either axis | 2.5.8 AA |
 | Focus | Hover/focus content (tooltips, menus): dismissable (Esc), hoverable (mouse can cross to overlay), persistent (no auto-dismiss before reading). `RawTooltip` and Material `Tooltip` close on Esc; custom overlays must handle Esc themselves | 1.4.13 AA |
 | Focus | Custom `HtmlElementView` next to focusable Flutter widgets: confirm it does not absorb keyboard events that should reach surrounding focusables | 2.1.1 A |
 | Layout | Reflow at 320 CSS px. `Row` with non-`Flexible` children and fixed-width `SizedBox` siblings inside a route subtree flagged | 1.4.10 AA |
 | Language | `lang` attribute on `<html>` and on inline language switches (rare, but flagged when a screen mixes languages) | 3.1.2 AA |
 | Forms | Browser autofill: `autofillHints` propagates to HTML autocomplete attribute. Required for password manager support | 1.3.5 AA, 3.3.8 AA |
-| Forms | `TextFormField` still has `aria-label` (issue #151929 regression in Flutter 3.22+; verify it was not removed on your version) | 1.1.1 A, 4.1.2 A |
+| Forms | `TextFormField` label reaches the `<input>` as `aria-label`; the hint reaches it as `aria-description` | 1.1.1 A, 4.1.2 A |
 
 ---
 
@@ -71,17 +71,19 @@ Without this call, users must press an invisible button with `aria-label="Enable
 
 **SemanticsRole maps to ARIA roles on web**
 
-`SemanticsRole` maps directly to ARIA roles on web. Its API docs say roles also map to native roles on other platforms, but per-role support there is not confirmed. Verify each role on mobile and desktop before relying on it.
+In Flutter 3.50, the web engine maps these `SemanticsRole` values to ARIA roles: `tab`, `tabBar` (as `tablist`), `tabPanel`, `dialog`, `alertDialog`, `table`, `cell`, `row`, `columnHeader`, `radioGroup`, `menu`, `menuBar`, `menuItem`, `menuItemCheckbox`, `menuItemRadio`, `alert`, `status`, `list`, `listItem`, `complementary`, `contentInfo`, `main`, `navigation`, `region`, `form`, `loadingSpinner`, `progressBar`, and `slider`.
 
-Supported roles include: `tab`, `tabBar`, `tabPanel`, `dialog`, `alertDialog`, `table`, `cell`, `row`, `columnHeader`, `dragHandle`, `spinButton`, `comboBox`, `menuBar`, `menu`, `menuItem`, `menuItemCheckbox`, `menuItemRadio`, `list`, `listItem`, `form`, `tooltip`, `loadingSpinner`, `progressBar`, `hotKey`, `radioGroup`, `status`, `alert`, `complementary`, `contentInfo`, `main`, `navigation`, `region`, and `slider` (Flutter 3.50+).
+The web engine does not map `dragHandle`, `spinButton`, `comboBox`, `tooltip`, or `hotKey`. Those nodes fall back to the role their semantics flags give (`button`, `textField`, and so on).
 
-**aria-label removed from input elements (regression)**
+Other platforms: Android maps 9 roles, and iOS, macOS, Windows and Linux ignore `SemanticsRole`. See each platform file.
 
-A known bug in Flutter 3.22+ removed `aria-label` from `<input>` semantic elements, breaking `TextFormField` accessibility on web (issue #151929). Check your Flutter version. If affected, apply a workaround or upgrade.
+**Text fields get aria-label; other labels render as DOM text**
+
+A text field's semantics label becomes the `aria-label` of its `<input>`, and its hint becomes `aria-description`. Since Flutter 3.22, other nodes render their label as DOM text instead of `aria-label` where possible. Screen readers read both. Test automation must not select by `aria-label`: use `Semantics(identifier:)` instead.
 
 **headingLevel fully wired on web**
 
-`Semantics(headingLevel: 1)` through `headingLevel: 6` maps to `<h1>` through `<h6>` (or `aria-level` on generic elements). Heading hierarchy works on web, unlike Android, where it's binary.
+`Semantics(headingLevel: 1)` through `headingLevel: 6` maps to `<h1>` through `<h6>` (or `aria-level` on generic elements). `header: true` without a level renders as `<h2>`. Heading hierarchy works on web; Android and iOS only expose heading or not heading, and desktop ignores the level.
 
 **prefers-reduced-motion is honored since Flutter 3.44**
 
@@ -91,9 +93,9 @@ Since Flutter 3.44 the web engine honors the browser `prefers-reduced-motion` se
 
 `SemanticsProperties.identifier` maps to a `flt-semantics-identifier` DOM attribute (not a standard ARIA property). Use for custom testing, not for accessibility trees.
 
-**scopesRoute + namesRoute requires careful ARIA wiring**
+**scopesRoute and namesRoute on separate nodes**
 
-When `scopesRoute` and `namesRoute` are on separate nodes (not the same node), the ARIA strategy differs from when combined (issue #126030). Test thoroughly and refer to the issue for workarounds.
+A route node with both flags gets its own `aria-label`. When `namesRoute` sits on a descendant instead, the route gets `aria-describedby` pointing at that descendant. Dialogs always get `role="dialog"` or `role="alertdialog"` and `aria-modal="true"`. The naming node does not re-attach if it is moved under a different route, so keep it inside the route it names.
 
 ---
 

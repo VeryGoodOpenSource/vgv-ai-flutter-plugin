@@ -68,7 +68,7 @@ class App extends StatelessWidget {
 }
 ```
 
-The API docs for `MediaQueryData.highContrast` name only iOS and Android, but the Flutter 3.50 Windows embedder sends the flag too.
+High contrast is the only accessibility feature Windows sends. `disableAnimations`, `reduceMotion`, `boldText` and `invertColors` are always `false` on Windows, so the Windows "Animation effects" setting does not reach `MediaQuery`. Offer an in-app reduce-motion toggle for Windows users.
 
 However, support for Windows forced-colors mode is incomplete (issue #75883). Always test with High Contrast enabled in Windows Settings.
 
@@ -76,9 +76,9 @@ However, support for Windows forced-colors mode is incomplete (issue #75883). Al
 
 Flutter Desktop on Windows runs in UIA **focus mode only** — unlike web where NVDA browse mode lets users skim content by headings. Screens that rely on heading navigation as the primary discovery pattern should note this limitation in findings. All content must be reachable via Tab navigation.
 
-### SemanticsRole support is unconfirmed on Windows
+### SemanticsRole is ignored on Windows
 
-`SemanticsRole` is mapped to native roles on each platform according to its API docs, but support for individual roles on Windows is not confirmed. Verify a role with the Inspect tool before relying on it.
+In Flutter 3.50, the Windows embedder does not read `SemanticsRole`. Native roles come only from semantics flags: `button`, `textField`, `header`, `image`, `link`, `checked` (checkbox, or radio button with `inMutuallyExclusiveGroup`), `toggled` (switch) and `slider`. Every other node is static text or a group. Set the flag, not `role`, to give a widget its role here. Headings come from `header: true`; `headingLevel` is ignored on desktop.
 
 ### UIA element tree mapping
 

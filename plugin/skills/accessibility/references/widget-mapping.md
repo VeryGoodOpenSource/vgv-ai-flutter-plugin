@@ -18,7 +18,7 @@ Quick-reference table mapping Flutter widgets to their accessibility requirement
 | `TextField` | Label | Use `InputDecoration(labelText:)` — always provide a visible label |
 | `Checkbox` | Label + state | Wrap in `CheckboxListTile` for automatic label association |
 | `Switch` | Label + state | Wrap in `SwitchListTile` for automatic label association |
-| `Slider` | Label + value | Use `Semantics(label:, value:)` or `Slider.adaptive`; a custom slider sets `Semantics(role: SemanticsRole.slider)` (Flutter 3.50+) |
+| `Slider` | Label + value | Use `Semantics(label:, value:)` or `Slider.adaptive`; a custom slider sets `Semantics(slider: true)`, plus `role: SemanticsRole.slider` on Flutter 3.50+ for web and Android |
 | `DropdownButton` | Label + expanded state | Wrap in `DropdownButtonFormField` with `InputDecoration(labelText:)` |
 | `AlertDialog` | Focus management | `showDialog` handles focus trapping and restoration automatically |
 | `BottomSheet` | Focus management | `showModalBottomSheet` handles focus trapping and restoration automatically |

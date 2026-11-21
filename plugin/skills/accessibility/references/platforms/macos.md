@@ -58,9 +58,9 @@ MediaQuery(
 
 macOS VoiceOver uses keyboard commands (VO + arrows, VO + space) to navigate, unlike iOS VoiceOver which uses swipes. Screen readers speak semantics the same way, but the modality is different. Test with actual keyboard commands, not swipes.
 
-### SemanticsRole support is unconfirmed on macOS
+### SemanticsRole is ignored on macOS
 
-`SemanticsRole` is mapped to native roles on each platform according to its API docs, but support for individual roles on macOS is not confirmed. Verify a role with Xcode Accessibility Inspector before relying on it.
+In Flutter 3.50, the macOS embedder does not read `SemanticsRole`. Native roles come only from semantics flags: `button`, `textField`, `header`, `image`, `link`, `checked` (checkbox, or radio button with `inMutuallyExclusiveGroup`), `toggled` (switch) and `slider`. Every other node is static text or a group. Set the flag, not `role`, to give a widget its role here. Headings come from `header: true`; `headingLevel` is ignored on desktop.
 
 ### Focus indicator visibility is critical
 

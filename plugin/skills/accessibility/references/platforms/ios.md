@@ -23,7 +23,7 @@ Per-platform WCAG 2.2 checks for iOS apps using Flutter. Read this file during P
 
 | Category | Check | WCAG 2.2 Tie-In |
 | --- | --- | --- |
-| Semantics | VoiceOver rotor: every screen exposes at least one `Semantics(headingLevel: 1)` widget so users can navigate by heading | 2.4.6 AA |
+| Semantics | VoiceOver rotor: every screen exposes at least one `Semantics(header: true, headingLevel: 1)` widget so users can navigate by heading | 2.4.6 AA |
 | Semantics | `CupertinoSwitch`, `CupertinoSlider`, `CupertinoSegmentedControl`, `CupertinoButton` wrapped in `Semantics(label:, value:, button:)` | 4.1.2 A |
 | Semantics | `liveRegion: true` paired with `SemanticsService.sendAnnouncement()` for async updates (see Flutter-Specific Gotchas below) | 4.1.3 A, 2.3.3 AAA |
 | Touch | Switch Control reaches every interactive widget. `CupertinoButton` with transparent hit areas confirmed reachable | 2.1.1 A |
@@ -71,9 +71,9 @@ Without the `sendAnnouncement()` call, VoiceOver users will not hear the update 
 
 When a button also has semantic hints (via `Semantics(hint:)`), calling `SemanticsService.sendAnnouncement()` during active button interaction gets interrupted (issue #122101). Debounce frequent calls and avoid calling during touch/interaction.
 
-### Use headingLevel, not header, for headings
+### Set both header and headingLevel on every heading
 
-Since Flutter 3.47, `Semantics(header: true)` is a no-op on iOS. Declare a heading with `Semantics(headingLevel: 1)` or any value above `0`. It maps to `UIAccessibilityTraitHeader`. Migrate every `header: true` to `headingLevel: 1`.
+On iOS, only `headingLevel` makes a heading. A value above `0` adds `UIAccessibilityTraitHeader`; `header: true` alone is ignored since Flutter 3.47. The desktop embedder does the opposite and read only `header`. Write every heading as `Semantics(header: true, headingLevel: 1)` so it is a heading on every platform.
 
 ### highContrast and invertColors
 

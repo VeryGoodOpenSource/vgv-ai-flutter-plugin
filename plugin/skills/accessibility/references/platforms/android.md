@@ -46,9 +46,9 @@ Per-platform WCAG 2.2 checks for Android apps using Flutter. Read this file duri
 
 ## Flutter-Specific Gotchas
 
-**Use headingLevel, not header, for headings**
+**Set both header and headingLevel on every heading**
 
-Since Flutter 3.38, `Semantics(header: true)` is a no-op on Android (iOS followed in 3.47). Declare a heading with `Semantics(headingLevel: 1)` or any value above `0`, which maps to `AccessibilityNodeInfo.setHeading(true)`. Migrate every `header: true` to `headingLevel: 1`.
+On Android, only `headingLevel` makes a heading. A value above `0` calls `AccessibilityNodeInfo.setHeading(true)`; `header: true` alone is ignored since Flutter 3.38. The desktop embedder does the opposite and read only `header`. Write every heading as `Semantics(header: true, headingLevel: 1)` so it is a heading on every platform.
 
 TalkBack does **not support heading hierarchy** — only binary heading status. Do not use numeric `headingLevel` values expecting h1-h6 hierarchy on Android.
 

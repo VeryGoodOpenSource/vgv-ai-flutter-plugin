@@ -39,22 +39,25 @@ Per-platform WCAG 2.2 checks for Flutter Linux apps. Read this file during Phase
 
 ## Flutter-Specific Gotchas
 
-**Linux is the least mature Flutter accessibility platform**
+**What Orca gets from Flutter on Linux**
 
-Flutter on Linux uses GTK, which supports AT-SPI2 (Assistive Technology Service Provider Interface). However, real-world Orca compatibility has documented gaps:
+Flutter 3.50 exposes an ATK tree to Orca through AT-SPI2. Supported: labels, focus, every semantics action (tap, focus, expand, collapse), text field values, and the checked, selected, focused, enabled and read-only states. Not supported:
 
-- Dropdown menu content is not always readable by Orca (confirmed in Ubuntu 25.10 Flutter installer, 2025).
-- Some complex widget hierarchies may not expose semantics correctly.
+- Expanded and collapsed state. Orca never hears whether a dropdown or expansion tile is open.
+- Heading levels. Headings come from `header: true` and have no level.
+- Slider values. Sliders are not exposed as an ATK value.
+- Hints, tooltips and custom semantics actions.
+- Reading non-focusable content without moving focus to it.
 
-Treat Linux as best-effort and document known limitations.
+Report these as platform limitations in a Linux audit, not as app defects.
 
-**SemanticsRole support is unconfirmed on Linux**
+**SemanticsRole is ignored on Linux**
 
-`SemanticsRole` is mapped to native roles on each platform according to its API docs, but support for individual roles on Linux is not confirmed. Verify a role with Orca before relying on it.
+In Flutter 3.50, the Linux embedder does not read `SemanticsRole`. ATK roles come only from semantics flags: `button`, `checked` (checkbox, or radio button with `inMutuallyExclusiveGroup`), `toggled`, `slider`, `textField` (password text when `obscured`), `header`, `link` and `image`. Every other node is `ATK_ROLE_PANEL`. Set the flag, not `role`, to give a widget its role here.
 
-**AccessibilityFeatures platform-specific flags not supported**
+**Only highContrast and disableAnimations reach MediaQuery on Linux**
 
-`AccessibilityFeatures` platform-specific flags (e.g., `boldText`, `highContrast`, `invertColors`) are not documented as available on Linux. Do not assume these flags work.
+The Linux embedder sends two accessibility features. `MediaQuery.highContrastOf(context)` follows the GNOME high-contrast setting. `MediaQuery.disableAnimationsOf(context)` is `true` when GNOME animations are off. `boldText`, `invertColors`, `reduceMotion` and `accessibleNavigation` are always `false` on Linux.
 
 **Orca verbosity is high**
 
