@@ -25,14 +25,3 @@ Since Flutter 3.50, `WidgetSpan` placeholders in RTL and mixed-direction text fo
 bidi visual order. Keep spans in the logical order of the content. Do not reverse span order,
 offset inline widgets with `Transform.translate`, or mirror placeholder x-coordinates; remove
 any such workaround and update RTL goldens.
-
-```dart
-Text.rich(
-  TextSpan(
-    children: [
-      TextSpan(text: context.l10n.verifiedLabel),
-      const WidgetSpan(child: Icon(Icons.verified)),
-    ],
-  ),
-)
-```

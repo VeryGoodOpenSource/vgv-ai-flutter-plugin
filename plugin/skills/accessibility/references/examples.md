@@ -738,22 +738,6 @@ testWidgets('Close button announces its purpose', (tester) async {
 });
 ```
 
-### Asserting Semantics Properties With isSemantics
-
-`containsSemantics` is deprecated since Flutter 3.41. Use `isSemantics` to check only the properties you name, or `matchesSemantics` to check every property.
-
-```dart
-testWidgets('Close button is announced as a labelled button', (tester) async {
-  final handle = tester.ensureSemantics();
-  await tester.pumpWidget(const _Subject());
-  expect(
-    tester.getSemantics(find.bySemanticsLabel('Close dialog')),
-    isSemantics(label: 'Close dialog', isButton: true),
-  );
-  handle.dispose();
-});
-```
-
 ### Asserting Target Size at AA (WCAG 2.2 2.5.8)
 
 ```dart
