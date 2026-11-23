@@ -43,6 +43,7 @@ plugin/                # The plugin folder: everything the plugin loads, and all
       allow-readonly-git.sh  # Restricts flutter-reviewer Bash to git diff/status
       allow-readonly-git_test.sh  # Tests for allow-readonly-git.sh
       analyze.sh         # Runs dart analyze on modified .dart files
+      analyze_test.sh    # Tests for analyze.sh
       block-cli-workarounds.sh  # Prevents direct CLI bypass via Bash
       block-cli-workarounds_test.sh  # Tests for block-cli-workarounds.sh
       check-vgv-cli.sh   # Validates VGV CLI installed and >= 1.6.0
@@ -226,7 +227,7 @@ from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is decla
 
 These run **after** a tool call completes:
 
-- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue)
+- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue). When the output has `uri_does_not_exist` errors and the package's dependencies are not resolved (no `.dart_tool/package_config.json` in the package, or for a pub workspace member in a directory above it), it reports that `pub get` needs to run instead of passing on the analyzer output
 - `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed). `block-cli-workarounds.sh` also requires **tr**, and exits 1 without either, since standing aside would drop enforcement silently.
