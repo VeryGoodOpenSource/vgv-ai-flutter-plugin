@@ -86,6 +86,8 @@ make_package() {
       printf 'name: app\nenvironment:\n  sdk: ^3.6.0\ndependencies:\n  flutter:\n    sdk: flutter\n' ;;
     flutter-quoted)
       printf 'name: app\nenvironment:\n  sdk: ^3.6.0\ndependencies:\n  flutter:\n    sdk: "flutter"\n' ;;
+    flutter-flow)
+      printf 'name: app\nenvironment:\n  sdk: ^3.6.0\ndependencies:\n  flutter: {sdk: flutter}\n' ;;
     flutter-dev-only)
       printf 'name: pkg\nenvironment:\n  sdk: ^3.6.0\ndev_dependencies:\n  flutter_test:\n    sdk: flutter\n' ;;
     workspace-member)
@@ -194,6 +196,10 @@ expect "Flutter package asks for flutter pub get" 2 \
 make_package "$WORK_DIR/flutter_quoted" flutter-quoted
 run_hook "$(payload_for "$WORK_DIR/flutter_quoted/lib/a.dart")"
 expect "quoted sdk: \"flutter\"" 2 "has:\`flutter pub get\`"
+
+make_package "$WORK_DIR/flutter_flow" flutter-flow
+run_hook "$(payload_for "$WORK_DIR/flutter_flow/lib/a.dart")"
+expect "flow-style flutter: {sdk: flutter}" 2 "has:\`flutter pub get\`"
 
 make_package "$WORK_DIR/flutter_dev" flutter-dev-only
 run_hook "$(payload_for "$WORK_DIR/flutter_dev/lib/a.dart")"

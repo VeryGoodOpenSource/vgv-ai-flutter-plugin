@@ -50,7 +50,7 @@ output=$(dart analyze "$file_path" 2>&1) || {
   # through, since pub get would not fix them.
   if [[ "$output" == *uri_does_not_exist* ]] && package_dir=$(unresolved_package_dir "$file_path"); then
     pub="dart"
-    grep -Eq '^[[:space:]]*sdk:[[:space:]]*["'\'']?flutter' "$package_dir/pubspec.yaml" && pub="flutter"
+    grep -Eq '^[^#]*sdk:[[:space:]]*["'\'']?flutter' "$package_dir/pubspec.yaml" && pub="flutter"
     echo "analyze hook: dependencies are not resolved for the package at $package_dir (no .dart_tool/package_config.json)." >&2
     echo "Run \`$pub pub get\` in that directory, then run \`dart analyze\` on $file_path to check it." >&2
     exit 2
