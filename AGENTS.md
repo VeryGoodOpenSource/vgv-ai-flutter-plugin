@@ -227,7 +227,7 @@ from `vgv-cli-common.sh`. The following hook is **agent-scoped** — it is decla
 
 These run **after** a tool call completes:
 
-- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue). When the output has `uri_does_not_exist` errors and the package's dependencies are not resolved (no `.dart_tool/package_config.json` in the package, or for a pub workspace member in a directory above it), it reports that `pub get` needs to run instead of passing on the analyzer output
+- `Edit|Write` matcher → `analyze.sh` — runs `dart analyze` on the modified `.dart` file; exits 2 on failure (blocking — Claude must fix the issue). When the output has `uri_does_not_exist` errors and the package's dependencies are not resolved (no `.dart_tool/package_config.json` in the package or, for a pub workspace member, in any directory above it), it reports that `pub get` needs to run instead of passing on the analyzer output, and still exits 2
 - `Edit|Write` matcher → `format.sh` — runs `dart format` on the modified `.dart` file; always exits 0 (non-blocking)
 
 All hook scripts require **jq** to parse the hook payload (they skip gracefully if `jq` is not installed). `block-cli-workarounds.sh` also requires **tr**, and exits 1 without either, since standing aside would drop enforcement silently.

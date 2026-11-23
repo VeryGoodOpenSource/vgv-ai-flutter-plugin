@@ -33,7 +33,7 @@ unresolved_package_dir() {
   done
   package_dir="$dir"
   [[ -f "$package_dir/.dart_tool/package_config.json" ]] && return 1
-  if grep -Eq '^resolution:[[:space:]]*workspace' "$package_dir/pubspec.yaml"; then
+  if grep -Eq '^resolution:[[:space:]]*["'\'']?workspace' "$package_dir/pubspec.yaml"; then
     while [[ "$dir" != "/" ]]; do
       dir=$(dirname -- "$dir")
       [[ -f "$dir/.dart_tool/package_config.json" ]] && return 1

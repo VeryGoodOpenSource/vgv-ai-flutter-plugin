@@ -52,18 +52,20 @@ BASE_PATH="$WORK_DIR/sys-bin"
 FULL_PATH="$WORK_DIR/dart-bin:$WORK_DIR/jq-bin:$BASE_PATH"
 
 URI_ERROR="uri_does_not_exist"
+FOLLOW_ON_ERROR="undefined_function"
 TYPE_ERROR="return_of_invalid_type"
 
 # Install a stubbed dart that records its arguments in dart-calls.
 #   pass        exits 0 with no issues
-#   uri-error   prints the error the real analyzer gives for an unresolved dependency
+#   uri-error   prints the error the real analyzer gives for an unresolved dependency,
+#               then an error that follows from it, as real analysis does
 #   type-error  prints an error unrelated to dependencies
 # The failing modes exit 3, as `dart analyze` does when it finds errors.
 stub_dart() {
   local message="" status=0
   case "$1" in
     pass) message="No issues found!" ;;
-    uri-error) message="error - a.dart:1:8 - Target of URI doesn't exist. - $URI_ERROR"; status=3 ;;
+    uri-error) message="error - a.dart:1:8 - Target of URI doesn't exist. - $URI_ERROR\nerror - a.dart:2:13 - The function 'join' isn't defined. - $FOLLOW_ON_ERROR"; status=3 ;;
     type-error) message="error - a.dart:1:12 - A value of type String cannot be returned. - $TYPE_ERROR"; status=3 ;;
   esac
   printf '#!/bin/sh\necho "$@" >> "%s/dart-calls"\necho "%s"\nexit %s\n' \
@@ -92,8 +94,11 @@ make_package() {
       printf 'name: pkg\nenvironment:\n  sdk: ^3.6.0\ndev_dependencies:\n  flutter_test:\n    sdk: flutter\n' ;;
     workspace-member)
       printf 'name: member\nenvironment:\n  sdk: ^3.6.0\nresolution: workspace\ndependencies:\n  path: ^1.9.0\n' ;;
+    workspace-member-quoted)
+      printf 'name: member\nenvironment:\n  sdk: ^3.6.0\nresolution: "workspace"\ndependencies:\n  path: ^1.9.0\n' ;;
     workspace-root)
       printf 'name: _\nenvironment:\n  sdk: ^3.6.0\nworkspace:\n  - packages/member\n' ;;
+    *) echo "make_package: unknown kind '$kind'" >&2; exit 1 ;;
   esac > "$dir/pubspec.yaml"
   printf "import 'package:path/path.dart';\n" > "$dir/lib/a.dart"
 }
@@ -181,7 +186,7 @@ make_package "$WORK_DIR/dart_pkg" dart
 run_hook "$(payload_for "$WORK_DIR/dart_pkg/lib/a.dart")"
 expect "Dart package without pub get" 2 \
   "has:not resolved" "$(names_package "$WORK_DIR/dart_pkg")" "has:\`dart pub get\`" \
-  "has:\`dart analyze\` on $WORK_DIR/dart_pkg/lib/a.dart" "lacks:$URI_ERROR"
+  "has:\`dart analyze\` on $WORK_DIR/dart_pkg/lib/a.dart" "lacks:$URI_ERROR" "lacks:$FOLLOW_ON_ERROR"
 
 make_package "$WORK_DIR/lookalike" dart-lookalike
 run_hook "$(payload_for "$WORK_DIR/lookalike/lib/a.dart")"
@@ -244,6 +249,9 @@ expect "relative path with CDPATH set" 2 "$(names_package "$WORK_DIR/cdpath_pkg"
 make_package "$WORK_DIR/parent" dart
 resolve "$WORK_DIR/parent"
 make_package "$WORK_DIR/parent/example" flutter
+# The analyzer falls back to the parent's config here, so the imports that fail are
+# the ones only the example depends on, such as Flutter.
+printf "import 'package:flutter/widgets.dart';\n" > "$WORK_DIR/parent/example/lib/a.dart"
 run_hook "$(payload_for "$WORK_DIR/parent/example/lib/a.dart")"
 expect "package nested in a resolved package that is not its workspace" 2 \
   "$(names_package "$WORK_DIR/parent/example")" "lacks:$URI_ERROR"
@@ -258,8 +266,17 @@ expect "package with package_config.json" 2 "has:$URI_ERROR" "lacks:not resolved
 make_package "$WORK_DIR/ws" workspace-root
 make_package "$WORK_DIR/ws/packages/member" workspace-member
 resolve "$WORK_DIR/ws"
+# pub leaves this in each member after resolving the workspace, and no package_config.json.
+mkdir -p "$WORK_DIR/ws/packages/member/.dart_tool/pub"
+echo '{"workspaceRoot":"../../.."}' > "$WORK_DIR/ws/packages/member/.dart_tool/pub/workspace_ref.json"
 run_hook "$(payload_for "$WORK_DIR/ws/packages/member/lib/a.dart")"
 expect "workspace member resolved at the root" 2 "has:$URI_ERROR" "lacks:not resolved"
+
+make_package "$WORK_DIR/ws_quoted" workspace-root
+make_package "$WORK_DIR/ws_quoted/packages/member" workspace-member-quoted
+resolve "$WORK_DIR/ws_quoted"
+run_hook "$(payload_for "$WORK_DIR/ws_quoted/packages/member/lib/a.dart")"
+expect "quoted resolution: \"workspace\" resolved at the root" 2 "has:$URI_ERROR" "lacks:not resolved"
 
 echo ""
 echo "--- Nothing pub get can fix (exit 2, analyzer output passed through) ---"
@@ -275,7 +292,8 @@ run_hook "$(payload_for "$WORK_DIR/loose/a.dart")"
 expect "file with no pubspec.yaml above it" 2 "has:$URI_ERROR" "lacks:not resolved"
 
 make_package "$WORK_DIR/gone" dart
-run_hook "$(payload_for "$WORK_DIR/gone/missing_dir/a.dart")"
+# Run from inside the package, so a hook that ignored the failed cd would find its pubspec.
+run_hook "$(payload_for "$WORK_DIR/gone/missing_dir/a.dart")" "$FULL_PATH" "$WORK_DIR/gone"
 expect "file in a directory that does not exist" 2 "has:$URI_ERROR" "lacks:not resolved"
 
 make_package "$WORK_DIR/no_dart" dart
