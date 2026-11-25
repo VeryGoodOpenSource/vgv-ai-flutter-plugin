@@ -75,14 +75,14 @@ VGV packages use `VeryGoodOpenSource/very_good_workflows` reusable workflows. Le
 `@v1` tag untouched. Flutter packages use `MAJOR.MINOR.x` — no caret, literal `x` as the
 patch wildcard so CI resolves to the latest patch automatically. Dart packages pin the exact
 patch version. When bumping versions, update MAJOR and/or MINOR as appropriate
-(e.g., `3.41.x` → `3.42.x` or `4.0.x`):
+(e.g., `3.47.x` → `3.50.x` or `4.0.x`):
 
 **Flutter package:**
 
 ```yaml
 uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/flutter_package.yml@v1
 with:
-  flutter_version: "3.41.x" # ← MAJOR.MINOR.x, resolves to latest patch
+  flutter_version: "3.50.x" # ← MAJOR.MINOR.x, resolves to latest patch
 ```
 
 **Pure Dart package** — note the key is `dart_sdk`, not `flutter_version`. Use the Dart
@@ -91,7 +91,7 @@ version, not the Flutter version:
 ```yaml
 uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/dart_package.yml@v1
 with:
-  dart_sdk: "3.11.0" # ← exact Dart version (not Flutter version)
+  dart_sdk: "3.14.0" # ← exact Dart version (not Flutter version)
 ```
 
 If a file uses `flutter_channel: stable` instead of a pinned version,
@@ -112,10 +112,10 @@ keys when you have not seen them, and do not guess a version number. Show the `w
 name the file it belongs in.
 
 ```yaml
-# Pure Dart package, target Dart 3.11.0 — the block to merge into your existing job
+# Pure Dart package, target Dart 3.14.0 — the block to merge into your existing job
 uses: VeryGoodOpenSource/very_good_workflows/.github/workflows/dart_package.yml@v1
 with:
-  dart_sdk: "3.11.0"
+  dart_sdk: "3.14.0"
 ```
 
 ---
@@ -142,7 +142,7 @@ Writing the Flutter number into `sdk:` is the single most common error in this c
 
 ```yaml
 environment:
-  sdk: ^3.11.0 # ← Dart version only
+  sdk: ^3.14.0 # ← Dart version only
   # no flutter: line
 ```
 
@@ -165,6 +165,29 @@ upgrading packages. Name the blocking package, its version, and the SDK constrai
 clashes with the new one, then hand the decision back to the user: raising that
 dependency is its own PR, not part of this one. If `analyze` surfaces new errors
 introduced by the SDK bump, report them rather than fixing them in this PR.
+
+**Crossing Flutter 3.50:** `package:flutter/material.dart` and `package:flutter/cupertino.dart`
+are deprecated in favor of `package:material_ui` and `package:cupertino_ui`. Both libraries
+carry `@Deprecated`, so `analyze` reports `deprecated_member_use` on every Material and
+Cupertino import. `GlobalMaterialLocalizations` and `GlobalCupertinoLocalizations` from
+`flutter_localizations` are deprecated too. That is expected. Report it and name the
+follow-up PR: `dart fix --apply --code=migrate_design_widgets`, which updates the imports, then
+`flutter pub add material_ui` / `flutter pub add cupertino_ui` when the fix does not add them,
+then a manual switch of `localizationsDelegates` to `GlobalMaterialLocalizations.delegates`
+(the breaking-change guide shows it as a manual step), then a second `dart fix --apply` for the
+remaining fixes such as import sorting. Do not run any of them in the SDK bump PR.
+
+**Crossing Dart 3.13:** `final` and `var` on ordinary parameters become errors, and `dart format`
+output changes for code at language version 3.13 or higher. Report the errors and the format
+diff as the follow-up PR. Do not fix or reformat in the SDK bump PR.
+
+**Do not use `dart migrate --apply` for the bump.** It applies code fixes along with the
+constraint change. Edit the constraints by hand. `dart migrate --dry-run` is fine for listing
+the fixes the follow-up PR needs.
+
+Crossing Flutter 3.44 to 3.50 also raises Android, iOS and macOS build minimums, and the Flutter
+tool edits some project files on its own. See
+[references/version-conflicts.md](references/version-conflicts.md#platform-minimums).
 
 See [references/version-conflicts.md](references/version-conflicts.md) for reading version
 solving output, the three shapes a conflict takes, tracing a transitive blocker, and the

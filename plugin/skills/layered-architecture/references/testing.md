@@ -12,7 +12,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 import 'package:user_api_client/user_api_client.dart';
 
-class _MockHttpClient extends Mock implements http.Client {}
+class _MockHttpClient extends Mock implements http.Client;
 
 void main() {
   group(UserApiClient, () {
@@ -84,7 +84,7 @@ import 'package:test/test.dart';
 import 'package:user_api_client/user_api_client.dart';
 import 'package:user_repository/user_repository.dart';
 
-class _MockUserApiClient extends Mock implements UserApiClient {}
+class _MockUserApiClient extends Mock implements UserApiClient;
 
 void main() {
   group(UserRepository, () {

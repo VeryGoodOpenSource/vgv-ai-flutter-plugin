@@ -80,7 +80,7 @@ extension PumpApp on WidgetTester {
 /// My UI — a custom Flutter widget library built on Material.
 library;
 
-export 'package:flutter/material.dart';
+export 'package:material_ui/material_ui.dart';
 
 export 'src/extensions/build_context_extensions.dart';
 export 'src/theme/app_colors.dart';
@@ -91,21 +91,75 @@ export 'src/widgets/app_card.dart';
 export 'src/widgets/app_text_field.dart';
 ```
 
+## Migrating an Existing Package to `material_ui`
+
+Switching the barrel from `package:flutter/material.dart` to `package:material_ui/material_ui.dart`
+is a breaking change for consumers. Class names stay the same, but the types come from a different
+library, so a `ColorScheme` or `TextTheme` from one is not assignable to the other.
+
+1. Run `dart fix --apply --code=migrate_design_widgets` in the package
+2. Add `material_ui: ^1.11.1` to `pubspec.yaml` if the fix did not (`flutter pub add material_ui`).
+   It requires Flutter 3.47 or newer, so raise the `environment` bound to
+   `flutter: ">=3.47.0"` and `sdk: ^3.13.0` at least
+3. Release the change as a new major version of the package
+4. Consuming apps that still have unmigrated dependencies wrap their tree in
+   `MaterialUiCompatibilityBridge` inside `MaterialApp.builder`; it passes `Theme` and
+   `MaterialLocalizations` down but cannot fix type mismatches in a dependency's public API.
+   The bridge is itself `@Deprecated` as a temporary migration utility, so remove it once every
+   dependency imports `package:material_ui`
+
 ## Widgetbook Catalog
 
 ### Key Concepts
 
 - **Use cases**: top-level functions annotated with `@widgetbook.UseCase(name:, type:)`, one file per widget in `use_cases/`
 - **Use-case decorator**: a `UseCaseDecorator` widget that wraps every use case with a consistent background
-- **Theme addon**: `ThemeAddon` wired to `AppTheme.light` and `AppTheme.dark` for switching themes in the catalog
+- **App builder**: a custom `appBuilder` on the default `Widgetbook` constructor that returns `material_ui`'s `MaterialApp`. Never use `Widgetbook.material`: its default app builder creates a `package:flutter/material.dart` `MaterialApp`, so use cases such as a text field find no `material_ui` `MaterialLocalizations` and fail `debugCheckHasMaterialLocalizations`
+- **Theme addon**: the generic `ThemeAddon<ThemeData>` wired to `AppTheme.light` and `AppTheme.dark`, with a `themeBuilder` that wraps the child in `material_ui`'s `Theme`. Never use `MaterialThemeAddon`: it expects `ThemeData` from `package:flutter/material.dart`, which is a different type
 - **Code generation**: Widgetbook uses `build_runner` to scan annotations and generate `widgetbook.directories.g.dart`
+
+```dart
+import 'package:my_ui/my_ui.dart';
+import 'package:widgetbook/widgetbook.dart';
+import 'package:widgetbook_annotation/widgetbook_annotation.dart' as widgetbook;
+
+import 'widgetbook.directories.g.dart';
+
+void main() => runApp(const WidgetbookApp());
+
+@widgetbook.App()
+class WidgetbookApp extends StatelessWidget {
+  const WidgetbookApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Widgetbook(
+      directories: directories,
+      appBuilder: (context, child) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Material(child: child),
+      ),
+      addons: [
+        ThemeAddon<ThemeData>(
+          themes: [
+            WidgetbookTheme(name: 'Light', data: AppTheme.light),
+            WidgetbookTheme(name: 'Dark', data: AppTheme.dark),
+          ],
+          themeBuilder: (context, theme, child) =>
+              Theme(data: theme, child: child),
+        ),
+      ],
+    );
+  }
+}
+```
 
 ### Commands
 
-| Command                                                                     | Purpose                                                          |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `cd widgetbook && dart run build_runner build --delete-conflicting-outputs` | Regenerate use-case directories after adding/modifying use cases |
-| `cd widgetbook && flutter run -d chrome`                                    | Run the catalog locally                                          |
+| Command                                         | Purpose                                                          |
+| ----------------------------------------------- | ---------------------------------------------------------------- |
+| `cd widgetbook && dart run build_runner build`  | Regenerate use-case directories after adding/modifying use cases |
+| `cd widgetbook && flutter run -d chrome`        | Run the catalog locally                                          |
 
 ## Common Workflows
 
@@ -116,7 +170,7 @@ export 'src/widgets/app_text_field.dart';
 3. Export the file from the barrel file (`lib/my_ui.dart`)
 4. Create `test/src/widgets/app_<name>_test.dart` with widget tests
 5. Add use cases in `widgetbook/lib/widgetbook/use_cases/app_<name>.dart` covering all variants
-6. Re-run `dart run build_runner build --delete-conflicting-outputs` in `widgetbook/`
+6. Re-run `dart run build_runner build` in `widgetbook/`
 
 ### Adding a New Custom Token
 

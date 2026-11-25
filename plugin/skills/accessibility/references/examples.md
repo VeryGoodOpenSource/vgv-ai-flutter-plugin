@@ -11,7 +11,7 @@ The examples in this file cover every WCAG 2.2 criterion the skill checks. Read 
 ### Custom Semantics for Complex Widgets
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// A rating bar that provides a single semantic description
 /// instead of exposing individual star icons.
@@ -45,8 +45,8 @@ class const AccessibleRatingBar({
 Cupertino widgets ship with weaker semantic defaults than their Material equivalents. Always wrap them.
 
 ```dart
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:material_ui/material_ui.dart';
 
 class const AccessibleCupertinoSwitch({
   required final String label,
@@ -150,7 +150,7 @@ Row(
 ### Live Region for Async Status Updates
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 enum UploadStatus { idle, uploading, success, error }
 
@@ -187,10 +187,20 @@ class const UploadStatusIndicator({required final UploadStatus status, super.key
 }
 ```
 
-For one-shot announcements:
+For one-shot announcements, use `SemanticsService.sendAnnouncement`. `SemanticsService.announce` is deprecated since Flutter 3.38, which also added `sendAnnouncement`:
 
 ```dart
-SemanticsService.announce('Item added to cart', TextDirection.ltr);
+import 'package:flutter/semantics.dart';
+import 'package:material_ui/material_ui.dart';
+
+void announceAddedToCart(BuildContext context) {
+  if (!MediaQuery.supportsAnnounceOf(context)) return;
+  SemanticsService.sendAnnouncement(
+    View.of(context),
+    'Item added to cart',
+    Directionality.of(context),
+  );
+}
 ```
 
 ---
@@ -200,7 +210,7 @@ SemanticsService.announce('Item added to cart', TextDirection.ltr);
 ### Expanding Small Icons to Meet Minimum Size
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Wraps any small widget in a minimum 48x48 touch target.
 /// 48 is the VGV recommended minimum. The WCAG 2.2 AA floor (2.5.8) is 24.
@@ -267,14 +277,16 @@ class const AccessibleDismissibleListItem({
 ```dart
 class const AccessibleReorderableList({
   required final List<Item> items,
-  required final void Function(int oldIndex, int newIndex) onReorder,
+  required final void Function(int oldIndex, int newIndex) onReorderItem,
   super.key,
 }) extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // onReorderItem (Flutter 3.44+) replaces the deprecated onReorder.
+    // newIndex is already corrected, so drag and buttons share one handler.
     return ReorderableListView.builder(
       itemCount: items.length,
-      onReorder: onReorder,
+      onReorderItem: onReorderItem,
       itemBuilder: (context, index) {
         final item = items[index];
         final isFirst = index == 0;
@@ -288,13 +300,12 @@ class const AccessibleReorderableList({
               IconButton(
                 icon: const Icon(Icons.arrow_upward),
                 tooltip: 'Move up',
-                onPressed: isFirst ? null : () => onReorder(index, index - 1),
+                onPressed: isFirst ? null : () => onReorderItem(index, index - 1),
               ),
               IconButton(
                 icon: const Icon(Icons.arrow_downward),
                 tooltip: 'Move down',
-                // ReorderableListView's onReorder uses index + 1 when moving down
-                onPressed: isLast ? null : () => onReorder(index, index + 2),
+                onPressed: isLast ? null : () => onReorderItem(index, index + 1),
               ),
               const Icon(Icons.drag_handle),
             ],
@@ -308,7 +319,7 @@ class const AccessibleReorderableList({
 
 ### Slider With Keyboard Stepping (WCAG 2.2 2.5.7)
 
-Material's `Slider` already responds to arrow keys. Custom slider widgets must do the same.
+Material's `Slider` already responds to arrow keys. Custom slider widgets must do the same. Give a slider drawn from scratch `Semantics(slider: true, label:, value:)`. The `slider` flag sets the slider role on every platform. On Flutter 3.50+, add `role: SemanticsRole.slider` too: web and Android map it to their native slider role. iOS, macOS, Windows and Linux ignore `role` and use the flag.
 
 ```dart
 class const AccessibleSlider({
@@ -355,7 +366,7 @@ class const AccessibleSlider({
 ### Custom Focus Traversal for a Form
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AccessibleForm extends StatelessWidget {
   const AccessibleForm({super.key});
@@ -507,7 +518,7 @@ class _FocusAppearanceWrapState extends State<FocusAppearanceWrap> {
 ### Contrast-Safe Theme
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 ThemeData buildAccessibleTheme() {
   const colorScheme = ColorScheme(
@@ -607,7 +618,7 @@ class const AdaptiveInfoCard({
 ### Animated Page Transition Respecting Reduced Motion
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
   AccessiblePageRoute({required super.builder, super.settings});
@@ -619,8 +630,12 @@ class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    if (MediaQuery.of(context).disableAnimations) {
+    if (MediaQuery.disableAnimationsOf(context)) {
       return child; // Instant page change
+    }
+    // Flutter 3.50+: Reduce Motion swaps the platform slide for a short fade.
+    if (MediaQuery.reduceMotionOf(context)) {
+      return FadeTransition(opacity: animation, child: child);
     }
     return super.buildTransitions(context, animation, secondaryAnimation, child);
   }
@@ -634,7 +649,9 @@ class const AccessibleHero({required final Object tag, required final Widget chi
     extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.of(context).disableAnimations) {
+    // Flutter 3.50+: iOS Reduce Motion sets reduceMotion, not disableAnimations.
+    if (MediaQuery.disableAnimationsOf(context) ||
+        MediaQuery.reduceMotionOf(context)) {
       return child;
     }
     return Hero(tag: tag, child: child);

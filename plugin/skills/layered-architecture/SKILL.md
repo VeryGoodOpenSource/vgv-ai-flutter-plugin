@@ -39,7 +39,7 @@ Apply these standards to all layered architecture work:
 - **Repositories take every external source through the constructor** — a data client or an SDK object such as `FirebaseAuth.instance`, built in bootstrap and passed in, never constructed or defaulted inside the repository
 - **App bootstrap wires all layers** — `main_<flavor>.dart` creates clients and repositories, provides them via `RepositoryProvider`
 - **Only the app's entrypoints and bootstrap import a data package** — blocs, widgets, and app tests reach data through a repository
-- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare model and widget fields as primary-constructor declaring parameters (`class const User(final String id, final String name) extends Equatable`) rather than `this.field`; keep the classic form only below 3.13
+- **Dart 3.13 primary constructors** — on a Dart 3.13+ baseline, declare model and widget fields as primary-constructor declaring parameters (`class const User(final String id, final String name) extends Equatable`) rather than `this.field`. A private field takes a private named parameter (`required final UserApiClient _userApiClient`, passed as `userApiClient:`), never an initializer list that only copies the parameter. A class-body constructor is named `new`. Keep the classic form only below 3.13
 
 > **Cross-harness fallback.** This skill scaffolds and tests packages via the Very Good CLI MCP server. On a host without this plugin's Bash hooks and without that MCP server connected, run the equivalent `very_good create dart_package …`, `very_good packages get`, and `very_good test` commands directly.
 
@@ -76,11 +76,10 @@ Constructor-inject the HTTP client for testability. Return typed response models
 /// HTTP client for the User API.
 class UserApiClient {
   // http.Client injected — tests pass a mock, production gets a real client
-  UserApiClient({
-    required String baseUrl,
+  new({
+    required this._baseUrl,
     http.Client? httpClient,
-  })  : _baseUrl = baseUrl,
-        _httpClient = httpClient ?? http.Client();
+  }) : _httpClient = httpClient ?? http.Client();
 
   final String _baseUrl;
   final http.Client _httpClient;
@@ -131,13 +130,8 @@ class const User({
 
 ```dart
 /// Repository accepts data client via constructor — never creates its own.
-class UserRepository {
-  const UserRepository({
-    required UserApiClient userApiClient,
-  }) : _userApiClient = userApiClient;
-
-  final UserApiClient _userApiClient;
-
+/// Callers pass `userApiClient:`; the private declaring parameter keeps the field private.
+class const UserRepository({required final UserApiClient _userApiClient}) {
   /// Transforms UserResponse (API shape) → User (domain shape).
   Future<User> getUser(String userId) async {
     final response = await _userApiClient.getUser(userId);
@@ -197,7 +191,7 @@ Flavors change only configuration — base URLs, API keys — never the wiring s
 // lib/main_development.dart
 import 'package:auth_api_client/auth_api_client.dart';
 import 'package:auth_repository/auth_repository.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/app/app.dart';
 import 'package:user_api_client/user_api_client.dart';
 import 'package:user_repository/user_repository.dart';

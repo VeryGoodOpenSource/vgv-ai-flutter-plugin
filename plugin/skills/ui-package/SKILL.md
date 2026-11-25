@@ -16,7 +16,7 @@ allowed-tools: Read Glob Grep Edit Write mcp__very-good-cli__create
 
 # UI Package
 
-Best practices for creating a Flutter UI package — a reusable widget library that builds on top of `package:flutter/material.dart`, extending it with app-specific components, custom design tokens via `ThemeExtension`, and a consistent API surface.
+Best practices for creating a Flutter UI package — a reusable widget library that builds on top of `package:material_ui/material_ui.dart`, extending it with app-specific components, custom design tokens via `ThemeExtension`, and a consistent API surface.
 
 > **Theming foundation:** This skill focuses on UI package structure, widget APIs, and testing. For foundational Material 3 theming (`ColorScheme`, `TextTheme`, component themes, spacing constants, light/dark mode), see the **Material Theming** skill (`/material-theming`). The two skills are complementary — Material Theming covers how to set up and use `ThemeData`; this skill covers how to extend it with `ThemeExtension` tokens and package reusable widgets around it.
 
@@ -26,9 +26,9 @@ Apply these standards to all UI package work:
 
 - **Read the matching VGE Standards file before writing code** — every task listed under VGE Standards below has a file you MUST open with the Read tool first; it holds rules these bullets do not repeat
 - **Scaffold from the `app_ui_package` template** — create the package with the Very Good CLI MCP tool, `subcommand: 'app_ui_package'`. Never `flutter_package`, never `dart_package`, never `flutter create --template=package`; those produce a bare package with none of the theme, barrel, test-helper, or Widgetbook scaffolding below
-- **Build on Material** — depend on `flutter/material.dart` and compose Material widgets; do not rebuild primitives that Material already provides
+- **Build on Material** — depend on `package:material_ui` and compose Material widgets; do not rebuild primitives that Material already provides. On Flutter 3.50+ never import `package:flutter/material.dart`, which is deprecated in favor of `material_ui`. Moving an existing package to `material_ui` changes its public types, so release it as a major version
 - **One widget per file** — each public widget lives in its own file named after the widget in snake_case (e.g., `app_button.dart`)
-- **Barrel file for public API** — expose all public widgets and theme classes through a single barrel file (e.g., `lib/my_ui.dart`) that also re-exports `material.dart`, so one import gives a consumer both Material's widgets and the package's own and no second Material import is needed
+- **Barrel file for public API** — expose all public widgets and theme classes through a single barrel file (e.g., `lib/my_ui.dart`) that also re-exports `package:material_ui/material_ui.dart`, so one import gives a consumer both Material's widgets and the package's own and no second Material import is needed
 - **`lib/src/` is private** — consumers import the barrel and nothing else; a per-file import such as `package:my_ui/src/widgets/app_button.dart` reaches into private implementation and breaks on any internal rename. Tree shaking already drops unused widgets, so the barrel costs nothing
 - **Extend theming with `ThemeExtension`** — use Material's `ThemeData`, `ColorScheme`, and `TextTheme` as the base (see Material Theming skill); add app-specific tokens (spacing, custom colors) via `ThemeExtension<T>`, register every one of them on `ThemeData.extensions`, and read them through a `BuildContext` extension (`context.appColors`, `context.appSpacing`). This deliberately differs from the app-level `abstract class AppColors`/`AppSpacing` statics in VGE `development/ui/theming.md`: a reusable UI package ships tokens that swap per theme and interpolate through `lerp`, which static constants cannot
 - **Every widget has a corresponding widget test** — behavioral tests verify interactions, callbacks, and state changes, pumped through the package's `pumpApp` helper rather than an inline `MaterialApp`
@@ -57,7 +57,7 @@ the synced copy, apply the Core Standards above.
 ```text
 my_ui/
 ├── lib/
-│   ├── my_ui.dart              # Barrel file — re-exports material.dart + all public API
+│   ├── my_ui.dart              # Barrel file — re-exports material_ui + all public API
 │   └── src/
 │       ├── theme/
 │       │   ├── app_theme.dart        # AppTheme class with light/dark ThemeData builders

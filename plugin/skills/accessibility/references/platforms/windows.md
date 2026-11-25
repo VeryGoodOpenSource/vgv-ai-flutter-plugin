@@ -45,16 +45,30 @@ Per-platform WCAG 2.2 checks for Flutter Windows apps. Read this file during Pha
 
 ## Flutter-Specific Gotchas
 
-### AccessibilityFeatures.highContrast is iOS-only
+### High Contrast Mode reaches MediaQuery on Windows
 
-`AccessibilityFeatures.highContrast` does **not exist on Windows**. Detect Windows High Contrast Mode via `ThemeData(useSystemColors: true)`:
+The Windows embedder reports High Contrast Mode as `AccessibilityFeatures.highContrast`. Read it with `MediaQuery.highContrastOf(context)`, and supply `MaterialApp.highContrastTheme` so it is picked automatically:
 
 ```dart
-ThemeData(
-  useMaterial3: true,
-  useSystemColors: true, // Auto-applies Windows High Contrast
-)
+import 'package:material_ui/material_ui.dart';
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(),
+      highContrastTheme: ThemeData(
+        colorScheme: const ColorScheme.highContrastLight(),
+      ),
+      home: const Placeholder(),
+    );
+  }
+}
 ```
+
+High contrast is the only accessibility feature Windows sends. `disableAnimations`, `reduceMotion`, `boldText` and `invertColors` are always `false` on Windows, so the Windows "Animation effects" setting does not reach `MediaQuery`. Offer an in-app reduce-motion toggle for Windows users.
 
 However, support for Windows forced-colors mode is incomplete (issue #75883). Always test with High Contrast enabled in Windows Settings.
 
@@ -62,9 +76,9 @@ However, support for Windows forced-colors mode is incomplete (issue #75883). Al
 
 Flutter Desktop on Windows runs in UIA **focus mode only** — unlike web where NVDA browse mode lets users skim content by headings. Screens that rely on heading navigation as the primary discovery pattern should note this limitation in findings. All content must be reachable via Tab navigation.
 
-### SemanticsRole is web-only
+### SemanticsRole is ignored on Windows
 
-`SemanticsRole` enum support is web-only in Flutter 3.32. Windows support is planned but not yet shipped. Do not rely on `SemanticsRole` for Windows accessibility.
+In Flutter 3.50, the Windows embedder does not read `SemanticsRole`. Native roles come only from semantics flags: `button`, `textField`, `header`, `image`, `link`, `checked` (checkbox, or radio button with `inMutuallyExclusiveGroup`), `toggled` (switch) and `slider`. Every other node is static text or a group. Set the flag, not `role`, to give a widget its role here. Headings come from `header: true`; `headingLevel` is ignored on desktop.
 
 ### UIA element tree mapping
 

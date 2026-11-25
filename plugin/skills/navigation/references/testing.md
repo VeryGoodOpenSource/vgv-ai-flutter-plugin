@@ -50,8 +50,8 @@ testWidgets('redirects unauthenticated user to sign in', (tester) async {
       return '/sign-in';
     },
     routes: [
-      GoRoute(path: '/sign-in', builder: (_, __) => const SignInPage()),
-      GoRoute(path: '/premium', builder: (_, __) => const PremiumPage()),
+      GoRoute(path: '/sign-in', builder: (_, _) => const SignInPage()),
+      GoRoute(path: '/premium', builder: (_, _) => const PremiumPage()),
     ],
   );
 

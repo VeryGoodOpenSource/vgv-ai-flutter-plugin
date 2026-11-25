@@ -7,9 +7,10 @@ A complete Flutter accessibility test suite covering semantics, touch targets, f
 ## Full Accessibility Test Suite Example
 
 ```dart
-import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() {
   // --- A. Semantics & Screen Reader ---
@@ -68,8 +69,11 @@ void main() {
         ),
       );
 
-      final semantics = tester.getSemantics(find.text('Loading complete'));
-      expect(semantics.hasFlag(SemanticsFlag.isLiveRegion), isTrue);
+      // isSemantics replaces the deprecated containsSemantics (Flutter 3.41+).
+      expect(
+        tester.getSemantics(find.text('Loading complete')),
+        isSemantics(isLiveRegion: true),
+      );
 
       handle.dispose();
     });
@@ -259,6 +263,64 @@ void main() {
 
       expect(find.text('Animated'), findsOneWidget);
     });
+
+    testWidgets('AccessiblePageRoute fades instead of sliding when reduceMotion is true',
+        (tester) async {
+      // MediaQueryData.reduceMotion requires Flutter 3.50+.
+      final navigatorKey = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(reduceMotion: true),
+          child: MaterialApp(
+            navigatorKey: navigatorKey,
+            home: const Text('Home'),
+          ),
+        ),
+      );
+
+      unawaited(
+        navigatorKey.currentState!.push(
+          AccessiblePageRoute<void>(builder: (_) => const Text('Details')),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(
+        find.ancestor(
+          of: find.text('Details'),
+          matching: find.byType(FadeTransition),
+        ),
+        findsWidgets,
+      );
+      expect(
+        find.ancestor(
+          of: find.text('Details'),
+          matching: find.byType(SlideTransition),
+        ),
+        findsNothing,
+      );
+    });
   });
+}
+
+class AccessiblePageRoute<T> extends MaterialPageRoute<T> {
+  AccessiblePageRoute({required super.builder, super.settings});
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return child;
+    }
+    if (MediaQuery.reduceMotionOf(context)) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+    return super.buildTransitions(context, animation, secondaryAnimation, child);
+  }
 }
 ```

@@ -71,7 +71,7 @@ late final Animation<Offset> _slideAnimation = Tween<Offset>(
 ).animate(
   CurvedAnimation(
     parent: _controller,
-    curve: const Interval(0.2, 0.8, curve: Easing.emphasized),
+    curve: const Interval(0.2, 0.8, curve: Easing.emphasizedDecelerate),
   ),
 );
 ```

@@ -31,14 +31,14 @@ class _StaggeredEntryState extends State<StaggeredEntry>
     ).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.1, 0.7, curve: Easing.emphasized),
+        curve: const Interval(0.1, 0.7, curve: Easing.emphasizedDecelerate),
       ),
     );
 
     _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.1, 0.7, curve: Easing.emphasized),
+        curve: const Interval(0.1, 0.7, curve: Easing.emphasizedDecelerate),
       ),
     );
 
@@ -99,7 +99,7 @@ class _StaggeredListItemState extends State<StaggeredListItem> {
     final end = ((widget.index + 1) / widget.itemCount).clamp(0.0, 1.0);
     _curvedAnimation = CurvedAnimation(
       parent: widget.animation,
-      curve: Interval(start, end, curve: Easing.emphasized),
+      curve: Interval(start, end, curve: Easing.emphasizedDecelerate),
     );
   }
 

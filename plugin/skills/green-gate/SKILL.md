@@ -188,6 +188,11 @@ Fixed order: **analyze → format → test → coverage**. Two rules govern it:
   hook fires only on files the loop edits via Edit/Write. A hand-edited or
   pre-existing unformatted file the loop never touches would otherwise pass
   green-gate and then fail CI. The whole-package format closes that gap.
+- **A large first-round diff after an SDK bump is not a regression** — once the
+  package's `sdk` lower bound is `^3.13.0` or newer, `dart format` applies the
+  Dart 3.13 style: import sections, block-formatted parameter lists, and split
+  call chains. The gate rewrites it like any other drift; re-run it next round
+  to observe the `0`.
 
 ---
 

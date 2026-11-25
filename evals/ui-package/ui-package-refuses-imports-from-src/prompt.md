@@ -3,7 +3,7 @@ max_turns: 12
 timeout_seconds: 600
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [ui-package]
-description: "Everything under a package's src/ is private, consumers import the one barrel file, and the barrel re-exports material.dart."
+description: "Everything under a package's src/ is private, consumers import the one barrel file, and the barrel re-exports Material (material_ui)."
 ---
 
 My app imports widgets from our UI package one file at a time, like this:

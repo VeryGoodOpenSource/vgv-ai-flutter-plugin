@@ -55,12 +55,12 @@ See [references/testing.md](references/testing.md) for mocking GoRouter and test
 ### Adding a New Route
 
 1. Create the page widget (following the Page/View pattern if using Bloc)
-2. Define a `GoRouteData` class with `@TypedGoRoute` annotation
+2. Define a `GoRouteData` class with `@TypedGoRoute` annotation that mixes in its generated mixin (`class HomeRoute extends GoRouteData with $HomeRoute`)
 3. Add it as a sub-route under the appropriate parent route
-4. Run `dart run build_runner build --delete-conflicting-outputs` to regenerate route helpers
+4. Run `dart run build_runner build` to regenerate route helpers
    (see [references/typed-routes.md](references/typed-routes.md) for shell routes and code generation)
 5. Navigate using the generated type-safe route class
-6. Launch the app with the route's URL to confirm it resolves as a deep link
+6. Launch the app with the route's URL to confirm it resolves as a deep link. On Android, declare the URL in an `AndroidManifest.xml` `<intent-filter>`: from Flutter 3.50, release builds honor a deep link only if it matches an intent-filter, and ignore an unverified `route` Intent extra. Debug and profile builds only log a warning, so confirm it in a release build
 
 ## Additional Resources
 

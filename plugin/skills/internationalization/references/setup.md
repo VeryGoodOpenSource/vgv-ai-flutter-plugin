@@ -27,6 +27,9 @@
 }
 ```
 
+Since Flutter 3.50, `flutter gen-l10n` rejects a placeholder `type` that is not a valid Dart
+type name. Use Dart types such as `String`, `int`, `num`, `double`, or `DateTime`.
+
 ## Plurals
 
 ```json

@@ -54,7 +54,7 @@ import 'package:mocktail/mocktail.dart';
 
 import 'package:my_app/todos/todos.dart';
 
-class _MockTodoRepository extends Mock implements TodoRepository {}
+class _MockTodoRepository extends Mock implements TodoRepository;
 
 void main() {
   group(TodosBloc, () {
@@ -110,7 +110,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:my_app/todos/todos.dart';
 
 // Private mock, one per test file
-class _MockTodoRepository extends Mock implements TodoRepository {}
+class _MockTodoRepository extends Mock implements TodoRepository;
 
 void main() {
   group(TodosBloc, () {
@@ -147,9 +147,9 @@ void main() {
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:my_app/todos/todos.dart';
@@ -157,7 +157,7 @@ import 'package:my_app/todos/todos.dart';
 import '../../helpers/helpers.dart';
 
 class _MockTodosBloc extends MockBloc<TodosEvent, TodosState>
-    implements TodosBloc {}
+    implements TodosBloc;
 
 void main() {
   group(TodosView, () {

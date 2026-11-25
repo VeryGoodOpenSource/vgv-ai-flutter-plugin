@@ -23,7 +23,7 @@ class const User({
   final String? avatarUrl,
 }) extends Equatable {
   /// Creates a [User] from a [UserResponse].
-  factory User.fromResponse(UserResponse response) {
+  factory fromResponse(UserResponse response) {
     return User(
       id: response.id,
       email: response.email,
@@ -51,7 +51,7 @@ Future<User> getUser(String userId) async {
 When the API returns fields that are optional or may change shape:
 
 ```dart
-factory User.fromResponse(UserResponse response) {
+factory fromResponse(UserResponse response) {
   return User(
     id: response.id,
     email: response.email,
@@ -68,16 +68,10 @@ factory User.fromResponse(UserResponse response) {
 When a domain model requires data from more than one client:
 
 ```dart
-class UserRepository {
-  const UserRepository({
-    required UserApiClient userApiClient,
-    required LocalStorageClient localStorageClient,
-  })  : _userApiClient = userApiClient,
-        _localStorageClient = localStorageClient;
-
-  final UserApiClient _userApiClient;
-  final LocalStorageClient _localStorageClient;
-
+class const UserRepository({
+  required final UserApiClient _userApiClient,
+  required final LocalStorageClient _localStorageClient,
+}) {
   Future<User> getUser(String userId) async {
     final response = await _userApiClient.getUser(userId);
     final cachedNickname = _localStorageClient.read('nickname_$userId');

@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'SemanticsService\.announce'
+pattern: 'SemanticsService\.sendAnnouncement'
 ---

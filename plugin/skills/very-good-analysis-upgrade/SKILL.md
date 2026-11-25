@@ -96,11 +96,11 @@ caret is what every other VGV package uses.
 ```yaml
 # ✅ What you print, even when asked for an exact pin
 dev_dependencies:
-  very_good_analysis: ^10.0.0 # caret is the VGV convention — patch lints land without a PR
+  very_good_analysis: ^11.0.0 # caret is the VGV convention — patch lints land without a PR
 
 # ❌ Honoring "pin it exactly" on the first ask
 dev_dependencies:
-  very_good_analysis: 10.0.0
+  very_good_analysis: 11.0.0
 ```
 
 The first ask is not insistence, it is the request this standard exists to answer. Write the
@@ -198,6 +198,11 @@ which changes belong in the PR is a scope decision, not something the files deci
 included by the project's own options file. You generally don't need to touch the project's
 `analysis_options.yaml` — the bump in `pubspec.yaml` is sufficient to pull in the new rules.
 
+**Crossing 11.0.0**: `very_good_analysis` 11.0.0 requires Dart 3.13 (`sdk: ^3.13.0`). Below that,
+`pub get` fails. The SDK bump is its own PR, so report the conflict and stop. 11.0.0 also sets
+`formatter: trailing_commas: automate`, so `dart format` rewrites trailing commas after the bump.
+That format diff is forced by the bump. Commit it separately inside the upgrade PR.
+
 **Breaking rule changes**: Occasionally a new version disables a rule that was previously
 enabled, or changes its severity. That might cause previously-flagged issues to disappear,
 which is fine — don't re-introduce them.
@@ -224,4 +229,4 @@ Naming only "there is a conflict" is not enough — name the two constraints.
 
 ## Additional Resources
 
-See [`references/lint-fixes.md`](references/lint-fixes.md) for a quick-reference table of common lint rules introduced by `very_good_analysis` upgrades, their typical fixes, and which ones carry behavior risk (`prefer_const_constructors`, `use_super_parameters`, `unnecessary_late`, `avoid_dynamic_calls`, `require_trailing_commas`, `unnecessary_null_checks`) — plus the Dart 3.13 constructor rules that `very_good_analysis` 11.0.0 adds (`unnecessary_type_name_in_constructor`, `use_declaring_parameters`, `unnecessary_primary_constructor_body`, `empty_container_bodies`).
+See [`references/lint-fixes.md`](references/lint-fixes.md) for a quick-reference table of common lint rules introduced by `very_good_analysis` upgrades, their typical fixes, and which ones carry behavior risk (`prefer_const_constructors`, `use_super_parameters`, `unnecessary_late`, `avoid_dynamic_calls`, `require_trailing_commas`, `unnecessary_null_checks`) — plus the seven rules `very_good_analysis` 11.0.0 adds, including the Dart 3.13 constructor rules (`unnecessary_type_name_in_constructor`, `use_declaring_parameters`, `unnecessary_primary_constructor_body`), `empty_container_bodies`, and `async_return_with_no_await`, which carries behavior risk.

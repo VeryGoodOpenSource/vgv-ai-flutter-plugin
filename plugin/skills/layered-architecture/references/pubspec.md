@@ -9,18 +9,18 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   http: ^1.4.0
-  json_annotation: ^4.9.0
+  json_annotation: ^4.12.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
-  json_serializable: ^6.9.0
+  build_runner: ^2.17.1
+  json_serializable: ^6.15.2
   mocktail: ^1.0.0
   test: ^1.25.0
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 ```
 
 ## Repository Package
@@ -32,17 +32,17 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
-  equatable: ^2.0.7
+  equatable: ^3.0.0
   weather_api_client:
     path: ../weather_api_client
 
 dev_dependencies:
   mocktail: ^1.0.0
   test: ^1.25.0
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 ```
 
 ## Root App
@@ -54,13 +54,14 @@ version: 1.0.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
-  flutter: ^3.29.0
+  sdk: ^3.14.0
+  flutter: ^3.50.0
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.0
+  material_ui: ^1.11.1
   auth_api_client:
     path: packages/auth_api_client
   auth_repository:
@@ -75,11 +76,11 @@ dependencies:
     path: packages/weather_repository
 
 dev_dependencies:
-  bloc_test: ^9.1.0
+  bloc_test: ^10.0.0
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.0
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 
 flutter:
   uses-material-design: true
@@ -96,17 +97,18 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
-  flutter: ^3.29.0
+  sdk: ^3.14.0
+  flutter: ^3.50.0
 
 dependencies:
   flutter:
     sdk: flutter
+  material_ui: ^1.11.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 ```
 
 ## Layer Boundaries in `pubspec.yaml`
@@ -120,14 +122,14 @@ both layers, because its bootstrap constructs the data clients it injects into r
 dependencies:
   # External packages only — no local dependencies
   http: ^1.4.0
-  json_annotation: ^4.9.0
+  json_annotation: ^4.12.0
 ```
 
 ### Repository Package (`packages/user_repository/pubspec.yaml`)
 
 ```yaml
 dependencies:
-  equatable: ^2.0.7
+  equatable: ^3.0.0
   # Path dependency on data layer package
   user_api_client:
     path: ../user_api_client
@@ -140,6 +142,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.0
+  material_ui: ^1.11.1
   # Repositories, plus each data package main_<flavor>.dart constructs
   auth_api_client:
     path: packages/auth_api_client

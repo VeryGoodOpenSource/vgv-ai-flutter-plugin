@@ -18,15 +18,15 @@ Quick-reference table mapping Flutter widgets to their accessibility requirement
 | `TextField` | Label | Use `InputDecoration(labelText:)` — always provide a visible label |
 | `Checkbox` | Label + state | Wrap in `CheckboxListTile` for automatic label association |
 | `Switch` | Label + state | Wrap in `SwitchListTile` for automatic label association |
-| `Slider` | Label + value | Use `Semantics(label:, value:)` or `Slider.adaptive` |
+| `Slider` | Label + value | Use `Semantics(label:, value:)` or `Slider.adaptive`; a custom slider sets `Semantics(slider: true)`, plus `role: SemanticsRole.slider` on Flutter 3.50+ for web and Android |
 | `DropdownButton` | Label + expanded state | Wrap in `DropdownButtonFormField` with `InputDecoration(labelText:)` |
 | `AlertDialog` | Focus management | `showDialog` handles focus trapping and restoration automatically |
 | `BottomSheet` | Focus management | `showModalBottomSheet` handles focus trapping and restoration automatically |
 | `ListView` | Scrolling semantics | Flutter handles scroll semantics automatically; ensure list items are accessible |
 | `TabBar` | Tab semantics | Flutter provides tab semantics automatically via `TabBar` + `TabBarView` |
-| `AnimatedContainer` | Motion sensitivity | Gate `duration` on `MediaQuery.of(context).disableAnimations` |
+| `AnimatedContainer` | Motion sensitivity | Gate `duration` on `MediaQuery.disableAnimationsOf(context)` |
 | `Hero` | Motion sensitivity | Skip `Hero` when `disableAnimations` is true |
-| `PageRoute` | Motion sensitivity | Override `buildTransitions` to return `child` directly when animations disabled |
+| `PageRoute` | Motion sensitivity | Override `buildTransitions` to return `child` directly when animations disabled, and a `FadeTransition` when `MediaQuery.reduceMotionOf(context)` is true (Flutter 3.50+) |
 
 ---
 

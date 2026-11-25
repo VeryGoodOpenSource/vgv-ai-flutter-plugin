@@ -13,18 +13,18 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   http: ^1.4.0
-  json_annotation: ^4.9.0
+  json_annotation: ^4.12.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
-  json_serializable: ^6.9.0
+  build_runner: ^2.17.1
+  json_serializable: ^6.15.2
   mocktail: ^1.0.0
   test: ^1.25.0
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 ```
 
 **`packages/user_api_client/lib/user_api_client.dart`**
@@ -57,7 +57,7 @@ class const UserResponse({
   @JsonKey(name: 'display_name') required final String displayName,
   @JsonKey(name: 'avatar_url') final String? avatarUrl,
 }) {
-  factory UserResponse.fromJson(Map<String, dynamic> json) =>
+  factory fromJson(Map<String, dynamic> json) =>
       _$UserResponseFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserResponseToJson(this);
@@ -78,11 +78,10 @@ class const UserApiException(final int statusCode, final String message)
 
 /// HTTP client for the User API.
 class UserApiClient {
-  UserApiClient({
-    required String baseUrl,
+  new({
+    required this._baseUrl,
     http.Client? httpClient,
-  })  : _baseUrl = baseUrl,
-        _httpClient = httpClient ?? http.Client();
+  }) : _httpClient = httpClient ?? http.Client();
 
   final String _baseUrl;
   final http.Client _httpClient;
@@ -119,7 +118,7 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
   shared_preferences: ^2.5.0
@@ -127,7 +126,7 @@ dependencies:
 dev_dependencies:
   mocktail: ^1.0.0
   test: ^1.25.0
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 ```
 
 **`packages/local_storage_client/lib/local_storage_client.dart`**
@@ -145,13 +144,9 @@ export 'src/local_storage_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Client for local key-value storage.
-class LocalStorageClient {
-  LocalStorageClient({
-    required SharedPreferences sharedPreferences,
-  }) : _sharedPreferences = sharedPreferences;
-
-  final SharedPreferences _sharedPreferences;
-
+class const LocalStorageClient({
+  required final SharedPreferences _sharedPreferences,
+}) {
   /// Reads the string value for the given [key].
   String? read(String key) => _sharedPreferences.getString(key);
 
@@ -178,10 +173,10 @@ version: 0.1.0+1
 publish_to: none
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.14.0
 
 dependencies:
-  equatable: ^2.0.7
+  equatable: ^3.0.0
   local_storage_client:
     path: ../local_storage_client
   user_api_client:
@@ -190,7 +185,7 @@ dependencies:
 dev_dependencies:
   mocktail: ^1.0.0
   test: ^1.25.0
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 ```
 
 **`packages/user_repository/lib/user_repository.dart`**
@@ -239,13 +234,7 @@ class const UserNotFoundException(final String userId) implements Exception;
 ///
 /// Combines [UserApiClient] with local caching to provide
 /// user data to the business logic layer.
-class UserRepository {
-  const UserRepository({
-    required UserApiClient userApiClient,
-  }) : _userApiClient = userApiClient;
-
-  final UserApiClient _userApiClient;
-
+class const UserRepository({required final UserApiClient _userApiClient}) {
   /// Returns the [User] with the given [userId].
   ///
   /// Throws:
@@ -279,7 +268,7 @@ class UserRepository {
 part of 'profile_bloc.dart';
 
 sealed class ProfileEvent extends Equatable {
-  const ProfileEvent();
+  const new();
 
   @override
   List<Object> get props => [];
@@ -298,19 +287,15 @@ final class const ProfileLoadRequested({required final String userId})
 part of 'profile_bloc.dart';
 
 sealed class ProfileState extends Equatable {
-  const ProfileState();
+  const new();
 
   @override
   List<Object?> get props => [];
 }
 
-final class ProfileInitial extends ProfileState {
-  const ProfileInitial();
-}
+final class const ProfileInitial() extends ProfileState;
 
-final class ProfileLoading extends ProfileState {
-  const ProfileLoading();
-}
+final class const ProfileLoading() extends ProfileState;
 
 final class const ProfileSuccess({required final User user})
     extends ProfileState {
@@ -318,13 +303,9 @@ final class const ProfileSuccess({required final User user})
   List<Object?> get props => [user];
 }
 
-final class ProfileNotFound extends ProfileState {
-  const ProfileNotFound();
-}
+final class const ProfileNotFound() extends ProfileState;
 
-final class ProfileFailure extends ProfileState {
-  const ProfileFailure();
-}
+final class const ProfileFailure() extends ProfileState;
 ```
 
 **`lib/profile/bloc/profile_bloc.dart`**
@@ -338,10 +319,9 @@ part 'profile_event.dart';
 part 'profile_state.dart';
 
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  ProfileBloc({
-    required UserRepository userRepository,
-  })  : _userRepository = userRepository,
-        super(const ProfileInitial()) {
+  new({
+    required this._userRepository,
+  }) : super(const ProfileInitial()) {
     on<ProfileLoadRequested>(_onLoadRequested);
   }
 
@@ -387,8 +367,8 @@ export 'profile_view.dart';
 **`lib/profile/view/profile_page.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/profile/profile.dart';
 import 'package:user_repository/user_repository.dart';
 
@@ -409,12 +389,12 @@ class const ProfilePage({required final String userId, super.key})
 **`lib/profile/view/profile_view.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/profile/profile.dart';
 
 class ProfileView extends StatelessWidget {
-  const ProfileView({super.key});
+  const new({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -460,7 +440,7 @@ class ProfileView extends StatelessWidget {
 **`lib/main_development.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/app/app.dart';
 import 'package:user_api_client/user_api_client.dart';
 import 'package:user_repository/user_repository.dart';
@@ -482,8 +462,8 @@ void main() {
 **`lib/app/view/app.dart`**
 
 ```dart
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:user_repository/user_repository.dart';
 
 class const App({
@@ -506,18 +486,20 @@ class const App({
 
 `main_<flavor>.dart` constructs every data client and repository, then hands them to `App`.
 Flavors change only configuration — base URLs, API keys — never the wiring shape.
+The app's `pubspec.yaml` declares `shared_preferences` too, because `main` builds the `SharedPreferences` instance the client takes.
 
 ```dart
 // lib/main_development.dart
 import 'package:auth_api_client/auth_api_client.dart';
 import 'package:auth_repository/auth_repository.dart';
-import 'package:flutter/material.dart';
 import 'package:local_storage_client/local_storage_client.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:my_app/app/app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:user_api_client/user_api_client.dart';
 import 'package:user_repository/user_repository.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   const baseUrl = 'https://api.dev.example.com';
@@ -525,7 +507,9 @@ void main() {
   // Data layer
   final authApiClient = AuthApiClient(baseUrl: baseUrl);
   final userApiClient = UserApiClient(baseUrl: baseUrl);
-  final localStorageClient = LocalStorageClient();
+  final localStorageClient = LocalStorageClient(
+    sharedPreferences: await SharedPreferences.getInstance(),
+  );
 
   // Repository layer
   final authRepository = AuthRepository(
