@@ -50,7 +50,7 @@ jobs:
       - name: Install Claude Code
         run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
       - name: Validate Plugin
-        run: claude plugin validate .
+        run: claude plugin validate . --profile directory
       - name: Eval fixtures are symlinks
         run: |
           set -euo pipefail
